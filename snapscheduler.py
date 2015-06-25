@@ -8,6 +8,7 @@ import subprocess
 import os.path
 import argparse
 import schedule
+import boto3
 
 def get_settings_dict_from_string(settings_string):
     settings = {}
@@ -18,6 +19,14 @@ def get_settings_dict_from_string(settings_string):
     return settings
 
 def send_backup_request(volume_id):
+    sqs = boto3.resource('sqs')
+    try:
+        queue = sqs.create_queue(QueueName='snapdirector-backup-queue')
+    except:
+        queue = sqs.get_queue_by_name(QueueName='snapdirector-backup-queue')
+
+    response = queue.send_message(MessageBody=volume_id)
+
     print "backup volume", volume_id
 
 class SnapScheduler:
@@ -36,8 +45,6 @@ class SnapScheduler:
                 except:
                     pass
             if not skip:
-#                snapshot = self.c.create_snapshot(volume.id)
-#                pending_snapshots.append(snapshot)
 
                 if 'backup-3x-daily' in volume_settings.keys() and volume_settings['backup-3x-daily'] == "True":
                     schedule.every().day.at("00:00").do(send_backup_request,{ "volume_id": volume.id })
