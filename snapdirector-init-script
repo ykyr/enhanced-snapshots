@@ -43,10 +43,10 @@ RETVAL=0
 start(){
 	echo -n $"Starting $prog: "
 
-	daemon mount.sdfs s3backed0 /media/s3backed0/ &
-	RETVAL=$?
 	daemon /usr/local/bin/snapworker.py &
-	RETVAL=`expr $RETVAL + $?`
+	RETVAL=$?
+#	daemon mount.sdfs s3backed0 /media/s3backed0/ &
+#	RETVAL=`expr $RETVAL + $?`
 	echo
 	if test $RETVAL = 0 ; then
 		touch /var/lock/subsys/snapdirector
@@ -56,9 +56,9 @@ start(){
 
 stop(){
 	echo -n $"Stopping $prog: "
-	killproc java		# probably need to be a little less ham-handed than killall all java
+	killproc java		# probably need to be a little less ham-handed than kill all java
 	RETVAL=$?
-	killproc snapworker.py	# probably need to be a little less ham-handed than killall all java
+	killproc snapworker.py	# probably need to be a little less ham-handed than kill all java
 	RETVAL=`expr $RETVAL + $?`
 	echo
 	rm -f /var/lock/subsys/snapdirector
