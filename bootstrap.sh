@@ -18,9 +18,9 @@ else
     --volume-name=s3backed0 \
     --volume-capacity=256TB \
     --aws-enabled=true \
-    --cloud-access-key=AKIAI5OLTIAOOMBMAW4Q \
+    --cloud-access-key=$aws_access_key \
     --cloud-bucket-name=$bucketname \
-    --cloud-secret-key=lwMmpCfMZ2pVkRK5aF+s1jTvps1QgdJeDrZrAfll \
+    --cloud-secret-key=$aws_secrect_key \
     --chunk-store-encrypt=true \
     --aws-bucket-location=US
 fi
