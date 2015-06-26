@@ -5,6 +5,7 @@ export PATH=$PATH:/sbin
 aws_account_id=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | cut -f2 -d: | cut -f2 -d\"`
 
 bucketname="$aws_account_id-snapdirector-$SNAPDIRECTORNAME"
+queuename=$bucketname
 
 mkdir /opt/sdfs
 aws s3 sync s3://$bucketname/opt/sdfs /opt/sdfs
@@ -27,8 +28,17 @@ fi
 
 mkdir -p /media/s3backed0
 
+pip install boto3
+
+configfile=/usr/local/etc/snapdirector.cfg
+echo "[general]" >> $configfile
+echo "  bucketname = $bucketname" >> $configfile
+echo "  queuename = $queuename" >> $configfile
+echo "  aws_region = $AWS_REGION" >> $configfile
+
 cp *.py /usr/local/bin
 cp snapdirector-init-script /etc/init.d/snapdirector
 chkconfig --add snapdirector
 chkconfig snapdirector on
 /etc/init.d/snapdirector start
+

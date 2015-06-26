@@ -1,14 +1,23 @@
 #!/usr/bin/python
-import boto.utils
-import boto.sqs
+import boto3
+import ConfigParser
 
-region = boto.utils.get_instance_metadata()['placement']['availability-zone'][:-1]
-conn = boto.sqs.connect_to_region(region)
-q = conn.create_queue('myqueue')
+config = ConfigParser.ConfigParser()
+config.read('/usr/local/etc/snapdirector.cfg')
+queuename = QueueName=config.get('general', 'queuename'),
+aws_region = QueueName=config.get('general', 'aws_region'),
 
+aws_session = boto3.session(region_name=aws_region)
+
+sqs = aws_session.resource('sqs')
+
+queue = sqs.get_queue_by_name(QueueName=queuename)
+
+message_count = 1
 while True:
-    m = q.read(wait_time_seconds=10)
-    if m != None:
-        print "Received message", m.get_body()
-        q.delete_message(m)
+    for message in queue.receive_messages():
+        print "Received message %d: %s" % (message_count, message)
+        message_count += 1
+    print "(Sleep...)"
+    sleep(10)
 
