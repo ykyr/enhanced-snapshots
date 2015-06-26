@@ -32,9 +32,9 @@ pip install boto3
 
 configfile=/usr/local/etc/snapdirector.cfg
 echo "[general]" >> $configfile
-echo "  bucketname = $bucketname" >> $configfile
-echo "  queuename = $queuename" >> $configfile
-echo "  aws_region = $AWS_REGION" >> $configfile
+echo "bucketname = $bucketname" >> $configfile
+echo "queuename = $queuename" >> $configfile
+echo "aws_region = $AWS_REGION" >> $configfile
 
 cp *.py /usr/local/bin
 cp snapdirector-init-script /etc/init.d/snapdirector

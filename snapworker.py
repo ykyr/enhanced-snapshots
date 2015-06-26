@@ -4,10 +4,10 @@ import ConfigParser
 
 config = ConfigParser.ConfigParser()
 config.read('/usr/local/etc/snapdirector.cfg')
-queuename = QueueName=config.get('general', 'queuename'),
-aws_region = QueueName=config.get('general', 'aws_region'),
+queuename = config.get('general', 'queuename')
+aws_region = config.get('general', 'aws_region')
 
-aws_session = boto3.session(region_name=aws_region)
+aws_session = boto3.session.Session(region_name=aws_region)
 
 sqs = aws_session.resource('sqs')
 
