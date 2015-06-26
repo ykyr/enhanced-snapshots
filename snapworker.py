@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import boto.utils
 import boto.sqs
 

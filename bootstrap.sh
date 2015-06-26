@@ -26,5 +26,9 @@ else
 fi
 
 mkdir -p /media/s3backed0
-#nohup mount.sdfs s3backed0 /media/s3backed0/ &
 
+cp *.py /usr/local/bin
+cp snapdirector-init-script /etc/init.d/snapdirector
+chkconfig --add snapdirector
+chkconfig snapdirector on
+/etc/init.d/snapdirector start

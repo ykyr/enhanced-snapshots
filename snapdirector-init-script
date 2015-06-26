@@ -1,0 +1,107 @@
+#!/bin/bash
+#
+# snapdirector        This starts and stops sdfs and the snapdirector process
+#
+# chkconfig: - 13 99
+# description: This starts and stops sdfs and the snapdirector process
+#
+# processname: snapdirector
+#
+# Return values according to LSB for all commands but status:
+# 0 - success
+# 1 - generic or unspecified error
+# 2 - invalid or excess argument(s)
+# 3 - unimplemented feature (e.g. "reload")
+# 4 - insufficient privilege
+# 5 - program is not installed
+# 6 - program is not configured
+# 7 - program is not running
+#
+
+prog=snapdirector
+
+
+PATH=/sbin:/bin:/usr/bin:/usr/sbin:/usr/local/bin
+
+# Source function library.
+. /etc/init.d/functions
+
+# Allow anyone to run status
+if [ "$1" = "status" ] ; then
+	ps ax  | egrep "java.*MountSDFS" | grep -v egrep
+        RETVAL=$?
+	ps ax  | egrep "snapdirector-worker" | grep -v egrep
+	RETVAL=`expr $RETVAL + $?`
+	exit $RETVAL
+fi
+
+# Check that we are root ... so non-root users stop here
+test $EUID = 0  ||  exit 4
+
+RETVAL=0
+
+start(){
+	echo -n $"Starting $prog: "
+
+	daemon mount.sdfs s3backed0 /media/s3backed0/ &
+	RETVAL=$?
+	daemon /usr/local/bin/snapworker.py &
+	RETVAL=`expr $RETVAL + $?`
+	echo
+	if test $RETVAL = 0 ; then
+		touch /var/lock/subsys/snapdirector
+	fi
+	return $RETVAL
+}
+
+stop(){
+	echo -n $"Stopping $prog: "
+	killproc java		# probably need to be a little less ham-handed than killall all java
+	RETVAL=$?
+	killproc snapworker.py	# probably need to be a little less ham-handed than killall all java
+	RETVAL=`expr $RETVAL + $?`
+	echo
+	rm -f /var/lock/subsys/snapdirector
+	return $RETVAL
+}
+
+reload(){
+	stop
+	start
+}
+
+restart(){
+	stop
+	start
+}
+
+condrestart(){
+	[ -e /var/lock/subsys/rngd ] && restart
+	return 0
+}
+
+
+# See how we were called.
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    restart)
+	restart
+	;;
+    reload|force-reload)
+	reload
+	;;
+    condrestart|try-restart)
+	condrestart
+	;;
+    *)
+	echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+	RETVAL=3
+esac
+
+exit $RETVAL
+
