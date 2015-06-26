@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import boto3
 import ConfigParser
+import time
 
 config = ConfigParser.ConfigParser()
 config.read('/usr/local/etc/snapdirector.cfg')
@@ -19,5 +20,5 @@ while True:
         print "Received message %d: %s" % (message_count, message)
         message_count += 1
     print "(Sleep...)"
-    sleep(10)
+    time.sleep(10)
 
