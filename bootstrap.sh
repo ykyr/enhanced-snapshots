@@ -26,5 +26,5 @@ else
 fi
 
 mkdir -p /media/s3backed0
-nohup mount.sdfs s3backed0 /media/s3backed0/ &
+#nohup mount.sdfs s3backed0 /media/s3backed0/ &
 
