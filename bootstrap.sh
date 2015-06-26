@@ -18,13 +18,13 @@ else
     --volume-name=s3backed0 \
     --volume-capacity=256TB \
     --aws-enabled=true \
-    --cloud-access-key=$aws_access_key \
+    --cloud-access-key=$AWS_ACCESS_KEY_ID \
     --cloud-bucket-name=$bucketname \
-    --cloud-secret-key=$aws_secrect_key \
+    --cloud-secret-key=$AWS_SECRET_ACCESS_KEY \
     --chunk-store-encrypt=true \
     --aws-bucket-location=US
 fi
 
 mkdir -p /media/s3backed0
-mount.sdfs s3backed0 /media/s3backed0/ &	
+nohup mount.sdfs s3backed0 /media/s3backed0/ &
 
