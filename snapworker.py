@@ -1,24 +1,26 @@
 #!/usr/bin/python
-import boto3
 import ConfigParser
-import time
+import logging
+import base64
+
+import boto.sqs
+from boto.sqs.message import Message
+
+logging.basicConfig(filename='/var/log/snapworker.log',level=logging.INFO)
 
 config = ConfigParser.ConfigParser()
 config.read('/usr/local/etc/snapdirector.cfg')
 queuename = config.get('general', 'queuename')
 aws_region = config.get('general', 'aws_region')
 
-aws_session = boto3.session.Session(region_name=aws_region)
+conn = boto.sqs.connect_to_region(aws_region)
+queue = conn.get_queue(queuename)
 
-sqs = aws_session.resource('sqs')
-
-queue = sqs.get_queue_by_name(QueueName=queuename)
+logging.info(str(dir(queue)))
 
 message_count = 1
 while True:
-    for message in queue.receive_messages():
-        print "Received message %d: %s" % (message_count, message)
+    for message in queue.get_messages(num_messages=1, wait_time_seconds=10):
+        logging.info("Received message %d: %s" % (message_count, message.get_body()))
+        queue.delete_message(message)
         message_count += 1
-    print "(Sleep...)"
-    time.sleep(10)
-
