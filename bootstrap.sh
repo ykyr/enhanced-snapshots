@@ -4,14 +4,12 @@ export PATH=$PATH:/sbin
 
 aws_account_id=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | cut -f2 -d: | cut -f2 -d\"`
 
-bucketname="$aws_account_id-snapdirector-$SNAPDIRECTORNAME"
-
 mkdir /opt/sdfs
-aws s3 sync s3://$bucketname/opt/sdfs /opt/sdfs
+aws s3 sync s3://$S3BUCKETNAME/opt/sdfs /opt/sdfs
 if [ -d /opt/sdfs/volumes/s3backed0 ] ; then
   echo "Existing sdfs found on S3"
-  aws s3 sync s3://$bucketname/etc/sdfs /etc/sdfs
-  aws s3 sync s3://$bucketname/var/log/sdfs /var/log/sdfs
+  aws s3 sync s3://$S3BUCKETNAME/etc/sdfs /etc/sdfs
+  aws s3 sync s3://$S3BUCKETNAME/var/log/sdfs /var/log/sdfs
 else
   echo "No sdfs on S3, so create a local one"
   mkfs.sdfs\
@@ -19,7 +17,7 @@ else
     --volume-capacity=256TB \
     --aws-enabled=true \
     --cloud-access-key=$AWS_ACCESS_KEY_ID \
-    --cloud-bucket-name=$bucketname \
+    --cloud-bucket-name=$S3BUCKETNAME \
     --cloud-secret-key=$AWS_SECRET_ACCESS_KEY \
     --chunk-store-encrypt=true \
     --aws-bucket-location=US
@@ -29,7 +27,7 @@ mkdir -p /media/s3backed0
 
 configfile=/usr/local/etc/snapdirector.cfg
 echo "[general]" >> $configfile
-echo "bucketname = $bucketname" >> $configfile
+echo "bucketname = $S3S3BUCKETNAME" >> $configfile
 echo "queuename = $QUEUENAME" >> $configfile
 echo "sdfsvolumename = s3backed0" >> $configfile
 echo "aws_region = $AWS_REGION" >> $configfile
@@ -42,15 +40,14 @@ cp snapdirector-init-script /etc/init.d/snapdirector
 chkconfig --add snapdirector
 chkconfig snapdirector on
 
-cat > /etc/cron.daily/snapdirector <<EOF
+/usr/local/bin/snapscheduler.py > /etc/cron.d/snapdirector
+
+cat > /etc/cron.hourly/snapdirector <<EOF
 #!/bin/sh
 
 /usr/local/bin/snapscheduler.py > /etc/cron.d/snapdirector
 EOF
 chmod 755 /etc/cron.daily/snapdirector
-
-#pip install schedule
-#/etc/init.d/snapdirector start
 
 cd /tmp
 cat > awslogs-config-file <<EOF
