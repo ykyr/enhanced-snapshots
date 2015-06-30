@@ -11,8 +11,6 @@ import argparse
 import logging
 import ConfigParser
 
-logging.basicConfig(filename='/var/log/snapworker.log',level=logging.INFO)
-
 class NextAvailableDeviceFinder:
     """Instances of this class return the next available storage device, /dev/xvdX, where
     X is a lower case letter a-z (in reverse order, starting from z). """

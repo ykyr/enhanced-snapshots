@@ -1,6 +1,11 @@
 #!/usr/bin/python
-import ConfigParser
 import logging
+logging.basicConfig(
+    filename='/var/log/snapworker.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s %(levelname)s %(pathname)s:%(lineno)s(%(funcName)s) (pid%(process)d) - %(message)s'
+)
+import ConfigParser
 import base64
 import snapdirector
 import boto
@@ -10,7 +15,7 @@ import sys, traceback
 import boto.sqs
 from boto.sqs.message import Message
 
-logging.basicConfig(filename='/var/log/snapworker.log',level=logging.INFO)
+logging.info("snapworker.py starting")
 
 config = ConfigParser.ConfigParser()
 config.read('/usr/local/etc/snapdirector.cfg')

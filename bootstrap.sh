@@ -52,3 +52,18 @@ chmod 755 /etc/cron.daily/snapdirector
 #pip install schedule
 #/etc/init.d/snapdirector start
 
+cd /tmp
+cat > awslogs-config-file <<EOF
+general]
+state_file = /var/awslogs/state/agent-state
+
+[/var/log/snapworker.log]
+file = /var/log/snapworker.log
+log_group_name = /var/log/snapworker.log
+log_stream_name = {instance_id}
+datetime_format = %b %d %H:%M:%S
+EOF
+
+wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+chmod +x ./awslogs-agent-setup.py
+./awslogs-agent-setup.py -n -r us-east-1 -c awslogs-config-file
