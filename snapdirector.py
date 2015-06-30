@@ -53,12 +53,12 @@ class OpendedupWrangler:
         """This is supposed to be idempotent"""
         if not os.path.isdir("/opt/sdfs/volumes/%s" % (self.sdfs_volume_name)):
             logging.info("No /opt/sdfs/volumes/%s, attempting to sync from s3" % (self.sdfs_volume_name))
-            command = "aws s3 sync s3://$bucketname/opt/sdfs /opt/sdfs" % (self.bucketname)
+            command = "aws s3 sync s3://%s/opt/sdfs /opt/sdfs" % (self.bucketname)
             subprocess.check_call(command.split(" "))
             if not os.path.isdir("/opt/sdfs/volumes/%s" % (self.sdfs_volume_name)):
                 logging.info("Still no /opt/sdfs/volumes/%s so it probably doesn't exist yet. Creating." % (self.sdfs_volume_name))
                 subprocess.check_call(command.split(" "))
-                command = "mkfs.sdfs"
+                command = "bash /sbin/mkfs.sdfs"
                 command += " --volume-name=%s" % (self.sdfs_volume_name)
                 command += " --volume-capacity=256TB"
                 command += " --aws-enabled=true"
@@ -195,7 +195,7 @@ class SnapDirector:
             ])
             logging.info("Backup complete for %s" % (volume_settings['original-volume-id']))
         except:
-            logging.info("Backup FAILED for %s" % (volume_settings['original-volume-id']))
+            logging.exception("Backup FAILED for %s" % (volume_settings['original-volume-id']))
 
     def detach_and_delete_volume(self):
         logging.info("Detaching volume")

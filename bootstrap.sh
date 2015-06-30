@@ -27,7 +27,7 @@ mkdir -p /media/s3backed0
 
 configfile=/usr/local/etc/snapdirector.cfg
 echo "[general]" >> $configfile
-echo "bucketname = $S3S3BUCKETNAME" >> $configfile
+echo "bucketname = $S3BUCKETNAME" >> $configfile
 echo "queuename = $QUEUENAME" >> $configfile
 echo "sdfsvolumename = s3backed0" >> $configfile
 echo "aws_region = $AWS_REGION" >> $configfile

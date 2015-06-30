@@ -43,8 +43,8 @@ RETVAL=0
 start(){
 	echo -n $"Starting $prog: "
 
-	daemon /usr/local/bin/snapworker.py >> /var/log/snapworker &
-	daemon /usr/local/bin/snapscheduler.py >> /var/log/snapscheduler &
+	daemon /usr/local/bin/snapworker.py &
+	daemon /usr/local/bin/snapscheduler.py &
 	RETVAL=$?
 #	daemon mount.sdfs s3backed0 /media/s3backed0/ &
 #	RETVAL=`expr $RETVAL + $?`

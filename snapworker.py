@@ -10,7 +10,6 @@ import base64
 import snapdirector
 import boto
 from snapdirector import OpendedupWrangler
-import sys, traceback
 
 import boto.sqs
 from boto.sqs.message import Message
@@ -42,7 +41,7 @@ while True:
             ow.ensure_sdfs_volume_exists()
             ow.start_sdfs()
         except:
-            logging.error("Failed to start sdfs")
+            logging.exception("Failed to start sdfs")
         try:
             sd = snapdirector.SnapDirector(c, volume_id)
             sd.create_snapshot()
@@ -52,10 +51,7 @@ while True:
             sd.detach_and_delete_volume()
             logging.info("Finished processing message %d" % (message_count))
         except:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logging.error("Failed to process message %d due to exception" % (message_count))
-            for line in traceback.format_exc().splitlines():
-                logging.error(line)
+            logging.exception("Failed to process message %d due to exception" % (message_count))
 
         ow.stop_and_sync_sdfs()
 
