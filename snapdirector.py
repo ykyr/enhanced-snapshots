@@ -83,8 +83,11 @@ class OpendedupWrangler:
 
     def stop_and_sync_sdfs(self):
         command = "killall java"                       # a bit ham-handed
-        subprocess.check_call(command.split(" "))
-        time.sleep(30)
+        try:
+            subprocess.check_call(command.split(" "))
+            time.sleep(30)
+        except subprocess.CalledProcessError:
+            logging.exception("killall java failed, which is probably just fine")
 
         command = "aws s3 sync /opt/sdfs s3://%s/opt/sdfs" % (self.bucketname)
         subprocess.check_call(command.split(" "))
@@ -198,6 +201,9 @@ class SnapDirector:
             logging.exception("Backup FAILED for %s" % (volume_settings['original-volume-id']))
 
     def detach_and_delete_volume(self):
+        logging.info("Deleting snapshot")
+        self.snapshot.delete()
+
         logging.info("Detaching volume")
         self.volume.detach()
 
