@@ -51,12 +51,12 @@ class OpendedupWrangler:
 
     def ensure_sdfs_volume_exists(self):
         """This is supposed to be idempotent"""
-        if not os.path.isdir("/opt/sdfs/volumes/%s" % (self.sdfs_volume_name)):
-            logging.info("No /opt/sdfs/volumes/%s, attempting to sync from s3" % (self.sdfs_volume_name))
-            command = "aws s3 sync s3://%s/opt/sdfs /opt/sdfs" % (self.bucketname)
+        if not os.path.isfile("/etc/sdfs/%s-volume-cfg.xml" % (self.sdfs_volume_name)):
+            logging.info("No /etc/sdfs/%s-volume-cfg.xml, attempting to sync from s3" % (self.sdfs_volume_name))
+            command = "aws s3 sync s3://%s/etc/sdfs /etc/sdfs" % (self.bucketname)
             subprocess.check_call(command.split(" "))
-            if not os.path.isdir("/opt/sdfs/volumes/%s" % (self.sdfs_volume_name)):
-                logging.info("Still no /opt/sdfs/volumes/%s so it probably doesn't exist yet. Creating." % (self.sdfs_volume_name))
+            if not os.path.isfile("/etc/sdfs/%s-volume-cfg.xml" % (self.sdfs_volume_name)):
+                logging.info("Still no /etc/sdfs/%s-volume-cfg.xml so it probably doesn't exist yet. Creating." % (self.sdfs_volume_name))
                 subprocess.check_call(command.split(" "))
                 command = "bash /sbin/mkfs.sdfs"
                 command += " --volume-name=%s" % (self.sdfs_volume_name)
@@ -70,9 +70,9 @@ class OpendedupWrangler:
                 subprocess.check_call(command.split(" "))
             else:
                 logging.info("Looks like there's an sdfs on S3. Got /opt/sdfs already, going to also get /etc/sdfs and /var/log/sdfs")
-                command = "aws s3 sync s3://$bucketname/etc/sdfs /etc/sdfs" % (self.bucketname)
+                command = "aws s3 sync s3://%s/opt/sdfs /opt/sdfs" % (self.bucketname)
                 subprocess.check_call(command.split(" "))
-                command = "aws s3 sync s3://$bucketname/var/log/sdfs /var/log/sdfs" % (self.bucketname)
+                command = "aws s3 sync s3://%s/var/log/sdfs /var/log/sdfs" % (self.bucketname)
                 subprocess.check_call(command.split(" "))
 
     def start_sdfs(self):
