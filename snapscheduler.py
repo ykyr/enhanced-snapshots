@@ -1,4 +1,5 @@
 import boto
+import boto.sqs
 import time
 import sys
 import glob
@@ -7,8 +8,8 @@ import string
 import subprocess
 import os.path
 import argparse
+import ConfigParser
 import schedule
-import boto3
 
 def get_settings_dict_from_string(settings_string):
     settings = {}
@@ -18,7 +19,20 @@ def get_settings_dict_from_string(settings_string):
 
     return settings
 
-def send_backup_request(volume_id):
+def send_backup_request(aws_region, queuename, volume_id):
+    print "Send request to back up", volume_id
+    conn = boto.sqs.connect_to_region(aws_region)
+    queue = conn.get_queue(queuename)
+
+    from boto.sqs.message import Message
+
+    m = Message()
+
+    m.set_body(volume_id)
+
+    queue.write(m)
+
+def send_backup_request_old(volume_id):
     sqs = boto3.resource('sqs')
     try:
         queue = sqs.create_queue(QueueName='snapdirector-backup-queue')
@@ -33,6 +47,11 @@ class SnapScheduler:
     def __init__(self):
         self.c = boto.connect_ec2()
         sys.stderr.write("Find some stuff...\n")
+        config = ConfigParser.ConfigParser()
+        config.read('/usr/local/etc/snapdirector.cfg')
+        queuename = config.get('general', 'queuename')
+        aws_region = config.get('general', 'aws_region')
+
 
         for volume in self.c.get_all_volumes():
             skip = False
@@ -45,31 +64,71 @@ class SnapScheduler:
                 except:
                     pass
             if not skip:
+                backup_arguments = {
+                    "aws_region": aws_region,
+                    "queuename": queuename,
+                    "volume_id": volume.id
+                }
 
-                if 'backup-3x-daily' in volume_settings.keys() and volume_settings['backup-3x-daily'] == "True":
-                    schedule.every().day.at("00:00").do(send_backup_request,{ "volume_id": volume.id })
-                    schedule.every().day.at("08:00").do(send_backup_request,{ "volume_id": volume.id })
-                    schedule.every().day.at("16:00").do(send_backup_request,{ "volume_id": volume.id })
-                    sys.stderr.write("Backup scheduled every 8 hours for volume %s\n" % (volume.id))
-                elif 'backup-daily' in volume_settings.keys() and volume_settings['backup-daily'] == "True":
-                    schedule.every().day.at("00:00").do(send_backup_request,{ "volume_id": volume.id })
-                    sys.stderr.write("Backup scheduled every 24 hours for volume %s\n" % (volume.id))
-
+                if 'backup-hours' in volume_settings.keys():
+                    backup_hours =  volume_settings['backup-hours'].split(":")
+                    for hour in backup_hours:
+                        schedule.every().day.at(hour + ":22").do(send_backup_request, backup_arguments)
+                        sys.stderr.write("Backup scheduled at %s:00 for volume %s\n" % (hour, volume.id))
             else:
                 sys.stderr.write("Will not create snapshot for volume %s because it's not an original or has 'skip-me' turned on\n" % (volume.id))
+
+        print "Currently scheduled jobs:"
+        for job in schedule.jobs:
+            print job
 
     def run(self):
         while True:
             schedule.run_pending()
-            print "jobs:"
-            for job in schedule.jobs:
-                print job
-            print "sleep; "
-            time.sleep(1)
+#            print "sleep; "
+            time.sleep(10)
+
+class CronSnapScheduler:
+    def __init__(self):
+        self.c = boto.connect_ec2()
+        sys.stderr.write("Find some stuff...\n")
+        config = ConfigParser.ConfigParser()
+        config.read('/usr/local/etc/snapdirector.cfg')
+        queuename = config.get('general', 'queuename')
+        aws_region = config.get('general', 'aws_region')
+ 
+        conn = boto.sqs.connect_to_region(aws_region)
+        queue_url = conn.get_queue(queuename).url
+
+        for volume in self.c.get_all_volumes():
+            skip = False
+            volume_settings = {}
+            if 'snapshot-director-settings' in volume.tags.keys():
+                print "foo"
+                volume_settings = get_settings_dict_from_string(volume.tags['snapshot-director-settings'])
+                if 'original-volume-id' in volume_settings.keys(): skip = True
+                try:
+                    if volume_settings['skip-me'] == "True": skip = True
+                except:
+                    pass
+            if not skip:
+                backup_arguments = {
+                    "aws_region": aws_region,
+                    "queuename": queuename,
+                    "volume_id": volume.id
+                }
+
+                if 'backup-hours' in volume_settings.keys():
+                    backup_hours =  volume_settings['backup-hours'].split(":")
+                    for hour in backup_hours:
+                        #schedule.every().day.at(hour + ":22").do(send_backup_request, backup_arguments)
+                        print "0 %s * * * root aws --region %s sqs send-message --queue-url %s --message-body %s" % (hour, aws_region, queue_url, volume.id)
+                        sys.stderr.write("Backup scheduled at %s:00 for volume %s\n" % (hour, volume.id))
+            else:
+                sys.stderr.write("Will not create snapshot for volume %s because it's not an original or has 'skip-me' turned on\n" % (volume.id))
+
 
 if __name__ == "__main__":
-    print "hi"
-    ss = SnapScheduler()
-    ss.run()
-    print "bye"
+    #ss = SnapScheduler()
+    ss = CronSnapScheduler()
 

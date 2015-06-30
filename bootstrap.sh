@@ -31,12 +31,16 @@ configfile=/usr/local/etc/snapdirector.cfg
 echo "[general]" >> $configfile
 echo "bucketname = $bucketname" >> $configfile
 echo "queuename = $QUEUENAME" >> $configfile
+echo "sdfsvolumename = s3backed0" >> $configfile
 echo "aws_region = $AWS_REGION" >> $configfile
+echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> $configfile
+echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> $configfile
 
 cp *.py /usr/local/bin
 cp snapdirector-init-script /etc/init.d/snapdirector
 chkconfig --add snapdirector
 chkconfig snapdirector on
 
+pip install schedule
 #/etc/init.d/snapdirector start
 
