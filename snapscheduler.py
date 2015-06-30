@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import boto
 import boto.sqs
 import time
