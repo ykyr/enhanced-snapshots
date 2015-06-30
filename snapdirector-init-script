@@ -44,6 +44,7 @@ start(){
 	echo -n $"Starting $prog: "
 
 	daemon /usr/local/bin/snapworker.py >> /var/log/snapworker &
+	daemon /usr/local/bin/snapscheduler.py >> /var/log/snapscheduler &
 	RETVAL=$?
 #	daemon mount.sdfs s3backed0 /media/s3backed0/ &
 #	RETVAL=`expr $RETVAL + $?`
@@ -56,9 +57,9 @@ start(){
 
 stop(){
 	echo -n $"Stopping $prog: "
-	killproc java		# probably need to be a little less ham-handed than kill all java
+	killproc snapworker.py
 	RETVAL=$?
-	killproc snapworker.py	# probably need to be a little less ham-handed than kill all java
+	killproc snapscheduler.py
 	RETVAL=`expr $RETVAL + $?`
 	echo
 	rm -f /var/lock/subsys/snapdirector

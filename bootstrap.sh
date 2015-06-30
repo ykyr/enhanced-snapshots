@@ -36,11 +36,19 @@ echo "aws_region = $AWS_REGION" >> $configfile
 echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> $configfile
 echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> $configfile
 
-cp *.py /usr/local/bin
+cp snapscheduler.py snapworker.py /usr/local/bin/
+cp snapdirector.py /usr/local/lib/python2.7/site-packages/
 cp snapdirector-init-script /etc/init.d/snapdirector
 chkconfig --add snapdirector
 chkconfig snapdirector on
 
-pip install schedule
+cat > /etc/cron.daily/snapdirector <<EOF
+#!/bin/sh
+
+/usr/local/bin/snapscheduler.py > /etc/cron.d/snapdirector
+EOF
+chmod 755 /etc/cron.daily/snapdirector
+
+#pip install schedule
 #/etc/init.d/snapdirector start
 

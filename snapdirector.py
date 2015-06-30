@@ -207,8 +207,8 @@ class SnapDirector:
         while True:
             self.volume.update()
             if self.volume.status == 'available':
-                logging.info("Volume detatched")
-                volume.delete()
+                logging.info("Volume detached")
+                self.volume.delete()
                 logging.info("Volume deleted")
                 return
             sleep.sleep()

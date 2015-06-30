@@ -5,6 +5,7 @@ import base64
 import snapdirector
 import boto
 from snapdirector import OpendedupWrangler
+import sys, traceback
 
 import boto.sqs
 from boto.sqs.message import Message
@@ -46,7 +47,10 @@ while True:
             sd.detach_and_delete_volume()
             logging.info("Finished processing message %d" % (message_count))
         except:
-            logging.info("Failed to process message %d" % (message_count))
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error("Failed to process message %d due to exception" % (message_count))
+            for line in traceback.format_exc().splitlines():
+                logging.error(line)
 
         ow.stop_and_sync_sdfs()
 
