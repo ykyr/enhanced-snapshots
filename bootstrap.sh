@@ -2,6 +2,8 @@
 #rpm --force -iv SDFS-2.0.11-2.x86_64.rpm
 export PATH=$PATH:/sbin
 
+aws configure set region $AWS_REGION
+
 aws_account_id=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | cut -f2 -d: | cut -f2 -d\"`
 
 mkdir /opt/sdfs
