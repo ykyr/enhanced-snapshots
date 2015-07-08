@@ -54,10 +54,11 @@ class OpendedupWrangler:
         if not os.path.isfile("/etc/sdfs/%s-volume-cfg.xml" % (self.sdfs_volume_name)):
             logging.info("No /etc/sdfs/%s-volume-cfg.xml, attempting to sync from s3" % (self.sdfs_volume_name))
             command = "aws s3 sync s3://%s/etc/sdfs /etc/sdfs" % (self.bucketname)
-            subprocess.check_call(command.split(" "))
+            output = subprocess.check_output(command.split(" "))
+            logging.debug("Output of '%s': %s" % (command, output))
             if not os.path.isfile("/etc/sdfs/%s-volume-cfg.xml" % (self.sdfs_volume_name)):
                 logging.info("Still no /etc/sdfs/%s-volume-cfg.xml so it probably doesn't exist yet. Creating." % (self.sdfs_volume_name))
-                subprocess.check_call(command.split(" "))
+                output = subprocess.check_output(command.split(" "))
                 command = "bash /sbin/mkfs.sdfs"
                 command += " --volume-name=%s" % (self.sdfs_volume_name)
                 command += " --volume-capacity=256TB"
@@ -67,13 +68,16 @@ class OpendedupWrangler:
                 command += " --cloud-secret-key=%s" % (self.aws_secret_access_key)
                 command += " --chunk-store-encrypt=true"
                 command += " --aws-bucket-location=US"
-                subprocess.check_call(command.split(" "))
+                output = subprocess.check_output(command.split(" "))
+                logging.debug("Output of '%s': %s" % (command, output))
             else:
                 logging.info("Looks like there's an sdfs on S3. Got /opt/sdfs already, going to also get /etc/sdfs and /var/log/sdfs")
                 command = "aws s3 sync s3://%s/opt/sdfs /opt/sdfs" % (self.bucketname)
-                subprocess.check_call(command.split(" "))
+                output = subprocess.check_output(command.split(" "))
+                logging.debug("Output of '%s': %s" % (command, output))
                 command = "aws s3 sync s3://%s/var/log/sdfs /var/log/sdfs" % (self.bucketname)
-                subprocess.check_call(command.split(" "))
+                output = subprocess.check_output(command.split(" "))
+                logging.debug("Output of '%s': %s" % (command, output))
 
     def start_sdfs(self):
         command = "bash /sbin/mount.sdfs %s /media/%s/" % (self.sdfs_volume_name, self.sdfs_volume_name)
@@ -83,19 +87,23 @@ class OpendedupWrangler:
     def stop_and_sync_sdfs(self):
         command = "killall java"                       # a bit ham-handed
         try:
-            subprocess.check_call(command.split(" "))
+            output = subprocess.check_output(command.split(" "))
+            logging.debug("Output of '%s': %s" % (command, output))
             time.sleep(30)
         except subprocess.CalledProcessError:
             logging.exception("killall java failed, which is probably just fine")
 
         command = "aws s3 sync /opt/sdfs s3://%s/opt/sdfs" % (self.bucketname)
-        subprocess.check_call(command.split(" "))
+        output = subprocess.check_output(command.split(" "))
+        logging.debug("Output of '%s': %s" % (command, output))
 
         command = "aws s3 sync /etc/sdfs s3://%s/etc/sdfs" % (self.bucketname)
-        subprocess.check_call(command.split(" "))
+        output = subprocess.check_output(command.split(" "))
+        logging.debug("Output of '%s': %s" % (command, output))
 
         command = "aws s3 sync /var/log/sdfs s3://%s/var/log/sdfs" % (self.bucketname)
-        subprocess.check_call(command.split(" "))
+        output = subprocess.check_output(command.split(" "))
+        logging.debug("Output of '%s': %s" % (command, output))
 
 def get_settings_dict_from_string(settings_string):
     settings = {}
@@ -188,16 +196,18 @@ class SnapDirector:
                     self.volume_settings['from-snapshot-start-time']
                 )
             )
-            subprocess.check_call(["ls", "-l", self.volume.attach_data.device])
-            subprocess.check_call([
+            output = subprocess.check_output(["ls", "-l", self.volume.attach_data.device])
+            logging.debug("Output of 'ls -l %s': %s" % (self.volume.attach_data.device, output))
+            output = subprocess.check_output([
                 "dd",
                 "bs=128k",
                 "if=%s" % (self.volume.attach_data.device),
                 "of=/media/s3backed0/%s__%s__%s" % (volume_settings['original-volume-id'], volume_settings['from-snapshot-id'], volume_settings['from-snapshot-start-time'])
             ])
-            logging.info("Backup complete for %s" % (volume_settings['original-volume-id']))
+            logging.debug("Output of 'dd': %s" % (command, output))
+            logging.info("AUDIT_LOG Backup complete for %s" % (volume_settings['original-volume-id']))
         except:
-            logging.exception("Backup FAILED for %s" % (volume_settings['original-volume-id']))
+            logging.exception("AUDIT_LOG Backup FAILED for %s" % (volume_settings['original-volume-id']))
 
     def detach_and_delete_volume(self):
         logging.info("Deleting snapshot")

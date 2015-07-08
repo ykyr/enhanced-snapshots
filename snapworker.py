@@ -10,6 +10,7 @@ import base64
 import snapdirector
 import boto
 from snapdirector import OpendedupWrangler
+import time
 
 import boto.sqs
 from boto.sqs.message import Message
@@ -34,6 +35,7 @@ message_count = 1
 while True:
     for message in queue.get_messages(num_messages=1, wait_time_seconds=10):
         logging.info("Received message %d: %s" % (message_count, message.get_body()))
+        start_time = time.time()
         volume_id = message.get_body()
         try:
             logging.info("Starting sdfs...")
@@ -52,8 +54,10 @@ while True:
             logging.info("Finished processing message %d" % (message_count))
         except:
             logging.exception("Failed to process message %d due to exception" % (message_count))
-
-        ow.stop_and_sync_sdfs()
+        finally:
+            ow.stop_and_sync_sdfs()
+            finish_time = time.time()
+            logging.info("AUDIT_LOG message %d took %f seconds to process" % (message_count, finish_time - start_time))
 
         queue.delete_message(message)
         message_count += 1
