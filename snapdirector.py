@@ -204,7 +204,7 @@ class SnapDirector:
                 "if=%s" % (self.volume.attach_data.device),
                 "of=/media/s3backed0/%s__%s__%s" % (volume_settings['original-volume-id'], volume_settings['from-snapshot-id'], volume_settings['from-snapshot-start-time'])
             ])
-            logging.debug("Output of 'dd': %s" % (command, output))
+            logging.debug("Output of 'dd': %s" % (output))
             logging.info("AUDIT_LOG Backup complete for %s" % (volume_settings['original-volume-id']))
         except:
             logging.exception("AUDIT_LOG Backup FAILED for %s" % (volume_settings['original-volume-id']))
