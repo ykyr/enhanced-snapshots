@@ -1,0 +1,29 @@
+<h2><span class="glyphicon glyphicon-tasks"></span>&nbsp; Task Queue</h2>
+
+<div class="bs-callout bs-callout-{{ statusColorClass[task.status] }}" ng-class="{ 'active': isRunning(task) }" ng-repeat="task in tasks">
+    <div class="row vertical-align">
+        <div class="col-xs-2 col-sm-1 text-center">
+            <h1 class="no-margin"><span class="glyphicon glyphicon-{{ typeIconClass[task.type] }} text-{{ typeColorClass[task.type] }}"></span></h1>
+        </div>
+        <div class="col-xs-9 col-sm-11">
+            <h5 class="pull-right no-margin">{{task.scheduler.time | date: 'yyyy-MM-dd HH:mm:ss'}}</h5>
+            <h4>{{task.volume}} </h4>
+            <p>
+                started by
+                <span class="label label-default">
+                    <span class="glyphicon glyphicon-{{ manualIconClass[task.scheduler.manual] }}"></span>&nbsp;
+                    {{task.scheduler.name}}</span>
+            </p>
+        </div>
+        <div class="col-xs-1 text-right">
+            <div class="btn-group-vertical btn-group-xs task-control" ng-hide="isRunning(task)">
+                <a class="btn btn-danger" title="Reject" ng-click="reject(task)"><span class="glyphicon glyphicon-remove"></span></a>
+                <a class="btn btn-default" title="Move up"><span class="glyphicon glyphicon-triangle-top"></span></a>
+                <a class="btn btn-default" title="Move down"><span class="glyphicon glyphicon-triangle-bottom"></span></a>
+            </div>
+        </div>
+    </div>
+    <div class="row progress-row" ng-show="isRunning(task)">
+        <div class="progress-bar progress-bar-striped active" role="progressbar"></div>
+    </div>
+</div>

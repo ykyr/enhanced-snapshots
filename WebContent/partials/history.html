@@ -1,0 +1,33 @@
+<div class="clearfix">
+    <a ui-sref="app.volume.list" class="btn btn-link pull-right"><span class="glyphicon glyphicon-chevron-left"> </span>Back to volumes</a>
+</div>
+
+<h2 class="pull-right"><small><span class="glyphicon glyphicon-hdd"></span>&nbsp; {{volumeID}}</small></h2>
+<h2><span class="glyphicon glyphicon-list"></span>&nbsp; Backup History </h2>
+
+<div class="row">
+    <table class="table table-condensed bg-white">
+        <thead>
+        <tr>
+            <th>&nbsp;</th>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Message</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="backup in backups | orderBy: '-date' " class="bg-{{ statusColorClass[backup.status] }}">
+            <td class="text-center commands">
+                <a class="btn btn-link" title="Restore" ng-click="restore(backup)"><span
+                        class="glyphicon glyphicon-cloud-upload" ng-show="isSuccess(backup)"></span></a>
+                <a class="text-danger" title="Remove" ng-click="remove(backup)"><span
+                        class="glyphicon glyphicon-remove" ng-hide="isRunning(backup)"></span></a>
+                <span class="glyphicon glyphicon-refresh spin" ng-show="isRunning(backup)"></span>
+            </td>
+            <td>{{backup.date | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+            <td>{{backup.name}}</td>
+            <td>{{backup.message}}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>

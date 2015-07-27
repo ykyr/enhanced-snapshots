@@ -1,0 +1,12 @@
+  {
+    "id": "3",
+    "volume": "vol-69dee6a0",
+    "type": "restore",
+    "status": "waiting",
+    "priority": "2",
+    "scheduler": {
+      "manual": "true",
+      "name": "admin",
+      "time": "2015-07-17 18:57:00"
+    }
+  }

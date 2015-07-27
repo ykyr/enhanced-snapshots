@@ -1,0 +1,50 @@
+[
+  {
+    "id": "1",
+    "volume": "vol-00000000",
+    "type": "backup",
+    "status": "running",
+    "priority": "0",
+    "scheduler": {
+      "manual": "true",
+      "name": "admin",
+      "time": "2015-07-17 18:50:00"
+    }
+  },
+  {
+    "id": "2",
+    "volume": "vol-33333333",
+    "type": "backup",
+    "status": "waiting",
+    "priority": "1",
+    "scheduler": {
+      "manual": "false",
+      "name": "schedule name",
+      "time": "2015-07-17 18:53:00"
+    }
+  },
+  {
+    "id": "3",
+    "volume": "vol-22222222",
+    "type": "restore",
+    "status": "waiting",
+    "priority": "2",
+    "scheduler": {
+      "manual": "true",
+      "name": "admin",
+      "time": "2015-07-17 18:57:00"
+    }
+  },
+  {
+    "id": "4",
+    "volume": "vol-44444444",
+    "type": "backup",
+    "status": "waiting",
+    "priority": "3",
+    "scheduler": {
+      "manual": "false",
+      "name": "another scheduler",
+      "time": "2015-07-17 19:00:00"
+    }
+  }
+]

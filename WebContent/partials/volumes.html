@@ -1,0 +1,67 @@
+<div class="clearfix">
+    <div class="pull-right">
+        <div class="btn-group" dropdown>
+            <button class="btn btn-default dropdown-toggle" dropdown-toggle>
+           <span ng-show="selectedRegion.location" class="hidden-xs">
+               {{selectedRegion.location}} -
+           </span>
+                {{selectedRegion.name}} &nbsp;
+                <span class="caret"></span>
+            </button>
+            <!--<button class="btn btn-default dropdown-toggle" dropdown-toggle>-->
+            <!--</button>-->
+            <ul class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <a ng-click="changeRegion(globalRegion)">
+                    <span ng-show="globalRegion.location" class="hidden-xs">
+                        {{globalRegion.location}} -
+                    </span>
+                        {{globalRegion.name}}
+                    </a>
+                </li>
+                <li role="separator" class="divider"></li>
+                <li ng-repeat="region in regions">
+                    <a ng-click="changeRegion(region)">
+                    <span ng-show="region.location" class="hidden-xs">
+                        {{region.location}} -
+                    </span>
+                        {{region.name}}
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <button class="btn btn-link" ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span></button>
+    </div>
+</div>
+
+<h2><span class="glyphicon glyphicon-hdd"></span>&nbsp; EBS Volumes</h2>
+
+<div class="row">
+    <table class="table table-condensed bg-white">
+        <thead>
+        <tr>
+            <th>&nbsp;</th>
+            <th>Volume ID</th>
+            <th>Capacity</th>
+            <th>Created</th>
+            <th>Zone</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="volume in volumes track by $index">
+            <td class="text-center commands">
+                <button class="btn btn-link" title="Backup now" ng-click="backup(volume.ID)"><span
+                        class="glyphicon glyphicon-cloud-download"></span></button>
+                <a ui-sref="app.volume.schedule({ volumeID: volume.ID })" class="btn btn-link" title="Schedule backup"><span
+                        class="glyphicon glyphicon-time"></span></a>
+                <a ui-sref="app.volume.history({ volumeID: volume.ID })" class="btn btn-link" title="History"><span
+                        class="glyphicon glyphicon-list"></span></a>
+            </td>
+            <td>{{::volume.ID}}</td>
+            <td>{{::volume.Capacity}} GiB</td>
+            <td>{{::volume.Created | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+            <td>{{::volume.Zone}}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>

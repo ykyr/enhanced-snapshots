@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "volume": "vol-00000000",
+    "date": "2015-07-07 12:55:00",
+    "name": "vol-00000000_2015-07-07_12:55:00_manual",
+    "status": "success",
+    "message": ""
+  },
+  {
+    "id": "2",
+    "volume": "vol-00000000",
+    "date": "2015-07-08 14:00:00",
+    "name": "vol-00000000_2015-07-08_14:00:00_daily",
+    "status": "success",
+    "message": ""
+  },
+  {
+    "id": "3",
+    "volume": "vol-00000000",
+    "date": "2015-07-09 14:00:00",
+    "name": "vol-00000000_2015-07-09_14:00:00_daily",
+    "status": "failed",
+    "message": "Connectivity problem. Server is down or unreachable."
+  },
+  {
+    "id": "4",
+    "volume": "vol-00000000",
+    "date": "2015-07-10 14:00:00",
+    "name": "vol-00000000_2015-07-10_14:00:00_daily",
+    "status": "success",
+    "message": ""
+  },
+  {
+    "id": "5",
+    "volume": "vol-00000000",
+    "date": "2015-07-21 13:25:00",
+    "name": "vol-00000000_2015-07-21_13:25:00_manual",
+    "status": "running",
+    "message": "Saving backup file..."
+  }
+]

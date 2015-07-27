@@ -1,0 +1,15 @@
+[
+  {
+    "id": "1",
+    "volumeID": "vol-00000000",
+    "name": "Schedule number one",
+    "interval": {
+      "amount": "1",
+      "unit": "day"
+    },
+    "start": "2015-08-08 03:37:00",
+    "end": "",
+    "week": [],
+    "comment": "Hello"
+  }
+]
