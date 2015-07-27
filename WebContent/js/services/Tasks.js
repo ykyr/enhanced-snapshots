@@ -42,13 +42,10 @@ angular.module('web')
         };
 
         var add = function (item) {
-            return getAll().then(function (data) {
-                var maxId = Math.max.apply(Math,data.map(function(i){return i.id;}));
-                item.id = maxId + 1;
-                item.priority = data.length;
-                data.push(item);
-                Storage.save(storageKey, data);
-                return true;
+            return $http({
+                url: url,
+                method: "POST",
+                data: item
             });
         };
 
