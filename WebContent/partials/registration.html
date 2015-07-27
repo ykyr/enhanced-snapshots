@@ -1,0 +1,60 @@
+<div class="container">
+    <div class="row centered-form">
+        <div class="col-xs-12 col-sm-8 col-md-4 col-sm-offset-2 col-md-offset-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h2 class="panel-title"><span class="glyphicon glyphicon-user"></span>&nbsp; Registration form</h2>
+                </div>
+                <div class="panel-body">
+                    <form role="form" ng-submit="registerUser()">
+
+                        <div class="form-group col-md-6">
+                            <label>Name:</label>
+                            <input type="text" name="name" class="form-control input-sm" ng-model="userName"
+                                   placeholder="Enter your name" required>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label>Surname:</label>
+                            <input type="text" name="surname" class="form-control input-sm" ng-model="userSurname"
+                                   placeholder="Enter your surname" required>
+                        </div>
+
+                        <div class="form-group col-md-12">
+                            <label>E-mail (will be used as your username):</label>
+                            <input type="email" name="email" class="form-control input-sm" ng-model="userEmail"
+                                   placeholder="email@example.com" required>
+                        </div>
+
+                        <div class="form-group text-danger col-md-12 text-center" ng-show="userExists">
+                            <span class="glyphicon glyphicon-alert"></span>&nbsp; {{userExists}}
+                        </div>
+
+                        <div class="form-group col-md-12">
+                            <label>Password:</label>
+                            <input type="password" name="passwordReg" class="form-control input-sm" ng-model="passwordReg"
+                                   required>
+                        </div>
+
+                        <div class="form-group col-md-12">
+                            <label>Password (confirm):</label>
+                            <input type="password" name="passwordConf" class="form-control input-sm" ng-model="passwordConf"
+                                   required>
+                        </div>
+
+
+                        <div class="form-group text-danger col-md-12 text-center" ng-show="passwordError">
+                            <span class="glyphicon glyphicon-alert"></span>&nbsp; {{passwordError}}
+                        </div>
+
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-info btn-block">Register me</button>
+                        </div>
+                    </form>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

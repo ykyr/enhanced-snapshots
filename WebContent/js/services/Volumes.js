@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .service('Volumes', function ($q, $http, Storage) {
-        var url = './rest/volume';
+    .service('Volumes', function ($q, $http, Storage, BASE_URL) {
+        var url = BASE_URL + 'rest/volume';
         var storageKey = 'volumes';
 
         return {

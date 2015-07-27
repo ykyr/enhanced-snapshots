@@ -1,20 +1,37 @@
 'use strict';
 
 angular.module('web')
-    .service('Auth', function ($http, $state, $rootScope, $q) {
-        var loginUrl = "./rest/user";
-        var authenticate = function (name, pass) {
+    .service('Auth', function ($rootScope, Users, $q, BASE_URL) {
+        // var loginUrl = BASE_URL + "rest/user";
+        var authenticate = function (email, pass) {
             var deferred = $q.defer();
 
-            $http.get(loginUrl).success(function (data) {
-                if (data.name == name && data.password == pass){
-                    $rootScope.currentUser = data;
-                    deferred.resolve(data);
-                }else{
+            Users.getAllUsers().then(function (data) {
+                var isPresent;
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].email == email && data[i].password == pass) {
+                        $rootScope.currentUser = data[i];
+                        deferred.resolve(data);
+                        isPresent = true;
+                        break;
+                    }
+                }
+
+                if (!isPresent) {
                     deferred.reject('Wrong credentials');
                 }
             });
+            return deferred.promise;
+        };
 
+        var _hasUsers = function () {
+            var deferred = $q.defer();
+
+            Users.getAllUsers().then(function (data) {
+                deferred.resolve(data.length > 0);
+            }, function () {
+                deferred.reject('Error getting users');
+            });
             return deferred.promise;
         };
 
@@ -26,10 +43,13 @@ angular.module('web')
                     return false;
                 }
             },
-            logIn: function (name, pass) {
-                return authenticate(name, pass);
+            hasUsers: function () {
+                return _hasUsers();
             },
-            logOut: function (){
+            logIn: function (email, pass) {
+                return authenticate(email, pass);
+            },
+            logOut: function () {
                 $rootScope.currentUser = undefined;
                 return true;
             }

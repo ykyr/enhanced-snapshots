@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .service('Backups', function ($q, $http, Storage) {
-        var url = './rest/backup';
+    .service('Backups', function ($q, $http, Storage, BASE_URL) {
+        var url = BASE_URL + 'rest/backup';
         var storageKey = '_backups';
 
         var getAll = function () {

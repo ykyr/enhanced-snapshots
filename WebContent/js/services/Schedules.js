@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .service('Schedules', function ($q, $http, Storage) {
-        var url = './rest/schedule';
+    .service('Schedules', function ($q, $http, Storage, BASE_URL) {
+        var url = BASE_URL + 'rest/schedule';
         var storageKey = '_schedules';
 
         var getAll = function () {
