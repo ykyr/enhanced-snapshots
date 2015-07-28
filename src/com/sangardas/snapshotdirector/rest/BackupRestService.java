@@ -9,7 +9,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import com.sangardas.snapshotdirector.rest.utils.JsonFromFile;
 
