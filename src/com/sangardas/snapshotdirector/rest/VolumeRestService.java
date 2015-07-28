@@ -13,8 +13,6 @@ import javax.ws.rs.core.MediaType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -22,7 +20,6 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sangardas.snapshotdirector.aws.PropertiesResourceFileCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.S3Utils;
-import com.sangardas.snapshotdirector.rest.utils.JsonFromFile;
 
 
 @Path("/volume")

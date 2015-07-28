@@ -1,7 +1,8 @@
 package com.sangardas.snapshotdirector.worker;
 
+import static java.lang.String.format;
+
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
@@ -21,8 +22,6 @@ import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 import com.sangardas.snapshotdirector.tasks.AWSBackupVolumeTask;
 import com.sangardas.snapshotdirector.tasks.Task;
-
-import static java.lang.String.format;
 
 
 public class AWSTaskWorker implements Runnable {
