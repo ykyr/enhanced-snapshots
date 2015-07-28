@@ -4,10 +4,14 @@
   <context-param>
     <param-name>rest:mock-directory</param-name>
     <param-value>./mockjson/</param-value>
-  </context-param>
+    </context-param>
   <context-param>
     <param-name>aws:credentials-file</param-name>
     <param-value>./aws/credentials</param-value>
+  </context-param>
+  <context-param>
+    <param-name>tmp:sdfsbackup-properties</param-name>
+    <param-value>./aws/sdfsbackup.properties</param-value>
   </context-param>
   <context-param>
     <param-name>aws:sqs-region</param-name>
@@ -19,7 +23,7 @@
   </context-param>
    <context-param>
     <param-name>aws:routine-inst-id</param-name>
-    <param-value>i-449010ad</param-value>
+    <param-value>i-e920a741</param-value>
   </context-param>
   
   <context-param>

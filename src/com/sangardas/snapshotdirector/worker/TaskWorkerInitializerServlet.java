@@ -51,10 +51,11 @@ public class TaskWorkerInitializerServlet extends HttpServlet {
 		String credentials = context.getInitParameter("aws:credentials-file");
 		String queueURL = context.getInitParameter("aws:sqs-queue-url");
 		String routineInstanceId = context.getInitParameter("aws:routine-inst-id");
+		String propertyFile = context.getInitParameter("tmp:sdfsbackup-properties");
 		AWSCredentialsProvider credentialsProvider = new PropertiesResourceFileCredentialsProvider(credentials);
 		
 		exec = Executors.newSingleThreadExecutor();
-		exec.execute(new AWSTaskWorker(credentialsProvider,queueURL, routineInstanceId));
+		exec.execute(new AWSTaskWorker(credentialsProvider,queueURL, routineInstanceId, propertyFile));
 	}
 
 	/**

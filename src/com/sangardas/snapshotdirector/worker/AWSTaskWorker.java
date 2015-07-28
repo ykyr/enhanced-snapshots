@@ -31,12 +31,14 @@ public class AWSTaskWorker implements Runnable {
 	private AWSCredentialsProvider awsCredentialsProvider;
 	private String queueURL;
 	private String routineInstanceId;
+	private String propertyFile;
 
 
-	public AWSTaskWorker(AWSCredentialsProvider awsCredentialsProvider, String queueURL, String routineInstanceId) {
+	public AWSTaskWorker(AWSCredentialsProvider awsCredentialsProvider, String queueURL, String routineInstanceId,String propertyFile) {
 		this.awsCredentialsProvider = awsCredentialsProvider;
 		this.queueURL = queueURL;
 		this.routineInstanceId = routineInstanceId;
+		this.propertyFile = propertyFile;
 	}
 
 
@@ -66,7 +68,7 @@ public class AWSTaskWorker implements Runnable {
 						String volumeId = taskMessage.getString("volume");
 						boolean execNow = taskMessage.getJSONObject("scheduler").getBoolean("manual");
 						
-						task = new AWSBackupVolumeTask(awsCredentialsProvider,volumeId,routineInstanceId);
+						task = new AWSBackupVolumeTask(awsCredentialsProvider,volumeId,routineInstanceId, propertyFile);
 					} catch (JSONException e) {
 						
 						e.printStackTrace();

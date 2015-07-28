@@ -40,7 +40,7 @@ public class TaskRestService {
 	public String getTasks() {
 		String result = null;
 		try {
-			addTask(null);
+			//addTask(null);
 			String path = context.getInitParameter("rest:mock-directory");
 			JSONArray tasks = JsonFromFile.newJSONArray(path + "tasks.json");
 			result = tasks.toString();
@@ -54,6 +54,7 @@ public class TaskRestService {
 	@POST()
 	@Produces(MediaType.APPLICATION_JSON)
 	public String addTask(String task) {
+		LOG.info("put message:" + task);
 		String credentials = context.getInitParameter("aws:credentials-file");
 		String sqsRegion = context.getInitParameter("aws:sqs-region");
 		String queueURL = context.getInitParameter("aws:sqs-queue-url");
@@ -63,7 +64,8 @@ public class TaskRestService {
 		
         String path = context.getInitParameter("rest:mock-directory");
         JSONObject newTask = JsonFromFile.newJSONObject(path + "newtask.json");
-        String body = newTask.toString();
+        //String body = newTask.toString();
+        String body = task;
         try {
         SendMessageRequest sendRequest = new SendMessageRequest(queueURL, body);
         sendRequest.setDelaySeconds(0);

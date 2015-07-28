@@ -1,8 +1,11 @@
 package com.sangardas.snapshotdirector.tasks;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
@@ -35,6 +38,7 @@ import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.sangardas.snapshotdirector.tasks.aws.VolumeBackup;
 
 import static java.lang.String.format;
 
@@ -47,22 +51,45 @@ public class AWSBackupVolumeTask implements Task {
 	private AWSCredentialsProvider awsCredentialsProvider;
 	private String volumeId;
 	private String routineInstanceId;
+	private String propertyFile;
 
 
-	public AWSBackupVolumeTask(AWSCredentialsProvider awsCredentialsProvider, String volumeId, String routineInstanceId) {
+	public AWSBackupVolumeTask(AWSCredentialsProvider awsCredentialsProvider, String volumeId, String routineInstanceId,String propertyFile) {
 		this.awsCredentialsProvider = awsCredentialsProvider;
 		this.volumeId = volumeId;
 		this.routineInstanceId = routineInstanceId;
+		this.propertyFile = propertyFile;
 	}
 
 
 	public void execute() {
 		LOG.info(format("AWSBackupVolumeTask[%d]: Starting backup process for volume %s",taskId, volumeId));
-
-
-		// TODO: create snapshot, create temporary volume, attach volume, backup, detach tempvolume
-		// TODO: sdfs backup
-		// TODO: detach temporary volume, delete temporary volume, delete snapshot
+		
+		
+//		Properties properties= new Properties();
+//		
+//		try {
+//		InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(propertyFile);
+//			properties.load(is);
+//		} catch (IOException e1) {
+//			e1.printStackTrace();
+//			return;
+//		}
+//		
+//		properties.remove("ACCESS_KEY");
+//		properties.remove("SECRET_KEY");
+//		properties.remove("INSTANCE_ID");
+//		properties.remove("VOLUME_TO_BACKUP");
+//		properties.put("ACCESS_KEY", awsCredentialsProvider.getCredentials().getAWSAccessKeyId());
+//		properties.put("SECRET_KEY", awsCredentialsProvider.getCredentials().getAWSSecretKey());
+//		properties.put("INSTANCE_ID", routineInstanceId);
+//		System.out.println(properties.get("INSTANCE_ID"));
+//		properties.put("VOLUME_TO_BACKUP", volumeId);
+//		try {
+//		VolumeBackup.backupFlow(properties);
+//		}catch(IOException e) {
+//			e.printStackTrace();
+//		}
 
 		LOG.info(format("AWSBackupVolumeTask[%d]: Backup process for volume %s finished successfully ",taskId, volumeId));
 	}
