@@ -1,6 +1,7 @@
 package com.sangardas.snapshotdirector.rest;
 
 import static java.lang.String.format;
+
 import javax.servlet.ServletContext;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -23,7 +24,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
-import com.sangardas.snapshotdirector.aws.PropertiesResourceFileCredentialsProvider;
+import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.rest.utils.JsonFromFile;
 
 
@@ -58,7 +59,7 @@ public class TaskRestService {
 		String credentials = context.getInitParameter("aws:credentials-file");
 		String sqsRegion = context.getInitParameter("aws:sqs-region");
 		String queueURL = context.getInitParameter("aws:sqs-queue-url");
-		AmazonSQS sqs = new AmazonSQSClient(new PropertiesResourceFileCredentialsProvider(credentials));
+		AmazonSQS sqs = new AmazonSQSClient(new EnvironmentBasedCredentialsProvider());
 		Region usWest2 = Region.getRegion(Regions.fromName(sqsRegion));
         sqs.setRegion(usWest2);
 		

@@ -13,6 +13,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 
 public class TestJob implements Job {
 
@@ -24,7 +25,7 @@ public class TestJob implements Job {
         
         AWSCredentials credentials = null;
         try {
-            credentials = new BasicAWSCredentials("AKIAJD3HUEO2S6JYNAGQ","QuTeTtlSx9jhnCOn4rq5ctXG69uRzvqa3zPCjVJD ");
+            credentials = new EnvironmentBasedCredentialsProvider().getCredentials();
         } catch (Exception e) {
             throw new AmazonClientException(
                     "Cannot load the credentials from the credential profiles file. " +

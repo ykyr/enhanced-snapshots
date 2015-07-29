@@ -15,7 +15,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.sangardas.snapshotdirector.aws.PropertiesResourceFileCredentialsProvider;
+import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 
 /**
  * Servlet implementation class TaskWorkerInitializerServlet
@@ -52,7 +52,7 @@ public class TaskWorkerInitializerServlet extends HttpServlet {
 		String queueURL = context.getInitParameter("aws:sqs-queue-url");
 		String routineInstanceId = context.getInitParameter("aws:routine-inst-id");
 		String propertyFile = context.getInitParameter("tmp:sdfsbackup-properties");
-		AWSCredentialsProvider credentialsProvider = new PropertiesResourceFileCredentialsProvider(credentials);
+		AWSCredentialsProvider credentialsProvider = new EnvironmentBasedCredentialsProvider();
 		
 		exec = Executors.newSingleThreadExecutor();
 		exec.execute(new AWSTaskWorker(credentialsProvider,queueURL, routineInstanceId, propertyFile));
