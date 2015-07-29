@@ -18,7 +18,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.Volume;
-import com.sangardas.snapshotdirector.aws.PropertiesResourceFileCredentialsProvider;
+import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.S3Utils;
 
 
@@ -35,7 +35,7 @@ public class VolumeRestService {
 		String result = null;
 		try {
 			String path = context.getInitParameter("aws:credentials-file");
-			AmazonEC2 ec2Client = new AmazonEC2Client(new PropertiesResourceFileCredentialsProvider(path));
+			AmazonEC2 ec2Client = new AmazonEC2Client(new EnvironmentBasedCredentialsProvider());
 			Region usEast = Region.getRegion(Regions.US_EAST_1);
 			ec2Client.setRegion(usEast);
 

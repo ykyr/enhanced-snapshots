@@ -4,10 +4,6 @@
   <context-param>
     <param-name>rest:mock-directory</param-name>
     <param-value>./mockjson/</param-value>
-    </context-param>
-  <context-param>
-    <param-name>aws:credentials-file</param-name>
-    <param-value>./aws/credentials</param-value>
   </context-param>
   <context-param>
     <param-name>tmp:sdfsbackup-properties</param-name>
@@ -21,11 +17,10 @@
     <param-name>aws:sqs-queue-url</param-name>
     <param-value>815082807540/sangard</param-value>
   </context-param>
-   <context-param>
+  <context-param>
     <param-name>aws:routine-inst-id</param-name>
     <param-value>i-e920a741</param-value>
   </context-param>
-  
   <context-param>
     <param-name>quartz:config-file</param-name>
     <param-value>./quartz/quartz.properties</param-value>
@@ -73,4 +68,5 @@
     <servlet-name>ServletContainer</servlet-name>
     <url-pattern>/rest/*</url-pattern>
   </servlet-mapping>
+
 </web-app>
