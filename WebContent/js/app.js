@@ -1,7 +1,11 @@
-var app = angular.module('web', ['ui.router', 'ui.bootstrap']);
+var app = angular.module('web', ['ui.router', 'ui.bootstrap', 'smart-table']);
 
 app.constant('BASE_URL', './');
 //app.constant('BASE_URL', 'http://localhost:8080/snapdirector01/');
+
+// Settings for table paging
+app.constant('ITEMS_BY_PAGE', 25);
+app.constant('DISPLAY_PAGES', 5);
 
 app.config(function ($stateProvider, $urlRouterProvider) {
     $urlRouterProvider.otherwise("/app/volumes");

@@ -1,7 +1,11 @@
 'use strict';
 
 angular.module('web')
-    .controller('HistoryController', function ($scope, $stateParams, $state, $modal, $filter, Backups, Tasks) {
+    .controller('HistoryController', function ($scope, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
+
+        $scope.itemsByPage = ITEMS_BY_PAGE;
+        $scope.displayedPages = DISPLAY_PAGES;
+
         $scope.statusColorClass = {
             running: "primary",
             success: "success",
@@ -22,6 +26,7 @@ angular.module('web')
         var loadBackups = function () {
             Backups.getForVolume($scope.volumeID).then(function (data) {
                 $scope.backups = data;
+                $scope.displayedBackups = data;
             });
         };
         loadBackups();

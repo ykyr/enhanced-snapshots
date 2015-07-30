@@ -1,7 +1,11 @@
 'use strict';
 
 angular.module('web')
-    .controller('VolumesController', function ($scope, $state, $filter, $modal, Volumes, Tasks) {
+    .controller('VolumesController', function ($scope, $state, $filter, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
+
+        $scope.itemsByPage = ITEMS_BY_PAGE;
+        $scope.displayedPages = DISPLAY_PAGES;
+
         $scope.globalRegion = {
             location: "",
             name: "Global",
@@ -54,6 +58,7 @@ angular.module('web')
         $scope.volumes = [];
         Volumes.get().then(function (data) {
             $scope.volumes = data;
+            $scope.displayedVolumes = data;
         });
 
         $scope.changeRegion = function (region) {
@@ -65,7 +70,6 @@ angular.module('web')
                 $scope.volumes = data;
             });
         };
-
 
         $scope.backup = function (volumeID) {
             $scope.backupVolumeId = volumeID;

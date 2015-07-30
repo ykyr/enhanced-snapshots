@@ -236,10 +236,21 @@ a:hover.link-white{
 }
 
 .backupPeriod{
- font-weight: bold;
+    font-weight: bold;
     margin: 10px 0 5px 0;
 }
 
+.st-sort-ascent:before{
+    content: '\25B2';
+}
+
+.st-sort-descent:before{
+    content: '\25BC';
+}
+
+.table.table-condensed.bg-white thead tr > th:hover{
+    cursor: pointer;
+}
 
 /* Callouts */
 
