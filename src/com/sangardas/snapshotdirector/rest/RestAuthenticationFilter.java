@@ -1,7 +1,10 @@
 package com.sangardas.snapshotdirector.rest;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -16,11 +19,15 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONObject;
+
+import com.sangardas.snapshotdirector.rest.utils.JsonFromStream;
 
 
 /**
  * Servlet Filter implementation class RestAuthenticationFilter
  */
+
 @WebFilter("/rest/*")
 public class RestAuthenticationFilter implements Filter {
 	private static final Log LOG = LogFactory.getLog(RestAuthenticationFilter.class);
@@ -31,7 +38,7 @@ public class RestAuthenticationFilter implements Filter {
      * Default constructor. 
      */
     public RestAuthenticationFilter() {
-        // TODO Auto-generated constructor stub
+    	
     }
 
 	/**
@@ -45,20 +52,42 @@ public class RestAuthenticationFilter implements Filter {
 	 * @see Filter#doFilter(ServletRequest, ServletResponse, FilterChain)
 	 */
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+		Set<String> allowedSessions = (Set<String>) request.getServletContext().getAttribute("allowedSessions");
+		if (allowedSessions==null) {
+			request.getServletContext().setAttribute("allowedSessions", new HashSet<String>());
+			allowedSessions = (Set<String>) request.getServletContext().getAttribute("allowedSessions");
+		}
+		
+		
+		
 		LOG.info("RestAuthenticationFilter:doFilter");
 		LOG.info("RestAuthenticationFilter:sessionid=" + ((HttpServletRequest)request).getSession().getId());
 		if (request instanceof HttpServletRequest) {
 			HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			String authCredentials = httpServletRequest
-					.getHeader(AUTHENTICATION_HEADER);
+			InputStream requestStream = httpServletRequest.getInputStream();
+			LOG.info("content length: " + httpServletRequest.getContentLength());
+			JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
+			requestStream.close();
+					
 
 			
 			AuthenticationService authenticationService = new AuthenticationService();
 			HttpSession session = ((HttpServletRequest) request).getSession();
-			boolean alloved = authenticationService.authenticateByCred(authCredentials,session);
-			if(!alloved) alloved = authenticationService.authenticateBySessionIs(session);
-
-			if (alloved) {
+			boolean allowed=false;
+			if(session.isNew()) {
+				LOG.info("RestAuthenticationFilter: new session " + session.getId());
+				allowed = authenticationService.authenticateByCred(authCredentials);
+				//Set<String> allowedSessions = (Set<String>) session.getServletContext().getAttribute("allowedSessions");
+				allowedSessions.add(session.getId());
+				LOG.info("RestAuthenticationFilter: allowed session" + session.getId());
+			}
+			else {
+				//Set<String> allowedSessions = (Set<String>) session.getServletContext().getAttribute("allowedSessions");
+				allowed = allowedSessions.contains(session.getId());
+				LOG.info("RestAuthenticationFilter: session" + session.getId() + "allowed=" + allowed);
+			}
+			
+			if (allowed) {
 				LOG.info("RestAuthenticationFilter: alloved");
 				chain.doFilter(request, response);
 			} else {
