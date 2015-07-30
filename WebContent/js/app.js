@@ -20,16 +20,6 @@ app.config(function ($stateProvider, $urlRouterProvider) {
         return deferred.promise;
     }];
 
-    var hasUsers = ['$state', 'Auth', function ($state, Auth) {
-        Auth.hasUsers().then(function (result) {
-            if (!result) {
-                $state.go('registration');
-            }else{
-                return false;
-            }
-        });
-    }];
-
     var logout = ['$q', 'Auth', function ($q, Auth) {
         Auth.logOut();
         return $q.reject('Logged out');
@@ -81,10 +71,7 @@ app.config(function ($stateProvider, $urlRouterProvider) {
         .state('login', {
             url: "/login",
             templateUrl: "partials/login.html",
-            controller: "LoginController",
-            resolve: {
-                hasUsers: hasUsers
-            }
+            controller: "LoginController"
         })
         .state('registration', {
             url: "/registration",
