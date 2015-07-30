@@ -10,8 +10,11 @@ public class AuthenticationService {
 	
 	
 	public boolean authenticateByCred(JSONObject authCredentials) {
-		authCredentials.get("email");
-		authCredentials.get("password");
+		if(authCredentials!=null) {
+			authCredentials.get("email");
+			authCredentials.get("password");
+		}
+
 
 		return true;
 	}

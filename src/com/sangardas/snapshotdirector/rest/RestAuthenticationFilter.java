@@ -66,7 +66,8 @@ public class RestAuthenticationFilter implements Filter {
 			HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 			InputStream requestStream = httpServletRequest.getInputStream();
 			LOG.info("content length: " + httpServletRequest.getContentLength());
-			JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
+			//TODO change to: JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
+			JSONObject authCredentials = null;
 			requestStream.close();
 					
 
