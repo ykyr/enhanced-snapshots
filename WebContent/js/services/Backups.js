@@ -1,72 +1,36 @@
 'use strict';
 
 angular.module('web')
-    .service('Backups', function ($q, $http, Storage, BASE_URL) {
+    .service('Backups', function ($q, $http, BASE_URL) {
         var url = BASE_URL + 'rest/backup';
-        var storageKey = '_backups';
 
-        var getAll = function () {
+        var _getForVolume = function (volume) {
             var deferred = $q.defer();
-            if (Storage.get(storageKey)) {
-                deferred.resolve(Storage.get(storageKey));
-            } else {
-                $http.get(url).success(function (data) {
-                    Storage.save(storageKey, data);
-                    deferred.resolve(data);
-                });
-            }
+            $http.get(url + '/' + volume).success(function (data) {
+                deferred.resolve(data);
+            }).error(function (msg) {
+                // TODO: handle 401 here
+                deferred.reject(msg);
+            });
             return deferred.promise;
         };
 
-        var save = function (item) {
-            return getAll().then(function (data) {
-                for (var i = 0; i < data.length; i++) {
-                    if (data[i].id == item.id){
-                        data[i] = item;
-                        Storage.save(storageKey, data);
-                        return true;
-                    };
-                }
-
-            });
-        };
-
-        var remove = function (id) {
-            return getAll().then(function (data) {
-                var newData = data.filter(function (i) {
-                    return i.id != id;
+        var _delete = function (id) {
+            return $http.delete(url + '/' + id)
+                .success(function () {
+                    // backup deleted
+                })
+                .error(function (msg) {
+                    // TODO: handle 401
                 });
-                Storage.save(storageKey, newData);
-                return true;
-            })
-        };
-
-        var add = function (item) {
-            return getAll().then(function (data) {
-                var maxId = Math.max.apply(Math,data.map(function(i){return i.id;}));
-                item.id = maxId + 1;
-                data.push(item);
-                Storage.save(storageKey, data);
-                return true;
-            });
         };
 
         return {
             getForVolume: function (volume) {
-                return getAll().then(function(data){
-                    return data.filter(function (s) {
-                        return s.volume == volume;
-                    });
-                });
-            },
-            update: function (item) {
-                return save(item);
-            },
-            insert: function (item) {
-                return add(item);
+                return _getForVolume(volume);
             },
             delete: function (id){
-                return remove(id);
+                return _delete(id);
             }
         }
     });

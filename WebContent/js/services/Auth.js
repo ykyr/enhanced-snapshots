@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('web')
-    .service('Auth', function ($rootScope, Users, $q, $http, BASE_URL) {
-        var loginUrl = BASE_URL + "rest/session";
+    .service('Auth', function (Storage, $q, $http, BASE_URL) {
+        var sessionUrl = BASE_URL + "rest/session";
         var statuses = {
             404: "Service is unavailable",
             401: "Wrong Credentials"
@@ -16,11 +16,9 @@ angular.module('web')
                 "email": email,
                 "password": pass
             });
-            $http.post(loginUrl, userData).success(
+            $http.post(sessionUrl, userData).success(
                 function(data){
-                    $http.defaults.headers.common.SessionID = data;
-                    $rootScope.sessionId = data;
-                    $rootScope.currentUser = email;
+                    Storage.save("currentUser", data);
                     deferred.resolve();
                 })
                 .error(function (err, status) {
@@ -31,18 +29,13 @@ angular.module('web')
         };
         
         var _logout= function () {
-            return $http.delete(loginUrl + "/" + $rootScope.sessionId)
+            return $http.delete(sessionUrl)
                 .success(function(data){
-                    delete $http.defaults.headers.common.SessionID;
-                    $rootScope.sessionId = undefined;
-                    $rootScope.currentUser = undefined;
+                    Storage.remove("currentUser");
                 })
             };
 
         return {
-            isLoggedIn: function () {
-                return angular.isDefined($rootScope.sessionId);
-            },
             logIn: function (email, pass) {
                 return _login(email, pass);
             },
