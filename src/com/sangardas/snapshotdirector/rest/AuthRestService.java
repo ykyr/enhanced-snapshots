@@ -52,9 +52,9 @@ public class AuthRestService {
 		
 		String sessionId = request.getSession().getId();
 		Set<String> allowedSessions = (Set<String>) context.getAttribute("allowedSessions");
-		allowedSessions.remove(sessionId);
+		boolean result = allowedSessions.remove(sessionId);
 		LOG.info("Logout for session: " + sessionId);
-		return null;
+		return String.valueOf(result);
 		
 	}
 	
@@ -65,9 +65,9 @@ public class AuthRestService {
 		
 		String sessionId = request.getSession().getId();
 		Set<String> allowedSessions = (Set<String>) context.getAttribute("allowedSessions");
-		allowedSessions.remove(sessionId);
+		boolean result = allowedSessions.remove(sessionId);
 		LOG.info("Logout for session: " + sessionId);
-		return null;
+		return String.valueOf(result);
 		
 	}
 }
