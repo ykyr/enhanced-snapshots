@@ -1,5 +1,6 @@
 package com.sangardas.snapshotdirector.aws.dynamodb;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -51,17 +52,24 @@ public class DynamoUtils {
 		return getBackupInfo(volume.getVolumeId(), mapper);
 	}
 
-	public void putBackupInfo(List<BackupEntry> bakupEntries,
+	public static void putBackupInfo(List<BackupEntry> bakupEntries,
 			DynamoDBMapper mapper) {
-		// TODO: Overload this method
-
+		
 		DynamoDBMapperConfig config = new DynamoDBMapperConfig(
 				DynamoDBMapperConfig.SaveBehavior.CLOBBER);
-		mapper.batchWrite(bakupEntries, null, config);
+		mapper.batchWrite(bakupEntries, new ArrayList<BackupEntry>(), config);
 
 	}
+	
+	public static void putbackupInfo(BackupEntry entry, DynamoDBMapper mapper){
+		List<BackupEntry> singleEntryList = new ArrayList<BackupEntry>();
+		singleEntryList.add(entry);
+		
+		putBackupInfo(singleEntryList, mapper);
+		
+	}
 
-	public void removeBackupInfo() {
+	public static void removeBackupInfo() {
 		// TODO: Implement removeBackupInfo
 	}
 
