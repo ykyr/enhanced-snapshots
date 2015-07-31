@@ -4,12 +4,10 @@ import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.ec2.model.Volume;
-import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.dynamodb.model.BackupEntry;
 import com.sangardas.snapshotdirector.aws.dynamodb.model.User;
 
@@ -68,7 +66,7 @@ public class DynamoUtils {
 	public static boolean authenticateUser(String email, String pass,
 			DynamoDBMapper mapper) {
 		User user = getUser(email, mapper);
-		if (user.getPassword().equals(getPasswordHash(pass))) {
+		if (user!=null &&user.getPassword().equals(getPasswordHash(pass))) {
 			return true;
 		}
 
