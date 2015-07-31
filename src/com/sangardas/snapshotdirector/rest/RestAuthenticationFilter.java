@@ -8,6 +8,7 @@ import java.util.Set;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -37,19 +38,14 @@ import com.sun.jersey.spi.container.ContainerResponseFilter;
  */
 
 @WebFilter("/rest/*")
-public class RestAuthenticationFilter implements Filter , ContainerResponseFilter{
+public class RestAuthenticationFilter implements Filter{
 	private static final Log LOG = LogFactory.getLog(RestAuthenticationFilter.class);
 	
-	private AmazonDynamoDBClient client;
-	private DynamoDBMapper mapper;
 
     /**
      * Default constructor. 
      */
     public RestAuthenticationFilter() {
-    	client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
-    	client.setRegion(Region.getRegion(Regions.US_EAST_1));
-    	 mapper = new DynamoDBMapper(client);
     }
 
 	/**
@@ -63,6 +59,8 @@ public class RestAuthenticationFilter implements Filter , ContainerResponseFilte
 	 * @see Filter#doFilter(ServletRequest, ServletResponse, FilterChain)
 	 */
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+		
+		
 		Set<String> allowedSessions = (Set<String>) request.getServletContext().getAttribute("allowedSessions");
 		if (allowedSessions==null) {
 			request.getServletContext().setAttribute("allowedSessions", new HashSet<String>());
@@ -96,8 +94,8 @@ public class RestAuthenticationFilter implements Filter , ContainerResponseFilte
 				requestStream.close();
 				LOG.info("email: " + authCredentials.getString("email"));
 				LOG.info("password: " + authCredentials.getString("password"));
-				LOG.info("mapper not null: "+ (mapper!=null));
-				allowed = DynamoUtils.authenticateUser(authCredentials.getString("email"), authCredentials.getString("password"), mapper);
+				
+				allowed = DynamoUtils.authenticateUser(authCredentials.getString("email"), authCredentials.getString("password"), getMapper(request));
 				allowedSessions.add(session.getId());
 			}
 			
@@ -124,17 +122,12 @@ public class RestAuthenticationFilter implements Filter , ContainerResponseFilte
 	public void init(FilterConfig fConfig) throws ServletException {
 		// TODO Auto-generated method stub
 	}
-
-	@Override
-	public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
-		LOG.info("Adding CORS HEADERS");
-    	response.getHttpHeaders().add("Access-Control-Allow-Origin", "*");
-    	response.getHttpHeaders().add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-    	response.getHttpHeaders().add("Access-Control-Allow-Credentials", "true");
-    	response.getHttpHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
-    	response.getHttpHeaders().add("Access-Control-Max-Age", "1209600");
-    	
-    	return response;
+	
+	private DynamoDBMapper getMapper(ServletRequest request) {
+		AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
+		String region = request.getServletContext().getInitParameter("aws:dynamodb-region");
+		return  new DynamoDBMapper(client);
 	}
+
 
 }
