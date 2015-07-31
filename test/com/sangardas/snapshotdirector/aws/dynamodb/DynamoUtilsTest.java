@@ -55,6 +55,18 @@ public class DynamoUtilsTest {
 		
 	}
 	
+	@Test
+	public void testRemoveBackupInfo() {
+		
+		
+		boolean res = DynamoUtils.removeBackupInfo("vol-69dee6a00.9619267669690094", "vol-69dee6a0111.backup", this.mapper);
+		boolean res1 = DynamoUtils.removeBackupInfo("vol-69dee6a0qweqwe", "vol-69dee6a0ssss.backup", this.mapper);
+
+		assertTrue(res);
+		assertFalse(res1);
+		
+	}
+	
 	
 	@Test
 	public void testAuthenticateUser(){

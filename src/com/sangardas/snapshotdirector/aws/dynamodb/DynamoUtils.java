@@ -9,6 +9,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper.FailedBatch;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.dynamodb.model.BackupEntry;
@@ -69,14 +70,25 @@ public class DynamoUtils {
 		
 	}
 
-	public static void removeBackupInfo() {
-		// TODO: Implement removeBackupInfo
+	public static boolean removeBackupInfo(String volumeId, String fileName, DynamoDBMapper mapper) {
+		BackupEntry remEntry = new BackupEntry();
+		remEntry.setVolumeId(volumeId);
+		remEntry.setFileName(fileName);
+		
+		List<FailedBatch> failed = mapper.batchDelete(remEntry);
+		System.out.println(failed.isEmpty());
+		if (failed.isEmpty()){
+			return true;
+		}
+		
+		return false;
 	}
 
 	public static boolean authenticateUser(String email, String pass,
 			DynamoDBMapper mapper) {
 		User user = getUser(email, mapper);
-		if (user.getPassword().equals(getPasswordHash(pass))) {
+		
+		if (user != null && user.getPassword().equals(getPasswordHash(pass))) {
 			return true;
 		}
 
