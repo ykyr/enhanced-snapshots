@@ -25,6 +25,8 @@ angular.module('web')
                 $http.get(url).success(function (data) {
                     Storage.save(storageKey, data);
                     deferred.resolve(data);
+                }).error(function(msg){
+                    // TODO: handle 401 here
                 });
 
                 return deferred.promise;

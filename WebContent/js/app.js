@@ -1,29 +1,18 @@
-var app = angular.module('web', ['ui.router', 'ui.bootstrap']);
+var app = angular.module('web', ['ui.router', 'ui.bootstrap', 'smart-table']);
 
 app.constant('BASE_URL', './');
-//app.constant('BASE_URL', 'http://localhost:8080/snapdirector01/');
+//app.constant('BASE_URL', 'http://localhost:8080/snapdirector02/');
+
+// Settings for table paging
+app.constant('ITEMS_BY_PAGE', 25);
+app.constant('DISPLAY_PAGES', 5);
 
 app.config(function ($stateProvider, $urlRouterProvider) {
     $urlRouterProvider.otherwise("/app/volumes");
 
-    var authenticated = ['$q', 'Auth', function ($q, Auth) {
-        var deferred = $q.defer();
-        if (Auth.isLoggedIn()) {
-            deferred.resolve(true);
-        } else {
-            deferred.reject('Not logged in');
-        }
-        return deferred.promise;
-    }];
-
-    var hasUsers = ['$state', 'Auth', function ($state, Auth) {
-        Auth.hasUsers().then(function (result) {
-            if (!result) {
-                $state.go('registration');
-            }else{
-                return false;
-            }
-        });
+    var authenticated = ['$rootScope', function ($rootScope) {
+        if (angular.isUndefined($rootScope.getUserName())) throw "User not authorized!";
+        return true;
     }];
 
     var logout = ['$q', 'Auth', function ($q, Auth) {
@@ -77,10 +66,7 @@ app.config(function ($stateProvider, $urlRouterProvider) {
         .state('login', {
             url: "/login",
             templateUrl: "partials/login.html",
-            controller: "LoginController",
-            resolve: {
-                hasUsers: hasUsers
-            }
+            controller: "LoginController"
         })
         .state('registration', {
             url: "/registration",
@@ -94,7 +80,10 @@ app.config(function ($stateProvider, $urlRouterProvider) {
             }
         });
 })
-    .run(function ($rootScope, $state) {
+    .run(function ($rootScope, $state, Storage) {
+        $rootScope.getUserName = function () {
+            return (Storage.get("currentUser") || {}).fullname;
+        };
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
             $state.go('login');

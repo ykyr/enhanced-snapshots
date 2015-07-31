@@ -2,21 +2,24 @@
     <a ui-sref="app.volume.list" class="btn btn-link pull-right"><span class="glyphicon glyphicon-chevron-left"> </span>Back to volumes</a>
 </div>
 
-<h2 class="pull-right"><small><span class="glyphicon glyphicon-hdd"></span>&nbsp; {{volumeID}}</small></h2>
+<h2 class="pull-right">
+    <small><span class="glyphicon glyphicon-hdd"></span>&nbsp; {{volumeID}}</small>
+</h2>
 <h2><span class="glyphicon glyphicon-list"></span>&nbsp; Backup History </h2>
 
 <div class="row">
-    <table class="table table-condensed bg-white">
+    <table class="table table-condensed bg-white" st-table="displayedBackups" st-safe-src="backups">
         <thead>
         <tr>
             <th>&nbsp;</th>
-            <th>Date</th>
-            <th>Name</th>
-            <th>Message</th>
+            <th st-sort="date" st-sort-default="reverse">Date</th>
+            <th st-sort="name">Name</th>
+            <th st-sort="message">Message</th>
         </tr>
         </thead>
+
         <tbody>
-        <tr ng-repeat="backup in backups | orderBy: '-date' " class="bg-{{ statusColorClass[backup.status] }}">
+        <tr ng-repeat="backup in backups " class="bg-{{ statusColorClass[backup.status] }}">
             <td class="text-center commands">
                 <a class="btn btn-link" title="Restore" ng-click="restore(backup)"><span
                         class="glyphicon glyphicon-cloud-upload" ng-show="isSuccess(backup)"></span></a>
@@ -29,5 +32,12 @@
             <td>{{backup.message}}</td>
         </tr>
         </tbody>
+        <tfoot>
+        <tr>
+            <td colspan="4" class="text-center">
+                <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
+            </td>
+        </tr>
+        </tfoot>
     </table>
 </div>

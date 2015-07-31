@@ -37,14 +37,14 @@
 <h2><span class="glyphicon glyphicon-hdd"></span>&nbsp; EBS Volumes</h2>
 
 <div class="row">
-    <table class="table table-condensed bg-white">
+    <table class="table table-condensed bg-white" st-table="displayedVolumes" st-safe-src="volumes">
         <thead>
         <tr>
             <th>&nbsp;</th>
-            <th>Volume ID</th>
-            <th>Capacity</th>
-            <th>Created</th>
-            <th>Zone</th>
+            <th st-sort="ID">Volume ID</th>
+            <th st-sort="Capacity">Capacity</th>
+            <th st-sort="Created">Created</th>
+            <th st-sort="Zone">Zone</th>
         </tr>
         </thead>
         <tbody>
@@ -63,5 +63,12 @@
             <td>{{::volume.Zone}}</td>
         </tr>
         </tbody>
+        <tfoot>
+        <tr>
+            <td colspan="5" class="text-center">
+                <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
+            </td>
+        </tr>
+        </tfoot>
     </table>
 </div>
