@@ -1,0 +1,32 @@
+---
+- debug: msg="install tomcat"
+
+- name: add group "tomcat"
+  group: name=tomcat
+
+- name: add user "tomcat"
+  user: name=tomcat group=tomcat home=/opt/tomcat-latest createhome=no
+
+- name: download tomcat
+  get_url: >
+    url=http://apache.cp.if.ua/tomcat/tomcat-8/v8.0.24/bin/apache-tomcat-8.0.24.tar.gz
+    dest=/opt/apache-tomcat-8.0.24.tar.gz
+
+- name: extract archive
+  command: tar -zxf /opt/apache-tomcat-8.0.24.tar.gz -C /opt
+  args:
+     creates: /opt/apache-tomcat-8.0.24
+
+- file: >
+    src=/opt/apache-tomcat-8.0.24
+    dest=/opt/tomcat-latest state=link
+    owner=tomcat group=tomcat
+
+- shell: "chown -hR tomcat: /opt/tomcat-latest /opt/apache-tomcat-8.0.24"
+  register: tomcat_home_perm_change
+  changed_when: tomcat_home_perm_change.stdout
+
+- copy: src=tomcat8 dest=/etc/init.d/tomcat8 mode="0700"
+
+- name: ensure that tomcat is running
+  service: name=tomcat8 state=running enabled=yes
