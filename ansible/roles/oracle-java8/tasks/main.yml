@@ -1,0 +1,26 @@
+---
+- name: install required packages
+  yum: name={{item}} state=installed
+  with_items:
+    - wget
+
+- name: java version?
+  shell: java -version 2>&1 | grep version | awk '{print $3}' | sed 's/"//g'
+  register: java_version
+  ignore_errors: yes
+
+- debug: var=java_version.stdout
+
+- name: check is jdk exists?
+  stat: path="{{ jdk_download_dir }}/{{ jdk_rpm }}"
+  register: jdk_package_stat
+
+- name: download jdk
+  shell: 'wget -N -P "{{jdk_download_dir}}" --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u51-b16/jdk-8u51-linux-x64.rpm'
+  when: jdk_package_stat.stat.exists == False
+
+- name: install java
+  yum: name={{ jdk_download_dir }}/{{ jdk_rpm }} state=installed
+
+- name: setup JAVA_HOME
+  copy: content="export JAVA_HOME=/usr/java/default" dest=/etc/profile.d/java_home.sh mode="0755"
