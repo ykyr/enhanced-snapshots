@@ -37,7 +37,7 @@
 <h2><span class="glyphicon glyphicon-hdd"></span>&nbsp; EBS Volumes</h2>
 
 <div class="row">
-    <table class="table table-condensed bg-white" st-table="displayedVolumes" st-safe-src="volumes">
+    <table st-table="displayedVolumes" st-safe-src="volumes" class="table table-condensed bg-white" >
         <thead>
         <tr>
             <th>&nbsp;</th>
@@ -48,7 +48,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr ng-repeat="volume in volumes track by $index">
+        <tr ng-repeat="volume in displayedVolumes track by $index">
             <td class="text-center commands">
                 <button class="btn btn-link" title="Backup now" ng-click="backup(volume.ID)"><span
                         class="glyphicon glyphicon-cloud-download"></span></button>
@@ -64,6 +64,11 @@
         </tr>
         </tbody>
         <tfoot>
+        <tr ng-show="isLoading">
+            <td colspan="5" class="text-center">
+                    <i class="glyphicon glyphicon-refresh text-muted spin"></i>
+            </td>
+        </tr>
         <tr>
             <td colspan="5" class="text-center">
                 <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
