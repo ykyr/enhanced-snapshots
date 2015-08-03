@@ -7,7 +7,7 @@ app.constant('BASE_URL', './');
 app.constant('ITEMS_BY_PAGE', 25);
 app.constant('DISPLAY_PAGES', 5);
 
-app.config(function ($stateProvider, $urlRouterProvider) {
+app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $urlRouterProvider.otherwise("/app/volumes");
 
     var authenticated = ['$rootScope', function ($rootScope) {
@@ -79,6 +79,8 @@ app.config(function ($stateProvider, $urlRouterProvider) {
                 logout: logout
             }
         });
+
+    $httpProvider.interceptors.push('Interceptor');
 })
     .run(function ($rootScope, $state, Storage) {
         $rootScope.getUserName = function () {
@@ -89,4 +91,4 @@ app.config(function ($stateProvider, $urlRouterProvider) {
             $state.go('login');
         });
     });
-;
+

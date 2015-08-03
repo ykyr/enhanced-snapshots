@@ -8,7 +8,7 @@ angular.module('web')
         return {
             get: function () {
                 var deferred = $q.defer();
-                if (Storage.get(storageKey) && false) {
+                if (Storage.get(storageKey)) {
                     deferred.resolve(Storage.get(storageKey));
                 } else {
                     $http.get(url).success(function (data) {
