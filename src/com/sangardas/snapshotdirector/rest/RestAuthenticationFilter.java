@@ -1,5 +1,7 @@
 package com.sangardas.snapshotdirector.rest;
 
+import static com.sangardas.snapshotdirector.rest.utils.Constants.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
@@ -28,106 +30,81 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.dynamodb.DynamoUtils;
 import com.sangardas.snapshotdirector.rest.utils.JsonFromStream;
+import com.sangardas.snapshotdirector.rest.utils.MultiReadHttpServletRequest;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerResponse;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
 
-
-/**
- * Servlet Filter implementation class RestAuthenticationFilter
- */
-
 @WebFilter("/rest/*")
-public class RestAuthenticationFilter implements Filter{
+public class RestAuthenticationFilter implements Filter {
 	private static final Log LOG = LogFactory.getLog(RestAuthenticationFilter.class);
-	
 
-    /**
-     * Default constructor. 
-     */
-    public RestAuthenticationFilter() {
-    }
-
-	/**
-	 * @see Filter#destroy()
-	 */
-	public void destroy() {
-		// TODO Auto-generated method stub
+	public RestAuthenticationFilter() {
 	}
 
-	/**
-	 * @see Filter#doFilter(ServletRequest, ServletResponse, FilterChain)
-	 */
-	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-		
-		
-		Set<String> allowedSessions = (Set<String>) request.getServletContext().getAttribute("allowedSessions");
-		if (allowedSessions==null) {
-			request.getServletContext().setAttribute("allowedSessions", new HashSet<String>());
-			allowedSessions = (Set<String>) request.getServletContext().getAttribute("allowedSessions");
-		}
-		
-		
-		
-		LOG.info("RestAuthenticationFilter:doFilter");
-		LOG.info("RestAuthenticationFilter:sessionid=" + ((HttpServletRequest)request).getSession().getId());
-		if (request instanceof HttpServletRequest) {
-			HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			
-			LOG.info("content length: " + httpServletRequest.getContentLength());
-			
-			
-					
+	public void destroy() {
+	}
 
-			
-			AuthenticationService authenticationService = new AuthenticationService();
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException,
+			IOException {
+
+		Set<String> allowedSessions = (Set<String>) request.getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
+		if (allowedSessions == null) {
+			request.getServletContext().setAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME, new HashSet<String>());
+			allowedSessions = (Set<String>) request.getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
+		}
+
+		LOG.info("RestAuthenticationFilter:doFilter");
+		LOG.info("RestAuthenticationFilter:sessionid=" + ((HttpServletRequest) request).getSession().getId());
+		if (request instanceof HttpServletRequest) {
+			MultiReadHttpServletRequest multiReadRequest = new MultiReadHttpServletRequest((HttpServletRequest) request);
 			HttpSession session = ((HttpServletRequest) request).getSession();
-			boolean allowed=false;
-			
+			boolean allowed = false;
+
 			allowed = allowedSessions.contains(session.getId());
-			
-			if(!allowed && httpServletRequest.getPathInfo().endsWith("/session")) {
-				System.out.println(httpServletRequest.getPathInfo());
+
+			if (!allowed && multiReadRequest.getPathInfo().endsWith("/session")) {
+				System.out.println(multiReadRequest.getPathInfo());
 				LOG.info("RestAuthenticationFilter: new session " + session.getId());
-				InputStream requestStream = httpServletRequest.getInputStream();
-				JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
-				requestStream.close();
-				LOG.info("email: " + authCredentials.getString("email"));
-				LOG.info("password: " + authCredentials.getString("password"));
-				
-				allowed = DynamoUtils.authenticateUser(authCredentials.getString("email"), authCredentials.getString("password"), getMapper(request));
-				allowedSessions.add(session.getId());
+				JSONObject authCredentials = null;
+
+				InputStream requestStream = multiReadRequest.getInputStream();
+				authCredentials = JsonFromStream.newJSONObject(requestStream);
+
+				LOG.info("email: " + authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL));
+				LOG.info("password: " + authCredentials.getString(JSON_AUTHENTIFICATION_PASSWORD));
+
+				allowed = DynamoUtils.authenticateUser(authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL),
+						authCredentials.getString(JSON_AUTHENTIFICATION_PASSWORD), getMapper(request));
+
 			}
-			
-			
-			
+
 			if (allowed) {
+				allowedSessions.add(session.getId());
 				LOG.info("RestAuthenticationFilter: alloved; session" + session.getId());
-				chain.doFilter(request, response);
+				try {
+					chain.doFilter(multiReadRequest, response);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			} else {
 				LOG.info("RestAuthenticationFilter: deny; session" + session.getId());
 				if (response instanceof HttpServletResponse) {
 					HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-					httpServletResponse
-							.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					httpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 				}
 			}
 		}
 
 	}
 
-	/**
-	 * @see Filter#init(FilterConfig)
-	 */
 	public void init(FilterConfig fConfig) throws ServletException {
-		// TODO Auto-generated method stub
 	}
-	
+
 	private DynamoDBMapper getMapper(ServletRequest request) {
 		AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
 		String region = request.getServletContext().getInitParameter("aws:dynamodb-region");
-		return  new DynamoDBMapper(client);
+		return new DynamoDBMapper(client);
 	}
-
 
 }

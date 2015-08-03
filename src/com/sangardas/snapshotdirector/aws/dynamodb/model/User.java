@@ -17,10 +17,10 @@ public class User {
 	
 	@DynamoDBHashKey(attributeName="userName")
 	public String getUserName(){
-		return (String) attributes.get("userName");
+		return (String) attributes.get("username");
 	}
 	public void setUserName(String userName){
-		attributes.put("userName", userName);
+		attributes.put("username", userName);
 	}
 	
 	
@@ -42,18 +42,18 @@ public class User {
 	
 	@DynamoDBAttribute(attributeName="fullName")
 	public String getFullName(){
-		return (String) attributes.get("fullName");
+		return (String) attributes.get("fullname");
 	}
 	public void setFullName(String fullName){
-		attributes.put("fullName", fullName);
+		attributes.put("fullname", fullName);
 	}
 	
 	@DynamoDBAttribute(attributeName="lastName")
 	public String getLastName(){
-		return (String) attributes.get("lastName");
+		return (String) attributes.get("lastname");
 	}
 	public void setLastName(String lastName){
-		attributes.put("lastName", lastName);
+		attributes.put("lastname", lastName);
 	}
 	
 	@SuppressWarnings("unchecked")

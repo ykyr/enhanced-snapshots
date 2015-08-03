@@ -1,5 +1,6 @@
 package com.sangardas.snapshotdirector.rest;
 
+import static com.sangardas.snapshotdirector.rest.utils.Constants.*;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,7 +27,6 @@ import com.amazonaws.services.ec2.model.Volume;
 import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.S3Utils;
 
-
 @Path("/volume")
 public class VolumeRestService {
 	private static final Log LOG = LogFactory.getLog(VolumeRestService.class);
@@ -34,22 +34,19 @@ public class VolumeRestService {
 	@Context
 	ServletContext context;
 
-
 	@Produces(MediaType.APPLICATION_JSON)
 	@GET()
 	public String getAllVolumes() {
 		String result = null;
 		try {
-			String path = context.getInitParameter("aws:credentials-file");
 			AmazonEC2 ec2Client = new AmazonEC2Client(new EnvironmentBasedCredentialsProvider());
 			List<Volume> volumes = new LinkedList<Volume>();
-			
-			
-			
-			for(Regions nextRegion : Regions.values()) {
-				try{ec2Client.setRegion(Region.getRegion(nextRegion));
-				volumes.addAll( S3Utils.getVolumeList(ec2Client));
-				}catch(AmazonServiceException unreachableRegion ) {
+
+			for (Regions nextRegion : Regions.values()) {
+				try {
+					ec2Client.setRegion(Region.getRegion(nextRegion));
+					volumes.addAll(S3Utils.getVolumeList(ec2Client));
+				} catch (AmazonServiceException unreachableRegion) {
 					continue;
 				}
 			}
@@ -57,18 +54,17 @@ public class VolumeRestService {
 		} catch (Exception e) {
 			throw new WebApplicationException(e);
 		}
-		
-		LOG.info("get all volumes: " +result);
+
+		LOG.info("get all volumes: " + result);
 		return result;
 	}
-	
+
 	@Path("/{regionId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@GET()
 	public String get(@PathParam("regionId") String region) {
 		String result = null;
 		try {
-			String path = context.getInitParameter("aws:credentials-file");
 			AmazonEC2 ec2Client = new AmazonEC2Client(new EnvironmentBasedCredentialsProvider());
 			Region usEast = Region.getRegion(Regions.valueOf(region));
 			ec2Client.setRegion(usEast);
@@ -78,22 +74,22 @@ public class VolumeRestService {
 		} catch (Exception e) {
 			throw new WebApplicationException(e);
 		}
-		LOG.info("get  volumes for region "+region+": " +result);
-		
+		LOG.info("get  volumes for region " + region + ": " + result);
+
 		return result;
 	}
-	
+
 	private JSONArray jsonArrayRepresentation(List<Volume> volumes) {
 		JSONArray volumesJSONArray = new JSONArray();
 		for (Volume v : volumes) {
 			JSONObject volumeJSONObject = new JSONObject();
-			volumeJSONObject.put("ID", v.getVolumeId());
-			volumeJSONObject.put("Capacity", v.getSize());
-			volumeJSONObject.put("Created", v.getCreateTime());
-			volumeJSONObject.put("Zone", v.getAvailabilityZone());
+			volumeJSONObject.put(JSON_VOLUME_VOLUME_ID, v.getVolumeId());
+			volumeJSONObject.put(JSON_VOLUME_SIZE, v.getSize());
+			volumeJSONObject.put(JSON_VOLUME_CREATE_TIME, v.getCreateTime());
+			volumeJSONObject.put(JSON_VOLUME_AVAILABILITY_ZONE, v.getAvailabilityZone());
 			volumesJSONArray.put(volumeJSONObject);
 		}
-		
+
 		return volumesJSONArray;
 	}
 
