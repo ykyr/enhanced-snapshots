@@ -64,8 +64,8 @@ angular.module('web')
 
         };
 
-        $scope.remove = function (backup) {
-            $scope.backupToDelete = backup;
+        $scope.remove = function (backupFileName) {
+            $scope.backupToDelete = backupFileName;
 
             var rejectInstance = $modal.open({
                 animation: true,
@@ -74,7 +74,7 @@ angular.module('web')
             });
 
             rejectInstance.result.then(function () {
-                Backups.delete(backup.id).then(function () {
+                Backups.delete(backupFileName).then(function () {
                     loadBackups();
                 });
             });
