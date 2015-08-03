@@ -5,7 +5,7 @@
            <span ng-show="selectedRegion.location" class="hidden-xs">
                {{selectedRegion.location}} -
            </span>
-                {{selectedRegion.name}} &nbsp;
+                {{selectedRegion.name | uppercase}} &nbsp;
                 <span class="caret"></span>
             </button>
             <!--<button class="btn btn-default dropdown-toggle" dropdown-toggle>-->
@@ -25,7 +25,7 @@
                     <span ng-show="region.location" class="hidden-xs">
                         {{region.location}} -
                     </span>
-                        {{region.name}}
+                        {{region.name | uppercase}}
                     </a>
                 </li>
             </ul>
