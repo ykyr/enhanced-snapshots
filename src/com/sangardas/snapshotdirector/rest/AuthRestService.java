@@ -46,7 +46,6 @@ public class AuthRestService {
 				(HttpServletRequest) servletRequest);
 		String result = null;
 		try (InputStream requestStream = multiReadRequest.getInputStream()) {
-			System.out.println("available:" + requestStream.available());
 			JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
 			result = DynamoUtils.getFullUserInfoByEmail(authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL), getMapper(servletRequest));
 		} catch (IOException e1) {
