@@ -2,7 +2,6 @@ package com.sangardas.snapshotdirector.rest;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,7 +20,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sangardas.snapshotdirector.aws.dynamodb.DynamoUtils;
 import com.sangardas.snapshotdirector.rest.utils.JsonFromStream;
+import com.sun.jersey.spi.container.ContainerRequest;
+import com.sun.jersey.spi.container.ContainerResponse;
+import com.sun.jersey.spi.container.ContainerResponseFilter;
 
 
 /**
@@ -29,16 +37,19 @@ import com.sangardas.snapshotdirector.rest.utils.JsonFromStream;
  */
 
 @WebFilter("/rest/*")
-public class RestAuthenticationFilter implements Filter {
+public class RestAuthenticationFilter implements Filter , ContainerResponseFilter{
 	private static final Log LOG = LogFactory.getLog(RestAuthenticationFilter.class);
-	private static final String AUTHENTICATION_HEADER = "Authorization";
-	private HashMap<String, Boolean> sessions = new  HashMap<String, Boolean>();
+	
+	private AmazonDynamoDBClient client;
+	private DynamoDBMapper mapper;
 
     /**
      * Default constructor. 
      */
     public RestAuthenticationFilter() {
-    	
+    	client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
+    	client.setRegion(Region.getRegion(Regions.US_EAST_1));
+    	 mapper = new DynamoDBMapper(client);
     }
 
 	/**
@@ -64,34 +75,39 @@ public class RestAuthenticationFilter implements Filter {
 		LOG.info("RestAuthenticationFilter:sessionid=" + ((HttpServletRequest)request).getSession().getId());
 		if (request instanceof HttpServletRequest) {
 			HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			InputStream requestStream = httpServletRequest.getInputStream();
+			
 			LOG.info("content length: " + httpServletRequest.getContentLength());
-			//TODO change to: JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
-			JSONObject authCredentials = null;
-			requestStream.close();
+			
+			
 					
 
 			
 			AuthenticationService authenticationService = new AuthenticationService();
 			HttpSession session = ((HttpServletRequest) request).getSession();
 			boolean allowed=false;
-			if(session.isNew()) {
+			
+			allowed = allowedSessions.contains(session.getId());
+			
+			if(!allowed && httpServletRequest.getPathInfo().endsWith("/session")) {
+				System.out.println(httpServletRequest.getPathInfo());
 				LOG.info("RestAuthenticationFilter: new session " + session.getId());
-				allowed = authenticationService.authenticateByCred(authCredentials);
-				//Set<String> allowedSessions = (Set<String>) session.getServletContext().getAttribute("allowedSessions");
+				InputStream requestStream = httpServletRequest.getInputStream();
+				JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
+				requestStream.close();
+				LOG.info("email: " + authCredentials.getString("email"));
+				LOG.info("password: " + authCredentials.getString("password"));
+				LOG.info("mapper not null: "+ (mapper!=null));
+				allowed = DynamoUtils.authenticateUser(authCredentials.getString("email"), authCredentials.getString("password"), mapper);
 				allowedSessions.add(session.getId());
-				LOG.info("RestAuthenticationFilter: allowed session" + session.getId());
-			}
-			else {
-				//Set<String> allowedSessions = (Set<String>) session.getServletContext().getAttribute("allowedSessions");
-				allowed = allowedSessions.contains(session.getId());
-				LOG.info("RestAuthenticationFilter: session" + session.getId() + "allowed=" + allowed);
 			}
 			
+			
+			
 			if (allowed) {
-				LOG.info("RestAuthenticationFilter: alloved");
+				LOG.info("RestAuthenticationFilter: alloved; session" + session.getId());
 				chain.doFilter(request, response);
 			} else {
+				LOG.info("RestAuthenticationFilter: deny; session" + session.getId());
 				if (response instanceof HttpServletResponse) {
 					HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 					httpServletResponse
@@ -107,6 +123,18 @@ public class RestAuthenticationFilter implements Filter {
 	 */
 	public void init(FilterConfig fConfig) throws ServletException {
 		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
+		LOG.info("Adding CORS HEADERS");
+    	response.getHttpHeaders().add("Access-Control-Allow-Origin", "*");
+    	response.getHttpHeaders().add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+    	response.getHttpHeaders().add("Access-Control-Allow-Credentials", "true");
+    	response.getHttpHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+    	response.getHttpHeaders().add("Access-Control-Max-Age", "1209600");
+    	
+    	return response;
 	}
 
 }
