@@ -57,21 +57,15 @@ angular.module('web')
 
         $scope.isLoading = true;
         $scope.volumes = [];
-         Volumes.get().then(function (data) {
-             $scope.isLoading = false;
-             $scope.volumes = data;
-             filterVolumes($scope.selectedRegion.id);
-         }, function () {
-             $scope.isLoading = false;
-         }) ;
+        Volumes.get().then(function (data) {
+            $scope.isLoading = false;
+            $scope.volumes = data;
+        }, function () {
+            $scope.isLoading = false;
+        });
 
         $scope.changeRegion = function (region) {
             $scope.selectedRegion = region;
-            filterVolumes(region.id);
-        };
-
-        var filterVolumes = function (id) {
-            $scope.displayedVolumes = !id ? $scope.volumes : $scope.volumes.filter(function (v) { return v.Zone.indexOf(id) === 0; });
         };
 
         $scope.refresh = function () {

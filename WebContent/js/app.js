@@ -1,7 +1,6 @@
 var app = angular.module('web', ['ui.router', 'ui.bootstrap', 'smart-table']);
 
 app.constant('BASE_URL', './');
-//app.constant('BASE_URL', 'http://localhost:8080/snapdirector02/');
 
 // Settings for table paging
 app.constant('ITEMS_BY_PAGE', 25);

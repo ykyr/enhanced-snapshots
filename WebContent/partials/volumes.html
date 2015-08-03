@@ -37,7 +37,7 @@
 <h2><span class="glyphicon glyphicon-hdd"></span>&nbsp; EBS Volumes</h2>
 
 <div class="row">
-    <table st-table="displayedVolumes" st-safe-src="volumes" class="table table-condensed bg-white" >
+    <table st-filter="selectedRegion.id"  st-table="displayedCollection" st-safe-src="volumes" class="table table-condensed bg-white" >
         <thead>
         <tr>
             <th>&nbsp;</th>
@@ -48,11 +48,11 @@
         </tr>
         </thead>
         <tbody>
-        <tr ng-repeat="volume in displayedVolumes track by $index">
+        <tr ng-repeat="volume in displayedCollection">
             <td class="text-center commands">
                 <button class="btn btn-link" title="Backup now" ng-click="backup(volume.ID)"><span
                         class="glyphicon glyphicon-cloud-download"></span></button>
-                <a ui-sref="app.volume.schedule({ volumeID: volume.ID })" class="btn btn-link" title="Schedule backup"><span
+                <a ui-sref="app.volume.schedule({ volumeID: volume.ID })" class="btn btn-link disabled" title="Schedule backup"><span
                         class="glyphicon glyphicon-time"></span></a>
                 <a ui-sref="app.volume.history({ volumeID: volume.ID })" class="btn btn-link" title="History"><span
                         class="glyphicon glyphicon-list"></span></a>
