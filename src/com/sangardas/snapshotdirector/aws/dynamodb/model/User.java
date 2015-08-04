@@ -15,6 +15,19 @@ public class User {
 
 	private final Map<String, Object> attributes = new LinkedHashMap<String, Object>();
 	
+	public User(){
+		super();
+	}
+	
+	public User(String userName, String lastName, String fullName, String email, String password, List<String> groups){
+		this.setUserName(userName);
+		this.setLastName(lastName);
+		this.setFullName(fullName);
+		this.setEmail(email);
+		this.setPassword(password);
+		this.setGroups(groups);
+	}
+	
 	@DynamoDBHashKey(attributeName="userName")
 	public String getUserName(){
 		return (String) attributes.get("username");
@@ -65,7 +78,10 @@ public class User {
 		attributes.put("groups", groups);
 	}
 	
-	
+	@Override
+	public String toString() {
+		return getUserInfo();
+	}
 	
 	public String getUserInfo() {
 		Map<String, Object> passwordlessUserInfo = new LinkedHashMap<String, Object>();
