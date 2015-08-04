@@ -78,7 +78,10 @@ public class User {
 		attributes.put("groups", groups);
 	}
 	
-	
+	@Override
+	public String toString() {
+		return getUserInfo();
+	}
 	
 	public String getUserInfo() {
 		Map<String, Object> passwordlessUserInfo = new LinkedHashMap<String, Object>();

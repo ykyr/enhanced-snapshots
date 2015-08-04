@@ -1,6 +1,8 @@
 package com.sangardas.snapshotdirector.aws.dynamodb;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +11,6 @@ import org.junit.Test;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.amazonaws.services.ec2.model.Region;
 import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.dynamodb.model.BackupEntry;
 
@@ -37,11 +37,10 @@ public class DynamoUtilsTest {
 		double salt = Math.random();
 		
 		BackupEntry newBackup = new BackupEntry("vol-69dee6a0" + salt, "vol-69dee6a0111.backup","201507311025","TestBackup");
-		/*BackupEntry newBackup = new BackupEntry();
 		newBackup.setVolumeId("vol-69dee6a0" + salt);
 		newBackup.setFileName("vol-69dee6a0111.backup");
 		newBackup.setTimeCreated("201507311025");
-		newBackup.setMessage("TestBackup");*/
+		newBackup.setMessage("TestBackup");
 		
 		List<BackupEntry> items = new ArrayList<BackupEntry>();
 		items.add(newBackup);
@@ -83,4 +82,7 @@ public class DynamoUtilsTest {
 		assertTrue(!info.isEmpty());
 		
 	}
+	
+	
+	
 }
