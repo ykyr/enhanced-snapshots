@@ -1,11 +1,10 @@
-package com.sangardas.snapshotdirector.aws.dynamodb;
+package com.sungardas.snapdirector.aws.dynamodb;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -68,13 +67,6 @@ public class DynamoUtilsTaskTest {
 		assertFalse(retId.isEmpty());
 	}
 
-	@Test
-	public void testGetTasks(){
-		List<Task> result = DynamoUtils.getTasks(mapper);
-		
-		assertFalse(result.isEmpty());
-	}
-	
 	@Test
 	public void testGetTask() {
 		String gotTaskId = DynamoUtils.getTask(taskToGet.getId(), mapper);
