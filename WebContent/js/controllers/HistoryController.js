@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('HistoryController', function ($scope, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
+    .controller('HistoryController', function ($scope, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
 
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
@@ -41,14 +41,14 @@ angular.module('web')
 
             confirmInstance.result.then(function () {
                 var newTask = {
+                    id: "",
+                    priority: "",
                     volume: $scope.backupToRestore.volume,
                     type: "restore",
                     status: "waiting",
-                    scheduler: {
-                        manual: true,
-                        name: "admin", // TODO: Real user name should be used here
-                        time: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
-                    }
+                    schedulerManual: true,
+                    schedulerName: Storage.get('currentUser').username, // TODO: Real user name should be used here
+                    schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
                 };
                 Tasks.insert(newTask).then(function () {
                     var successInstance = $modal.open({
