@@ -65,7 +65,7 @@
     <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
     <init-param>
       <param-name>com.sun.jersey.config.property.packages</param-name>
-      <param-value>com.sangardas</param-value>
+      <param-value>com.sungardas</param-value>
     </init-param>
   </servlet>
   <servlet-mapping>

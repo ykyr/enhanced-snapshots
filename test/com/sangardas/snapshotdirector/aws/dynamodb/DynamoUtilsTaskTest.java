@@ -12,8 +12,9 @@ import org.junit.Test;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
-import com.sangardas.snapshotdirector.aws.dynamodb.model.Task;
+import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
+import com.sungardas.snapdirector.aws.dynamodb.model.Task;
 
 
 public class DynamoUtilsTaskTest {
