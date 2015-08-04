@@ -1,5 +1,10 @@
 package com.sangardas.snapshotdirector.rest;
 
+import static com.sangardas.snapshotdirector.rest.utils.Constants.JSON_VOLUME_AVAILABILITY_ZONE;
+import static com.sangardas.snapshotdirector.rest.utils.Constants.JSON_VOLUME_CREATE_TIME;
+import static com.sangardas.snapshotdirector.rest.utils.Constants.JSON_VOLUME_SIZE;
+import static com.sangardas.snapshotdirector.rest.utils.Constants.JSON_VOLUME_VOLUME_ID;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -23,6 +28,7 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.ec2.model.Volume;
 import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.dynamodb.DynamoUtils;
 import com.sangardas.snapshotdirector.aws.dynamodb.model.BackupEntry;
@@ -47,12 +53,22 @@ public class BackupRestService {
 	public String get(@PathParam("volumeId") String volumeId) {
 		
 		List<BackupEntry> items = DynamoUtils.getBackupInfo(volumeId, getMapper(servletRequest));
-		JSONArray result = new JSONArray();
-		for(BackupEntry backup: items) {
-			result.put(backup.toString());
+		
+		return jsonArrayRepresentation(items).toString();
+	}
+	
+	private JSONArray jsonArrayRepresentation(List<BackupEntry> backupEntries) {
+		JSONArray backupsJSONArray = new JSONArray();
+		for(BackupEntry entry: backupEntries) {
+			JSONObject backupItem = new JSONObject();
+			backupItem.put("message", entry.getMessage());
+			backupItem.put("fileName", entry.getFileName());
+			backupItem.put("volumeId", entry.getVolumeId());
+			backupItem.put("timeCreated", entry.getTimeCreated());
+			backupsJSONArray.put(backupItem);
 		}
-		System.out.println(result.toString());
-		return result.toString();
+
+		return backupsJSONArray;
 	}
 	
 	@DELETE()
