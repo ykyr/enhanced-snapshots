@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -73,6 +74,16 @@ public class DynamoUtilsTaskTest {
 		System.out.println(gotTaskId);
 		assertFalse(gotTaskId.isEmpty());
 		assertTrue(gotTaskId.equals(taskToGet.getId()));
+	}
+	
+	@Test
+	public void testGetTasks() {
+		List<Task> allTasks = DynamoUtils.getTasks(mapper);
+		for (Task task : allTasks) {
+			System.out.println(task);
+		}
+		assertFalse(allTasks.isEmpty());
+		
 	}
 
 	@Test
