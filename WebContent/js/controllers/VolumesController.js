@@ -32,8 +32,11 @@ angular.module('web')
         };
 
         $scope.refresh = function () {
+            $scope.isLoading = true;
+            $scope.volumes = undefined;
             Volumes.refresh().then(function (data) {
                 $scope.volumes = data;
+                $scope.isLoading = false;
             });
         };
 

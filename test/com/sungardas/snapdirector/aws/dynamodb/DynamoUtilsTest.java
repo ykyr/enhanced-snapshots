@@ -1,4 +1,4 @@
-package com.sangardas.snapshotdirector.aws.dynamodb;
+package com.sungardas.snapdirector.aws.dynamodb;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

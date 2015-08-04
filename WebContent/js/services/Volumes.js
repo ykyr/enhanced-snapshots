@@ -20,7 +20,6 @@ angular.module('web')
             },
             refresh: function() {
                 var deferred = $q.defer();
-
                 Storage.remove(storageKey);
                 $http.get(url).success(function (data) {
                     Storage.save(storageKey, data);
