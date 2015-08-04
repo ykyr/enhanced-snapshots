@@ -27,7 +27,6 @@ angular.module('web')
                         return true;
                     };
                 }
-
             });
         };
 

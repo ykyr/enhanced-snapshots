@@ -6,13 +6,13 @@
             <h1 class="no-margin"><span class="glyphicon glyphicon-{{ typeIconClass[task.type] }} text-{{ typeColorClass[task.type] }}"></span></h1>
         </div>
         <div class="col-xs-9 col-sm-11">
-            <h5 class="pull-right no-margin">{{task.scheduler.time | date: 'yyyy-MM-dd HH:mm:ss'}}</h5>
+            <h5 class="pull-right no-margin">{{task.schedulerTime | date: 'yyyy-MM-dd HH:mm:ss'}}</h5>
             <h4>{{task.volume}} </h4>
             <p>
                 started by
                 <span class="label label-default">
-                    <span class="glyphicon glyphicon-{{ manualIconClass[task.scheduler.manual] }}"></span>&nbsp;
-                    {{task.scheduler.name}}</span>
+                    <span class="glyphicon glyphicon-{{ manualIconClass[task.schedulerManual] }}"></span>&nbsp;
+                    {{task.schedulerName}}</span>
             </p>
         </div>
         <div class="col-xs-1 text-right">
