@@ -20,6 +20,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -74,9 +75,16 @@ public class BackupRestService {
 	@DELETE()
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{backupfileName}")
-	public String deleteBackup(@PathParam("backupfileName") String filename) {
+	public Response deleteBackup(@PathParam("backupfileName") String filename) {
+		String volumeId = filename.substring(0, 12);
+		System.out.println(volumeId);
+		boolean statusOk = DynamoUtils.removeBackupInfo(volumeId, filename, getMapper(servletRequest));
 		
-		return null;
+		 if(statusOk) {
+			 return Response.ok().build();
+			 }
+		 else return Response.serverError().build();
+		
 	}
 	
 	private DynamoDBMapper getMapper(ServletRequest request) {
