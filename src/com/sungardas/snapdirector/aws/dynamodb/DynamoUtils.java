@@ -11,6 +11,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper.FailedBatch;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.Task;
@@ -136,6 +137,16 @@ public class DynamoUtils {
 		
 		return taskList.get(0).toString();
 			
+	}
+	
+	public static List<Task> getTasks(DynamoDBMapper mapper){
+		
+		DynamoDBScanExpression expression = new DynamoDBScanExpression();
+		
+		List<Task> scanResult = mapper.scan(Task.class, expression);
+		
+		return scanResult;
+		
 	}
 	
 	public static String putTask(Task task, DynamoDBMapper mapper){
