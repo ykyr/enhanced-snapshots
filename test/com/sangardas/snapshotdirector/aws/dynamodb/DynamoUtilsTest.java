@@ -1,15 +1,16 @@
 package com.sangardas.snapshotdirector.aws.dynamodb;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.amazonaws.services.ec2.model.Region;
 import com.sangardas.snapshotdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sangardas.snapshotdirector.aws.dynamodb.model.BackupEntry;
 
@@ -31,6 +32,42 @@ public class DynamoUtilsTest {
 	}
 	
 	@Test
+	public void testPutBackupInfo() {
+		
+		double salt = Math.random();
+		
+		BackupEntry newBackup = new BackupEntry("vol-69dee6a0" + salt, "vol-69dee6a0111.backup","201507311025","TestBackup");
+		newBackup.setVolumeId("vol-69dee6a0" + salt);
+		newBackup.setFileName("vol-69dee6a0111.backup");
+		newBackup.setTimeCreated("201507311025");
+		newBackup.setMessage("TestBackup");
+		
+		List<BackupEntry> items = new ArrayList<BackupEntry>();
+		items.add(newBackup);
+
+		DynamoUtils.putBackupInfo(items, mapper);
+		
+		BackupEntry fetched = DynamoUtils.getBackupInfo("vol-69dee6a0" + salt, mapper).get(0);
+		
+		assertNotNull(fetched);
+		assertTrue(newBackup.equals(fetched));
+		
+	}
+	
+	@Test
+	public void testRemoveBackupInfo() {
+		
+		
+		boolean res = DynamoUtils.removeBackupInfo("vol-69dee6a00.9619267669690094", "vol-69dee6a0111.backup", this.mapper);
+		boolean res1 = DynamoUtils.removeBackupInfo("vol-69dee6a0qweqwe", "vol-69dee6a0ssss.backup", this.mapper);
+
+		assertTrue(res);
+		assertFalse(res1);
+		
+	}
+	
+	
+	@Test
 	public void testAuthenticateUser(){
 		boolean info = DynamoUtils.authenticateUser("admin@sungard.com", "admin", mapper);
 		assertNotNull(info);
@@ -45,4 +82,7 @@ public class DynamoUtilsTest {
 		assertTrue(!info.isEmpty());
 		
 	}
+	
+	
+	
 }
