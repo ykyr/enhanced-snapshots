@@ -1,58 +1,21 @@
 'use strict';
 
 angular.module('web')
-    .controller('VolumesController', function ($scope, $state, $filter, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
+    .controller('VolumesController', function ($scope, $state, $filter, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
 
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
         $scope.globalRegion = {
             location: "",
-            name: "Global",
+            name: "GLOBAL",
             id: ""
         };
-        $scope.regions = [
-            {
-                location: "Virginia",
-                name: "US East 1",
-                id: "us-east-1"
-            },
-            {
-                location: "California",
-                name: "US West 1",
-                id: "us-west-1"
-            },
-            {
-                location: "Oregon",
-                name: "US West 2",
-                id: "us-west-2"
-            },
-            {
-                location: "Ireland",
-                name: "EU West 1",
-                id: "eu-west-1"
-            },
-            {
-                location: "Singapore",
-                name: "AP Southeast 1",
-                id: "ap-southeast-1"
-            },
-            {
-                location: "Tokyo",
-                name: "AP Northeast 1",
-                id: "ap-northeast-1"
-            },
-            {
-                location: "Sydney",
-                name: "AP Southeast 2",
-                id: "ap-southeast-2"
-            },
-            {
-                location: "São Paulo",
-                name: "SA East 1",
-                id: "sa-east-1"
-            }
-        ];
+
+        Regions.get().then(function (regions) {
+            $scope.regions = regions
+        });
+
         $scope.selectedRegion = $scope.globalRegion;
 
         $scope.isLoading = true;
@@ -106,6 +69,4 @@ angular.module('web')
             });
 
         };
-
-
     });

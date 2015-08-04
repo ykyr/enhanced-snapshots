@@ -15,8 +15,8 @@ angular.module('web')
             return deferred.promise;
         };
 
-        var _delete = function (id) {
-            return $http.delete(url + '/' + id)
+        var _delete = function (fileName) {
+            return $http.delete(url + '/' + fileName)
                 .success(function () {
                     // backup deleted
                 })
@@ -29,8 +29,8 @@ angular.module('web')
             getForVolume: function (volume) {
                 return _getForVolume(volume);
             },
-            delete: function (id){
-                return _delete(id);
+            delete: function (fileName){
+                return _delete(fileName);
             }
         }
     });

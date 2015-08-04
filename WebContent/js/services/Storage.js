@@ -6,19 +6,19 @@ angular.module('web')
         return {
 
             get: function (key) {
-                return JSON.parse(localStorage.getItem(key));
+                return JSON.parse(sessionStorage.getItem(key));
             },
 
             save: function (key, data) {
-                localStorage.setItem(key, JSON.stringify(data));
+                sessionStorage.setItem(key, JSON.stringify(data));
             },
 
             remove: function (key) {
-                localStorage.removeItem(key);
+                sessionStorage.removeItem(key);
             },
 
             clearAll : function () {
-                localStorage.clear();
+                sessionStorage.clear();
             }
         };
     });
