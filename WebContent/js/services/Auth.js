@@ -5,7 +5,7 @@ angular.module('web')
         var sessionUrl = BASE_URL + "rest/session";
         var statuses = {
             404: "Service is unavailable",
-            401: "Wrong Credentials"
+            401: "Your authentication information was incorrect. Please try again"
         };
 
 

@@ -2,7 +2,7 @@
 
 angular.module('web')
     .controller('AwsController',  function ($scope, $state, Settings) {
-        $scope.units = ['GiB','TiB']
+        $scope.units = ['GB','TB'];
         $scope.amount = 4;
         $scope.unit = $scope.units[0];
 

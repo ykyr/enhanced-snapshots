@@ -13,6 +13,7 @@ angular.module('web')
                 }
             }, function (res) {
                 $scope.error = res;
+                $scope.password = "";
             });
         }
     });

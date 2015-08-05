@@ -11,7 +11,7 @@ angular.module('web')
                 var table=ctrl;
 
                 scope.$watch('stFilter',function(val){
-                    ctrl.search(val, 'Zone');
+                    ctrl.search(val, 'availabilityZone');
                 });
 
             }

@@ -248,17 +248,14 @@ a:hover.link-white{
     content: '\25BC';
 }
 
-.table.table-condensed.bg-white thead tr > th:hover{
+th[st-sort]:hover,
+ul.dropdown-menu a {
     cursor: pointer;
 }
 
 .spinner-container {
     font-size: large !important;
     padding: 20px !important;
-}
-
-.glyphicon.glyphicon-remove{
-    cursor: pointer;
 }
 
 /* Callouts */

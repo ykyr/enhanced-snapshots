@@ -12,6 +12,15 @@ angular.module('web')
             id: ""
         };
 
+        $scope.statusColorClass = {
+          "in-use": "success",
+          "creating": "error",
+          "available": "info",
+          "deleting": "error",
+          "deleted": "error",
+          "error": "error"
+        };
+
         Regions.get().then(function (regions) {
             $scope.regions = regions
         });
@@ -40,8 +49,8 @@ angular.module('web')
             });
         };
 
-        $scope.backup = function (volumeID) {
-            $scope.backupVolumeId = volumeID;
+        $scope.backup = function (volumeId) {
+            $scope.backupVolumeId = volumeId;
             var confirmInstance = $modal.open({
                 animation: true,
                 templateUrl: './partials/modal.backup-now.html',
@@ -56,7 +65,7 @@ angular.module('web')
                     type: "backup",
                     status: "waiting",
                     schedulerManual: true,
-                    schedulerName: Storage.get('currentUser').username, // TODO: Real user name should be used here
+                    schedulerName: Storage.get('currentUser').username,
                     schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
                 };
                 Tasks.insert(newTask).then(function () {

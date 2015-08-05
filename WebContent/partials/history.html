@@ -14,6 +14,7 @@
             <th>&nbsp;</th>
             <th st-sort="timeCreated" st-sort-default="reverse">Created</th>
             <th st-sort="fileName">File Name</th>
+            <th st-sort="size">Size</th>
             <th st-sort="message">Message</th>
         </tr>
         </thead>
@@ -23,18 +24,24 @@
             <td class="text-center commands">
                 <a class="btn btn-link" title="Restore" ng-click="restore(backup)"><span
                         class="glyphicon glyphicon-cloud-upload"></span></a>
-                <a class="text-danger" title="Remove" ng-click="remove(backup.fileName)"><span
-                        class="glyphicon glyphicon-remove" ng-hide="isRunning(backup)"></span></a>
-                <span class="glyphicon glyphicon-refresh spin" ng-show="isRunning(backup)"></span>
+                <a class="btn text-danger" title="Remove" ng-click="remove(backup.fileName)"><i
+                        class="glyphicon glyphicon-remove" ng-hide="isRunning(backup)"></i></a>
+                <i class="glyphicon glyphicon-refresh spin" ng-show="isRunning(backup)"></i>
             </td>
             <td>{{backup.timeCreated | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
             <td>{{backup.fileName}}</td>
+            <td>{{backup.size}}</td>
             <td>{{backup.message}}</td>
         </tr>
         </tbody>
         <tfoot>
+        <tr ng-show="isLoading">
+            <td colspan="5" class="text-center spinner-container">
+                <i class="glyphicon glyphicon-refresh text-muted spin"></i>
+            </td>
+        </tr>
         <tr>
-            <td colspan="4" class="text-center">
+            <td colspan="5" class="text-center">
                 <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
             </td>
         </tr>

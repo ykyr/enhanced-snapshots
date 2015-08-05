@@ -6,13 +6,18 @@ angular.module('web')
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
-        $scope.volumeID = $stateParams.volumeID;
+        $scope.volumeId = $stateParams.volumeId;
 
+        $scope.isLoading = false;
         $scope.backups = [];
         var loadBackups = function () {
-            Backups.getForVolume($scope.volumeID).then(function (data) {
+            $scope.isLoading = true;
+            Backups.getForVolume($scope.volumeId).then(function (data) {
                 $scope.backups = data;
-            });
+                $scope.isLoading = false;
+            }, function () {
+                $scope.isLoading = false;
+            })
         };
         loadBackups();
 
@@ -32,7 +37,7 @@ angular.module('web')
                     type: "restore",
                     status: "waiting",
                     schedulerManual: true,
-                    schedulerName: Storage.get('currentUser').username, // TODO: Real user name should be used here
+                    schedulerName: Storage.get('currentUser').username,
                     schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
                 };
                 Tasks.insert(newTask).then(function () {

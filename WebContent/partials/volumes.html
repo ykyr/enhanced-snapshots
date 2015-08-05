@@ -41,36 +41,44 @@
         <thead>
         <tr>
             <th>&nbsp;</th>
-            <th st-sort="ID">Volume ID</th>
-            <th st-sort="Capacity">Capacity</th>
-            <th st-sort="Created">Created</th>
-            <th st-sort="Zone">Zone</th>
+            <th st-sort="state">Status</th>
+            <th st-sort="volumeId">ID</th>
+            <th st-sort="volumeName">Name</th>
+            <th st-sort="size">Size</th>
+            <th st-sort="snapshotId">Snapshot</th>
+            <th st-sort="created">Created</th>
+            <th st-sort="availabilityZone">Zone</th>
         </tr>
         </thead>
         <tbody>
         <tr ng-repeat="volume in displayedCollection">
             <td class="text-center commands">
-                <button class="btn btn-link" title="Backup now" ng-click="backup(volume.ID)"><span
+                <button class="btn btn-link" title="Backup now" ng-click="backup(volume.volumeId)"><span
                         class="glyphicon glyphicon-cloud-download"></span></button>
-                <a ui-sref="app.volume.schedule({ volumeID: volume.ID })" class="btn btn-link disabled" title="Schedule backup"><span
+                <a ui-sref="app.volume.schedule({ volumeId: volume.volumeId })" class="btn btn-link disabled" title="Schedule backup"><span
                         class="glyphicon glyphicon-time"></span></a>
-                <a ui-sref="app.volume.history({ volumeID: volume.ID })" class="btn btn-link" title="History"><span
+                <a ui-sref="app.volume.history({ volumeId: volume.volumeId })" class="btn btn-link" title="History"><span
                         class="glyphicon glyphicon-list"></span></a>
             </td>
-            <td>{{::volume.ID}}</td>
-            <td>{{::volume.Capacity}} GiB</td>
-            <td>{{::volume.Created | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
-            <td>{{::volume.Zone}}</td>
+            <td>
+                <i class="glyphicon glyphicon-record text-{{statusColorClass[volume.state]}}"></i> {{::volume.state}}
+            </td>
+            <td>{{::volume.volumeId}}</td>
+            <td>{{::volume.volumeName}}</td>
+            <td>{{::volume.size}} GB</td>
+            <td>{{::volume.snapshotId}}</td>
+            <td>{{::volume.created | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+            <td>{{::volume.availabilityZone}}</td>
         </tr>
         </tbody>
         <tfoot>
         <tr ng-show="isLoading">
-            <td colspan="5" class="text-center spinner-container">
+            <td colspan="8" class="text-center spinner-container">
                     <i class="glyphicon glyphicon-refresh text-muted spin"></i>
             </td>
         </tr>
         <tr>
-            <td colspan="5" class="text-center">
+            <td colspan="8" class="text-center">
                 <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
             </td>
         </tr>

@@ -39,13 +39,13 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             controller: 'VolumesController'
         })
         .state('app.volume.schedule', {
-            url: "/schedule/:volumeID",
+            url: "/schedule/:volumeId",
             templateUrl: "partials/schedule.html",
             controller: 'ScheduleController'
         })
 
         .state('app.volume.history', {
-            url: "/history/:volumeID",
+            url: "/history/:volumeId",
             templateUrl: "partials/history.html",
             controller: 'HistoryController'
         })
