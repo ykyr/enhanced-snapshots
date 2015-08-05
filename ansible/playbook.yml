@@ -3,15 +3,11 @@
   sudo: yes
   sudo_user: root
   remote_user: vagrant
-  vars:
-    - jdk_download_dir: /opt
-    - jdk_rpm: jdk-8u51-linux-x64.rpm
-
   tasks:
   - name: update system
     yum: name=* state=latest
   roles:
-    - oracle-java8
+    - openjdk
     - tomcat8
     - opendedup
     - maven
