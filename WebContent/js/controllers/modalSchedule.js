@@ -86,31 +86,6 @@ angular.module('web')
                 .filter(function (d) {
                     return $scope.weekdays[d];
                 });
-
-            //var getFormattedDate = function (date) {
-            //    if (date != null && date) {
-            //        var fullDate = {
-            //            year: date.getFullYear(),
-            //            month: date.getMonth() + 1,
-            //            day: date.getDate(),
-            //            hours: date.getHours(),
-            //            mins: date.getMinutes(),
-            //            secs: date.getSeconds()
-            //        };
-            //        angular.forEach(fullDate, function (value, key) {
-            //            if (value < 10) {
-            //                fullDate[key] = "0" + value
-            //            }
-            //        });
-            //        var mergedPeriods = fullDate.year + "-" + fullDate.month + "-" + fullDate.day + " " + fullDate.hours + ":" + fullDate.mins + ":" + fullDate.secs;
-            //    }
-            //    else {
-            //        mergedPeriods = ""
-            //    }
-            //    return mergedPeriods;
-            //};
-            //$scope.schedule.start = getFormattedDate($scope.schedule.start);
-            //$scope.schedule.end = getFormattedDate($scope.schedule.end);
             $scope.schedule.start = $filter('date')($scope.schedule.start, 'yyyy-MM-dd hh:mm:ss');
             $scope.schedule.end = (function () {
                 if ($scope.schedule.end != null && $scope.schedule.end) {

@@ -18,6 +18,10 @@
     <param-value>815082807540/sangard</param-value>
   </context-param>
   <context-param>
+    <param-name>aws:dynamodb-region</param-name>
+    <param-value>us-east-1</param-value>
+  </context-param>
+  <context-param>
     <param-name>aws:routine-inst-id</param-name>
     <param-value>i-e920a741</param-value>
   </context-param>
@@ -61,7 +65,7 @@
     <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
     <init-param>
       <param-name>com.sun.jersey.config.property.packages</param-name>
-      <param-value>com.sangardas</param-value>
+      <param-value>com.sungardas</param-value>
     </init-param>
   </servlet>
   <servlet-mapping>

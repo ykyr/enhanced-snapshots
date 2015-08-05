@@ -1,64 +1,39 @@
 'use strict';
 
 angular.module('web')
-    .controller('VolumesController', function ($scope, $state, $filter, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
+    .controller('VolumesController', function ($scope, $state, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
 
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
         $scope.globalRegion = {
             location: "",
-            name: "Global",
+            name: "GLOBAL",
             id: ""
         };
-        $scope.regions = [
-            {
-                location: "Virginia",
-                name: "US East 1",
-                id: "us-east-1"
-            },
-            {
-                location: "California",
-                name: "US West 1",
-                id: "us-west-1"
-            },
-            {
-                location: "Oregon",
-                name: "US West 2",
-                id: "us-west-2"
-            },
-            {
-                location: "Ireland",
-                name: "EU West 1",
-                id: "eu-west-1"
-            },
-            {
-                location: "Singapore",
-                name: "AP Southeast 1",
-                id: "ap-southeast-1"
-            },
-            {
-                location: "Tokyo",
-                name: "AP Northeast 1",
-                id: "ap-northeast-1"
-            },
-            {
-                location: "Sydney",
-                name: "AP Southeast 2",
-                id: "ap-southeast-2"
-            },
-            {
-                location: "São Paulo",
-                name: "SA East 1",
-                id: "sa-east-1"
-            }
-        ];
+
+        $scope.statusColorClass = {
+          "in-use": "success",
+          "creating": "error",
+          "available": "info",
+          "deleting": "error",
+          "deleted": "error",
+          "error": "error"
+        };
+
+        Regions.get().then(function (regions) {
+            $scope.regions = regions
+        });
+
         $scope.selectedRegion = $scope.globalRegion;
 
+        $scope.isLoading = true;
         $scope.volumes = [];
         Volumes.get().then(function (data) {
+            $scope.isLoading = false;
             $scope.volumes = data;
-            $scope.displayedVolumes = data;
+        }, function () {
+            $scope.isLoading = false;
         });
 
         $scope.changeRegion = function (region) {
@@ -66,13 +41,16 @@ angular.module('web')
         };
 
         $scope.refresh = function () {
+            $scope.isLoading = true;
+            $scope.volumes = undefined;
             Volumes.refresh().then(function (data) {
                 $scope.volumes = data;
+                $scope.isLoading = false;
             });
         };
 
-        $scope.backup = function (volumeID) {
-            $scope.backupVolumeId = volumeID;
+        $scope.backup = function (volumeId) {
+            $scope.backupVolumeId = volumeId;
             var confirmInstance = $modal.open({
                 animation: true,
                 templateUrl: './partials/modal.backup-now.html',
@@ -81,14 +59,14 @@ angular.module('web')
 
             confirmInstance.result.then(function () {
                 var newTask = {
+                    id: "",
+                    priority: "",
                     volume: $scope.backupVolumeId,
                     type: "backup",
                     status: "waiting",
-                    scheduler: {
-                        manual: true,
-                        name: "admin", // TODO: Real user name should be used here
-                        time: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
-                    }
+                    schedulerManual: true,
+                    schedulerName: Storage.get('currentUser').username,
+                    schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
                 };
                 Tasks.insert(newTask).then(function () {
                     var successInstance = $modal.open({
@@ -103,6 +81,4 @@ angular.module('web')
             });
 
         };
-
-
     });

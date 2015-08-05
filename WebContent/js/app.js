@@ -1,13 +1,12 @@
 var app = angular.module('web', ['ui.router', 'ui.bootstrap', 'smart-table']);
 
 app.constant('BASE_URL', './');
-//app.constant('BASE_URL', 'http://localhost:8080/snapdirector02/');
 
 // Settings for table paging
 app.constant('ITEMS_BY_PAGE', 25);
 app.constant('DISPLAY_PAGES', 5);
 
-app.config(function ($stateProvider, $urlRouterProvider) {
+app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $urlRouterProvider.otherwise("/app/volumes");
 
     var authenticated = ['$rootScope', function ($rootScope) {
@@ -40,13 +39,13 @@ app.config(function ($stateProvider, $urlRouterProvider) {
             controller: 'VolumesController'
         })
         .state('app.volume.schedule', {
-            url: "/schedule/:volumeID",
+            url: "/schedule/:volumeId",
             templateUrl: "partials/schedule.html",
             controller: 'ScheduleController'
         })
 
         .state('app.volume.history', {
-            url: "/history/:volumeID",
+            url: "/history/:volumeId",
             templateUrl: "partials/history.html",
             controller: 'HistoryController'
         })
@@ -79,6 +78,8 @@ app.config(function ($stateProvider, $urlRouterProvider) {
                 logout: logout
             }
         });
+
+    $httpProvider.interceptors.push('Interceptor');
 })
     .run(function ($rootScope, $state, Storage) {
         $rootScope.getUserName = function () {
@@ -89,4 +90,4 @@ app.config(function ($stateProvider, $urlRouterProvider) {
             $state.go('login');
         });
     });
-;
+

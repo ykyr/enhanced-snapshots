@@ -20,12 +20,18 @@ angular.module('web')
         };
 
         $scope.tasks = [];
-        var loadTasks = function () {
+        $scope.isLoading = false;
+        $scope.refresh = function () {
+            $scope.isLoading = true;
             Tasks.get().then(function (data) {
                 $scope.tasks = data;
+                $scope.isLoading = false;
+            }, function () {
+                $scope.isLoading = false;
             });
+
         };
-        loadTasks();
+        $scope.refresh();
 
         $scope.isRunning = function (task) {
             return task.status == "running";
@@ -42,7 +48,7 @@ angular.module('web')
 
             rejectInstance.result.then(function () {
                 Tasks.delete(task.id).then(function () {
-                        loadTasks();
+                    $scope.refresh();
                 });
             });
         };

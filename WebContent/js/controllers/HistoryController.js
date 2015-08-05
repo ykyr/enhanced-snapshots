@@ -1,33 +1,23 @@
 'use strict';
 
 angular.module('web')
-    .controller('HistoryController', function ($scope, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
+    .controller('HistoryController', function ($scope, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
 
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
-        $scope.statusColorClass = {
-            running: "primary",
-            success: "success",
-            failed: "danger"
-        };
+        $scope.volumeId = $stateParams.volumeId;
 
-        $scope.isRunning = function (backup) {
-            return backup.status == "running";
-        };
-
-        $scope.isSuccess = function (backup) {
-            return backup.status == "success";
-        };
-
-        $scope.volumeID = $stateParams.volumeID;
-
+        $scope.isLoading = false;
         $scope.backups = [];
         var loadBackups = function () {
-            Backups.getForVolume($scope.volumeID).then(function (data) {
+            $scope.isLoading = true;
+            Backups.getForVolume($scope.volumeId).then(function (data) {
                 $scope.backups = data;
-                $scope.displayedBackups = data;
-            });
+                $scope.isLoading = false;
+            }, function () {
+                $scope.isLoading = false;
+            })
         };
         loadBackups();
 
@@ -41,14 +31,14 @@ angular.module('web')
 
             confirmInstance.result.then(function () {
                 var newTask = {
+                    id: "",
+                    priority: "",
                     volume: $scope.backupToRestore.volume,
                     type: "restore",
                     status: "waiting",
-                    scheduler: {
-                        manual: true,
-                        name: "admin", // TODO: Real user name should be used here
-                        time: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
-                    }
+                    schedulerManual: true,
+                    schedulerName: Storage.get('currentUser').username,
+                    schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
                 };
                 Tasks.insert(newTask).then(function () {
                     var successInstance = $modal.open({
@@ -64,8 +54,8 @@ angular.module('web')
 
         };
 
-        $scope.remove = function (backup) {
-            $scope.backupToDelete = backup;
+        $scope.remove = function (backupFileName) {
+            $scope.backupToDelete = backupFileName;
 
             var rejectInstance = $modal.open({
                 animation: true,
@@ -74,7 +64,7 @@ angular.module('web')
             });
 
             rejectInstance.result.then(function () {
-                Backups.delete(backup.id).then(function () {
+                Backups.delete(backupFileName).then(function () {
                     loadBackups();
                 });
             });
