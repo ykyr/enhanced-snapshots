@@ -12,7 +12,6 @@ angular.module('web')
         var loadBackups = function () {
             Backups.getForVolume($scope.volumeID).then(function (data) {
                 $scope.backups = data;
-                $scope.displayedBackups = data;
             });
         };
         loadBackups();

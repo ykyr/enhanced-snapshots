@@ -257,6 +257,10 @@ a:hover.link-white{
     padding: 20px !important;
 }
 
+.glyphicon.glyphicon-remove{
+    cursor: pointer;
+}
+
 /* Callouts */
 
 .bs-callout {

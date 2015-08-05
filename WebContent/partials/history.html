@@ -12,14 +12,14 @@
         <thead>
         <tr>
             <th>&nbsp;</th>
-            <th st-sort="date" st-sort-default="reverse">Created</th>
-            <th st-sort="name">File Name</th>
+            <th st-sort="timeCreated" st-sort-default="reverse">Created</th>
+            <th st-sort="fileName">File Name</th>
             <th st-sort="message">Message</th>
         </tr>
         </thead>
 
         <tbody>
-        <tr ng-repeat="backup in displayedBackups ">
+        <tr ng-repeat="backup in displayedBackups">
             <td class="text-center commands">
                 <a class="btn btn-link" title="Restore" ng-click="restore(backup)"><span
                         class="glyphicon glyphicon-cloud-upload"></span></a>
