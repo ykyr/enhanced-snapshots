@@ -252,6 +252,11 @@ a:hover.link-white{
     cursor: pointer;
 }
 
+.spinner-container {
+    font-size: large !important;
+    padding: 20px !important;
+}
+
 /* Callouts */
 
 .bs-callout {

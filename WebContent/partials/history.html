@@ -19,10 +19,10 @@
         </thead>
 
         <tbody>
-        <tr ng-repeat="backup in displayedBackups " class="bg-{{ statusColorClass[backup.status] }}">
+        <tr ng-repeat="backup in displayedBackups ">
             <td class="text-center commands">
                 <a class="btn btn-link" title="Restore" ng-click="restore(backup)"><span
-                        class="glyphicon glyphicon-cloud-upload" ng-show="isSuccess(backup)"></span></a>
+                        class="glyphicon glyphicon-cloud-upload"></span></a>
                 <a class="text-danger" title="Remove" ng-click="remove(backup.fileName)"><span
                         class="glyphicon glyphicon-remove" ng-hide="isRunning(backup)"></span></a>
                 <span class="glyphicon glyphicon-refresh spin" ng-show="isRunning(backup)"></span>

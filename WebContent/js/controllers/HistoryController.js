@@ -6,20 +6,6 @@ angular.module('web')
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
-        $scope.statusColorClass = {
-            running: "primary",
-            success: "success",
-            failed: "danger"
-        };
-
-        $scope.isRunning = function (backup) {
-            return backup.status == "running";
-        };
-
-        $scope.isSuccess = function (backup) {
-            return backup.status == "success";
-        };
-
         $scope.volumeID = $stateParams.volumeID;
 
         $scope.backups = [];
