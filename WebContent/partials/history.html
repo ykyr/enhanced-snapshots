@@ -15,7 +15,6 @@
             <th st-sort="timeCreated" st-sort-default="reverse">Created</th>
             <th st-sort="fileName">File Name</th>
             <th st-sort="size">Size</th>
-            <th st-sort="message">Message</th>
         </tr>
         </thead>
 
@@ -31,17 +30,16 @@
             <td>{{backup.timeCreated | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
             <td>{{backup.fileName}}</td>
             <td>{{backup.size}}</td>
-            <td>{{backup.message}}</td>
         </tr>
         </tbody>
         <tfoot>
         <tr ng-show="isLoading">
-            <td colspan="5" class="text-center spinner-container">
+            <td colspan="4" class="text-center spinner-container">
                 <i class="glyphicon glyphicon-refresh text-muted spin"></i>
             </td>
         </tr>
         <tr>
-            <td colspan="5" class="text-center">
+            <td colspan="4" class="text-center">
                 <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
             </td>
         </tr>
