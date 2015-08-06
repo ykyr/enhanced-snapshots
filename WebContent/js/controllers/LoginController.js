@@ -2,7 +2,11 @@
 
 angular.module('web')
     .controller('LoginController', function ($scope, $state, Auth, Settings) {
-        $scope.error = "";
+
+        $scope.clearErr = function () {
+            $scope.error = "";
+        };
+
         $scope.login = function () {
             Auth.logIn($scope.email, $scope.password).then(function () {
                 if (Settings.get()) {

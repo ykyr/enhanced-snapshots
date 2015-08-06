@@ -4,7 +4,7 @@
 </div>
 
 <div class="bs-callout bs-callout-{{ statusColorClass[task.status] }}" ng-class="{ 'active': isRunning(task) }"
-     ng-repeat="task in tasks"
+     ng-repeat="task in tasks | orderBy: '-schedulerTime'"
         ng-hide="isLoading">
     <div class="row vertical-align">
         <div class="col-xs-2 col-sm-1 text-center">
@@ -23,13 +23,10 @@
                     {{task.schedulerName}}</span>
             </p>
         </div>
-        <div class="col-xs-1 text-right">
+        <div class="col-xs-1 text-right hidden">
             <div class="btn-group-vertical btn-group-xs task-control" ng-hide="isRunning(task)">
                 <a class="btn btn-danger" title="Reject" ng-click="reject(task)"><span
                         class="glyphicon glyphicon-remove"></span></a>
-                <a class="btn btn-default" title="Move up"><span class="glyphicon glyphicon-triangle-top"></span></a>
-                <a class="btn btn-default" title="Move down"><span
-                        class="glyphicon glyphicon-triangle-bottom"></span></a>
             </div>
         </div>
     </div>
