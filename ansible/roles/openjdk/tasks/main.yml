@@ -1,5 +1,5 @@
 ---
-- name: install OpenJDK 7 JDK
+- name: install OpenJDK 8 JDK
   yum: name="java-1.8.0-openjdk-devel" state=latest
 
 - name: setup JAVA_HOME

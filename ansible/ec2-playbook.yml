@@ -1,0 +1,11 @@
+---
+- hosts: all
+  sudo: yes
+  sudo_user: root
+  remote_user: ec2-user
+  gather_facts: False
+  roles:
+    - openjdk
+    - tomcat8
+    - opendedup
+    - maven

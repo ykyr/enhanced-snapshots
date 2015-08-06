@@ -1,0 +1,1 @@
+server ansible_ssh_host=52.5.121.176 ansible_ssh_user=ec2-user
