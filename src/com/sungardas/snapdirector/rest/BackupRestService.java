@@ -62,10 +62,10 @@ public class BackupRestService {
 		JSONArray backupsJSONArray = new JSONArray();
 		for(BackupEntry entry: backupEntries) {
 			JSONObject backupItem = new JSONObject();
-			backupItem.put("message", entry.getMessage());
 			backupItem.put("fileName", entry.getFileName());
 			backupItem.put("volumeId", entry.getVolumeId());
 			backupItem.put("timeCreated", entry.getTimeCreated());
+			backupItem.put("size", entry.getSize());
 			backupsJSONArray.put(backupItem);
 		}
 

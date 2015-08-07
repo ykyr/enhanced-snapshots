@@ -18,11 +18,11 @@ final public class BackupEntry {
 		super();
 	}
 	
-	public BackupEntry(String volumeId, String fileName, String message, String timeCreated){
+	public BackupEntry(String volumeId, String fileName, String timeCreated, String size){
 		this.setVolumeId(volumeId);
 		this.setFileName(fileName);
-		this.setMessage(message);
 		this.setTimeCreated(timeCreated);
+		this.setSize(size);
 	}
 	
 	
@@ -45,14 +45,6 @@ final public class BackupEntry {
 		attributes.put("fileName", fileName);
 	}
 
-	@DynamoDBAttribute(attributeName = "message")
-	public String getMessage() {
-		return (String) attributes.get("message");
-	}
-
-	public void setMessage(String message) {
-		attributes.put("message", message);
-	}
 
 	@DynamoDBAttribute(attributeName = "timeCreated")
 	public String getTimeCreated() {
@@ -61,6 +53,15 @@ final public class BackupEntry {
 
 	public void setTimeCreated(String timeCreated) {
 		attributes.put("timeCreated", timeCreated);
+	}
+	
+	@DynamoDBAttribute(attributeName = "size")
+	public String getSize() {
+		return (String) attributes.get("size");
+	}
+
+	public void setSize(String size) {
+		attributes.put("size", size);
 	}
 
 	@Override
@@ -73,12 +74,12 @@ final public class BackupEntry {
 
 		if (obj != null && obj instanceof BackupEntry) {
 			if (this.getFileName().equals(((BackupEntry) obj).getFileName())
-					&& this.getMessage().equals(
-							((BackupEntry) obj).getMessage())
 					&& this.getTimeCreated().equals(
 							((BackupEntry) obj).getTimeCreated())
 					&& this.getVolumeId().equals(
-							((BackupEntry) obj).getVolumeId()))
+							((BackupEntry) obj).getVolumeId())
+					&& this.getSize().equals(
+						((BackupEntry) obj).getSize()))
 				return true;
 		}
 

@@ -37,11 +37,11 @@ public class DynamoUtilsTest {
 		
 		double salt = Math.random();
 		
-		BackupEntry newBackup = new BackupEntry("vol-69dee6a0" + salt, "vol-69dee6a0111.backup","201507311025","TestBackup");
+		BackupEntry newBackup = new BackupEntry("vol-69dee6a0" + salt, "vol-69dee6a0111.backup","201507311025", "111111");
 		newBackup.setVolumeId("vol-69dee6a0" + salt);
 		newBackup.setFileName("vol-69dee6a0111.backup");
 		newBackup.setTimeCreated("201507311025");
-		newBackup.setMessage("TestBackup");
+
 		
 		List<BackupEntry> items = new ArrayList<BackupEntry>();
 		items.add(newBackup);

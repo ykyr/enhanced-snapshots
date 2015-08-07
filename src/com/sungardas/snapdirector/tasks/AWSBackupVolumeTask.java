@@ -72,8 +72,10 @@ public class AWSBackupVolumeTask implements Task {
 			attachedDeviceName = tempVolume.getAttachments().get(0).getDevice();
 		}
 		
-		String backupDate = getCurrentDate();
+		String backupDate = String.valueOf(System.currentTimeMillis());
 		String backupfileName = volumeId + "."+backupDate+".backup";
+		
+		
 		
 		
 		if( configuration.isFakeBackup() ) {
@@ -83,11 +85,16 @@ public class AWSBackupVolumeTask implements Task {
 			sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
 			
 		}
+		long backupSize=sdfs.getBackupSize(backupfileName);
 		LOG.info("Backup creation time: " + sdfs.getBackupCreationTime(backupfileName));
-		LOG.info("Backup size: " + sdfs.getBackupSize(backupfileName));
-		BackupEntry backup = new BackupEntry(volumeId, backupfileName, "", backupDate);
+		LOG.info("Backup size: " + backupSize);
 		
+		BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, String.valueOf(backupSize));
+		LOG.info("Put backup entry to the Backup List: "+backup.toString());
 		DynamoUtils.putbackupInfo(backup, getMapper());
+		
+		
+		
 		
 		if (!configuration.isFakeEC2()) {
 			VolumeBackup.detachAndDeleteVolume(ec2client, tempVolume);
