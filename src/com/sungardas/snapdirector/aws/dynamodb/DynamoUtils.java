@@ -14,7 +14,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
-import com.sungardas.snapdirector.aws.dynamodb.model.Task;
+import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 
 /**
@@ -123,13 +123,13 @@ public class DynamoUtils {
 	}
 	
 	public static String getTask(String taskId, DynamoDBMapper mapper){
-		Task t = new Task();
+		TaskEntry t = new TaskEntry();
 		t.setId(taskId);
 		
-		DynamoDBQueryExpression<Task> expression = new DynamoDBQueryExpression<Task>()
+		DynamoDBQueryExpression<TaskEntry> expression = new DynamoDBQueryExpression<TaskEntry>()
 				.withHashKeyValues(t);
 		
-		List<Task> taskList = mapper.query(Task.class, expression);
+		List<TaskEntry> taskList = mapper.query(TaskEntry.class, expression);
 		
 		if (taskList == null || taskList.isEmpty()){
 			return null;
@@ -139,36 +139,36 @@ public class DynamoUtils {
 			
 	}
 	
-	public static List<Task> getTasks(DynamoDBMapper mapper){
+	public static List<TaskEntry> getTasks(DynamoDBMapper mapper){
 		
 		DynamoDBScanExpression expression = new DynamoDBScanExpression();
 		
-		List<Task> scanResult = mapper.scan(Task.class, expression);
+		List<TaskEntry> scanResult = mapper.scan(TaskEntry.class, expression);
 		
 		return scanResult;
 		
 	}
 	
-	public static String putTask(Task task, DynamoDBMapper mapper){
+	public static String putTask(TaskEntry task, DynamoDBMapper mapper){
 		return putOrDeleteTask(task, null, mapper);
 	}
 	
 	public static String putTask(JSONObject JSONTask, DynamoDBMapper mapper){
-		Task task = new Task(JSONTask);
+		TaskEntry task = new TaskEntry(JSONTask);
 		return putOrDeleteTask(task, null, mapper);
 	}
 	
 	public static void deleteTask(String taskId, DynamoDBMapper mapper){
-		Task task = new Task();
+		TaskEntry task = new TaskEntry();
 		task.setId(taskId);
 		putOrDeleteTask(null, task, mapper);
 	}
 	
 	
-	private static String putOrDeleteTask(Task taskToPut, Task taskToDelete, DynamoDBMapper mapper){
+	private static String putOrDeleteTask(TaskEntry taskToPut, TaskEntry taskToDelete, DynamoDBMapper mapper){
 		String taskToPutId = null;
-		List<Task> singleTaskToPut = new ArrayList<Task>();
-		List<Task> singleTaskToDelete = new ArrayList<Task>();
+		List<TaskEntry> singleTaskToPut = new ArrayList<TaskEntry>();
+		List<TaskEntry> singleTaskToDelete = new ArrayList<TaskEntry>();
 		
 		if (taskToPut != null) {
 			taskToPutId = Calendar.getInstance().getTimeInMillis()

@@ -54,8 +54,8 @@ public class TaskWorkerInitializerServlet extends HttpServlet {
 		String propertyFile = context.getInitParameter("tmp:sdfsbackup-properties");
 		AWSCredentialsProvider credentialsProvider = new EnvironmentBasedCredentialsProvider();
 		
-		exec = Executors.newSingleThreadExecutor();
-		exec.execute(new AWSTaskWorker(credentialsProvider,queueURL, routineInstanceId, propertyFile));
+//		exec = Executors.newSingleThreadExecutor();
+//		exec.execute(new AWSTaskWorker(credentialsProvider,queueURL, routineInstanceId));
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class TaskWorkerInitializerServlet extends HttpServlet {
 	 */
 	public void destroy() {
 		LOG.info("TaskWorkerInitializerServlet stoped.");
-		exec.shutdownNow();
+//		exec.shutdownNow();
 	}
 
 }

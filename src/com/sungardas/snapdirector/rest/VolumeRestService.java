@@ -46,7 +46,10 @@ public class VolumeRestService {
 			for (Regions nextRegion : Regions.values()) {
 				try {
 					ec2Client.setRegion(Region.getRegion(nextRegion));
-					volumes.addAll(S3Utils.getVolumeList(ec2Client));
+					//for(int i=0;i<20;i++)
+						volumes.addAll(S3Utils.getVolumeList(ec2Client));
+					
+					
 				} catch (AmazonServiceException unreachableRegion) {
 					continue;
 				}
@@ -84,10 +87,13 @@ public class VolumeRestService {
 		JSONArray volumesJSONArray = new JSONArray();
 		for (Volume v : volumes) {
 			JSONObject volumeJSONObject = new JSONObject();
+			volumeJSONObject.put(JSON_VOLUME_VOLUME_NAME, "");
 			volumeJSONObject.put(JSON_VOLUME_VOLUME_ID, v.getVolumeId());
 			volumeJSONObject.put(JSON_VOLUME_SIZE, v.getSize());
-			volumeJSONObject.put(JSON_VOLUME_CREATE_TIME, v.getCreateTime());
+			volumeJSONObject.put(JSON_VOLUME_VOLUME_SNAPSHOT_ID, v.getSnapshotId());
+			volumeJSONObject.put(JSON_VOLUME_CREATE_TIME, v.getCreateTime().getTime());
 			volumeJSONObject.put(JSON_VOLUME_AVAILABILITY_ZONE, v.getAvailabilityZone());
+			volumeJSONObject.put(JSON_VOLUME_STATE, v.getState());
 			volumesJSONArray.put(volumeJSONObject);
 		}
 
