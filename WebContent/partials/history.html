@@ -29,7 +29,7 @@
             </td>
             <td>{{backup.timeCreated | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
             <td>{{backup.fileName}}</td>
-            <td>{{backup.size}}</td>
+            <td>{{backup.size | sizeConvertion}}</td>
         </tr>
         </tbody>
         <tfoot>

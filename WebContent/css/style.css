@@ -249,7 +249,9 @@ a:hover.link-white{
 }
 
 th[st-sort]:hover,
-ul.dropdown-menu a {
+ul.dropdown-menu a,
+.pagination a
+{
     cursor: pointer;
 }
 

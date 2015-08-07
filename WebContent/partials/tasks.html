@@ -4,7 +4,7 @@
 </div>
 
 <div class="bs-callout bs-callout-{{ statusColorClass[task.status] }}" ng-class="{ 'active': isRunning(task) }"
-     ng-repeat="task in tasks | orderBy: '-schedulerTime'"
+     ng-repeat="task in tasks | orderBy: '-schedulerTime' | orderBy: 'status' "
         ng-hide="isLoading">
     <div class="row vertical-align">
         <div class="col-xs-2 col-sm-1 text-center">
