@@ -12,16 +12,16 @@ import com.amazonaws.util.json.Jackson;
 
 
 @DynamoDBTable(tableName="Tasks")
-public class Task {
+public class TaskEntry {
 
 	private final Map<String, Object> attributes = new LinkedHashMap<String, Object>();
 	//private Scheduler scheduler;
 
-	public Task() {
+	public TaskEntry() {
 		super();
 	}
 
-	public Task(String priority, String status, String type, String volume,
+	public TaskEntry(String priority, String status, String type, String volume,
 			String schedulerManual, String schedulerName, String schedulerTime) {
 		this();
 
@@ -34,14 +34,18 @@ public class Task {
 		this.attributes.put("schedulerTime", schedulerTime);
 	}
 
-	public Task(JSONObject jsonTask) {
+	public TaskEntry(JSONObject jsonTask) {
 		this();
 		
+		try {
 		this.setPriority(jsonTask.getInt("priority"));
+		}catch(RuntimeException emptyPriority) {
+			this.setPriority(0);
+		}
 		this.setStatus(jsonTask.getString("status"));
 		this.setType(jsonTask.getString("type"));
 		this.setVolume(jsonTask.getString("volume"));
-		this.setSchedulerManual(jsonTask.getString("schedulerManual"));
+		this.setSchedulerManual(jsonTask.getBoolean("schedulerManual"));
 		this.setSchedulerName(jsonTask.getString("schedulerName"));
 		this.setSchedulerTime(jsonTask.getString("schedulerTime"));
 
@@ -100,6 +104,10 @@ public class Task {
 
 	public void setSchedulerManual(String schedulerManual) {
 		attributes.put("schedulerManual", schedulerManual);
+	}
+	
+	public void setSchedulerManual(Boolean isManual) {
+		attributes.put("schedulerManual", isManual.toString());
 	}
 
 	@DynamoDBAttribute(attributeName = "schedulerName")

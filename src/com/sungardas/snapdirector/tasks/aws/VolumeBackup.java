@@ -122,11 +122,11 @@ public class VolumeBackup {
 
 		// starting sdfs
 //		LOG.info(format("---==Starting SDFS==---"));
-//		sdfsProc.mountsdfs();
+		sdfsProc.mountsdfs();
 
 		// prepare temp volume to backup
 		LOG.info(format("---==Prepare volume for backup==---"));
-		Volume volumeToBackup = createAndAttachBackupVolume(ec2client, properties.getProperty("VOLUME_TO_BACKUP"));
+		Volume volumeToBackup = createAndAttachBackupVolume(ec2client, properties.getProperty("VOLUME_TO_BACKUP"), null);
 
 		// create volume backup
 		LOG.info(format("\n---==Backuping volume to SDFS==---"));
@@ -223,31 +223,34 @@ public class VolumeBackup {
 //	}
 
 
-	public static Volume createAndAttachBackupVolume(AmazonEC2 ec2client, String volumeId) {
+	public static Volume createAndAttachBackupVolume(AmazonEC2 ec2client, String volumeId, String instanceId) {
+		Instance instance = getInstance(ec2client, instanceId);
+		if (instance == null) {
+			LOG.error("\nCan't get access to " + instanceId + " instance");
+			System.exit(-1);
+		}
+		LOG.info("\ninst:" + instance);
+		
 		// create snapshot for AMI
 		Volume volumeSrc = getVolume(ec2client, volumeId);
 		if (volumeSrc == null) {
 			LOG.error("\nCan't get access to " + volumeId + " volume");
 			System.exit(-1);
 		}
+		
+		
 		Snapshot snapshot = S3Utils.createSnapshot(ec2client, volumeSrc);
-
 		S3Utils.waitForCompleteState(ec2client, snapshot);
 		LOG.info("\nSnapshot creation done. Check snapshot data:\n" + snapshot.toString());
 
 		// create volume
-		Volume volumeDest = S3Utils.createVolumeFromSnapshot(ec2client, snapshot, "us-east-1c");
+		String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
+		Volume volumeDest = S3Utils.createVolumeFromSnapshot(ec2client, snapshot, instanceAvailabilityZone);
 				//properties.getProperty("TEMP_VOLUME_AVIALABILITY_ZONE"));
 		volumeDest = S3Utils.waitForAvailableState(ec2client, volumeDest);
 		LOG.info("\nVolume created. Check volume data:\n" + volumeDest.toString());
 
-		// TODO: mount AMI volume
-		Instance instance = getInstance(ec2client, "i-e920a741");
-		if (instance == null) {
-			LOG.error("\nCan't get access to " + volumeId + " instance");
-			System.exit(-1);
-		}
-		LOG.info("\ninst:" + instance);
+		// mount AMI volume
 		S3Utils.attachVolume(ec2client, instance, volumeDest);
 		return S3Utils.syncVolume(ec2client, volumeDest);
 	}
@@ -285,7 +288,7 @@ public class VolumeBackup {
 	}
 
 
-	private static void detachAndDeleteVolume(AmazonEC2 ec2client, Volume volume) {
+	public static void detachAndDeleteVolume(AmazonEC2 ec2client, Volume volume) {
 		// Detaching volume
 		LOG.info("Detaching volume: " + volume.getVolumeId());
 		S3Utils.unattachVolume(ec2client, volume);
@@ -301,7 +304,7 @@ public class VolumeBackup {
 		LOG.info(String.format("Volume %s detached", volume.getVolumeId()));
 
 		// Delete snapshot
-		//S3Utils.deleteSnapshot(ec2client, volume);
+		S3Utils.deleteSnapshot(ec2client, volume);
 
 		// Delete volume
 		S3Utils.deleteVolume(ec2client, volume);

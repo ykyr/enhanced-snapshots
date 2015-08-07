@@ -2,7 +2,15 @@ package com.sungardas.snapdirector.rest;
 
 import static java.lang.String.format;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
 import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -20,11 +28,15 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
+import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.rest.utils.JsonFromFile;
 
 
@@ -34,21 +46,47 @@ public class TaskRestService {
 
 	@Context
 	ServletContext context;
+	@Context
+	private HttpServletRequest servletRequest;
 
 
 	@GET()
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getTasks() {
+	public String getTasks() throws ParseException {
 		String result = null;
-		try {
+		//try {
 			//addTask(null);
-			String path = context.getInitParameter("rest:mock-directory");
-			JSONArray tasks = JsonFromFile.newJSONArray(path + "tasks.json");
-			result = tasks.toString();
-		} catch (Exception e) {
-			throw new WebApplicationException(e);
-		}
-		return result;
+			List<TaskEntry> taskModels = DynamoUtils.getTasks(getMapper(servletRequest));
+			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			JSONArray tasks = new JSONArray();
+			for(TaskEntry nextTask:taskModels) {
+				JSONObject jsonTask = new JSONObject();
+				jsonTask.put("id", nextTask.getId());
+				jsonTask.put("priority",nextTask.getPriority());
+				jsonTask.put("schedulerManual",Boolean.valueOf(nextTask.getSchedulerManual()));
+				jsonTask.put("schedulerName",nextTask.getSchedulerName());
+				jsonTask.put("schedulerTime",Long.valueOf(format.parse(nextTask.getSchedulerTime()).getTime())); 
+				jsonTask.put("status",nextTask.getStatus());
+				jsonTask.put("type",nextTask.getType());
+				jsonTask.put("volume",nextTask.getVolume());
+				tasks.put(jsonTask);
+			}
+			
+			return tasks.toString();
+//			String path = context.getInitParameter("rest:mock-directory");
+//			JSONArray tasks = JsonFromFile.newJSONArray(path + "tasks.json");
+//			result = tasks.toString();
+//		} catch (Exception e) {
+//			throw new WebApplicationException(e);
+//		}
+//		return result;
+	}
+	
+	private DynamoDBMapper getMapper(ServletRequest request) {
+		AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
+		String region = request.getServletContext().getInitParameter("aws:dynamodb-region");
+		client.setRegion(Region.getRegion(Regions.fromName(region)));
+		return new DynamoDBMapper(client);
 	}
 
 
@@ -56,15 +94,13 @@ public class TaskRestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String addTask(String task) {
 		LOG.info("put message:" + task);
-		String credentials = context.getInitParameter("aws:credentials-file");
 		String sqsRegion = context.getInitParameter("aws:sqs-region");
 		String queueURL = context.getInitParameter("aws:sqs-queue-url");
 		AmazonSQS sqs = new AmazonSQSClient(new EnvironmentBasedCredentialsProvider());
 		Region usWest2 = Region.getRegion(Regions.fromName(sqsRegion));
         sqs.setRegion(usWest2);
 		
-        String path = context.getInitParameter("rest:mock-directory");
-        JSONObject newTask = JsonFromFile.newJSONObject(path + "newtask.json");
+        //String path = context.getInitParameter("rest:mock-directory");
         //String body = newTask.toString();
         String body = task;
         try {

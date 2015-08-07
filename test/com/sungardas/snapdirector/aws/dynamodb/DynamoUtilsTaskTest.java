@@ -15,7 +15,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
-import com.sungardas.snapdirector.aws.dynamodb.model.Task;
+import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 
 
 public class DynamoUtilsTaskTest {
@@ -24,12 +24,12 @@ public class DynamoUtilsTaskTest {
 			new EnvironmentBasedCredentialsProvider());
 	private DynamoDBMapper mapper = new DynamoDBMapper(client);
 	
-	private Task taskToGet;
-	private Task taskToDelete;
+	private TaskEntry taskToGet;
+	private TaskEntry taskToDelete;
 
 	@Test
 	public void testPutTaskTaskDynamoDBMapper() {
-		Task task = new Task("1", "running", "backup", "vol-00000000", "true",
+		TaskEntry task = new TaskEntry("1", "running", "backup", "vol-00000000", "true",
 				"admin", "2015-07-17 19:50:00");
 		
 		
@@ -56,7 +56,7 @@ public class DynamoUtilsTaskTest {
 		
 		JSONObject jsonTask = new JSONObject(mapTask);
 		
-		Task task = new Task(jsonTask);
+		TaskEntry task = new TaskEntry(jsonTask);
 		
 		this.taskToDelete = task;
 
@@ -78,8 +78,8 @@ public class DynamoUtilsTaskTest {
 	
 	@Test
 	public void testGetTasks() {
-		List<Task> allTasks = DynamoUtils.getTasks(mapper);
-		for (Task task : allTasks) {
+		List<TaskEntry> allTasks = DynamoUtils.getTasks(mapper);
+		for (TaskEntry task : allTasks) {
 			System.out.println(task);
 		}
 		assertFalse(allTasks.isEmpty());
