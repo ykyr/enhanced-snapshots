@@ -2,9 +2,13 @@
     <h3 class="modal-title"><span class="glyphicon glyphicon-cloud-download"></span>&nbsp; Backup</h3>
 </div>
 <div class="modal-body">
-    <p>Are you sure you want to start backup process for volume <span class="h4 text-primary">{{backupVolumeId}}</span> now? </p>
+    <p>You are going to start backup process. </p>
+    <blockquote>
+        <p>Volume: <span class="h4 text-primary">{{backupVolumeId}}</span></p>
+    </blockquote>
+    <p> Do you want to start it now?</p>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-primary" ng-click="$close()"><span class="glyphicon glyphicon-cloud-download"></span>&nbsp; Add Task</button>
+    <button class="btn btn-primary" ng-click="$close()"><span class="glyphicon glyphicon-cloud-download"></span>&nbsp; Add Backup Task</button>
     <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
 </div>

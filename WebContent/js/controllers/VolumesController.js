@@ -62,6 +62,7 @@ angular.module('web')
                     id: "",
                     priority: "",
                     volume: $scope.backupVolumeId,
+                    backupFileName: "",
                     type: "backup",
                     status: "waiting",
                     schedulerManual: true,
@@ -72,6 +73,42 @@ angular.module('web')
                     var successInstance = $modal.open({
                         animation: true,
                         templateUrl: './partials/modal.task-backup-created.html'
+                    });
+
+                    successInstance.result.then(function () {
+                        $state.go('app.tasks');
+                    });
+                });
+            });
+
+        };
+
+        $scope.restore = function (volumeId) {
+            $scope.backupToRestore = {
+                fileName: '',
+                volumeId: volumeId
+            };
+            var confirmInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.backup-restore.html',
+                scope: $scope
+            });
+
+            confirmInstance.result.then(function () {
+                var newTask = {
+                    id: "",
+                    priority: "",
+                    volume: $scope.backupVolumeId,
+                    type: "restore",
+                    status: "waiting",
+                    schedulerManual: true,
+                    schedulerName: Storage.get('currentUser').username,
+                    schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
+                };
+                  Tasks.insert(newTask).then(function () {
+                    var successInstance = $modal.open({
+                        animation: true,
+                        templateUrl: './partials/modal.task-restore-created.html'
                     });
 
                     successInstance.result.then(function () {
