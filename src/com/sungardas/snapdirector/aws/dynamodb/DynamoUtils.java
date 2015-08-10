@@ -1,11 +1,12 @@
 package com.sungardas.snapdirector.aws.dynamodb;
 
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONObject;
+import org.quartz.Calendar;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper.FailedBatch;
@@ -171,7 +172,7 @@ public class DynamoUtils {
 		List<TaskEntry> singleTaskToDelete = new ArrayList<TaskEntry>();
 		
 		if (taskToPut != null) {
-			taskToPutId = Calendar.getInstance().getTimeInMillis()
+			taskToPutId = GregorianCalendar.getInstance().getTimeInMillis()
 					+ taskToPut.getVolume();
 			taskToPut.setId(taskToPutId);
 			singleTaskToPut.add(taskToPut);
