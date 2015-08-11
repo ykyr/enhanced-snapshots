@@ -1,10 +1,8 @@
 package com.sungardas.snapdirector.worker;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.amazonaws.services.dynamodbv2.document.Item;
-import com.sungardas.snapdirector.tasks.aws.sdfs.SdfsConfigPathes;
 
 public class WorkerConfiguration {
 	private Map<String,String> sdfsVolume;

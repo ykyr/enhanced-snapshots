@@ -1,6 +1,8 @@
 package com.sungardas.snapdirector.rest;
 
-import static com.sungardas.snapdirector.rest.utils.Constants.*;
+import static com.sungardas.snapdirector.rest.utils.Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME;
+import static com.sungardas.snapdirector.rest.utils.Constants.JSON_AUTHENTIFICATION_EMAIL;
+import static com.sungardas.snapdirector.rest.utils.Constants.JSON_AUTHENTIFICATION_PASSWORD;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +12,6 @@ import java.util.Set;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -23,13 +24,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sun.jersey.spi.container.ContainerRequest;
-import com.sun.jersey.spi.container.ContainerResponse;
-import com.sun.jersey.spi.container.ContainerResponseFilter;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.rest.utils.JsonFromStream;

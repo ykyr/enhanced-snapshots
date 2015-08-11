@@ -1,16 +1,17 @@
 package com.sungardas.snapdirector.tasks.aws;
 
+import static java.lang.String.format;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.text.Format;
 import java.util.LinkedList;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -38,13 +39,9 @@ import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.sungardas.snapdirector.tasks.AWSBackupVolumeTask;
 import com.sungardas.snapdirector.tasks.aws.sdfs.SdfsConfigPathes;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.S3Utils;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsProcess;
-import com.sungardas.snapdirector.tasks.aws.sdfs.utils.TarUtils;
-
-import static java.lang.String.*;
 
 
 public class VolumeBackup {

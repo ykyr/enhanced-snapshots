@@ -16,7 +16,6 @@ import org.apache.commons.logging.LogFactory;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.util.BinaryUtils;
 import com.amazonaws.util.Md5Utils;
-import com.sungardas.snapdirector.tasks.AWSBackupVolumeTask;
 import com.sungardas.snapdirector.tasks.aws.sdfs.SdfsConfigPathes;
 
 

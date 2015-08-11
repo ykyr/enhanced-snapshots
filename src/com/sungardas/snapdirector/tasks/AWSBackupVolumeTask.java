@@ -2,15 +2,8 @@ package com.sungardas.snapdirector.tasks;
 
 import static java.lang.String.format;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Scanner;
-
-import javax.servlet.ServletRequest;
-import javax.swing.text.DateFormatter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,11 +14,8 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.ec2.model.DescribeSnapshotsRequest;
-import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
-import com.sungardas.snapdirector.aws.S3Utils;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.tasks.aws.VolumeBackup;

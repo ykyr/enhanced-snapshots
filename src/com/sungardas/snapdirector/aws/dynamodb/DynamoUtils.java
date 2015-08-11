@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONObject;
-import org.quartz.Calendar;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper.FailedBatch;

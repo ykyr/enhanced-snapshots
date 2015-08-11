@@ -1,8 +1,5 @@
 package com.sungardas.snapdirector.rest.utils;
 
-import static java.lang.String.format;
-
-import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.commons.logging.Log;

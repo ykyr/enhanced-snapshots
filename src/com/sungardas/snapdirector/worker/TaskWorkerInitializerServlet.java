@@ -2,8 +2,8 @@ package com.sungardas.snapdirector.worker;
 
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
+import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;

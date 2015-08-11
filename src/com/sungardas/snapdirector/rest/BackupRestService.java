@@ -1,12 +1,5 @@
 package com.sungardas.snapdirector.rest;
 
-import static com.sungardas.snapdirector.rest.utils.Constants.JSON_VOLUME_AVAILABILITY_ZONE;
-import static com.sungardas.snapdirector.rest.utils.Constants.JSON_VOLUME_CREATE_TIME;
-import static com.sungardas.snapdirector.rest.utils.Constants.JSON_VOLUME_SIZE;
-import static com.sungardas.snapdirector.rest.utils.Constants.JSON_VOLUME_VOLUME_ID;
-
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import javax.servlet.ServletContext;
@@ -17,7 +10,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -29,13 +21,9 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
-import com.sungardas.snapdirector.rest.utils.JsonFromFile;
-import com.sungardas.snapdirector.rest.utils.JsonFromStream;
-import com.sungardas.snapdirector.rest.utils.MultiReadHttpServletRequest;
 
 
 @Path("/backup")
