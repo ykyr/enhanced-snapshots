@@ -38,7 +38,6 @@ public class AWSTaskWorker implements Runnable {
 	public static final Log LOG = LogFactory.getLog(AWSTaskWorker.class);
 
 	private AWSCredentialsProvider awsCredentialsProvider;
-	private String queueURL;
 	private String region;
 	private String routineInstanceId;
 	private Item configuration;
@@ -46,7 +45,6 @@ public class AWSTaskWorker implements Runnable {
 
 	public AWSTaskWorker(AWSCredentialsProvider awsCredentialsProvider, Item configuration, String routineInstanceId) {
 		this.awsCredentialsProvider = awsCredentialsProvider;
-		this.queueURL = configuration.getString("taskQueueURL");
 		this.region = configuration.getString("ec2Region");
 		this.routineInstanceId = routineInstanceId;
 		this.configuration = configuration;
@@ -55,49 +53,31 @@ public class AWSTaskWorker implements Runnable {
 
 	@Override
 	public void run() {
-		AmazonSQS sqs = newAmazonSQSClient();
-		LOG.info(format("Starting listening tasks queue: %s", queueURL));
 		
 		try {
 			while (true) {
 				sleep();
-				Task task = null;
-				TaskEntry taskEntry = null;
 				
-				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
-				List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
-				if(messages!=null && messages.size()>0)
-					LOG.info(format("Resieved %d messages from tasks queue\n", messages.size()));
+				List<TaskEntry> tasks = DynamoUtils.getTasks(getMapper()); 
 				
-				for (Message message : messages) {
-					try {
-						taskEntry = createTaskEntry(message);
-						if(taskEntry!=null) {
-							LOG.info(format("Handling message : %s : %s",message.getMessageId(), taskEntry.toString()));
-							boolean execNow = taskEntry.getSchedulerManual().equals("true");
-							if(execNow && taskEntry.getType().equals("backup")) {
-								LOG.info(format("Backup on demand for volume: %s\n", taskEntry.getVolume()));
-								task = new AWSBackupVolumeTask(awsCredentialsProvider, taskEntry.getVolume(), routineInstanceId, new WorkerConfiguration(configuration));
-							} else {
-								LOG.info("Not a backup on demand task");
-							}
-						}
-						
-					} catch (JSONException e) {	e.printStackTrace(); }
-
-					if(task != null && taskEntry != null) {
-						DynamoUtils.putTask(taskEntry, getMapper());
-						task.execute();
+				
+				for(TaskEntry taskEntry: tasks) {
+					if(taskEntry.getStatus().equalsIgnoreCase("waiting")) {
 						DynamoUtils.deleteTask(taskEntry.getId(), getMapper());
+						taskEntry.setStatus("running");
+						 String taskId = DynamoUtils.putTask(taskEntry, getMapper());
+						 
+						 Task task = new AWSBackupVolumeTask(awsCredentialsProvider, taskEntry.getVolume(), routineInstanceId, new WorkerConfiguration(configuration));
+						 task.execute();
+						 DynamoUtils.deleteTask(taskId, getMapper());
+						 
+					break;
 					}
-
-					// Delete a message
-					LOG.info(format("AWSTaskWorker: message deleted: %s", message.getMessageId()));
-					String messageRecieptHandle = message.getReceiptHandle();
-					sqs.deleteMessage(new DeleteMessageRequest(queueURL, messageRecieptHandle));
 					
-				
+					sleep();
 				}
+				
+
 
 			}
 
@@ -108,12 +88,6 @@ public class AWSTaskWorker implements Runnable {
 		}
 	}
 	
-	private AmazonSQS newAmazonSQSClient() {
-		AmazonSQS sqs = new AmazonSQSClient(awsCredentialsProvider);
-		Region sqsRegion = Region.getRegion(Regions.fromName(region));
-		sqs.setRegion(sqsRegion);
-		return sqs;
-	}
 	
 	private TaskEntry createTaskEntry(Message message) {
 		JSONObject jsonTask=null;
