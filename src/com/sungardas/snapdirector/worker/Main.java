@@ -8,6 +8,13 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -21,8 +28,18 @@ import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 public class Main {
 	public static final Log LOG = LogFactory.getLog(Main.class);
 	public static void main(String[] args) {
+		String instanceId = null;
+		CommandLineArgumentsProvider argsProvider = new CommandLineArgumentsProvider(args);
+		
+		if(argsProvider.hasWorkerInstanceId()) {
+			instanceId = argsProvider.getWorkerInstanceId();
+		}
+		else {
+			instanceId = retrieveInstanceIdFromMetadata();
+		}
+		
 		AWSCredentialsProvider awsCredentialsProvider =  new EnvironmentBasedCredentialsProvider();
-		String instanceId = retrieveInstanceId();
+		
 		
 		DynamoDB dynamoDB = new DynamoDB(new AmazonDynamoDBClient(awsCredentialsProvider));
 		Table workerConfigurationTable = dynamoDB.getTable("WorkerConfiguration");
@@ -39,7 +56,7 @@ public class Main {
 		
 	}
 	
-	private static String retrieveInstanceId() {
+	private static String retrieveInstanceIdFromMetadata() {
 		String instanceId = null;
 		try {
 			URL url = new URL("http://169.254.169.254/latest/meta-data/instance-id");
@@ -72,6 +89,10 @@ public class Main {
 			}
 		return;
 	}
+	
+	
+	
+	
 	
 
 }
