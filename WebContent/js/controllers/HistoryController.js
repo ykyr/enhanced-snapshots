@@ -33,7 +33,8 @@ angular.module('web')
                 var newTask = {
                     id: "",
                     priority: "",
-                    volume: $scope.backupToRestore.volume,
+                    volume: $scope.backupToRestore.volumeId,
+                    backupFileName: $scope.backupToRestore.fileName,
                     type: "restore",
                     status: "waiting",
                     schedulerManual: true,

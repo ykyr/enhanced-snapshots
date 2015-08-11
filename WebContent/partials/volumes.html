@@ -53,6 +53,8 @@
         <tbody>
         <tr ng-repeat="volume in displayedCollection">
             <td class="text-center commands">
+                <button class="btn btn-link" title="Restore now" ng-click="restore(volume.volumeId)"><span
+                        class="glyphicon glyphicon-cloud-upload text-success"></span></button>
                 <button class="btn btn-link" title="Backup now" ng-click="backup(volume.volumeId)"><span
                         class="glyphicon glyphicon-cloud-download"></span></button>
                 <a ui-sref="app.volume.schedule({ volumeId: volume.volumeId })" class="btn btn-link disabled" title="Schedule backup"><span

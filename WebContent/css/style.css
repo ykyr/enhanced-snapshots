@@ -260,6 +260,23 @@ ul.dropdown-menu a,
     padding: 20px !important;
 }
 
+@keyframes activeTaskBlinking {
+    from {color: #d9edf7}
+    to {color: rgba(60, 118, 61, 1)}
+}
+
+.bs-callout.active h1 span.glyphicon{
+    animation: infinite;
+    animation-name: activeTaskBlinking;
+    animation-duration: 0.75s;
+    animation-direction: alternate;
+}
+
+input.ng-invalid-email{
+    border: 1px solid #A30000;
+    box-shadow: 0 0 2px #A30000;
+}
+
 /* Callouts */
 
 .bs-callout {
@@ -268,10 +285,9 @@ ul.dropdown-menu a,
     border: 1px solid #ccc;
     border-left-width: 5px;
     border-radius: 5px;
-    background-color: rgba(255, 255, 255, 0.6);
 }
-.bs-callout.active{
-    background-color: #ffffff;
+.bs-callout:not(.active){
+    background-color: rgba(255, 255, 255, 0.6);
 }
 .bs-callout h4 {
     margin-top: 0;

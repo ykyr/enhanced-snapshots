@@ -2,9 +2,14 @@
     <h3 class="modal-title"><span class="glyphicon glyphicon-cloud-upload"></span>&nbsp; Restore Backup</h3>
 </div>
 <div class="modal-body">
-    <p>Are you sure you want to start restore process for volume <span class="h4 text-primary">{{backupToRestore.volume}}</span> from backup <span class="h4 text-warning">{{backupToRestore.name}}</span> now? </p>
+    <p>You are going to start restore process. </p>
+    <blockquote>
+        <p>Volume: <span class="h4 text-primary">{{backupToRestore.volumeId}}</span></p>
+        <p>Backup: <span class="h4 text-warning">{{backupToRestore.fileName || 'your last backup'}}</span></p>
+    </blockquote>
+    <p> Do you want to start it now?</p>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-warning" ng-click="$close()"><span class="glyphicon glyphicon-cloud-upload"></span>&nbsp; Add Task</button>
+    <button class="btn btn-warning" ng-click="$close()"><span class="glyphicon glyphicon-cloud-upload"></span>&nbsp; Add Restore Task</button>
     <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
 </div>
