@@ -8,13 +8,6 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -23,7 +16,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sungardas.snapdirector.aws.SysProperiesBasedCredentialsProvider;
 
 public class Main {
 	public static final Log LOG = LogFactory.getLog(Main.class);
@@ -38,7 +31,7 @@ public class Main {
 			instanceId = retrieveInstanceIdFromMetadata();
 		}
 		
-		AWSCredentialsProvider awsCredentialsProvider =  new EnvironmentBasedCredentialsProvider();
+		AWSCredentialsProvider awsCredentialsProvider =  new SysProperiesBasedCredentialsProvider(argsProvider);
 		
 		
 		DynamoDB dynamoDB = new DynamoDB(new AmazonDynamoDBClient(awsCredentialsProvider));
@@ -65,8 +58,8 @@ public class Main {
 			if (s.hasNext()) {
 				instanceId = s.next();
 				LOG.info("Getting Worker InstanceId from metadata: " + instanceId);
-				
 			}
+			s.close();
 		} catch (IOException e) {
 			LOG.info("Can't get InstanceId from metadata.");
 			System.exit(0);

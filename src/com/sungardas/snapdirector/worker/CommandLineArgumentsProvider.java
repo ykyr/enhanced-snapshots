@@ -8,18 +8,23 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 public class CommandLineArgumentsProvider {
 	private static final String WORKER_ID_ARG = "worker-id";
+	private static final String ACESS_KEY_ARG = "access-key";
+	private static final String SECRET_KEY_ARG = "secret-key";
 	private CommandLine commandLine;
 	private String workerInstanceId;
+	private String accessKey;
+	private String secretKey;
 
 	public CommandLineArgumentsProvider(String[] args) {
 		commandLine = parseArguments(getOptions(), args);
 		workerInstanceId = commandLine.getOptionValue(WORKER_ID_ARG);
+		accessKey = commandLine.getOptionValue(ACESS_KEY_ARG);
+		secretKey = commandLine.getOptionValue(SECRET_KEY_ARG);
 	}
 	
 	public boolean hasWorkerInstanceId() {
@@ -30,12 +35,27 @@ public class CommandLineArgumentsProvider {
 	}
 
 	private static Options getOptions() {
-		Option workerId = new Option("w", WORKER_ID_ARG, false, "Worker's configuration identifier");
+		Option workerId = new Option("w", WORKER_ID_ARG, true, "Worker's configuration identifier");
 		workerId.setArgs(1);
-		workerId.setArgName(WORKER_ID_ARG);
+		workerId.setArgName("worker instance id");
 		workerId.setRequired(true);
+		
+		
+		Option accessKey = new Option(null,  ACESS_KEY_ARG, true, "The AWS assigned access key");
+		accessKey.setArgs(1);
+		accessKey.setArgName("aws access key");
+		accessKey.setRequired(true);
+		
+		Option secretKey = new Option(null,  SECRET_KEY_ARG, true, "The AWS assigned secret key");
+		secretKey.setArgs(1);
+		secretKey.setArgName("aws secret key");
+		secretKey.setRequired(false);
+		
+		
 		Options opts = new Options();
 		opts.addOption(workerId);
+		opts.addOption(accessKey);
+		opts.addOption(secretKey);
 		return opts;
 	}
 
@@ -60,6 +80,14 @@ public class CommandLineArgumentsProvider {
 		helpFormatter.printHelp(writer, printedRowWidth, commandLineSyntax, header, options, spacesBeforeOption,
 				spacesBeforeOptionDescription, footer, displayUsage);
 		writer.flush();
+	}
+
+	public String getAwsAccessKey() {
+		return accessKey;
+	}
+
+	public String getAwsSecretKey() {
+		return secretKey;
 	}
 
 }
