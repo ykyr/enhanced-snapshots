@@ -130,7 +130,6 @@ public class S3Utils {
 
 		String volumeId = volume.getVolumeId();
 		LOG.info(format("Starting creating snapshot for %s", volumeId));
-
 		CreateSnapshotRequest snapshotRequest = new CreateSnapshotRequest(volumeId, volumeId + "__"
 				+ formatter.format(new Date(System.currentTimeMillis())));
 		CreateSnapshotResult crSnapshotResult = ec2client.createSnapshot(snapshotRequest);
@@ -241,10 +240,26 @@ public class S3Utils {
 		if (zones.size() > 0) {
 			LOG.info(format("Starting creating volume from %s", sourceSnapshot.getSnapshotId()));
 
-			CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(sourceSnapshot.getSnapshotId(),
-					availabilityZoneName);
-			CreateVolumeResult crVolumeResult = ec2client.createVolume(crVolumeRequest);
-			vol = crVolumeResult.getVolume();
+			boolean incorrectState = true;
+			long timeout = 10L;
+			while (incorrectState) {
+				try {
+					incorrectState = false;
+					CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(sourceSnapshot.getSnapshotId(),
+							availabilityZoneName);
+					CreateVolumeResult crVolumeResult = ec2client.createVolume(crVolumeRequest);
+					vol = crVolumeResult.getVolume();
+				} catch (AmazonServiceException incorrectStateException) {
+					LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
+					incorrectState = true;
+					timeout += timeout < 120 ? timeout * 2 : 0;
+					try {
+						TimeUnit.SECONDS.sleep(timeout);
+					} catch (InterruptedException e) {
+					}
+				}
+			}
+
 		}
 		return vol;
 	}
@@ -252,25 +267,70 @@ public class S3Utils {
 
 	public static void deleteVolume(AmazonEC2 ec2client, Volume volume) {
 
-		DeleteVolumeRequest deleteVolumeRequest = new DeleteVolumeRequest(volume.getVolumeId());
-		ec2client.deleteVolume(deleteVolumeRequest);
+		boolean incorrectState = true;
+		long timeout = 10L;
+		while (incorrectState) {
+			try {
+				incorrectState = false;
+				DeleteVolumeRequest deleteVolumeRequest = new DeleteVolumeRequest(volume.getVolumeId());
+				ec2client.deleteVolume(deleteVolumeRequest);
+			} catch (AmazonServiceException incorrectStateException) {
+				LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
+				incorrectState = true;
+				timeout += timeout < 120 ? timeout * 2 : 0;
+				try {
+					TimeUnit.SECONDS.sleep(timeout);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
 		LOG.info(format("Volume %s deleted", volume.getVolumeId()));
 	}
 
 
 	public static void attachVolume(AmazonEC2 ec2client, Instance instance, Volume volume) {
 		String deviceName = getNextAvaiableDeviceName(instance);
+		boolean incorrectState = true;
+		long timeout = 10L;
+		while (incorrectState) {
+			try {
+				incorrectState = false;
 		AttachVolumeRequest attachVolumeRequest = new AttachVolumeRequest(volume.getVolumeId(),
 				instance.getInstanceId(), deviceName);
 		AttachVolumeResult res = ec2client.attachVolume(attachVolumeRequest);
+			} catch (AmazonServiceException incorrectStateException) {
+				LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
+				incorrectState = true;
+				timeout += timeout < 120 ? timeout * 2 : 0;
+				try {
+					TimeUnit.SECONDS.sleep(timeout);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
 		LOG.info(format("\nVolume attached. check instance data\n %s", instance.toString()));
 
 	}
 
 
 	public static void unattachVolume(AmazonEC2 ec2client, Volume volume) {
+		boolean incorrectState = true;
+		long timeout = 10L;
+		while (incorrectState) {
+			try {
+				incorrectState = false;
 		DetachVolumeRequest detachVolumeRequest = new DetachVolumeRequest(volume.getVolumeId());
 		DetachVolumeResult detachVolumeResult = ec2client.detachVolume(detachVolumeRequest);
+			} catch (AmazonServiceException incorrectStateException) {
+				LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
+				incorrectState = true;
+				timeout += timeout < 120 ? timeout * 2 : 0;
+				try {
+					TimeUnit.SECONDS.sleep(timeout);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
 		LOG.info(format("\nVolume %s unattached", volume.getVolumeId()));
 	}
 

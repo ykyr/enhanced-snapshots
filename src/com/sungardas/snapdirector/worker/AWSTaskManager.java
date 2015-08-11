@@ -1,10 +1,9 @@
 package com.sungardas.snapdirector.worker;
 
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
+import static java.lang.String.format;
 
-import javax.servlet.ServletRequest;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,7 +17,6 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
@@ -28,66 +26,63 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
-import com.sungardas.snapdirector.tasks.AWSBackupVolumeTask;
-import com.sungardas.snapdirector.tasks.Task;
 
-import static java.lang.String.format;
-
-
-public class AWSTaskWorker implements Runnable {
-	public static final Log LOG = LogFactory.getLog(AWSTaskWorker.class);
-
+public class AWSTaskManager implements Runnable {
+	public static final Log LOG = LogFactory.getLog(AWSTaskManager.class);
 	private AWSCredentialsProvider awsCredentialsProvider;
+	private String queueURL;
 	private String region;
-	private String routineInstanceId;
 	private Item configuration;
-
-
-	public AWSTaskWorker(AWSCredentialsProvider awsCredentialsProvider, Item configuration, String routineInstanceId) {
+	
+	public AWSTaskManager(AWSCredentialsProvider awsCredentialsProvider, Item configuration) {
 		this.awsCredentialsProvider = awsCredentialsProvider;
+		this.queueURL = configuration.getString("taskQueueURL");
 		this.region = configuration.getString("ec2Region");
-		this.routineInstanceId = routineInstanceId;
 		this.configuration = configuration;
 	}
 
-
 	@Override
 	public void run() {
+		AmazonSQS sqs = newAmazonSQSClient();
+		LOG.info(format("Starting listening tasks queue: %s", queueURL));
 		
 		try {
+			
 			while (true) {
 				sleep();
+				TaskEntry taskEntry = null;
 				
-				List<TaskEntry> tasks = DynamoUtils.getTasks(getMapper()); 
+				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
+				List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+				if(messages!=null && messages.size()>0)
+					LOG.info(format("Resieved %d messages from tasks queue\n", messages.size()));
 				
-				
-				for(TaskEntry taskEntry: tasks) {
-					if(taskEntry.getStatus().equalsIgnoreCase("waiting")) {
-						DynamoUtils.deleteTask(taskEntry.getId(), getMapper());
-						taskEntry.setStatus("running");
-						 String taskId = DynamoUtils.putTask(taskEntry, getMapper());
-						 
-						 Task task = new AWSBackupVolumeTask(awsCredentialsProvider, taskEntry.getVolume(), routineInstanceId, new WorkerConfiguration(configuration));
-						 task.execute();
-						 DynamoUtils.deleteTask(taskId, getMapper());
-						 
-					break;
-					}
+				for (Message message : messages) {
+					try {
+						taskEntry = createTaskEntry(message);
+						if(taskEntry!=null) {
+							LOG.info(format("Handling message : %s : %s",message.getMessageId(), taskEntry.toString()));
+							DynamoUtils.putTask(taskEntry, getMapper());	
+						}
+						
+						
+					} catch (JSONException e) {	e.printStackTrace(); }
 					
-					sleep();
+					// Delete a message
+					LOG.info(format("AWSTaskWorker: message deleted: %s", message.getMessageId()));
+					String messageRecieptHandle = message.getReceiptHandle();
+					sqs.deleteMessage(new DeleteMessageRequest(queueURL, messageRecieptHandle));
 				}
-				
-
-
+			
 			}
-
+			
 		} catch (AmazonServiceException ase) {
 			printASE(ase);
 		} catch (AmazonClientException ace) {
 			printACE(ace);
 		}
+		
 	}
-	
 	
 	private TaskEntry createTaskEntry(Message message) {
 		JSONObject jsonTask=null;
@@ -99,6 +94,13 @@ public class AWSTaskWorker implements Runnable {
 			}
 		} catch (JSONException e) {e.printStackTrace();	}
 		return taskEntity;
+	}
+	
+	private AmazonSQS newAmazonSQSClient() {
+		AmazonSQS sqs = new AmazonSQSClient(awsCredentialsProvider);
+		Region sqsRegion = Region.getRegion(Regions.fromName(region));
+		sqs.setRegion(sqsRegion);
+		return sqs;
 	}
 	
 	private void sleep() {

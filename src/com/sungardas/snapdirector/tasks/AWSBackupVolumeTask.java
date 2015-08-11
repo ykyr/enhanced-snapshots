@@ -77,21 +77,24 @@ public class AWSBackupVolumeTask implements Task {
 		
 		
 		
-		
+		boolean backupStatus = false;
 		if( configuration.isFakeBackup() ) {
-			sdfs.backupVolumeToSdfs(configuration.getFakeBackupSource(), backupfileName);
+			backupStatus = sdfs.backupVolumeToSdfs(configuration.getFakeBackupSource(), backupfileName);
 		}
 		else if(!configuration.isFakeEC2()){
-			sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
+			backupStatus = sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
 			
 		}
-		long backupSize=sdfs.getBackupSize(backupfileName);
-		LOG.info("Backup creation time: " + sdfs.getBackupCreationTime(backupfileName));
-		LOG.info("Backup size: " + backupSize);
+		if(backupStatus) {
+			long backupSize=sdfs.getBackupSize(backupfileName);
+			LOG.info("Backup creation time: " + sdfs.getBackupCreationTime(backupfileName));
+			LOG.info("Backup size: " + backupSize);
+			
+			BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, String.valueOf(backupSize));
+			LOG.info("Put backup entry to the Backup List: "+backup.toString());
+			DynamoUtils.putbackupInfo(backup, getMapper());
+		}
 		
-		BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, String.valueOf(backupSize));
-		LOG.info("Put backup entry to the Backup List: "+backup.toString());
-		DynamoUtils.putbackupInfo(backup, getMapper());
 		
 		
 		

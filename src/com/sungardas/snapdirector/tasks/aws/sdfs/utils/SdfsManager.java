@@ -176,18 +176,29 @@ public class SdfsManager {
 //	}
 //
 //
-	public void backupVolumeToSdfs(String volume, String backupFileName) {
+	public boolean backupVolumeToSdfs(String volume, String backupFileName) {
 		try {
 			LOG.info(format("Creating backup from '%s' with name '%s'", volume, backupFileName));
-			Process binaryCopy = binaryCopy(volume, backupFileName);
-			while (isAlive(binaryCopy)) {
-				sleep();
+			File volf = new File(volume);
+			if (!volf.exists() || !volf.isFile()) {
+				LOG.info(format("Cant find attached source: %s", volume));
+				
+				volume = "/dev/xvd" + volume.substring(volume.length()-1);
+				LOG.info(format("New sourcepash : %s", volume));
 			}
-			LOG.info(format("Backup '%s' created", backupFileName));
 			
+			
+			Process binaryCopy = binaryCopy(volume, backupFileName);
+//			while (isAlive(binaryCopy)) {
+//				sleep();
+//			}
+			LOG.info(format("Backup '%s' created", backupFileName));
+			return true;
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return false;
 	}
 	
 	public long getBackupSize( String backupFileName) {
@@ -241,7 +252,14 @@ public class SdfsManager {
 		}
 		
 		Process p = processbuilder.start();
-
+		int exit_code=0;
+		try {
+			exit_code = p.waitFor();
+		} catch (InterruptedException e) {
+			
+			e.printStackTrace();
+		}
+		LOG.info("dd finished wuth code:" + exit_code);
 		return p;
 	}
 	
