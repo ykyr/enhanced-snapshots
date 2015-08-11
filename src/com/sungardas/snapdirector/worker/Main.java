@@ -31,8 +31,11 @@ public class Main {
 		checkFakeBackupSourceUsage(configuration);
 		
 		
-		ExecutorService  executor = Executors.newSingleThreadExecutor();
+		ExecutorService  executor = Executors.newCachedThreadPool();
 		executor.execute(new AWSTaskWorker(awsCredentialsProvider,configuration, instanceId));
+		executor.execute(new AWSTaskManager(awsCredentialsProvider,configuration));
+		
+		
 		
 	}
 	

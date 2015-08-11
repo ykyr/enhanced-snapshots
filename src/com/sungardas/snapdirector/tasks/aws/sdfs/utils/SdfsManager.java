@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,11 +15,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.util.BinaryUtils;
+import com.amazonaws.util.Md5Utils;
+import com.sungardas.snapdirector.tasks.AWSBackupVolumeTask;
+import com.sungardas.snapdirector.tasks.aws.sdfs.SdfsConfigPathes;
 import com.sungardas.snapdirector.worker.WorkerConfiguration;
 
 
@@ -169,18 +176,24 @@ public class SdfsManager {
 //	}
 //
 //
-	public void backupVolumeToSdfs(String volume, String backupFileName) {
-		try {
+	public boolean backupVolumeToSdfs(String volume, String backupFileName) throws IOException {
+		
 			LOG.info(format("Creating backup from '%s' with name '%s'", volume, backupFileName));
-			Process binaryCopy = binaryCopy(volume, backupFileName);
-			while (isAlive(binaryCopy)) {
-				sleep();
+			File volf = new File(volume);
+			if (!volf.exists() || !volf.isFile()) {
+				LOG.info(format("Cant find attached source: %s", volume));
+				
+				volume = "/dev/xvd" + volume.substring(volume.length()-1);
+				LOG.info(format("New sourcepash : %s", volume));
 			}
-			LOG.info(format("Backup '%s' created", backupFileName));
 			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+			
+			Process binaryCopy = binaryCopy(volume, backupFileName);
+			LOG.info(format("Backup '%s' created", backupFileName));
+			return true;
+
+		
+		
 	}
 	
 	public long getBackupSize( String backupFileName) {
@@ -234,7 +247,14 @@ public class SdfsManager {
 		}
 		
 		Process p = processbuilder.start();
-
+		int exit_code=0;
+		try {
+			exit_code = p.waitFor();
+		} catch (InterruptedException e) {
+			
+			e.printStackTrace();
+		}
+		LOG.info("dd finished wuth code:" + exit_code);
 		return p;
 	}
 	

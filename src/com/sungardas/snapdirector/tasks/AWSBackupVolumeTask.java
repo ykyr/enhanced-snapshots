@@ -2,8 +2,15 @@ package com.sungardas.snapdirector.tasks;
 
 import static java.lang.String.format;
 
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Scanner;
+
+import javax.servlet.ServletRequest;
+import javax.swing.text.DateFormatter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,10 +21,14 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.DescribeSnapshotsRequest;
+import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sungardas.snapdirector.aws.S3Utils;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
+import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.tasks.aws.VolumeBackup;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsManager;
 import com.sungardas.snapdirector.worker.WorkerConfiguration;
@@ -65,23 +76,36 @@ public class AWSBackupVolumeTask implements Task {
 		String backupDate = String.valueOf(System.currentTimeMillis());
 		String backupfileName = volumeId + "."+backupDate+".backup";
 		
-		
-		
-		
-		if( configuration.isFakeBackup() ) {
-			sdfs.backupVolumeToSdfs(configuration.getFakeBackupSource(), backupfileName);
-		}
-		else if(!configuration.isFakeEC2()){
-			sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
-			
-		}
-		long backupSize=sdfs.getBackupSize(backupfileName);
-		LOG.info("Backup creation time: " + sdfs.getBackupCreationTime(backupfileName));
-		LOG.info("Backup size: " + backupSize);
-		
-		BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, String.valueOf(backupSize));
-		LOG.info("Put backup entry to the Backup List: "+backup.toString());
+		BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS);
 		DynamoUtils.putbackupInfo(backup, getMapper());
+		
+		boolean backupStatus = false;
+		try {
+			if( configuration.isFakeBackup() ) {
+				backupStatus = sdfs.backupVolumeToSdfs(configuration.getFakeBackupSource(), backupfileName);
+			}
+			else if(!configuration.isFakeEC2()){
+				backupStatus = sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
+				
+			}
+		} catch (IOException e) {
+			LOG.fatal(format("Backup of volume %s failed", volumeId));
+			backup.setState(BackupState.FAILED);
+			DynamoUtils.putbackupInfo(backup, getMapper());
+		}
+		
+		if(backupStatus) {
+			long backupSize=sdfs.getBackupSize(backupfileName);
+			LOG.info("Backup creation time: " + sdfs.getBackupCreationTime(backupfileName));
+			LOG.info("Backup size: " + backupSize);
+			
+			
+			LOG.info("Put backup entry to the Backup List: "+backup.toString());
+			backup.setState(BackupState.COMPLETED);
+			backup.setSize(String.valueOf(backupSize));
+			DynamoUtils.putbackupInfo(backup, getMapper());
+		}
+		
 		
 		
 		

@@ -1,17 +1,16 @@
 package com.sungardas.snapdirector.tasks.aws;
 
-import static java.lang.String.format;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.text.Format;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -39,9 +38,13 @@ import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.sungardas.snapdirector.tasks.AWSBackupVolumeTask;
 import com.sungardas.snapdirector.tasks.aws.sdfs.SdfsConfigPathes;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.S3Utils;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsProcess;
+import com.sungardas.snapdirector.tasks.aws.sdfs.utils.TarUtils;
+
+import static java.lang.String.*;
 
 
 public class VolumeBackup {
@@ -237,20 +240,29 @@ public class VolumeBackup {
 		
 		
 		Snapshot snapshot = S3Utils.createSnapshot(ec2client, volumeSrc);
-		S3Utils.waitForCompleteState(ec2client, snapshot);
-		LOG.info("\nSnapshot creation done. Check snapshot data:\n" + snapshot.toString());
+//		try {
+//			TimeUnit.SECONDS.sleep(120);
+//		} catch (InterruptedException e) {}
+		
+//		S3Utils.waitForCompleteState(ec2client, snapshot);
+		LOG.info("\nSnapshot created. Check snapshot data:\n" + snapshot.toString());
 
 		// create volume
 		String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
 		Volume volumeDest = S3Utils.createVolumeFromSnapshot(ec2client, snapshot, instanceAvailabilityZone);
-				//properties.getProperty("TEMP_VOLUME_AVIALABILITY_ZONE"));
-		volumeDest = S3Utils.waitForAvailableState(ec2client, volumeDest);
+//		
+//		try {
+//			TimeUnit.SECONDS.sleep(120);
+//		} catch (InterruptedException e) {}
+		
+		//volumeDest = S3Utils.waitForAvailableState(ec2client, volumeDest);
 		LOG.info("\nVolume created. Check volume data:\n" + volumeDest.toString());
 
 		// mount AMI volume
 		S3Utils.attachVolume(ec2client, instance, volumeDest);
 		return S3Utils.syncVolume(ec2client, volumeDest);
 	}
+	
 
 
 	private static Volume getVolume(AmazonEC2 ec2client, String volumeId) {
@@ -289,6 +301,12 @@ public class VolumeBackup {
 		// Detaching volume
 		LOG.info("Detaching volume: " + volume.getVolumeId());
 		S3Utils.unattachVolume(ec2client, volume);
+		
+		try {
+			TimeUnit.SECONDS.sleep(120);
+		} catch (InterruptedException e) {}
+		
+		
 		Volume unattachedVol = S3Utils.waitForAvailableState(ec2client, volume);
 		do {
 			try {

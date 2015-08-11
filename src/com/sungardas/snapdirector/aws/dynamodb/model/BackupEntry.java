@@ -18,11 +18,12 @@ final public class BackupEntry {
 		super();
 	}
 	
-	public BackupEntry(String volumeId, String fileName, String timeCreated, String size){
+	public BackupEntry(String volumeId, String fileName, String timeCreated, String size, BackupState state){
 		this.setVolumeId(volumeId);
 		this.setFileName(fileName);
 		this.setTimeCreated(timeCreated);
 		this.setSize(size);
+		this.setState(state);
 	}
 	
 	
@@ -62,6 +63,15 @@ final public class BackupEntry {
 
 	public void setSize(String size) {
 		attributes.put("size", size);
+	}
+	
+	@DynamoDBAttribute(attributeName = "state")
+	public String getState() {
+		return (String) attributes.get("state");
+	}
+
+	public void setState(BackupState state) {
+		attributes.put("state", state.getState());
 	}
 
 	@Override

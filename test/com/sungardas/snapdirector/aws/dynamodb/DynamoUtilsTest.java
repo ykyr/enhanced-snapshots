@@ -14,6 +14,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
+import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 
 public class DynamoUtilsTest {
 
@@ -37,7 +38,7 @@ public class DynamoUtilsTest {
 		
 		double salt = Math.random();
 		
-		BackupEntry newBackup = new BackupEntry("vol-69dee6a0" + salt, "vol-69dee6a0111.backup","201507311025", "111111");
+		BackupEntry newBackup = new BackupEntry("vol-69dee6a0" + salt, "vol-69dee6a0111.backup","201507311025", "111111", BackupState.INPROGRESS);
 		newBackup.setVolumeId("vol-69dee6a0" + salt);
 		newBackup.setFileName("vol-69dee6a0111.backup");
 		newBackup.setTimeCreated("201507311025");
