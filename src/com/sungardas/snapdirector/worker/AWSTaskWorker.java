@@ -1,10 +1,7 @@
 package com.sungardas.snapdirector.worker;
 
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,24 +11,14 @@ import org.json.JSONObject;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.tasks.AWSBackupVolumeTask;
 import com.sungardas.snapdirector.tasks.Task;
-
-import static java.lang.String.format;
 
 
 public class AWSTaskWorker implements Runnable {
@@ -125,7 +112,7 @@ public class AWSTaskWorker implements Runnable {
 	}
 	
 	private DynamoDBMapper getMapper() {
-		AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
+		AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentialsProvider);
 		return new DynamoDBMapper(client);
 	}
 

@@ -23,7 +23,6 @@ import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 
@@ -127,7 +126,7 @@ public class AWSTaskManager implements Runnable {
 	}
 	
 	private DynamoDBMapper getMapper() {
-		AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
+		AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentialsProvider);
 		return new DynamoDBMapper(client);
 	}
 
