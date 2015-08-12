@@ -14,7 +14,6 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.Volume;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
@@ -73,7 +72,7 @@ public class AWSBackupVolumeTask implements Task {
 			}
 		} catch (IOException e) {
 			LOG.fatal(format("Backup of volume %s failed", volumeId));
-			backup.setState(BackupState.FAILED.getState());
+			backup.setState(BackupState.FAILED);
 			DynamoUtils.putbackupInfo(backup, getMapper());
 		}
 		
@@ -84,7 +83,7 @@ public class AWSBackupVolumeTask implements Task {
 			
 			
 			LOG.info("Put backup entry to the Backup List: "+backup.toString());
-			backup.setState(BackupState.COMPLETED.getState());
+			backup.setState(BackupState.COMPLETED);
 			backup.setSize(String.valueOf(backupSize));
 			DynamoUtils.putbackupInfo(backup, getMapper());
 		}
@@ -103,7 +102,7 @@ public class AWSBackupVolumeTask implements Task {
 	
 	
 	private DynamoDBMapper getMapper() {
-		AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
+		AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentialsProvider);
 		String region = configuration.getEc2Region();
 		client.setRegion(Region.getRegion(Regions.fromName(region)));
 		return new DynamoDBMapper(client);
