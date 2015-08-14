@@ -2,6 +2,7 @@ package com.sungardas.snapdirector.aws.dynamodb.model;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIgnore;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.util.json.Jackson;
 
@@ -32,7 +33,7 @@ public class User {
     }
 
     public void setFirstName(String firstName) {
-        attributes.put("username", firstName);
+        attributes.put("firstName", firstName);
     }
 
 
@@ -77,8 +78,9 @@ public class User {
         return getUserInfo();
     }
 
+    @DynamoDBIgnore
     public String getUserInfo() {
-        Map<String, Object> passwordLessUserInfo = new LinkedHashMap<String, Object>();
+        Map<String, Object> passwordLessUserInfo = new LinkedHashMap<>();
         passwordLessUserInfo.putAll(attributes);
         passwordLessUserInfo.remove("password");
         return Jackson.toJsonString(passwordLessUserInfo);
