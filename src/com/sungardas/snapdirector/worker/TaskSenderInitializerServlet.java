@@ -17,29 +17,29 @@ import org.apache.commons.logging.LogFactory;
  * Servlet implementation class TaskWorkerInitializerServlet
  */
 @WebServlet(
-		loadOnStartup=2,
-		urlPatterns = { "/TaskWorkerInitializerServlet" }, 
+		loadOnStartup=3,
+		urlPatterns = { "/TaskSenderInitializerServlet" }, 
 		initParams = { 
 				@WebInitParam(name = "shutdown-on-unload", value = "true")
 		})
-public class TaskWorkerInitializerServlet extends HttpServlet {
-	private static final Log LOG = LogFactory.getLog(TaskWorkerInitializerServlet.class);
+public class TaskSenderInitializerServlet extends HttpServlet {
+	private static final Log LOG = LogFactory.getLog(TaskSenderInitializerServlet.class);
 	private static final long serialVersionUID = 1L;
 	private ExecutorService  executor;
        
-    public TaskWorkerInitializerServlet() {
+    public TaskSenderInitializerServlet() {
         super();
     }
 
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		LOG.info("TaskWorkerInitializerServlet started...");
+		LOG.info("TaskSenderInitializerServlet started...");
 		executor = Executors.newSingleThreadExecutor();
-		executor.execute(new TaskWorker(config.getServletContext()));
+		executor.execute(new TasksSender(config.getServletContext()));
 	}
 
 	public void destroy() {
-		LOG.info("TaskWorkerInitializerServlet stoped.");
+		LOG.info("TaskSenderInitializerServlet stoped.");
 		executor.shutdownNow();
 	}
 	

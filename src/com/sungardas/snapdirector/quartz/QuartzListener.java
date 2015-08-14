@@ -42,7 +42,7 @@ public class QuartzListener extends QuartzInitializerListener implements Servlet
         StdSchedulerFactory factory = (StdSchedulerFactory) ctx.getAttribute(QUARTZ_FACTORY_KEY);
         try {
             Scheduler scheduler = factory.getScheduler();
-            JobDetail jobDetail = JobBuilder.newJob(TestJob.class).build();
+            JobDetail jobDetail = JobBuilder.newJob(QuartzTestJob.class).build();
 //            Trigger trigger = TriggerBuilder.newTrigger().withIdentity("simple").withSchedule(
 //                    CronScheduleBuilder.cronSchedule("0 0/1 * 1/1 * ? *")).startNow().build();
             

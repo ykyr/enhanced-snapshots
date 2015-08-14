@@ -48,6 +48,8 @@ public class AWSTaskWorker implements Runnable {
 				List<TaskEntry> tasks = DynamoUtils.getTasks(getMapper()); 
 				
 				
+				
+				
 				for(TaskEntry taskEntry: tasks) {
 					if(taskEntry.getStatus().equalsIgnoreCase("waiting")) {
 						DynamoUtils.deleteTask(taskEntry.getId(), getMapper());
@@ -56,6 +58,13 @@ public class AWSTaskWorker implements Runnable {
 						 
 						 Task task = new AWSBackupVolumeTask(awsCredentialsProvider, taskEntry.getVolume(), routineInstanceId, new WorkerConfiguration(configuration));
 						 task.execute();
+						 try {
+							TimeUnit.SECONDS.sleep(10);
+							System.out.println("<<waiting>>");
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						 DynamoUtils.deleteTask(taskId, getMapper());
 						 
 					break;
@@ -76,17 +85,17 @@ public class AWSTaskWorker implements Runnable {
 	}
 	
 	
-	private TaskEntry createTaskEntry(Message message) {
-		JSONObject jsonTask=null;
-		com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry taskEntity = null;
-		try {
-			jsonTask = new JSONObject(message.getBody());
-			if(jsonTask.getString("type").equalsIgnoreCase("backup"))	{
-				taskEntity = new com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry(jsonTask);
-			}
-		} catch (JSONException e) {e.printStackTrace();	}
-		return taskEntity;
-	}
+//	private TaskEntry createTaskEntry(Message message) {
+//		JSONObject jsonTask=null;
+//		com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry taskEntity = null;
+//		try {
+//			jsonTask = new JSONObject(message.getBody());
+//			if(jsonTask.getString("type").equalsIgnoreCase("backup"))	{
+//				taskEntity = new com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry(jsonTask);
+//			}
+//		} catch (JSONException e) {e.printStackTrace();	}
+//		return taskEntity;
+//	}
 	
 	private void sleep() {
 		try {

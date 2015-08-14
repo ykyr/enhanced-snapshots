@@ -48,6 +48,8 @@ public class TaskEntry {
 		this.setSchedulerManual(jsonTask.getBoolean("schedulerManual"));
 		this.setSchedulerName(jsonTask.getString("schedulerName"));
 		this.setSchedulerTime(jsonTask.getString("schedulerTime"));
+		this.setId(jsonTask.getString("id"));
+		this.setWorker(jsonTask.getString("worker"));
 
 	}
 	
@@ -68,6 +70,15 @@ public class TaskEntry {
 
 	public void setPriority(Integer priority) {
 		attributes.put("priority", priority);
+	}
+	
+	@DynamoDBAttribute(attributeName = "worker")
+	public String getWorker() {
+		return (String) attributes.get("worker");
+	}
+
+	public void setWorker(String worker) {
+		attributes.put("worker", worker);
 	}
 
 	@DynamoDBAttribute(attributeName = "status")

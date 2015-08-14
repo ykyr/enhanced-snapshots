@@ -13,6 +13,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
@@ -49,9 +50,8 @@ public class TaskRestService {
 	@GET()
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getTasks() throws ParseException {
-		String result = null;
-		//try {
-			//addTask(null);
+		try {
+			
 			List<TaskEntry> taskModels = DynamoUtils.getTasks(getMapper(servletRequest));
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 			JSONArray tasks = new JSONArray();
@@ -65,17 +65,75 @@ public class TaskRestService {
 				jsonTask.put("status",nextTask.getStatus());
 				jsonTask.put("type",nextTask.getType());
 				jsonTask.put("volume",nextTask.getVolume());
+				
 				tasks.put(jsonTask);
 			}
-			
 			return tasks.toString();
-//			String path = context.getInitParameter("rest:mock-directory");
-//			JSONArray tasks = JsonFromFile.newJSONArray(path + "tasks.json");
-//			result = tasks.toString();
-//		} catch (Exception e) {
-//			throw new WebApplicationException(e);
-//		}
-//		return result;
+			
+		} catch (Exception e) {
+			throw new WebApplicationException(e);
+		}
+	}
+
+
+	@POST()
+	@Produces(MediaType.APPLICATION_JSON)
+	public String addTask(String taskJsonString) {
+		try {
+		JSONObject jsonTask =new JSONObject(taskJsonString);
+		jsonTask.put("worker", context.getInitParameter("aws:routine-inst-id"));
+		TaskEntry task = new TaskEntry(jsonTask);
+		DynamoUtils.putTask(task, getMapper(servletRequest));
+		return null;
+		
+		} catch (Exception e) {
+			throw new WebApplicationException(e);
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+//		LOG.info("put message:" + task);
+//		String sqsRegion = context.getInitParameter("aws:sqs-region");
+//		String queueURL = context.getInitParameter("aws:sqs-queue-url");
+//		AmazonSQS sqs = new AmazonSQSClient(new EnvironmentBasedCredentialsProvider());
+//		Region usWest2 = Region.getRegion(Regions.fromName(sqsRegion));
+//        sqs.setRegion(usWest2);
+//		
+//        //String path = context.getInitParameter("rest:mock-directory");
+//        //String body = newTask.toString();
+//        String body = task;
+//        try {
+//        SendMessageRequest sendRequest = new SendMessageRequest(queueURL, body);
+//        sendRequest.setDelaySeconds(0);
+//        SendMessageResult sendResult = sqs.sendMessage(sendRequest);
+//        LOG.info(format("TaskRestService: sended message: %s; body:%s", sendResult.getMessageId(),body)  );
+//        } catch (AmazonServiceException ase) {
+//            System.out.println("Caught an AmazonServiceException, which means your request made it " +
+//                    "to Amazon SQS, but was rejected with an error response for some reason.");
+//            System.out.println("Error Message:    " + ase.getMessage());
+//            System.out.println("HTTP Status Code: " + ase.getStatusCode());
+//            System.out.println("AWS Error Code:   " + ase.getErrorCode());
+//            System.out.println("Error Type:       " + ase.getErrorType());
+//            System.out.println("Request ID:       " + ase.getRequestId());
+//        } catch (AmazonClientException ace) {
+//            System.out.println("Caught an AmazonClientException, which means the client encountered " +
+//                    "a serious internal problem while trying to communicate with SQS, such as not " +
+//                    "being able to access the network.");
+//            System.out.println("Error Message: " + ace.getMessage());
+//        }
+//		return null;
 	}
 	
 	private DynamoDBMapper getMapper(ServletRequest request) {
@@ -83,41 +141,5 @@ public class TaskRestService {
 		String region = request.getServletContext().getInitParameter("aws:dynamodb-region");
 		client.setRegion(Region.getRegion(Regions.fromName(region)));
 		return new DynamoDBMapper(client);
-	}
-
-
-	@POST()
-	@Produces(MediaType.APPLICATION_JSON)
-	public String addTask(String task) {
-		LOG.info("put message:" + task);
-		String sqsRegion = context.getInitParameter("aws:sqs-region");
-		String queueURL = context.getInitParameter("aws:sqs-queue-url");
-		AmazonSQS sqs = new AmazonSQSClient(new EnvironmentBasedCredentialsProvider());
-		Region usWest2 = Region.getRegion(Regions.fromName(sqsRegion));
-        sqs.setRegion(usWest2);
-		
-        //String path = context.getInitParameter("rest:mock-directory");
-        //String body = newTask.toString();
-        String body = task;
-        try {
-        SendMessageRequest sendRequest = new SendMessageRequest(queueURL, body);
-        sendRequest.setDelaySeconds(0);
-        SendMessageResult sendResult = sqs.sendMessage(sendRequest);
-        LOG.info(format("TaskRestService: sended message: %s; body:%s", sendResult.getMessageId(),body)  );
-        } catch (AmazonServiceException ase) {
-            System.out.println("Caught an AmazonServiceException, which means your request made it " +
-                    "to Amazon SQS, but was rejected with an error response for some reason.");
-            System.out.println("Error Message:    " + ase.getMessage());
-            System.out.println("HTTP Status Code: " + ase.getStatusCode());
-            System.out.println("AWS Error Code:   " + ase.getErrorCode());
-            System.out.println("Error Type:       " + ase.getErrorType());
-            System.out.println("Request ID:       " + ase.getRequestId());
-        } catch (AmazonClientException ace) {
-            System.out.println("Caught an AmazonClientException, which means the client encountered " +
-                    "a serious internal problem while trying to communicate with SQS, such as not " +
-                    "being able to access the network.");
-            System.out.println("Error Message: " + ace.getMessage());
-        }
-		return null;
 	}
 }

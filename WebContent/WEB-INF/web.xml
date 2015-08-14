@@ -6,6 +6,10 @@
     <param-value>./mockjson/</param-value>
   </context-param>
   <context-param>
+    <param-name>aws:worker-configuration</param-name>
+    <param-value>ogorVagrantDev</param-value>
+  </context-param>
+  <context-param>
     <param-name>tmp:sdfsbackup-properties</param-name>
     <param-value>./aws/sdfsbackup.properties</param-value>
   </context-param>
@@ -13,18 +17,25 @@
     <param-name>aws:sqs-region</param-name>
     <param-value>us-east-1</param-value>
   </context-param>
-  <context-param>
-    <param-name>aws:sqs-queue-url</param-name>
-    <param-value> 815082807540/sungard</param-value>
-  </context-param>
+  
   <context-param>
     <param-name>aws:dynamodb-region</param-name>
     <param-value>us-east-1</param-value>
   </context-param>
+
+  <context-param>
+    <param-name>aws:worker-configuration</param-name>
+    <param-value>ogorVagrantDev</param-value>
+  </context-param>
   <context-param>
     <param-name>aws:routine-inst-id</param-name>
-    <param-value>i-e920a741</param-value>
+    <param-value>ogorVagrantDev</param-value>
   </context-param>
+  <context-param>
+    <param-name>aws:sqs-queue-url</param-name>
+    <param-value> 815082807540/sungard_ogor</param-value>
+  </context-param>
+
   <context-param>
     <param-name>quartz:config-file</param-name>
     <param-value>./quartz/quartz.properties</param-value>
