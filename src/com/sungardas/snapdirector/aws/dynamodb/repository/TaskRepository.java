@@ -1,4 +1,4 @@
-package com.sungardas.snapdirector.aws.repository;
+package com.sungardas.snapdirector.aws.dynamodb.repository;
 
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
