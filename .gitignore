@@ -1,6 +1,17 @@
+# eclipse project files
+.classpath
+.project
 .settings/
-WebContent/lib/
+
+#idea project files
+.idea/
+*.iml
+
+# Build directories
 target/
 build/
-.classpath
-/.classpath
+
+# Misc
+WebContent/lib/
+.vagrant/
+
