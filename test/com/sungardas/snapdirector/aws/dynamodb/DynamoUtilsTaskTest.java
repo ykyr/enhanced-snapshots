@@ -1,96 +1,90 @@
 package com.sungardas.snapdirector.aws.dynamodb;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONObject;
-import org.junit.Test;
-
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
-import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
-import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
+import static org.junit.Assert.*;
 
 
 public class DynamoUtilsTaskTest {
 
-	private AmazonDynamoDBClient client = new AmazonDynamoDBClient(
-			new EnvironmentBasedCredentialsProvider());
-	private DynamoDBMapper mapper = new DynamoDBMapper(client);
-	
-	private TaskEntry taskToGet;
-	private TaskEntry taskToDelete;
+    private AmazonDynamoDBClient client = new AmazonDynamoDBClient(
+            new EnvironmentBasedCredentialsProvider());
+    private DynamoDBMapper mapper = new DynamoDBMapper(client);
 
-	@Test
-	public void testPutTaskTaskDynamoDBMapper() {
-		TaskEntry task = new TaskEntry("1", "running", "backup", "vol-00000000", "true",
-				"admin", "2015-07-17 19:50:00");
-		
-		
-		
-		String retId = DynamoUtils.putTask(task, mapper);
-		
-		task.setId(retId);
-		this.taskToGet = task;
-		
-		assertFalse(retId.isEmpty());
-	}
+    private TaskEntry taskToGet;
+    private TaskEntry taskToDelete;
 
-	@Test
-	public void testPutTaskJSONObjectDynamoDBMapper() {
-		
-		Map<String, Object> mapTask = new HashMap<String, Object>();
-		mapTask.put("priority", "0");
-		mapTask.put("status", "running");
-		mapTask.put("type", "backup");
-		mapTask.put("volume", "vol-00000001");
-		mapTask.put("schedulerManual", "true");
-		mapTask.put("schedulerName", "admin");
-		mapTask.put("schedulerTime", "2015-07-17 19:50:00");
-		
-		JSONObject jsonTask = new JSONObject(mapTask);
-		
-		TaskEntry task = new TaskEntry(jsonTask);
-		
-		this.taskToDelete = task;
+    @Before
+    public void setup() {
+        TaskEntry task = new TaskEntry("1", "running", "backup", "vol-00000000", "true",
+                "admin", "2015-07-17 19:50:00", "id");
 
-		String retId = DynamoUtils.putTask(task, mapper);
-		
-		task.setId(retId);
-		this.taskToDelete = task;
+        String retId = DynamoUtils.putTask(task, mapper);
 
-		assertFalse(retId.isEmpty());
-	}
+        task.setId(retId);
+        this.taskToGet = task;
 
-	@Test
-	public void testGetTask() {
-		String gotTaskId = DynamoUtils.getTask(taskToGet.getId(), mapper);
-		System.out.println(gotTaskId);
-		assertFalse(gotTaskId.isEmpty());
-		assertTrue(gotTaskId.equals(taskToGet.getId()));
-	}
-	
-	@Test
-	public void testGetTasks() {
-		List<TaskEntry> allTasks = DynamoUtils.getTasks(mapper);
-		for (TaskEntry task : allTasks) {
-			System.out.println(task);
-		}
-		assertFalse(allTasks.isEmpty());
-		
-	}
+        Map<String, Object> mapTask = new HashMap<String, Object>();
+        mapTask.put("id", "");
+        mapTask.put("priority", "0");
+        mapTask.put("status", "running");
+        mapTask.put("type", "backup");
+        mapTask.put("volume", "vol-00000001");
+        mapTask.put("schedulerManual", "true");
+        mapTask.put("schedulerName", "admin");
+        mapTask.put("schedulerTime", "2015-07-17 19:50:00");
+        mapTask.put("worker", "");
+        mapTask.put("instanceId", "");
 
-	@Test
-	public void testDeleteTask() {
-		DynamoUtils.deleteTask(taskToDelete.getId(), mapper);
-		String deletedTaskId = DynamoUtils.getTask(taskToDelete.getId(), mapper);
-		assertNull(deletedTaskId);
-	}
+        JSONObject jsonTask = new JSONObject(mapTask);
+
+        this.taskToDelete = new TaskEntry(jsonTask);
+        taskToDelete.setId(DynamoUtils.putTask(task, mapper));
+    }
+
+    @Test
+    public void testPutTaskTaskDynamoDBMapper() {
+        assertFalse(taskToGet.getId().isEmpty());
+    }
+
+    @Test
+    public void testPutTaskJSONObjectDynamoDBMapper() {
+        assertFalse(taskToDelete.getId().isEmpty());
+    }
+
+    @Test
+    public void testGetTask() {
+        String gotTaskId = new JSONObject(DynamoUtils.getTask(taskToGet.getId(), mapper)).getString("id");
+        System.out.println(gotTaskId);
+        assertFalse(gotTaskId.isEmpty());
+        assertTrue(gotTaskId.equals(taskToGet.getId()));
+    }
+
+    @Test
+    public void testGetTasks() {
+        List<TaskEntry> allTasks = DynamoUtils.getTasks(mapper);
+        for (TaskEntry task : allTasks) {
+            System.out.println(task);
+        }
+        assertFalse(allTasks.isEmpty());
+
+    }
+
+    @Test
+    public void testDeleteTask() {
+        DynamoUtils.deleteTask(taskToDelete.getId(), mapper);
+        String deletedTaskId = DynamoUtils.getTask(taskToDelete.getId(), mapper);
+        assertNull(deletedTaskId);
+    }
 
 }

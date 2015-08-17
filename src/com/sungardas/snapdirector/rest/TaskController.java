@@ -54,6 +54,7 @@ public class TaskController {
                 jsonTask.put("status", nextTask.getStatus());
                 jsonTask.put("type", nextTask.getType());
                 jsonTask.put("volume", nextTask.getVolume());
+                jsonTask.put("instanceId", nextTask.getInstanceId());
                 tasks.put(jsonTask);
             }
             return tasks.toString();
@@ -65,8 +66,9 @@ public class TaskController {
     @RequestMapping(method = RequestMethod.POST)
     public String addTask(String taskJsonString) {
         try {
-            JSONObject jsonTask =new JSONObject(taskJsonString);
+            JSONObject jsonTask = new JSONObject(taskJsonString);
             jsonTask.put("worker", context.getInitParameter("aws:routine-inst-id"));
+            jsonTask.put("instanceId", context.getInitParameter("aws:routine-inst-id"));
             TaskEntry task = new TaskEntry(jsonTask);
             DynamoUtils.putTask(task, getMapper(servletRequest));
             return null;
