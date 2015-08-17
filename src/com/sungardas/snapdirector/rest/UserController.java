@@ -3,7 +3,6 @@ package com.sungardas.snapdirector.rest;
 import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
-import com.sungardas.snapdirector.exception.UniqueConstraintViolationException;
 import com.sungardas.snapdirector.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
