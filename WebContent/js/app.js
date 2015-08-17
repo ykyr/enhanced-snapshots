@@ -1,4 +1,4 @@
-var app = angular.module('web', ['ui.router', 'ui.bootstrap', 'smart-table']);
+var app = angular.module('web', ['ui.router', 'angularAwesomeSlider', 'ui.bootstrap', 'smart-table', 'ngTagsInput']);
 
 app.constant('BASE_URL', './');
 
@@ -54,6 +54,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             templateUrl: "partials/tasks.html",
             controller: "TasksController"
         })
+        .state('app.users', {
+            url: "/users",
+            templateUrl: "partials/users.html",
+            controller: "UserController"
+        })
         .state('aws', {
             url: "/aws",
             templateUrl: "partials/aws.html",
@@ -83,7 +88,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 })
     .run(function ($rootScope, $state, Storage) {
         $rootScope.getUserName = function () {
-            return (Storage.get("currentUser") || {}).fullname;
+            return (Storage.get("currentUser") || {}).email;
         };
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
