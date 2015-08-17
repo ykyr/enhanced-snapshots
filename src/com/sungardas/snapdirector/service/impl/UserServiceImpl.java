@@ -1,9 +1,11 @@
 package com.sungardas.snapdirector.service.impl;
 
+import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
 import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.DataAccessException;
+import com.sungardas.snapdirector.exception.UniqueConstraintViolationException;
 import com.sungardas.snapdirector.service.UserService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +28,24 @@ public class UserServiceImpl implements UserService {
             return UserDtoConverter.convert(userRepository.findAll());
         } catch (RuntimeException e) {
             LOG.error(e);
+            throw new DataAccessException(e);
+        }
+    }
+
+    @Override
+    public void createUser(UserDto userInfo, String password) throws DataAccessException, UniqueConstraintViolationException {
+        // check whether user with the same email already exists
+        if (userRepository.exists(userInfo.getEmail())) {
+            UniqueConstraintViolationException e = new UniqueConstraintViolationException("User with such email already exists: " + userInfo.getEmail());
+            LOG.info("Failed to register user.", e);
+            throw e;
+        }
+        try {
+            User newUser = UserDtoConverter.convert(userInfo);
+            newUser.setPassword(password);
+            userRepository.save(newUser);
+        } catch (RuntimeException e) {
+            LOG.error("Failed to register user.", e);
             throw new DataAccessException(e);
         }
     }

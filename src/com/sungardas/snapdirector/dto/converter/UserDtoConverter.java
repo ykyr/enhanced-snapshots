@@ -2,6 +2,7 @@ package com.sungardas.snapdirector.dto.converter;
 
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.dto.UserDto;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,5 +28,11 @@ public final class UserDtoConverter {
             dtos.add(convert(user));
         }
         return dtos;
+    }
+
+    public static User convert(UserDto userDto) {
+        User user = new User();
+        BeanUtils.copyProperties(userDto, user);
+        return user;
     }
 }
