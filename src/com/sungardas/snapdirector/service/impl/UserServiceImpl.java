@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void createUser(UserDto userInfo, String password) throws DataAccessException, UniqueConstraintViolationException {
         // check whether user with the same email already exists
-        if (userRepository.exists(userInfo.getEmail())) {
+        if (userRepository.exists(userInfo.getEmail().toLowerCase())) {
             UniqueConstraintViolationException e = new UniqueConstraintViolationException("User with such email already exists: " + userInfo.getEmail());
             LOG.info("Failed to register user.", e);
             throw e;
@@ -44,6 +44,7 @@ public class UserServiceImpl implements UserService {
         try {
             User newUser = UserDtoConverter.convert(userInfo);
             newUser.setPassword(DigestUtils.sha512Hex(password));
+            newUser.setEmail(newUser.getEmail().toLowerCase());
             userRepository.save(newUser);
         } catch (RuntimeException e) {
             LOG.error("Failed to register user.", e);
