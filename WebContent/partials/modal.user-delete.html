@@ -1,0 +1,17 @@
+<div class="modal-header bg-danger">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-user"></span>&nbsp; User</h3>
+</div>
+
+<div class="modal-body">
+    <p>You are going to delete the following user</p>
+    <blockquote>
+        <p>{{userToDelete.email}}</p>
+        <p>{{userToDelete.firstName}} {{userToDelete.lastName}}</p>
+    </blockquote>
+    <p>Are you sure you want to proceed?</p>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-danger" ng-click="$close()"><span class="glyphicon glyphicon-remove"></span>&nbsp; Delete
+    </button>
+    <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
+</div>

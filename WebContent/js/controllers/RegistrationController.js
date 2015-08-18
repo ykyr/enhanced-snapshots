@@ -1,6 +1,3 @@
-/**
- * Created by Administrator on 24.07.2015.
- */
 'use strict';
 
 angular.module('web')
@@ -10,14 +7,7 @@ angular.module('web')
         var userData = {};
 
         $scope.registerUser = function () {
-            userData.name = $scope.userName;
-            userData.surname = $scope.userSurname;
-            userData.fullname = $scope.userName + ' ' + $scope.userSurname;
-            userData.email = $scope.userEmail;
-            userData.password = $scope.passwordReg;
-
             if ($scope.passwordReg === $scope.passwordConf) {
-
                 // check if user already exists
                 Users.getAllUsers().then(function (data) {
                     var unique = true;
@@ -33,10 +23,17 @@ angular.module('web')
                     }
 
                     if (unique) {
+                        userData = {
+                            firstName: $scope.firstName,
+                            lastName: $scope.lastName,
+                            email: $scope.userEmail,
+                            password: $scope.passwordReg
+                        };
+
                         Users.insert(userData).then(function () {
                             var modalInstance = $modal.open({
                                 animation: true,
-                                templateUrl: './partials/modal.user-add.html'
+                                templateUrl: './partials/modal.user-added.html'
                             });
 
                             modalInstance.result.then(function () {

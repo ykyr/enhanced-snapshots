@@ -1,0 +1,90 @@
+<div class="modal-header" ng-class="{'bg-success': userToEdit.isNew, 'bg-primary': !userToEdit.isNew}">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-user" aria-hidden="true"> </span> {{ userToEdit.isNew ? "New" : "Edit" }} User</h3>
+</div>
+
+    <div class="modal-body">
+
+    <form name="addUser">
+
+        <div class="form-group">
+            <label for="email" class="control-label">Email:<span class="text-danger">*</span></label>
+            <input type="email" id="email" name="email" class="form-control" ng-model="userToEdit.email"
+                   ng-disabled="!userToEdit.isNew"
+                   ng-required="userToEdit.isNew">
+
+        </div>
+
+
+        <div class="form-group">
+            <label for="firstname" class="control-label">First name:</label>
+            <input type="text" id="firstname" class="form-control" ng-model="userToEdit.firstName" ng-required="true">
+        </div>
+
+        <div class="form-group">
+            <label for="lastName" class="control-label">Last name:</label>
+            <input type="text" id="lastName" class="form-control" ng-model="userToEdit.lastName" ng-required="true">
+        </div>
+
+        <div class="form-group" ng-show="isAdmin">
+            <label for="passwordAdmin" class="control-label">Set password:<span class="text-danger" ng-show="userToEdit.isNew">*</span></label>
+            <input type="password" id="passwordAdmin" name="setPassword" class="form-control"
+                   ng-model="userToEdit.password"
+                   ng-required="userToEdit.isNew">
+        </div>
+
+        <!-- FOR USER ROLE-->
+
+        <div class="form-group" ng-hide="isAdmin">
+
+            <a class="btn btn-link" ng-click="isCollapsed = !isCollapsed"><span class="glyphicon glyphicon-chevron-{{isCollapsed ? 'up' : 'down'}}"></span> Change password</a>
+
+            <div collapse="!isCollapsed">
+                <div class="well">
+                    <div class="form-group">
+                        <label for="passwordUser" class="control-label">Old password:</label>
+                        <input type="password" id="passwordUser" class="form-control" ng-model="userToEdit.password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPasswordUser" class="control-label">New password:</label>
+                        <input type="password" id="newPasswordUser" class="form-control"
+                               ng-model="userToEdit.newPassword">
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="newPasswordConfirm" class="control-label">Confirm new password:</label>
+                        <input type="password" class="form-control" name="newPasswordConfirm" id="newPasswordConfirm" ng-model="newPasswordConfirm" ng-model-options="{ debounce: 500 }" repeat-password="userToEdit.newPassword" />
+                    </div>
+
+                    <div class="form-group text-danger"
+                         ng-show="addUser.newPasswordConfirm.$error.match">
+                        <span class="glyphicon glyphicon-alert"></span>&nbsp; Passwords do not match
+                    </div>
+
+
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="form-group" ng-show="isAdmin">
+            <button type="button" class="btn" ng-class="{'btn-primary': userToEdit.admin, 'btn-default': !userToEdit.admin}" ng-model="userToEdit.admin"
+                    ng-click="userToEdit.admin = !userToEdit.admin">
+                <span class="glyphicon glyphicon-{{userToEdit.admin ? 'check': 'unchecked'}}"></span> Admin
+            </button>
+        </div>
+
+    </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" ng-class="{'btn-success': userToEdit.isNew, 'btn-primary': !userToEdit.isNew}"
+                ng-click="$close()"
+                ng-disabled="newPasswordConfirm !== userToEdit.newPassword || addUser.email.$invalid || addUser.setPassword.$invalid">
+            <!--ng-disabled="">-->
+            {{userToEdit.isNew? "Add User" : "Save Changes" }}
+        </button>
+        <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
+    </div>
+
