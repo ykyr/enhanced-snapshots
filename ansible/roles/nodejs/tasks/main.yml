@@ -7,3 +7,4 @@
   with_items:
     - nodejs
     - npm
+	- git
