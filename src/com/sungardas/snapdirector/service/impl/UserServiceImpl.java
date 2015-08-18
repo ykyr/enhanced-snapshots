@@ -7,6 +7,7 @@ import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.UniqueConstraintViolationException;
 import com.sungardas.snapdirector.service.UserService;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ public class UserServiceImpl implements UserService {
         }
         try {
             User newUser = UserDtoConverter.convert(userInfo);
-            newUser.setPassword(password);
+            newUser.setPassword(DigestUtils.sha512Hex(password));
             userRepository.save(newUser);
         } catch (RuntimeException e) {
             LOG.error("Failed to register user.", e);
