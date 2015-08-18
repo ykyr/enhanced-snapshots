@@ -1,44 +1,64 @@
 package com.sungardas.snapdirector.tasks;
 
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
+import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
+import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.tasks.aws.VolumeBackup;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsManager;
-import com.sungardas.snapdirector.worker.WorkerConfiguration;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
 import static java.lang.String.format;
 
 
-public class AWSBackupVolumeTask implements Task {
-    //TODO: remove temporary counter, use dbdata instead
+public class AWSBackupVolumeTask implements Task{
+	private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeTask.class);
+	@Autowired
+	private TaskRepository taskRepository;
+    
+    @Autowired
+    private AWSCredentials amazonAWSCredentials;
+    
+    @Autowired
+    AmazonEC2 ec2client;
+    
+    private TaskEntry taskEntry;
+
+    
+    public void setTaskEntry(TaskEntry taskEntry) {
+    	this.taskEntry= taskEntry;
+    }
+	
+	
+	
+	//TODO: remove temporary counter, use dbdata instead
     public static int taskId = 0;
 
-    public static final Log LOG = LogFactory.getLog(AWSBackupVolumeTask.class);
+    
     private AWSCredentialsProvider awsCredentialsProvider;
     private String volumeId;
     private String instanceId;
     private WorkerConfiguration configuration;
-    ;
-
-
-    public AWSBackupVolumeTask(AWSCredentialsProvider awsCredentialsProvider, String volumeId, String routineInstanceId, WorkerConfiguration configuration, String instanceId) {
-        this.awsCredentialsProvider = awsCredentialsProvider;
-        this.volumeId = volumeId;
-        this.configuration = configuration;
-        LOG.info(format("AWSBackupVolumeTask[%d]: Initialized backup process for volume %s", taskId, volumeId));
-    }
 
 
     public void execute() {
@@ -50,8 +70,8 @@ public class AWSBackupVolumeTask implements Task {
 
         Volume tempVolume = null;
         String attachedDeviceName = null;
-        if (!configuration.isFakeEC2()) {
-            tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId, configuration.getInstanceId());
+        if (!configuration.isUseFakeEC2()) {
+            tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId, configuration.getConfigurationId());
             attachedDeviceName = tempVolume.getAttachments().get(0).getDevice();
         }
 
@@ -63,9 +83,9 @@ public class AWSBackupVolumeTask implements Task {
 
         boolean backupStatus = false;
         try {
-            if (configuration.isFakeBackup()) {
+            if (configuration.isUseFakeBackup()) {
                 backupStatus = sdfs.backupVolumeToSdfs(configuration.getFakeBackupSource(), backupfileName);
-            } else if (!configuration.isFakeEC2()) {
+            } else if (!configuration.isUseFakeEC2()) {
                 backupStatus = sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
 
             }
@@ -88,7 +108,7 @@ public class AWSBackupVolumeTask implements Task {
         }
 
 
-        if (!configuration.isFakeEC2()) {
+        if (!configuration.isUseFakeEC2()) {
             VolumeBackup.detachAndDeleteVolume(ec2client, tempVolume);
         }
 

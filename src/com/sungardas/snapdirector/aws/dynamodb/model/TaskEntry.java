@@ -46,8 +46,8 @@ public class TaskEntry {
         this.setType(jsonTask.getString("type"));
         this.setVolume(jsonTask.getString("volume"));
         this.setSchedulerManual(jsonTask.getBoolean("schedulerManual"));
-        this.setSchedulerName(jsonTask.getString("schedulerName"));
-        this.setSchedulerTime(jsonTask.getString("schedulerTime"));
+        this.setSchedulerName(jsonTask.optString("schedulerName"));
+        this.setSchedulerTime(jsonTask.optString("schedulerTime"));
         this.setId(jsonTask.getString("id"));
         this.setWorker(jsonTask.getString("worker"));
         setInstanceId(jsonTask.getString("instanceId"));
