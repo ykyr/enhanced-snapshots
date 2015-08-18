@@ -14,7 +14,9 @@ import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.tasks.aws.VolumeBackup;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsManager;
 
@@ -31,98 +33,90 @@ import java.io.IOException;
 import static java.lang.String.format;
 
 
-public class AWSBackupVolumeTask implements Task{
+public class AWSBackupVolumeTask implements Task {
 	private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeTask.class);
 	@Autowired
 	private TaskRepository taskRepository;
-    
-    @Autowired
-    private AWSCredentials amazonAWSCredentials;
-    
-    @Autowired
-    AmazonEC2 ec2client;
-    
-    private TaskEntry taskEntry;
 
-    
-    public void setTaskEntry(TaskEntry taskEntry) {
-    	this.taskEntry= taskEntry;
-    }
-	
-	
-	
-	//TODO: remove temporary counter, use dbdata instead
-    public static int taskId = 0;
+	@Autowired
+	private AWSCredentials amazonAWSCredentials;
 
-    
-    private AWSCredentialsProvider awsCredentialsProvider;
-    private String volumeId;
-    private String instanceId;
-    private WorkerConfiguration configuration;
+	@Autowired
+	AmazonEC2 ec2client;
 
+	@Autowired
+	BackupRepository backupRepository;
 
-    public void execute() {
-        LOG.info(format("AWSBackupVolumeTask[%d]: Starting backup process for volume %s", taskId, volumeId));
-        AmazonEC2Client ec2client = new AmazonEC2Client(awsCredentialsProvider);
-        SdfsManager sdfs = new SdfsManager(configuration);
-        String ec2Region = configuration.getEc2Region();
-        ec2client.setRegion(Region.getRegion(Regions.fromName(ec2Region)));
+	private TaskEntry taskEntry;
 
-        Volume tempVolume = null;
-        String attachedDeviceName = null;
-        if (!configuration.isUseFakeEC2()) {
-            tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId, configuration.getConfigurationId());
-            attachedDeviceName = tempVolume.getAttachments().get(0).getDevice();
-        }
+	@Autowired
+	private ConfigurationService configurationService;
 
-        String backupDate = String.valueOf(System.currentTimeMillis());
-        String backupfileName = volumeId + "." + backupDate + ".backup";
+	private WorkerConfiguration configuration;
 
-        BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS, instanceId);
-        DynamoUtils.putbackupInfo(backup, getMapper());
+	public void setTaskEntry(TaskEntry taskEntry) {
+		this.taskEntry = taskEntry;
+	}
 
-        boolean backupStatus = false;
-        try {
-            if (configuration.isUseFakeBackup()) {
-                backupStatus = sdfs.backupVolumeToSdfs(configuration.getFakeBackupSource(), backupfileName);
-            } else if (!configuration.isUseFakeEC2()) {
-                backupStatus = sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
+	public void execute() {
+		String volumeId = taskEntry.getVolume();
+		configuration = configurationService.getConfiguration();
 
-            }
-        } catch (IOException e) {
-            LOG.fatal(format("Backup of volume %s failed", volumeId));
-            backup.setState(BackupState.FAILED.getState());
-            DynamoUtils.putbackupInfo(backup, getMapper());
-        }
+		LOG.info(format("AWSBackupVolumeTask: Starting backup process for volume %s", volumeId));
+		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
+        taskEntry.setStatus("running");
+        taskRepository.save(taskEntry);
+		
+		SdfsManager sdfs = new SdfsManager(configuration);
 
-        if (backupStatus) {
-            long backupSize = sdfs.getBackupSize(backupfileName);
-            LOG.info("Backup creation time: " + sdfs.getBackupCreationTime(backupfileName));
-            LOG.info("Backup size: " + backupSize);
+		Volume tempVolume = null;
+		String attachedDeviceName = null;
+		if (!configuration.isUseFakeEC2()) {
+			tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId,
+					configuration.getConfigurationId());
+			attachedDeviceName = tempVolume.getAttachments().get(0).getDevice();
+		}
 
+		String backupDate = String.valueOf(System.currentTimeMillis());
+		String backupfileName = volumeId + "." + backupDate + ".backup";
 
-            LOG.info("Put backup entry to the Backup List: " + backup.toString());
-            backup.setState(BackupState.COMPLETED.getState());
-            backup.setSize(String.valueOf(backupSize));
-            DynamoUtils.putbackupInfo(backup, getMapper());
-        }
+		BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS,
+				configuration.getConfigurationId());
+		backupRepository.save(backup);
 
+		boolean backupStatus = false;
+		try {
+			if (configuration.isUseFakeBackup()) {
+				backupStatus = sdfs.backupVolumeToSdfs(configuration.getFakeBackupSource(), backupfileName);
+			} else if (!configuration.isUseFakeEC2()) {
+				backupStatus = sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
 
-        if (!configuration.isUseFakeEC2()) {
-            VolumeBackup.detachAndDeleteVolume(ec2client, tempVolume);
-        }
+			}
+		} catch (IOException e) {
+			LOG.fatal(format("Backup of volume %s failed", volumeId));
+			backup.setState(BackupState.FAILED.getState());
+			backupRepository.save(backup);
+		}
 
+		if (backupStatus) {
+			long backupSize = sdfs.getBackupSize(backupfileName);
+			LOG.info("Backup creation time: " + sdfs.getBackupCreationTime(backupfileName));
+			LOG.info("Backup size: " + backupSize);
 
-        LOG.info(format("Backup process for volume %s finished successfully ", taskId, volumeId));
-    }
+			LOG.info("Put backup entry to the Backup List: " + backup.toString());
+			backup.setState(BackupState.COMPLETED.getState());
+			backup.setSize(String.valueOf(backupSize));
+			backupRepository.save(backup);
+		}
 
+		if (!configuration.isUseFakeEC2()) {
+			VolumeBackup.detachAndDeleteVolume(ec2client, tempVolume);
+		}
 
-    private DynamoDBMapper getMapper() {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentialsProvider);
-        String region = configuration.getEc2Region();
-        client.setRegion(Region.getRegion(Regions.fromName(region)));
-        return new DynamoDBMapper(client);
-    }
-
+		LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
+		LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
+        taskRepository.delete(taskEntry);
+        LOG.info("Task completed.");
+	}
 
 }

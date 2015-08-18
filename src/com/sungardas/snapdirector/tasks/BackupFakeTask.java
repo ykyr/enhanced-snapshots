@@ -17,6 +17,7 @@ import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
+import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 
 @Component
@@ -26,6 +27,8 @@ public class BackupFakeTask implements Task {
     
     @Autowired
 	private TaskRepository taskRepository;
+    @Autowired
+	private BackupRepository backupRepository;
     
     @Autowired
     private AWSCredentials amazonAWSCredentials;
@@ -49,22 +52,16 @@ public class BackupFakeTask implements Task {
         String filename = volumeId + "." + timestamp + ".backup";
         BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId());
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
-        DynamoUtils.putbackupInfo(backup, getMapper());
+        backupRepository.save(backup);
 
         try {
             TimeUnit.SECONDS.sleep(10);
         } catch (InterruptedException ignored) {
         }
-
-        DynamoUtils.deleteTask(taskEntry.getId(), getMapper());
+        
         LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
+        taskRepository.delete(taskEntry);
         LOG.info("Task completed.");
-    }
-
-    private DynamoDBMapper getMapper() {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(amazonAWSCredentials);
-        client.setRegion(Region.getRegion(Regions.fromName("us-east-1")));
-        return new DynamoDBMapper(client);
     }
 
 }

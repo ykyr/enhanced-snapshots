@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -71,7 +72,7 @@ public class TasksDispatcher {
 			
 			
 			while (true) {
-				LOGts.info("\n\nLook for waiting tasks..");
+				//LOGts.info("\n\nLook for waiting tasks..");
 				List<TaskEntry> taskModels = taskRepository.findByStatusAndInstanceId("waiting", instanceId);
 				for (TaskEntry entry : taskModels) {
 					SendMessageRequest sendRequest = new SendMessageRequest(queueURL, entry.toString());

@@ -41,7 +41,7 @@ public class WorkersDispatcher {
 	@Autowired
 	private AmazonSQS sqs;
 	@Autowired
-    private ObjectFactory<BackupFakeTask> taskObjectFactory;
+    private ObjectFactory<Task> taskObjectFactory;
 	
 	private WorkerConfiguration configuration;	
 	private ExecutorService  executor;
@@ -69,7 +69,7 @@ public class WorkersDispatcher {
 
 			while (true) {
 				
-				LOGtw.info("\n\nLook for sended tasks..");
+				//LOGtw.info("\n\nLook for sended tasks..");
 				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
 				ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
 				List<Message> messages = result.getMessages();
