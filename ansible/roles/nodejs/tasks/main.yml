@@ -1,0 +1,9 @@
+---
+- name: add NodeSource repo
+  shell: curl --silent --location https://rpm.nodesource.com/setup | bash -
+
+- name: install Node.js and npm
+  yum: name={{item}} state=installed
+  with_items:
+    - nodejs
+    - npm
