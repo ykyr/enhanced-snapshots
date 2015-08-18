@@ -24,14 +24,12 @@ public class UserController {
 
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<String> createUser(@ModelAttribute UserDto userInfo, @RequestParam String password) {
-        ResponseEntity<String> responseEntity;
         try {
             userService.createUser(userInfo, password);
-            responseEntity = new ResponseEntity<>("User was successfully created.", HttpStatus.OK);
+            return new ResponseEntity<>("User was successfully created.", HttpStatus.OK);
         } catch (SnapdirectorException e) {
-            responseEntity = new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return responseEntity;
     }
 
 

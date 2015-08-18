@@ -24,9 +24,9 @@ import org.apache.commons.logging.LogFactory;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.util.BinaryUtils;
 import com.amazonaws.util.Md5Utils;
+import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.tasks.AWSBackupVolumeTask;
 import com.sungardas.snapdirector.tasks.aws.sdfs.SdfsConfigPathes;
-import com.sungardas.snapdirector.worker.WorkerConfiguration;
 
 
 public class SdfsManager {
@@ -38,46 +38,46 @@ public class SdfsManager {
 	private String mountPoint;
 	private SdfsState state;
 	
-	//private SdfsConfigPathes sdfsConfigPathes;
-	//private Properties properties;
+	private SdfsConfigPathes sdfsConfigPathes;
+	private Properties properties;
 
 
 	public SdfsManager(WorkerConfiguration configuration) {
 		this.sdfs = configuration.getSdfsVolumeName();
 		this.mountPoint = configuration.getSdfsMountPoint();
 		state = SdfsState.Unmounted;
-		//this.properties = properties;
+		this.properties = properties;
 		//this.sdfsConfigPathes = initSdfsConfigPathes(properties);
 	}
 	
-//	private static SdfsConfigPathes initSdfsConfigPathes(Properties properties) {
-//		SdfsConfigPathes configPathes = new SdfsConfigPathes();
-//		configPathes.setChunkStorePath(properties.getProperty("CHUNK_STORE_PATH"));
-//		configPathes.setClusterConfigPath(properties.getProperty("CLUSTER_CONFIG_PATH"));
-//		configPathes.setDedupDbStorePath(properties.getProperty("DEDUP_DB_STORE_PATH"));
-//		configPathes.setHashDBStorePath(properties.getProperty("HASH_DB_STORE_PATH"));
-//		configPathes.setIOLogPath(properties.getProperty("IO_LOG_PATH"));
-//		configPathes.setPoolConfigPath(properties.getProperty("POOL_CONFIG_PATH"));
-//		configPathes.setVolumeKeysPath(properties.getProperty("VOLUME_KEYSTORE"));
-//		configPathes.setVolumePath(properties.getProperty("VOLUME_PATH"));
-//		return configPathes;
-//	}
+	private static SdfsConfigPathes initSdfsConfigPathes(Properties properties) {
+		SdfsConfigPathes configPathes = new SdfsConfigPathes();
+		configPathes.setChunkStorePath(properties.getProperty("CHUNK_STORE_PATH"));
+		configPathes.setClusterConfigPath(properties.getProperty("CLUSTER_CONFIG_PATH"));
+		configPathes.setDedupDbStorePath(properties.getProperty("DEDUP_DB_STORE_PATH"));
+		configPathes.setHashDBStorePath(properties.getProperty("HASH_DB_STORE_PATH"));
+		configPathes.setIOLogPath(properties.getProperty("IO_LOG_PATH"));
+		configPathes.setPoolConfigPath(properties.getProperty("POOL_CONFIG_PATH"));
+		configPathes.setVolumeKeysPath(properties.getProperty("VOLUME_KEYSTORE"));
+		configPathes.setVolumePath(properties.getProperty("VOLUME_PATH"));
+		return configPathes;
+	}
 
-//	public void packSdfsStateAndUpload(AmazonS3 s3client) {
-//		LOG.info(format("\nCreating SDFS configuration & metadata archive"));
-//		TarUtils.packToTar(properties.getProperty("SDFS_BACKUP_UPLOAD_FILE"), sdfsConfigPathes.getPathes());
-//		LOG.info(format("\nUploading SDFS configuration & metadata archiveto S3"));
-//		S3Utils.upload(s3client, properties.getProperty("BUCKET_NAME"),
-//				properties.getProperty("SDFS_BACKUP_UPLOAD_FILE"), properties.getProperty("KEY_NAME"));
-//	}
-//	
-//	public void downloadAndRestoreSdfs(AmazonS3 s3client) {
-//		LOG.info(format("\nDownloading SDFS configuration & metadata from S3"));
-//		S3Utils.download(s3client, properties.getProperty("BUCKET_NAME"),
-//				properties.getProperty("SDFS_BACKUP_DOWNLOAD_FILE"), properties.getProperty("KEY_NAME"));
-//		LOG.info(format("\nRestoring SDFS configuration & metadata from archive"));
-//		TarUtils.unpackFromTar(properties.getProperty("SDFS_BACKUP_DOWNLOAD_FILE"));
-//	}
+	public void packSdfsStateAndUpload(AmazonS3 s3client) {
+		LOG.info(format("\nCreating SDFS configuration & metadata archive"));
+		TarUtils.packToTar(properties.getProperty("SDFS_BACKUP_UPLOAD_FILE"), sdfsConfigPathes.getPathes());
+		LOG.info(format("\nUploading SDFS configuration & metadata archiveto S3"));
+		S3Utils.upload(s3client, properties.getProperty("BUCKET_NAME"),
+				properties.getProperty("SDFS_BACKUP_UPLOAD_FILE"), properties.getProperty("KEY_NAME"));
+	}
+	
+	public void downloadAndRestoreSdfs(AmazonS3 s3client) {
+		LOG.info(format("\nDownloading SDFS configuration & metadata from S3"));
+		S3Utils.download(s3client, properties.getProperty("BUCKET_NAME"),
+				properties.getProperty("SDFS_BACKUP_DOWNLOAD_FILE"), properties.getProperty("KEY_NAME"));
+		LOG.info(format("\nRestoring SDFS configuration & metadata from archive"));
+		TarUtils.unpackFromTar(properties.getProperty("SDFS_BACKUP_DOWNLOAD_FILE"));
+	}
 
 	public SdfsState getState() {
 		return state;
@@ -108,74 +108,74 @@ public class SdfsManager {
 	}
 
 
-//	public void mountsdfs() throws IOException {
-//		if (alreadyRunning())
-//			throw new IllegalSdfsStateException("Expected state is " + SdfsState.Unmounted + ", but "
-//					+ state.toString());
-//
-//		LOG.info(format("Trying to mount '%s'", sdfs));
-//		ProcessBuilder processbuilder = new ProcessBuilder("mount.sdfs", sdfs, mountPoint, "&");
-//		mountsdfsProcess = processbuilder.start();
-//		state = SdfsState.Mounting;
-//
-//		InputStream sdfsIn = mountsdfsProcess.getInputStream();
-//		BufferedReader reader = new BufferedReader(new InputStreamReader(sdfsIn));
-//
-//		InputStream error = mountsdfsProcess.getErrorStream();
-//
-//		while (state.equals(SdfsState.Mounting)) {
-//			String sdfsData = reader.readLine();
-//			// System.out.println(sdfsData);
-//			if (error.available() > 0)
-//				state = SdfsState.Error;
-//			if (sdfsData.equals("Mounted Filesystem"))
-//				state = SdfsState.Mounted;
-//		}
-//		
-//		LOG.info(format("Sdfs '%s' started with state %s", sdfs, state.toString()));
-//		
-//
-//	}
-//
-//
-//	public void umountsdfs() throws IOException {
-//		if (mountsdfsProcess == null)
-//			return;
-//		if (umountsdfsProcess != null)
-//			return;
-//		if (state != SdfsState.Mounted)
-//			throw new IllegalSdfsStateException("Expected state is " + SdfsState.Mounted.toString() + ", but " + state.toString());
-//		LOG.info(format("Trying to unmount '%s'", sdfs));
-//		InputStream sdfsIn = mountsdfsProcess.getInputStream();
-//		BufferedReader reader = new BufferedReader(new InputStreamReader(sdfsIn));
-//		InputStream error = mountsdfsProcess.getErrorStream();
-//
-//		ProcessBuilder processbuilder = new ProcessBuilder("umount", mountPoint);
-//		umountsdfsProcess = processbuilder.start();
-//		state = SdfsState.Unmounting;
-//		while (state == SdfsState.Unmounting) {
-//			try {
-//				TimeUnit.SECONDS.sleep(5);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//			if (!isAlive(umountsdfsProcess)) {
-//				if (umountsdfsProcess != null) {
-//					LOG.info("Unmouning process ended.");
-//					umountsdfsProcess = null;
-//				}
-//
-//				if (mountsdfsProcess != null) {
-//					LOG.info(format("Sdfs '%s' finished", sdfs));
-//					mountsdfsProcess = null;
-//				}
-//			}
-//			state = SdfsState.Unmounted;
-//			LOG.info("SdfsProcess in 'Unmounted' state");
-//		}
-//	}
-//
-//
+	public void mountsdfs() throws IOException {
+		if (alreadyRunning())
+			throw new IllegalSdfsStateException("Expected state is " + SdfsState.Unmounted + ", but "
+					+ state.toString());
+
+		LOG.info(format("Trying to mount '%s'", sdfs));
+		ProcessBuilder processbuilder = new ProcessBuilder("mount.sdfs", sdfs, mountPoint, "&");
+		mountsdfsProcess = processbuilder.start();
+		state = SdfsState.Mounting;
+
+		InputStream sdfsIn = mountsdfsProcess.getInputStream();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(sdfsIn));
+
+		InputStream error = mountsdfsProcess.getErrorStream();
+
+		while (state.equals(SdfsState.Mounting)) {
+			String sdfsData = reader.readLine();
+			// System.out.println(sdfsData);
+			if (error.available() > 0)
+				state = SdfsState.Error;
+			if (sdfsData.equals("Mounted Filesystem"))
+				state = SdfsState.Mounted;
+		}
+		
+		LOG.info(format("Sdfs '%s' started with state %s", sdfs, state.toString()));
+		
+
+	}
+
+
+	public void umountsdfs() throws IOException {
+		if (mountsdfsProcess == null)
+			return;
+		if (umountsdfsProcess != null)
+			return;
+		if (state != SdfsState.Mounted)
+			throw new IllegalSdfsStateException("Expected state is " + SdfsState.Mounted.toString() + ", but " + state.toString());
+		LOG.info(format("Trying to unmount '%s'", sdfs));
+		InputStream sdfsIn = mountsdfsProcess.getInputStream();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(sdfsIn));
+		InputStream error = mountsdfsProcess.getErrorStream();
+
+		ProcessBuilder processbuilder = new ProcessBuilder("umount", mountPoint);
+		umountsdfsProcess = processbuilder.start();
+		state = SdfsState.Unmounting;
+		while (state == SdfsState.Unmounting) {
+			try {
+				TimeUnit.SECONDS.sleep(5);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (!isAlive(umountsdfsProcess)) {
+				if (umountsdfsProcess != null) {
+					LOG.info("Unmouning process ended.");
+					umountsdfsProcess = null;
+				}
+
+				if (mountsdfsProcess != null) {
+					LOG.info(format("Sdfs '%s' finished", sdfs));
+					mountsdfsProcess = null;
+				}
+			}
+			state = SdfsState.Unmounted;
+			LOG.info("SdfsProcess in 'Unmounted' state");
+		}
+	}
+
+
 	public boolean backupVolumeToSdfs(String volume, String backupFileName) throws IOException {
 		
 			LOG.info(format("Creating backup from '%s' with name '%s'", volume, backupFileName));
@@ -233,13 +233,13 @@ public class SdfsManager {
 		e.printStackTrace();
 	}
 	}
-//
-//
-//	public void restoreVolumeFromSdfs(String volume, String backupFileName) {
-//
-//	}
-//
-//
+
+
+	public void restoreVolumeFromSdfs(String volume, String backupFileName) {
+
+	}
+
+
 	private Process binaryCopy(String source, String destination) throws IOException {
 		ProcessBuilder processbuilder = new ProcessBuilder("dd", "if=" + source, "of=" + mountPoint + "/" + destination);
 		for(String command: processbuilder.command()) {

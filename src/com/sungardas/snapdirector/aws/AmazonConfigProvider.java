@@ -2,6 +2,8 @@ package com.sungardas.snapdirector.aws;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -23,6 +25,9 @@ public class AmazonConfigProvider {
 
     @Value("${amazon.aws.secretkey}")
     private String amazonAWSSecretKey;
+    
+    @Value("${amazon.aws.region}")
+    private String region;
 
 
     @Bean
@@ -39,13 +44,15 @@ public class AmazonConfigProvider {
     @Bean
     public AmazonEC2 amazonEC2() {
     	AmazonEC2 amazonEC2 = new AmazonEC2Client(amazonAWSCredentials());
+    	amazonEC2.setRegion(Region.getRegion(Regions.fromName(region)));
         return amazonEC2;
     }
     
     @Bean
     public AmazonSQS amazonSQS() {
-    	AmazonSQS amazonEC2 = new AmazonSQSClient(amazonAWSCredentials());
-        return amazonEC2;
+    	AmazonSQS amazonSQS = new AmazonSQSClient(amazonAWSCredentials());
+    	amazonSQS.setRegion(Region.getRegion(Regions.fromName(region)));
+        return amazonSQS;
     }
 
 }

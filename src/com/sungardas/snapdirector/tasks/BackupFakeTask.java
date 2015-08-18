@@ -1,6 +1,14 @@
 package com.sungardas.snapdirector.tasks;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
@@ -9,49 +17,51 @@ import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
+import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 
-import java.util.concurrent.TimeUnit;
-
+@Component
+@Scope("prototype")
 public class BackupFakeTask implements Task {
-    private static final Log LOG = LogFactory.getLog(AWSBackupVolumeTask.class);
-    private AWSCredentialsProvider credentialsProvider;
+	private static final Logger LOG = LogManager.getLogger(BackupFakeTask.class);
+    
+    @Autowired
+	private TaskRepository taskRepository;
+    @Autowired
+	private BackupRepository backupRepository;
+    
+    @Autowired
+    private AWSCredentials amazonAWSCredentials;
+    
     private TaskEntry taskEntry;
 
-    public BackupFakeTask(AWSCredentialsProvider credentialsProvider, TaskEntry taskEntry) {
-        this.credentialsProvider = credentialsProvider;
-        this.taskEntry = taskEntry;
+    
+    public void setTaskEntry(TaskEntry taskEntry) {
+    	this.taskEntry= taskEntry;
     }
 
     @Override
     public void execute() {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
-        DynamoUtils.deleteTask(taskEntry.getId(), getMapper());
         taskEntry.setStatus("running");
-        DynamoUtils.putTask(taskEntry, getMapper());
+        taskRepository.save(taskEntry);
 
+        LOG.info(taskEntry.toString());
         String timestamp = Long.toString(System.currentTimeMillis());
         String volumeId = taskEntry.getVolume();
         String filename = volumeId + "." + timestamp + ".backup";
         BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId());
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
-        DynamoUtils.putbackupInfo(backup, getMapper());
+        backupRepository.save(backup);
 
         try {
             TimeUnit.SECONDS.sleep(10);
         } catch (InterruptedException ignored) {
         }
-
-        DynamoUtils.deleteTask(taskEntry.getId(), getMapper());
+        
         LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
+        taskRepository.delete(taskEntry);
         LOG.info("Task completed.");
-    }
-
-    private DynamoDBMapper getMapper() {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(credentialsProvider);
-        client.setRegion(Region.getRegion(Regions.fromName("us-east-1")));
-        return new DynamoDBMapper(client);
     }
 
 }

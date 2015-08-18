@@ -22,6 +22,8 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
@@ -39,6 +41,7 @@ import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.sungardas.snapdirector.tasks.AWSBackupVolumeTask;
+import com.sungardas.snapdirector.tasks.BackupFakeTask;
 import com.sungardas.snapdirector.tasks.aws.sdfs.SdfsConfigPathes;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.S3Utils;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsProcess;
@@ -49,56 +52,45 @@ import static java.lang.String.*;
 
 public class VolumeBackup {
 
-	public static final Log LOG = LogFactory.getLog(VolumeBackup.class);
+	private static final Logger LOG = LogManager.getLogger(VolumeBackup.class);
 	static SdfsConfigPathes sdfsConfigPathes;
 
 	public static Region region;
 	public static Properties properties;
 
 
-	public static void main(String[] commandLinaArguments) throws IOException {
+//	public static void main(String[] commandLinaArguments) throws IOException {
+//
+//		CommandLine commandLine = parseArguments(getOptions(), commandLinaArguments);
+//		properties = loadProperties(commandLine.getOptionValues("c")[0]);
+//		sdfsConfigPathes = initSdfsConfigPathes(properties);
+//		SdfsProcess sdfsProc=null;
+//		if (commandLine.hasOption("backup")) {
+//			sdfsProc = new SdfsProcess(null, properties);
+//
+//			if (sdfsProc.alreadyRunning()) {
+//				LOG.error(format("SDFS pool %s is already mounted", properties.getProperty("AWS_POOL")));
+//				System.exit(-1);
+//			}
+//
+//			if (commandLine.hasOption("check-md5")) {
+//				properties.setProperty("CHECK_MD5SUM", "true");
+//			}
+//
+//			if (commandLine.hasOption("first-start")) {
+//				sdfsProc.packSdfsStateAndUpload(newAmazonS3Client(properties));
+//			}
+//
+//			backupFlow(properties);
+//		} else if (commandLine.hasOption("restore")) {
+//			{
+//				restoreFlow();
+//			}
+//		}
+//
+//	}
 
-		CommandLine commandLine = parseArguments(getOptions(), commandLinaArguments);
-		properties = loadProperties(commandLine.getOptionValues("c")[0]);
-		sdfsConfigPathes = initSdfsConfigPathes(properties);
-		SdfsProcess sdfsProc=null;
-		if (commandLine.hasOption("backup")) {
-			sdfsProc = new SdfsProcess(null, properties);
 
-			if (sdfsProc.alreadyRunning()) {
-				LOG.error(format("SDFS pool %s is already mounted", properties.getProperty("AWS_POOL")));
-				System.exit(-1);
-			}
-
-			if (commandLine.hasOption("check-md5")) {
-				properties.setProperty("CHECK_MD5SUM", "true");
-			}
-
-			if (commandLine.hasOption("first-start")) {
-				sdfsProc.packSdfsStateAndUpload(newAmazonS3Client(properties));
-			}
-
-			backupFlow(properties);
-		} else if (commandLine.hasOption("restore")) {
-			{
-				restoreFlow();
-			}
-		}
-
-	}
-
-
-	private static CommandLine parseArguments(Options options, String[] commandLinaArguments) {
-		CommandLine commandLine = null;
-		try {
-			CommandLineParser cmdLinePosixParser = new PosixParser();
-			commandLine = cmdLinePosixParser.parse(options, commandLinaArguments);
-		} catch (ParseException e) {
-			printHelp(options, 120, "Options:", "", 3, 5, true, System.out);
-			System.exit(-1);
-		}
-		return commandLine;
-	}
 
 
 	private static void restoreFlow() {
@@ -118,10 +110,10 @@ public class VolumeBackup {
 		// restore sdfs state
 		LOG.info(format("---==Restoring SDFS state==---"));
 		SdfsProcess sdfsProc = new SdfsProcess(null, properties);
-//		sdfsProc.downloadAndRestoreSdfs(s3client);
+		sdfsProc.downloadAndRestoreSdfs(s3client);
 
 		// starting sdfs
-//		LOG.info(format("---==Starting SDFS==---"));
+		LOG.info(format("---==Starting SDFS==---"));
 		sdfsProc.mountsdfs();
 
 		// prepare temp volume to backup
@@ -130,13 +122,13 @@ public class VolumeBackup {
 
 		// create volume backup
 		LOG.info(format("\n---==Backuping volume to SDFS==---"));
-//		if (properties.getProperty("CHECK_MD5SUM") != null && properties.getProperty("CHECK_MD5SUM").equals("true")) {
-//			sdfsProc.backupVolumeToSdfs(properties.getProperty("BACKUP_SRC"), properties.getProperty("BACKUP_NAME"),
-//					true);
-//		} else {
-//			sdfsProc.backupVolumeToSdfs(properties.getProperty("BACKUP_SRC"), properties.getProperty("BACKUP_NAME"),
-//					false);
-//		}
+		if (properties.getProperty("CHECK_MD5SUM") != null && properties.getProperty("CHECK_MD5SUM").equals("true")) {
+			sdfsProc.backupVolumeToSdfs(properties.getProperty("BACKUP_SRC"), properties.getProperty("BACKUP_NAME"),
+					true);
+		} else {
+			sdfsProc.backupVolumeToSdfs(properties.getProperty("BACKUP_SRC"), properties.getProperty("BACKUP_NAME"),
+					false);
+		}
 
 		// unattach and delete temp volume and related objects
 		LOG.info(format("\n---==Clean volume and related snapshot==---"));
@@ -144,12 +136,12 @@ public class VolumeBackup {
 		detachAndDeleteVolume(ec2client, volumeToBackup);
 
 		// stop sdfs
-//		LOG.info(format("\n---==Stoping SDFS sdfs==---"));
-//		sdfsProc.umountsdfs();
+		LOG.info(format("\n---==Stoping SDFS sdfs==---"));
+		sdfsProc.umountsdfs();
 
 //		// backup sdfs state
-//		LOG.info(format("\n---==Backuping SDFS state==---"));
-//		sdfsProc.packSdfsStateAndUpload(s3client);
+		LOG.info(format("\n---==Backuping SDFS state==---"));
+		sdfsProc.packSdfsStateAndUpload(s3client);
 	}
 
 
@@ -205,22 +197,22 @@ public class VolumeBackup {
 	}
 
 
-//	public static void packSdfsStateAndUpload(AmazonS3 s3client) {
-//		LOG.info(format("\nCreating SDFS configuration & metadata archive"));
-//		TarUtils.packToTar(properties.getProperty("SDFS_BACKUP_UPLOAD_FILE"), sdfsConfigPathes.getPathes());
-//		LOG.info(format("\nUploading SDFS configuration & metadata archiveto S3"));
-//		S3Utils.upload(s3client, properties.getProperty("BUCKET_NAME"),
-//				properties.getProperty("SDFS_BACKUP_UPLOAD_FILE"), properties.getProperty("KEY_NAME"));
-//	}
-//
-//
-//	public static void downloadAndRestoreSdfs(AmazonS3 s3client) {
-//		LOG.info(format("\nDownloading SDFS configuration & metadata from S3"));
-//		S3Utils.download(s3client, properties.getProperty("BUCKET_NAME"),
-//				properties.getProperty("SDFS_BACKUP_DOWNLOAD_FILE"), properties.getProperty("KEY_NAME"));
-//		LOG.info(format("\nRestoring SDFS configuration & metadata from archive"));
-//		TarUtils.unpackFromTar(properties.getProperty("SDFS_BACKUP_DOWNLOAD_FILE"));
-//	}
+	public static void packSdfsStateAndUpload(AmazonS3 s3client) {
+		LOG.info(format("\nCreating SDFS configuration & metadata archive"));
+		TarUtils.packToTar(properties.getProperty("SDFS_BACKUP_UPLOAD_FILE"), sdfsConfigPathes.getPathes());
+		LOG.info(format("\nUploading SDFS configuration & metadata archiveto S3"));
+		S3Utils.upload(s3client, properties.getProperty("BUCKET_NAME"),
+				properties.getProperty("SDFS_BACKUP_UPLOAD_FILE"), properties.getProperty("KEY_NAME"));
+	}
+
+
+	public static void downloadAndRestoreSdfs(AmazonS3 s3client) {
+		LOG.info(format("\nDownloading SDFS configuration & metadata from S3"));
+		S3Utils.download(s3client, properties.getProperty("BUCKET_NAME"),
+				properties.getProperty("SDFS_BACKUP_DOWNLOAD_FILE"), properties.getProperty("KEY_NAME"));
+		LOG.info(format("\nRestoring SDFS configuration & metadata from archive"));
+		TarUtils.unpackFromTar(properties.getProperty("SDFS_BACKUP_DOWNLOAD_FILE"));
+	}
 
 
 	public static Volume createAndAttachBackupVolume(AmazonEC2 ec2client, String volumeId, String instanceId) {
@@ -240,22 +232,11 @@ public class VolumeBackup {
 		
 		
 		Snapshot snapshot = S3Utils.createSnapshot(ec2client, volumeSrc);
-//		try {
-//			TimeUnit.SECONDS.sleep(120);
-//		} catch (InterruptedException e) {}
-		
-//		S3Utils.waitForCompleteState(ec2client, snapshot);
 		LOG.info("\nSnapshot created. Check snapshot data:\n" + snapshot.toString());
 
 		// create volume
 		String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
 		Volume volumeDest = S3Utils.createVolumeFromSnapshot(ec2client, snapshot, instanceAvailabilityZone);
-//		
-//		try {
-//			TimeUnit.SECONDS.sleep(120);
-//		} catch (InterruptedException e) {}
-		
-		//volumeDest = S3Utils.waitForAvailableState(ec2client, volumeDest);
 		LOG.info("\nVolume created. Check volume data:\n" + volumeDest.toString());
 
 		// mount AMI volume
