@@ -1,11 +1,16 @@
 ---
 <<<<<<< HEAD
+<<<<<<< HEAD
 - name: install OpenJDK 7 JDK
   yum: name="java-1.7.0-openjdk-devel" state=latest
 =======
 - name: install OpenJDK 8 JDK
   yum: name="java-1.8.0-openjdk-devel" state=latest
 >>>>>>> 7121e06... 1. Has been added playbook and inventory for ec2 deployment
+=======
+- name: install OpenJDK 7 JDK
+  yum: name="java-1.7.0-openjdk-devel" state=latest
+>>>>>>> bf32736... Change OpenJDK version to 7
 
 - name: setup JAVA_HOME
   copy: content="export JAVA_HOME=/usr/lib/jvm/java" dest=/etc/profile.d/java_home.sh mode="0755"
