@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,7 +65,7 @@ public class TaskController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public String addTask(String taskJsonString) {
+    public String addTask(@RequestBody String taskJsonString) {
         try {
             JSONObject jsonTask = new JSONObject(taskJsonString);
             jsonTask.put("worker", context.getInitParameter("aws:routine-inst-id"));
