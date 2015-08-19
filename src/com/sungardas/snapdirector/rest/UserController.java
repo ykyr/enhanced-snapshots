@@ -57,6 +57,7 @@ public class UserController {
 
 			// getting password
 			String password = mapper.readValue(userInfo, ObjectNode.class).get("password").asText();
+
 			userService.updateUser(user, password, getCurrentUserEmail());
 			return new ResponseEntity<>("", HttpStatus.OK);
 		} catch (SnapdirectorException e) {

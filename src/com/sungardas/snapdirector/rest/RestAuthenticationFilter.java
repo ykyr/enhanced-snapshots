@@ -51,7 +51,7 @@ public class RestAuthenticationFilter implements Filter {
 			if (!allowed && multiReadRequest.getPathInfo().endsWith("/session")) {
 				InputStream requestStream = multiReadRequest.getInputStream();
 				JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
-				String email = authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL);
+				String email = authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL).toLowerCase();
 				allowed = DynamoUtils.authenticateUser(email,
 						authCredentials.getString(JSON_AUTHENTIFICATION_PASSWORD), getMapper(request));
 				if (allowed) {
