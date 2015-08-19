@@ -33,7 +33,7 @@ import java.io.IOException;
 import static java.lang.String.format;
 
 
-public class AWSBackupVolumeTask implements Task {
+public class AWSBackupVolumeTask implements BackupTask {
 	private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeTask.class);
 	@Autowired
 	private TaskRepository taskRepository;
