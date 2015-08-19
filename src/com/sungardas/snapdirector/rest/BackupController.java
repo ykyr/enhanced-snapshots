@@ -68,9 +68,9 @@ public class BackupController {
         LOG.debug("Removing backup [{}]", backupName);
         try{
             backupService.deleteBackup(backupName);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (DataAccessException e){
-            return new ResponseEntity<>("Failed to remove backup.", HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>("Failed to remove backup.", HttpStatus.NOT_ACCEPTABLE);
         }
     }
 
