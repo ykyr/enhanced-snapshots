@@ -79,9 +79,14 @@ public class AWSBackupVolumeTask implements Task {
 
 		String backupDate = String.valueOf(System.currentTimeMillis());
 		String backupfileName = volumeId + "." + backupDate + ".backup";
-
+		
+		String snapshotId = tempVolume.getSnapshotId();
+		String volumeType = tempVolume.getVolumeType();
+		String iops = tempVolume.getIops().toString();
+		String sizeGib = tempVolume.getSize().toString();
+		
 		BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS,
-				configuration.getConfigurationId());
+				configuration.getConfigurationId(),snapshotId,volumeType, iops,sizeGib);
 		backupRepository.save(backup);
 
 		boolean backupStatus = false;

@@ -45,7 +45,8 @@ public class BackupFakeTask implements Task {
         String timestamp = Long.toString(System.currentTimeMillis());
         String volumeId = taskEntry.getVolume();
         String filename = volumeId + "." + timestamp + ".backup";
-        BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId());
+        BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId(),
+        		"snap-00100110","gp2","3000", "10");
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
         backupRepository.save(backup);
 
