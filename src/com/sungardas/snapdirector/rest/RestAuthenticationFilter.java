@@ -6,8 +6,8 @@ import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.rest.utils.JsonFromStream;
 import com.sungardas.snapdirector.rest.utils.MultiReadHttpServletRequest;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import javax.servlet.*;
@@ -17,14 +17,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.sungardas.snapdirector.rest.utils.Constants.*;
 
 @WebFilter("/rest/*")
 public class RestAuthenticationFilter implements Filter {
-	private static final Log LOG = LogFactory.getLog(RestAuthenticationFilter.class);
+	private static final Logger LOG = LogManager.getLogger(RestAuthenticationFilter.class);
 
 	public RestAuthenticationFilter() {
 	}
@@ -35,10 +35,10 @@ public class RestAuthenticationFilter implements Filter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException,
 			IOException {
 
-		Set<String> allowedSessions = (Set<String>) request.getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
+		Map<String, String> allowedSessions = (Map<String, String>) request.getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
 		if (allowedSessions == null) {
-			request.getServletContext().setAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME, new HashSet<String>());
-			allowedSessions = (Set<String>) request.getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
+			request.getServletContext().setAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME, new HashMap<String, String>());
+			allowedSessions = (Map<String, String>) request.getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
 		}
 
 		LOG.info("RestAuthenticationFilter:doFilter");
@@ -46,36 +46,27 @@ public class RestAuthenticationFilter implements Filter {
 		if (request instanceof HttpServletRequest) {
 			MultiReadHttpServletRequest multiReadRequest = new MultiReadHttpServletRequest((HttpServletRequest) request);
 			HttpSession session = ((HttpServletRequest) request).getSession();
-			boolean allowed = false;
 
-			allowed = allowedSessions.contains(session.getId());
-
+			boolean allowed = allowedSessions.containsKey(session.getId());
 			if (!allowed && multiReadRequest.getPathInfo().endsWith("/session")) {
-				System.out.println(multiReadRequest.getPathInfo());
-				LOG.info("RestAuthenticationFilter: new session " + session.getId());
-				JSONObject authCredentials = null;
-
 				InputStream requestStream = multiReadRequest.getInputStream();
-				authCredentials = JsonFromStream.newJSONObject(requestStream);
-
-				LOG.info("email: " + authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL));
-				LOG.info("password: " + authCredentials.getString(JSON_AUTHENTIFICATION_PASSWORD));
-
-				allowed = DynamoUtils.authenticateUser(authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL),
+				JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
+				String email = authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL);
+				allowed = DynamoUtils.authenticateUser(email,
 						authCredentials.getString(JSON_AUTHENTIFICATION_PASSWORD), getMapper(request));
-
+				if (allowed) {
+					allowedSessions.put(session.getId(), email);
+					LOG.info("Add session to allowed list: [{}] [{}]", session.getId(), email);
+				}
 			}
-
 			if (allowed) {
-				allowedSessions.add(session.getId());
-				LOG.info("RestAuthenticationFilter: alloved; session" + session.getId());
 				try {
 					chain.doFilter(multiReadRequest, response);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			} else {
-				LOG.info("RestAuthenticationFilter: deny; session" + session.getId());
+				LOG.info("Authentication failed. Session [{}]", session.getId());
 				if (response instanceof HttpServletResponse) {
 					HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 					httpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
