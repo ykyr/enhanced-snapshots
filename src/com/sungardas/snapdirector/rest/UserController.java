@@ -77,7 +77,7 @@ public class UserController {
 	}
 
 
-	@RequestMapping(value = "/{userEmail}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/{userEmail:.+}", method = RequestMethod.DELETE)
 	public ResponseEntity removeUser(@PathVariable("userEmail") String userEmail) {
 		try {
 			userService.removeUser(userEmail, getCurrentUserEmail());

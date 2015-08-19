@@ -11,6 +11,12 @@
     <table class="table table-condensed bg-white" st-table="displayedBackups" st-safe-src="backups">
         <thead>
         <tr>
+            <th class="text-center">
+                <a class="btn btn-link" ng-click="makeSelection()" title="Click to {{ textClass[isAllSelected]}} all">
+                    {{textClass[isAllSelected]}} all
+                </a>
+            </th>
+
             <th>&nbsp;</th>
             <th st-sort="timeCreated" st-sort-default="reverse">Created</th>
             <th st-sort="fileName">File Name</th>
@@ -19,13 +25,16 @@
         </thead>
 
         <tbody>
-        <tr ng-repeat="backup in displayedBackups">
+        <tr st-select-row="backup" st-select-mode="multiple" ng-repeat="backup in displayedBackups"
+            ng-click="checkSelection()">
+            <td class="text-center">
+                <span class="glyphicon glyphicon-{{ iconClass[backup.isSelected] }} text-primary"></span>
+                <input type="checkbox" ng-checked="backup.isSelected" class="hidden"/> &nbsp;
+            </td>
             <td class="text-center commands">
-                <a class="btn btn-link" title="Restore" ng-click="restore(backup)"><span
-                        class="glyphicon glyphicon-cloud-upload"></span></a>
-                <a class="btn text-danger" title="Remove" ng-click="remove(backup.fileName)"><i
-                        class="glyphicon glyphicon-remove" ng-hide="isRunning(backup)"></i></a>
-                <i class="glyphicon glyphicon-refresh spin" ng-show="isRunning(backup)"></i>
+                <a class="btn btn-link" title="Restore" ng-click="restore(backup); $event.stopPropagation();"><span
+                        class="glyphicon glyphicon-cloud-upload text-success"></span></a>
+                <span class="glyphicon glyphicon-refresh spin" ng-show="isRunning(backup)"></span>
             </td>
             <td>{{backup.timeCreated | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
             <td>{{backup.fileName}}</td>
@@ -34,15 +43,20 @@
         </tbody>
         <tfoot>
         <tr ng-show="isLoading">
-            <td colspan="4" class="text-center spinner-container">
+            <td colspan="5" class="text-center spinner-container">
                 <i class="glyphicon glyphicon-refresh text-muted spin"></i>
             </td>
         </tr>
         <tr>
-            <td colspan="4" class="text-center">
+            <td colspan="5" class="text-center">
                 <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
             </td>
         </tr>
         </tfoot>
     </table>
+    <div class="col-xs-12">
+        <button type="button" class="btn btn-danger pull-right" ng-disabled="!selectedAmount" ng-click="deleteSelection()">
+            <span class="glyphicon glyphicon-remove" title="Delete selected backups"></span> Delete selected
+        </button>
+    </div>
 </div>

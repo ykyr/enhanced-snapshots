@@ -277,6 +277,18 @@ input.ng-invalid-email{
     box-shadow: 0 0 2px #A30000;
 }
 
+.st-selected {
+    background-color: #d9edf7;
+}
+
+.well {
+    margin-bottom: -5px;
+}
+
+td .glyphicon{
+    cursor: pointer;
+}
+
 /* Callouts */
 
 .bs-callout {
