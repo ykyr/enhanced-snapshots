@@ -10,15 +10,12 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import com.sungardas.snapdirector.tasks.BackupTask;
-import com.sungardas.snapdirector.tasks.DeleteTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -29,7 +26,9 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
-import com.sungardas.snapdirector.tasks.BackupFakeTask;
+import com.sungardas.snapdirector.tasks.BackupTask;
+import com.sungardas.snapdirector.tasks.DeleteTask;
+import com.sungardas.snapdirector.tasks.RestoreTask;
 import com.sungardas.snapdirector.tasks.Task;
 
 @Component
@@ -43,10 +42,14 @@ public class WorkersDispatcher {
 	@Autowired
 	private AmazonSQS sqs;
 	@Autowired
-    private ObjectFactory<BackupTask> taskObjectFactory;
+    private ObjectFactory<BackupTask> backupTaskObjectFactory;
 
 	@Autowired
     private ObjectFactory<DeleteTask> deleteTaskObjectFactory;
+	
+	@Autowired
+    private ObjectFactory<RestoreTask> restoreTaskObjectFactory;
+	
 
 	private WorkerConfiguration configuration;
 	private ExecutorService  executor;
@@ -89,10 +92,14 @@ public class WorkersDispatcher {
 					switch (entry.getType()) {
 					case "backup":
 						LOGtw.info("Task was identified as backup");
-						task = taskObjectFactory.getObject();
+						task = backupTaskObjectFactory.getObject();
 						task.setTaskEntry(entry);
 						break;
 					case "restore":
+						LOGtw.info("Task was identified as restore");
+						task= restoreTaskObjectFactory.getObject();
+						task.setTaskEntry(entry);
+						break;
 					case "deleteBackupfile": {
 						LOGtw.info("Task was identified as delete backup");
                         task = deleteTaskObjectFactory.getObject();
