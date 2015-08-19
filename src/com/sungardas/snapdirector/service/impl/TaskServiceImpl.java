@@ -19,7 +19,7 @@ import java.util.List;
 public class TaskServiceImpl implements TaskService {
 
 
-	private static final Logger LOG = LogManager.getLogger(UserServiceImpl.class);
+	private static final Logger LOG = LogManager.getLogger(TaskServiceImpl.class);
 	@Autowired
 	private TaskRepository taskRepository;
 	@Value("${sungardas.worker.configuration}")
