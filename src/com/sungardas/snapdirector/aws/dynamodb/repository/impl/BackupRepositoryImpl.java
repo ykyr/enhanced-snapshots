@@ -3,13 +3,16 @@ package com.sungardas.snapdirector.aws.dynamodb.repository.impl;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.exception.DataAccessException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +37,19 @@ public class BackupRepositoryImpl implements BackupRepository {
         if (!failed.isEmpty()) {
             throw new DataAccessException("Can`t delete: " + backupEntry.getVolumeId() + " " + backupEntry.getFileName());
         }
+    }
+    
+    @Override
+    public List<BackupEntry> get(String volumeId) {
+    	BackupEntry backupEntry = new BackupEntry();
+		backupEntry.setVolumeId(volumeId);
+		DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
+				.withHashKeyValues(backupEntry);
+
+		List<BackupEntry> backupEntries = mapper.query(BackupEntry.class,
+				expression);
+
+		return backupEntries;
     }
 
     @PostConstruct
