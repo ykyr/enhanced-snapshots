@@ -2,17 +2,89 @@
 
 angular.module('web')
     .controller('HistoryController', function ($scope, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
+        $scope.maxDeleteBackupDisplay = 5;
 
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
         $scope.volumeId = $stateParams.volumeId;
 
+        $scope.textClass = {
+            'false': 'select',
+            'true': 'unselect'
+        };
+
+        $scope.iconClass = {
+            'false': 'unchecked',
+            'true': 'check'
+        };
+
+        $scope.isAllSelected = false;
+        $scope.selectedAmount = 0;
+
+        $scope.checkSelection = function () {
+            $scope.selectedAmount = $scope.backups.filter(function (b) { return b.isSelected; }).length;
+            $scope.isAllSelected = $scope.selectedAmount == $scope.backups.length;
+        };
+
+        $scope.makeSelection = function () {
+            $scope.backups.forEach(function (backup) {
+                backup.isSelected = !$scope.isAllSelected;
+            });
+            $scope.checkSelection();
+        };
+
+        $scope.deleteSelection = function () {
+            $scope.selectedBackups = $scope.backups.filter(function (b) { return b.isSelected; });
+
+            var confirmInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.backup-delete.html',
+                scope: $scope
+            });
+
+            confirmInstance.result.then(function () {
+                $scope.isLoading = true;
+                $scope.deleteErrors = [];
+
+                var fileNames = selectedBackups.map(function (b) { return b.fileName });
+                var remaining = fileNames.length;
+
+                var checkDeleteFinished = function () {
+                    $scope.isLoading = remaining > 0;
+                    if (!$scope.isLoading){
+                        if ($scope.deleteErrors.length) { console.log($scope.deleteErrors); }
+                        var finishedInstance = $modal.open({
+                            animation: true,
+                            templateUrl: './partials/modal.backup-delete-result.html',
+                            scope: $scope
+                        });
+
+                        loadBackups();
+                    }
+                };
+
+                for (var i = 0; i < fileNames.length; i++) {
+                    Backups.delete(fileNames[i]).then(function () {
+                        remaining--;
+                        checkDeleteFinished();
+                    }, function (e) {
+                        $scope.deleteErrors.push(e);
+                        remaining--;
+                        checkDeleteFinished();
+                    })
+                }
+            })
+        };
+
         $scope.isLoading = false;
         $scope.backups = [];
         var loadBackups = function () {
             $scope.isLoading = true;
             Backups.getForVolume($scope.volumeId).then(function (data) {
+                data.forEach(function (backup) {
+                    backup.isSelected = false;
+                });
                 $scope.backups = data;
                 $scope.isLoading = false;
             }, function () {
@@ -38,7 +110,7 @@ angular.module('web')
                     type: "restore",
                     status: "waiting",
                     schedulerManual: true,
-                    schedulerName: Storage.get('currentUser').username,
+                    schedulerName: Storage.get('currentUser').email,
                     schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
                 };
                 Tasks.insert(newTask).then(function () {
@@ -53,22 +125,6 @@ angular.module('web')
                 });
             });
 
-        };
-
-        $scope.remove = function (backupFileName) {
-            $scope.backupToDelete = backupFileName;
-
-            var rejectInstance = $modal.open({
-                animation: true,
-                templateUrl: './partials/modal.backup-delete.html',
-                scope: $scope
-            });
-
-            rejectInstance.result.then(function () {
-                Backups.delete(backupFileName).then(function () {
-                    loadBackups();
-                });
-            });
         };
 
     });
