@@ -4,7 +4,6 @@ angular.module('web')
     .controller('UserController', function ($scope, Users, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
-
         $scope.users = [];
 
         var currentUser = Users.getCurrent();
@@ -16,29 +15,25 @@ angular.module('web')
         $scope.editUser = function (user) {
             $scope.userToEdit = angular.copy(user);
             $scope.userToEdit.isNew = false;
-            var modalInstance = $modal.open({
+            var editUserModal = $modal.open({
                 animation: true,
                 templateUrl: './partials/modal.user-edit.html',
                 scope: $scope
             });
 
-            modalInstance.result.then(function () {
+            editUserModal.result.then(function () {
                 $scope.isLoading = true;
-                $scope.userToEdit.newPassword = $scope.userToEdit.newPassword || "";
+                $scope.userToEdit.password = $scope.userToEdit.password || "";
 
-                Users.update($scope.userToEdit).then(function (data) {
-                    var modalInstance = $modal.open({
+                Users.update($scope.userToEdit).then(function () {
+                    var confirmModal = $modal.open({
                         animation: true,
                         templateUrl: './partials/modal.user-added.html',
                         scope: $scope
                     });
-
-                    modalInstance.result.then(function () {
-                        $scope.refreshUsers();
-                    });
-                }, function () {
-                    $scope.isLoading = false;
+                    $scope.refreshUsers();
                 });
+                $scope.isLoading = false;
             });
         };
 
@@ -54,9 +49,8 @@ angular.module('web')
 
             modalInstance.result.then(function () {
                 $scope.isLoading = true;
-                $scope.userToEdit.newPassword = $scope.userToEdit.newPassword || "";
 
-                Users.insert($scope.userToEdit).then(function (data) {
+                Users.insert($scope.userToEdit).then(function () {
                     var modalInstance = $modal.open({
                         animation: true,
                         templateUrl: './partials/modal.user-added.html',
@@ -72,14 +66,14 @@ angular.module('web')
             });
         };
 
-        Users.getAllUsers().then(function (data) {
+        Users.getAll().then(function (data) {
             $scope.users = data;
         });
 
         $scope.refreshUsers = function () {
             $scope.isLoading = true;
             $scope.users = [];
-            Users.getAllUsers().then(function (data) {
+            Users.getAll().then(function (data) {
                 $scope.users = data;
                 $scope.isLoading = false;
             }, function () {
