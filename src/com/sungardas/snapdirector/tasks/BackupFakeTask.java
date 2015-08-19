@@ -9,11 +9,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
