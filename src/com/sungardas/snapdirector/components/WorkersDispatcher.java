@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import com.sungardas.snapdirector.tasks.BackupTask;
+import com.sungardas.snapdirector.tasks.DeleteTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -41,23 +43,26 @@ public class WorkersDispatcher {
 	@Autowired
 	private AmazonSQS sqs;
 	@Autowired
-    private ObjectFactory<Task> taskObjectFactory;
-	
-	private WorkerConfiguration configuration;	
+    private ObjectFactory<BackupTask> taskObjectFactory;
+
+	@Autowired
+    private ObjectFactory<DeleteTask> deleteTaskObjectFactory;
+
+	private WorkerConfiguration configuration;
 	private ExecutorService  executor;
-	
+
 	@PostConstruct
 	private void init() {
 		configuration = confRepository.findOne(configurationId);
 		executor = Executors.newSingleThreadExecutor();
 		executor.execute(new TaskWorker());
 	}
-	
+
 	@PreDestroy
 	public void destroy() {
 		executor.shutdownNow();
 	}
-	
+
 	private class TaskWorker implements Runnable {
 		private  final Logger LOGtw = LogManager.getLogger(TaskWorker.class);
 
@@ -68,7 +73,7 @@ public class WorkersDispatcher {
 			LOGtw.info(format("Starting listening to tasks queue: %s", queueURL));
 
 			while (true) {
-				
+
 				//LOGtw.info("\n\nLook for sended tasks..");
 				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
 				ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
@@ -88,9 +93,13 @@ public class WorkersDispatcher {
 						task.setTaskEntry(entry);
 						break;
 					case "restore":
-					case "deleteBackupfile":
+					case "deleteBackupfile": {
+						LOGtw.info("Task was identified as delete backup");
+                        task = deleteTaskObjectFactory.getObject();
+                        task.setTaskEntry(entry);
+						break;
+					}
 					default:
-
 						LOGtw.info("Task type not implemented");
 					}
 
@@ -111,6 +120,6 @@ public class WorkersDispatcher {
 			}
 		}
 	}
-	
+
 
 }

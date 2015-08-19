@@ -17,7 +17,7 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 
 @Component
 @Scope("prototype")
-public class BackupFakeTask implements Task {
+public class BackupFakeTask implements BackupTask {
 	private static final Logger LOG = LogManager.getLogger(BackupFakeTask.class);
     
     @Autowired

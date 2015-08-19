@@ -25,7 +25,7 @@ final public class BackupEntry {
 		setSize(backupSize);
 		setState(state.getState());
 		setInstanceId(instanceId);
-		setSnapsotId(snapshotId);
+		setSnapshotId(snapshotId);
 		setVolumeType(volumeType);
 		setIops(iops);
 		setSizeGiB(sizeGiB);
@@ -87,7 +87,7 @@ final public class BackupEntry {
 	}
 
 	@DynamoDBAttribute(attributeName = "snapshotId")
-	public void setSnapsotId(String snapshotId) {
+	public void setSnapshotId(String snapshotId) {
 		attributes.put("snapshotId", snapshotId);
 	}
 
