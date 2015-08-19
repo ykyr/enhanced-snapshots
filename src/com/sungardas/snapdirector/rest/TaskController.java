@@ -76,8 +76,10 @@ public class TaskController {
     	String configurationId = configuration.getConfiguration().getConfigurationId();
         try {
             JSONObject jsonTask = new JSONObject(taskJsonString);
+            
             jsonTask.put("worker", configurationId);
             jsonTask.put("instanceId", configurationId);
+            jsonTask = modifyIfFakeRestoreJSONTask(jsonTask);
             TaskEntry task = new TaskEntry(jsonTask);
             DynamoUtils.putTask(task, getMapper());
             return null;
@@ -86,6 +88,13 @@ public class TaskController {
             throw new WebApplicationException(e);
         }
     }
+    
+	private JSONObject modifyIfFakeRestoreJSONTask(JSONObject jsonTask) {
+		if (jsonTask.get("type").equals("restore")) {
+			jsonTask.put("volume", "vol-81c6aa60");
+		}
+		return jsonTask;
+	}
 
     private DynamoDBMapper getMapper() {
         AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
