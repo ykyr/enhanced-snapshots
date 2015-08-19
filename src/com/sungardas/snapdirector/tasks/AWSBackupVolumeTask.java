@@ -1,15 +1,8 @@
 package com.sungardas.snapdirector.tasks;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.Volume;
-import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
@@ -19,17 +12,13 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.tasks.aws.VolumeBackup;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsManager;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 import static java.lang.String.format;
 
 
@@ -64,7 +53,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 
 		LOG.info(format("AWSBackupVolumeTask: Starting backup process for volume %s", volumeId));
 		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
-        taskEntry.setStatus("running");
+        taskEntry.setStatus(RUNNING.getStatus());
         taskRepository.save(taskEntry);
 		
 		SdfsManager sdfs = new SdfsManager(configuration);

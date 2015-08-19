@@ -1,19 +1,20 @@
 package com.sungardas.snapdirector.tasks;
 
-import java.util.concurrent.TimeUnit;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
 import com.amazonaws.auth.AWSCredentials;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
+
+import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
 @Component
 @Scope("prototype")
@@ -38,7 +39,7 @@ public class BackupFakeTask implements BackupTask {
     @Override
     public void execute() {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
-        taskEntry.setStatus("running");
+        taskEntry.setStatus(RUNNING.getStatus());
         taskRepository.save(taskEntry);
 
         LOG.info(taskEntry.toString());

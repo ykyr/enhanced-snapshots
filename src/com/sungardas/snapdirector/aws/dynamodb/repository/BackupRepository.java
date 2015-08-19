@@ -6,4 +6,6 @@ public interface BackupRepository {
 
 	void save(BackupEntry backup);
 
+    void delete(BackupEntry backupEntry);
+
 }

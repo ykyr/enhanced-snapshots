@@ -7,7 +7,9 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
+import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.rest.utils.Constants;
+import com.sungardas.snapdirector.service.BackupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -36,6 +38,9 @@ public class BackupController {
     @Autowired
     private HttpServletRequest servletRequest;
 
+    @Autowired
+    private BackupService backupService;
+
 
     @RequestMapping(value = "/{volumeId}", method = RequestMethod.GET)
     public ResponseEntity<String> get(@PathVariable(value = "volumeId") String volumeId) {
@@ -60,13 +65,12 @@ public class BackupController {
 
     @RequestMapping(value = "/{backupName}", method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteBackup(@PathVariable String backupName) {
-        String volumeId = backupName.substring(0, 12);
         LOG.debug("Removing backup [{}]", backupName);
-        boolean backupRemoved = DynamoUtils.removeBackupInfo(volumeId, backupName, getMapper(servletRequest));
-        if (backupRemoved) {
+        try{
+            backupService.deleteBackup(backupName);
             return new ResponseEntity<>(HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Failed to remove backup.", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (DataAccessException e){
+            return new ResponseEntity<>("Failed to remove backup.", HttpStatus.NO_CONTENT);
         }
     }
 
