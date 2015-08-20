@@ -6,7 +6,7 @@ jdk:
 
 branches:
   only:
-  - java
+   - java
   
 sudo: required
 
@@ -22,4 +22,4 @@ deploy:
   region: us-east-1
   endpoint: com.sungardas.releases.s3-website-us-east-1.amazonaws.com
 
-# Version 0.5
+# Version 0.7
