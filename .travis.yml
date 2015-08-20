@@ -1,7 +1,6 @@
 # .travis.yml file for Travis CI Automated Build configuration
 
 language: java
-
 jdk:
   - openjdk7
 
@@ -20,7 +19,8 @@ deploy:
   bucket: "com.sungardas.releases"
   skip_cleanup: true
   acl: public_read
+  region: us-east-1
   endpoint: com.sungardas.releases.s3-website-us-east-1.amazonaws.com
 
-# Version 0.3
+# Version 0.4
 
