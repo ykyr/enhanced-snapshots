@@ -50,6 +50,29 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 	public static final Log LOG = LogFactory.getLog(AWSCommunticationServiceImpl.class);
 
 	@Override
+	public Volume createVolume(int size, int iiops, String type) {
+		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest().
+				withSize(size).withIops(iiops).withVolumeType(type);
+		Volume result = ec2client.createVolume(createVolumeRequest).getVolume();
+		return result;
+	}
+	
+	@Override
+	public Volume createStandardVolume(int size) {
+		return createVolume(size, 0, "standard");
+	}
+	
+	@Override
+	public Volume createGP2Volume(int size) {
+		return createVolume(size, 0, "gp2");
+	}
+	
+	@Override
+	public Volume createIO1Volume(int size,int iops) {
+		return createVolume(size, iops, "io1");
+	}
+	
+	@Override
 	public Snapshot createSnapshot(Volume volume) {
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd'_T'hh:mm:ss");
 
@@ -316,4 +339,6 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		}
 		return "/dev/sdf";
 	}
+
+
 }

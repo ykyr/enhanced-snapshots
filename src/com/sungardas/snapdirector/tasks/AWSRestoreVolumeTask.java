@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
@@ -46,15 +47,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 
 		deleteCompletedTask();
 	}
-
-	private void restoreFromSnapshot() {
-
-	}
-
-	private void restoreFromBackupFile() {
-
-	}
-
+	
 	private void changeTaskStatusToRunning() {
 		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
 		taskEntry.setStatus("running");
@@ -66,5 +59,24 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		taskRepository.delete(taskEntry);
 		LOG.info("Task completed.");
 	}
+
+	private void restoreFromSnapshot() {
+
+	}
+
+	private void restoreFromBackupFile() {
+		String volumeId = taskEntry.getVolume();
+		String sourceFile = taskEntry.getOptions();
+		
+		BackupEntry backupentry = backupRepository.getLast(volumeId);
+		String volumeType = backupentry.getVolumeType();
+		String size =backupentry.getSizeGiB();
+		String iops = backupentry.getIops();
+		
+		
+		
+	}
+
+	
 
 }

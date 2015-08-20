@@ -51,6 +51,19 @@ public class BackupRepositoryImpl implements BackupRepository {
 
 		return backupEntries;
     }
+    
+    @Override
+    public BackupEntry getLast(String volumeId) {
+    	BackupEntry backupEntry = new BackupEntry();
+		backupEntry.setVolumeId(volumeId);
+		DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
+				.withHashKeyValues(backupEntry).withScanIndexForward(false);
+
+		List<BackupEntry> backupEntries = mapper.query(BackupEntry.class,
+				expression);
+
+		return backupEntries.size()>0?backupEntries.get(0):null;
+    }
 
     @PostConstruct
     private void init() {

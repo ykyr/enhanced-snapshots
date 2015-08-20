@@ -40,4 +40,12 @@ public interface AWSCommunticationService {
 
 	Volume getVolume(String volumeId);
 
+	Volume createVolume(int size, int iiops, String type);
+
+	Volume createIO1Volume(int size, int iops);
+
+	Volume createGP2Volume(int size);
+
+	Volume createStandardVolume(int size);
+
 }
