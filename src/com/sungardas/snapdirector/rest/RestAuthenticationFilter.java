@@ -1,5 +1,7 @@
 package com.sungardas.snapdirector.rest;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
@@ -15,10 +17,11 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import static com.sungardas.snapdirector.rest.utils.Constants.*;
 
@@ -84,5 +87,7 @@ public class RestAuthenticationFilter implements Filter {
 		String region = request.getServletContext().getInitParameter("aws:dynamodb-region");
 		return new DynamoDBMapper(client);
 	}
+
+
 
 }
