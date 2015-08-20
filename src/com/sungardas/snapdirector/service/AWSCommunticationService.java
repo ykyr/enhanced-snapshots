@@ -30,13 +30,9 @@ public interface AWSCommunticationService {
 
 	void attachVolume(Instance instance, Volume volume);
 
-	void unattachVolume(AmazonEC2 ec2client, Volume volume);
-
 	List<Instance> getInstanceList();
 
 	List<Volume> getVolumeList();
-
-	VolumeAttachment detachVolumeFromInstance(Volume volume);
 
 	Volume getVolume(String volumeId);
 
@@ -47,5 +43,9 @@ public interface AWSCommunticationService {
 	Volume createGP2Volume(int size);
 
 	Volume createStandardVolume(int size);
+
+	Instance getInstance(String instanceId);
+
+	void detachVolume(Volume volume);
 
 }

@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
@@ -67,13 +69,31 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	private void restoreFromBackupFile() {
 		String volumeId = taskEntry.getVolume();
 		String sourceFile = taskEntry.getOptions();
+		String instanceId = taskEntry.getInstanceId();
 		
 		BackupEntry backupentry = backupRepository.getLast(volumeId);
+		Instance instance = awsCommunication.getInstance(instanceId);
 		String volumeType = backupentry.getVolumeType();
 		String size =backupentry.getSizeGiB();
 		String iops = backupentry.getIops();
+		Volume volumeToRestore = null;
+		switch (volumeType) {
+		case "standard":
+			volumeToRestore = awsCommunication.createStandardVolume(Integer.parseInt(size));
+			break;
+		case "gp2":
+			volumeToRestore = awsCommunication.createGP2Volume(Integer.parseInt(size));
+			break;
+		case "io1":
+			volumeToRestore = awsCommunication.createIO1Volume(Integer.parseInt(size), Integer.parseInt(iops));
+			break;
+		}
 		
+		awsCommunication.attachVolume(instance, volumeToRestore);
 		
+		//TODO: binary copy from backup to volume
+		
+		awsCommunication.detachVolume(volumeToRestore);
 		
 	}
 
