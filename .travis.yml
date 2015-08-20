@@ -14,8 +14,8 @@ sudo: required
 
 deploy:
   provider: s3
-  access_key_id: "AKIAISYFB75SDWQGIAZA"
-  secret_access_key: "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"
+  access_key_id: "xxxxxxxxxxxxxxxxxxxxx"
+  secret_access_key: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
   bucket: "com.sungardas.releases"
   skip_cleanup: true
 # acl: public_read
