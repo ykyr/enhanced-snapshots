@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
 					updatedUser.setPassword(userToBeUpdated.getPassword());
 				}
 				// in case it's last admin in system, ADMIN role can not be changed
-				if (isAdmin(currentUser) && updatedUser.getRole().equals(Roles.USER.getName()) && isLastAdmin()) {
+				if (isAdmin(userToBeUpdated) && updatedUser.getRole().equals(Roles.USER.getName()) && isLastAdmin()) {
 					OperationNotAllowedException e = new OperationNotAllowedException("At least one user with admin role must be in system.");
 					LOG.error("Admin role can not be changed in case it's last admin in system.", e);
 					throw e;
