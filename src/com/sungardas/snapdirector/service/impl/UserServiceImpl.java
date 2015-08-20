@@ -49,6 +49,9 @@ public class UserServiceImpl implements UserService {
 				User newUser = UserDtoConverter.convert(userInfo);
 				newUser.setPassword(DigestUtils.sha512Hex(password));
 				newUser.setEmail(newUser.getEmail().toLowerCase());
+				if (newUser.getRole().isEmpty()) {
+					newUser.setRole(Roles.USER.getName());
+				}
 				userRepository.save(newUser);
 			} else {
 				OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can create new user.");
@@ -70,16 +73,36 @@ public class UserServiceImpl implements UserService {
 			throw e;
 		}
 		try {
-			// check whether current user has permission to modify existing users
-			if (isAdmin(currentUserEmail)) {
+			// currentUser - user who performs update
+			User currentUser = userRepository.findOne(currentUserEmail);
+
+			// check whether current user has permission to modify existing user
+			if ((isAdmin(currentUserEmail) || userInfo.getEmail().toLowerCase().equals(currentUserEmail))) {
+				User userToBeUpdated = userRepository.findOne(userInfo.getEmail().toLowerCase());
 				User updatedUser = UserDtoConverter.convert(userInfo);
-				if (newPassword != null) {
+				// new password setting
+				if (newPassword != null && !newPassword.isEmpty()) {
 					updatedUser.setPassword(DigestUtils.sha512Hex(newPassword));
+				} else {
+					// in case password is empty we use old password
+					updatedUser.setPassword(userToBeUpdated.getPassword());
+				}
+				// in case it's last admin in system, ADMIN role can not be changed
+				if (isAdmin(currentUser) && updatedUser.getRole().equals(Roles.USER.getName()) && isLastAdmin()) {
+					OperationNotAllowedException e = new OperationNotAllowedException("At least one user with admin role must be in system.");
+					LOG.error("Admin role can not be changed in case it's last admin in system.", e);
+					throw e;
+				}
+				// not admin user can not change its role to admin
+				if (!isAdmin(currentUser) && updatedUser.getRole().equals(Roles.ADMIN.getName())) {
+					OperationNotAllowedException e = new OperationNotAllowedException("Only admin users can create other users with admin roles");
+					LOG.error("Only admin users can create other users with admin roles", e);
+					throw e;
 				}
 				userRepository.save(updatedUser);
 			} else {
 				OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can update users.");
-				LOG.info("Failed to update user.", e);
+				LOG.error("Failed to update user.", e);
 				throw e;
 			}
 		} catch (RuntimeException e) {
@@ -97,9 +120,16 @@ public class UserServiceImpl implements UserService {
 			throw e;
 		}
 		try {
-			// check whether current user has permission to remove existing users
+			// check whether current user has permission to remove existing users and it is not last admin in system
 			if (isAdmin(currentUserEmail)) {
-				userRepository.delete(userEmail);
+				// in case it's last admin in system, it can not be removed
+				if (isAdmin(userEmail) && isLastAdmin()) {
+					OperationNotAllowedException e = new OperationNotAllowedException("Admin user can not be removed in case it is the last admin in system.");
+					LOG.debug("Admin user can not be removed in case it's last admin in system.", e);
+					throw e;
+				} else {
+					userRepository.delete(userEmail);
+				}
 			} else {
 				OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can remove users.");
 				LOG.info("Failed to remove user.", e);
@@ -112,10 +142,17 @@ public class UserServiceImpl implements UserService {
 
 	}
 
-
 	private boolean isAdmin(String userEmail) {
 		return userRepository.findOne(userEmail.toLowerCase()).getRole() != null &&
 				userRepository.findOne(userEmail.toLowerCase()).getRole().equals(Roles.ADMIN.getName());
 	}
 
+	private boolean isAdmin(User user) {
+		return user.getRole() != null &&
+				user.getRole().equals(Roles.ADMIN.getName());
+	}
+
+	private boolean isLastAdmin() {
+		return userRepository.findByRole(Roles.ADMIN.getName()).size() == 1;
+	}
 }

@@ -5,7 +5,7 @@ angular.module('web')
         var url = BASE_URL + "rest/user";
         var storageKey = '_users';
 
-        var getAll = function () {
+        var getUsers = function () {
             var deferred = $q.defer();
             $http({
                 url: url,
@@ -29,8 +29,8 @@ angular.module('web')
         };
 
         var updateUser = function (user) {
-            console.log(user);       return $http({
-                url: url + "/" + user.email,
+            return $http({
+                url: url,
                 method: 'PUT',
                 data: user
             })
@@ -63,8 +63,8 @@ angular.module('web')
             getCurrent: function () {
                 return getCurrentUser();
             },
-            getAllUsers: function () {
-                return getAll().then(function (data) {
+            getAll: function () {
+                return getUsers().then(function (data) {
                     return data;
                 })
             }

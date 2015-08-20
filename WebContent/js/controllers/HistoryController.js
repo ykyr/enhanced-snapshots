@@ -47,7 +47,7 @@ angular.module('web')
                 $scope.isLoading = true;
                 $scope.deleteErrors = [];
 
-                var fileNames = selectedBackups.map(function (b) { return b.fileName });
+                var fileNames = $scope.selectedBackups.map(function (b) { return b.fileName });
                 var remaining = fileNames.length;
 
                 var checkDeleteFinished = function () {
@@ -59,7 +59,6 @@ angular.module('web')
                             templateUrl: './partials/modal.backup-delete-result.html',
                             scope: $scope
                         });
-
                         loadBackups();
                     }
                 };
@@ -116,7 +115,8 @@ angular.module('web')
                 Tasks.insert(newTask).then(function () {
                     var successInstance = $modal.open({
                         animation: true,
-                        templateUrl: './partials/modal.task-restore-created.html'
+                        templateUrl: './partials/modal.task-restore-created.html',
+                        scope: $scope
                     });
 
                     successInstance.result.then(function () {

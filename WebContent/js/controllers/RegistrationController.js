@@ -9,7 +9,7 @@ angular.module('web')
         $scope.registerUser = function () {
             if ($scope.passwordReg === $scope.passwordConf) {
                 // check if user already exists
-                Users.getAllUsers().then(function (data) {
+                Users.getAll().then(function (data) {
                     var unique = true;
 
                     if (data) {
