@@ -6,7 +6,8 @@ import org.apache.commons.logging.LogFactory;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
-import java.util.Set;
+import java.util.Map;
+
 
 import static com.sungardas.snapdirector.rest.utils.Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME;
 
@@ -23,7 +24,7 @@ public class SessionAuthentificationListener implements HttpSessionListener {
 	@SuppressWarnings("unchecked")
 	public void sessionDestroyed(HttpSessionEvent se) {
 		String sessionId = se.getSession().getId();
-		Set<String> allowedSessions = (Set<String>) se.getSession().getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
+		Map<String, String> allowedSessions = (Map<String, String>) se.getSession().getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
 		allowedSessions.remove(sessionId);
 		LOG.info("sessionDestroyed: " + sessionId);
 	}
