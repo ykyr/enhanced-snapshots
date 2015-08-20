@@ -25,6 +25,7 @@ import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
 import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
 import com.amazonaws.services.ec2.model.DescribeAvailabilityZonesResult;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeSnapshotsRequest;
 import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
@@ -167,6 +168,20 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		describeVolumesRequest.setVolumeIds(ids);
 		DescribeVolumesResult describeVolumesResult = ec2client.describeVolumes(describeVolumesRequest);
 		return describeVolumesResult.getVolumes().get(0);
+	}
+	
+	@Override
+	public Instance getInstance(String instanceId) {
+		DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest().withInstanceIds(instanceId);
+		DescribeInstancesResult describeInstancesResult = ec2client.describeInstances(describeInstancesRequest);
+		List<Reservation> reservations = describeInstancesResult.getReservations();
+		for (Reservation res : reservations) {
+			if(res.getInstances().size()>0) {
+				return res.getInstances().get(0);
+			}
+		}
+		return null;
+		
 	}
 
 	// public static Volume createVolumeFromSnapshot(AmazonEC2 ec2client,

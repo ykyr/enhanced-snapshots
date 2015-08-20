@@ -48,4 +48,6 @@ public interface AWSCommunticationService {
 
 	Volume createStandardVolume(int size);
 
+	Instance getInstance(String instanceId);
+
 }
