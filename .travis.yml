@@ -1,0 +1,17 @@
+# .travis.yml file for Travis CI Automated Build configuration
+
+language: java
+
+# Deploy to AWS S3
+
+deploy:
+  provider: s3
+  access_key_id: "AKIAISYFB75SDWQGIAZA"
+  secret_access_key: "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"
+  bucket: "com.sungardas.releases"
+  skip_cleanup: true
+  acl: public_read
+  endpoint: com.sungardas.releases.s3-website-us-east-1.amazonaws.com
+
+# Version 0.1
+
