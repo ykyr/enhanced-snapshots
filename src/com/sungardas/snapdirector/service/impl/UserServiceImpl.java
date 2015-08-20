@@ -73,6 +73,9 @@ public class UserServiceImpl implements UserService {
 			throw e;
 		}
 		try {
+			// currentUser - user who performs update
+			User currentUser = userRepository.findOne(currentUserEmail);
+
 			// check whether current user has permission to modify existing user
 			if ((isAdmin(currentUserEmail) || userInfo.getEmail().toLowerCase().equals(currentUserEmail))) {
 				User userToBeUpdated = userRepository.findOne(userInfo.getEmail().toLowerCase());
@@ -87,13 +90,19 @@ public class UserServiceImpl implements UserService {
 				// in case it's last admin in system, ADMIN role can not be changed
 				if (isAdmin(userToBeUpdated) && updatedUser.getRole().equals(Roles.USER.getName()) && isLastAdmin()) {
 					OperationNotAllowedException e = new OperationNotAllowedException("At least one user with admin role must be in system.");
-					LOG.debug("Admin role can not be changed in case it's last admin in system.");
+					LOG.error("Admin role can not be changed in case it's last admin in system.", e);
+					throw e;
+				}
+				// not admin user can not change its role to admin
+				if (!isAdmin(currentUser) && updatedUser.getRole().equals(Roles.ADMIN.getName())) {
+					OperationNotAllowedException e = new OperationNotAllowedException("Only admin users can create other users with admin roles");
+					LOG.error("Only admin users can create other users with admin roles", e);
 					throw e;
 				}
 				userRepository.save(updatedUser);
 			} else {
 				OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can update users.");
-				LOG.info("Failed to update user.", e);
+				LOG.error("Failed to update user.", e);
 				throw e;
 			}
 		} catch (RuntimeException e) {
