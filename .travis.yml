@@ -2,6 +2,11 @@
 
 language: java
 
+jdk:
+  - openjdk7
+
+sudo: required
+
 # Deploy to AWS S3
 
 deploy:
@@ -13,5 +18,5 @@ deploy:
   acl: public_read
   endpoint: com.sungardas.releases.s3-website-us-east-1.amazonaws.com
 
-# Version 0.1
+# Version 0.2
 
