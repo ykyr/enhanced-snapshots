@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 
 import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
@@ -76,7 +77,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 		String attachedDeviceName = null;
 		
 		tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId, configuration.getConfigurationId());
-		attachedDeviceName = tempVolume.getAttachments().get(0).getDevice();
+		attachedDeviceName = detectFsDevName(tempVolume);
 
 		String backupDate = String.valueOf(System.currentTimeMillis());
 		String backupfileName = volumeId + "." + backupDate + ".backup";
@@ -96,6 +97,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 			if (configuration.isUseFakeBackup()) {
 				source = configuration.getFakeBackupSource();
 			} else {
+				
 				source = attachedDeviceName;
 			}
 			LOG.info("Starting copying: " + source + " to:" +backupfileName);
@@ -129,6 +131,18 @@ public class AWSBackupVolumeTask implements BackupTask {
 		LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
         taskRepository.delete(taskEntry);
         LOG.info("Task completed.");
+	}
+	
+	private String detectFsDevName(Volume volume) {
+		String devname = volume.getAttachments().get(0).getDevice();
+		File volf = new File(devname);
+		if (!volf.exists() || !volf.isFile()) {
+			LOG.info(format("Cant find attached source: %s", volume));
+			
+			devname = "/dev/xvd" + devname.substring(devname.length()-1);
+			LOG.info(format("New sourcepash : %s", devname));
+		}
+		return devname;
 	}
 
 }
