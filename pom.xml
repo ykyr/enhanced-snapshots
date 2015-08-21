@@ -366,6 +366,11 @@
 				<version>2.4</version>
 				<configuration>
 					<warSourceDirectory>WebContent</warSourceDirectory>
+                    <webResources>
+                        <resource>
+                            <directory>resources</directory>
+                        </resource>
+                    </webResources>
 					<failOnMissingWebXml>false</failOnMissingWebXml>
 				</configuration>
 			</plugin>
