@@ -151,16 +151,6 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 	}
 
 	@Override
-	public Volume syncVolume(Volume volume) {
-		DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest();
-		LinkedList<String> ids = new LinkedList<String>();
-		ids.add(volume.getVolumeId());
-		describeVolumesRequest.setVolumeIds(ids);
-		DescribeVolumesResult describeVolumesResult = ec2client.describeVolumes(describeVolumesRequest);
-		return describeVolumesResult.getVolumes().get(0);
-	}
-	
-	@Override
 	public Volume getVolume(String volumeId) {
 		DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest();
 		LinkedList<String> ids = new LinkedList<String>();
@@ -236,6 +226,13 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		return vol;
 	}
 
+	@Override
+	public Volume syncVolume(Volume volume) {
+		DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest().withVolumeIds(volume.getVolumeId());
+		DescribeVolumesResult result = ec2client.describeVolumes(describeVolumesRequest);
+		return  result.getVolumes().get(0);
+	}
+	
 	@Override
 	public void deleteVolume(Volume volume) {
 

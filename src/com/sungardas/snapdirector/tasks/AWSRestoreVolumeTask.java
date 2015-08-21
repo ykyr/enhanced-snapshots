@@ -1,5 +1,11 @@
 package com.sungardas.snapdirector.tasks;
 
+import static java.lang.String.format;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +15,13 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
+import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.service.AWSCommunticationService;
+import com.sungardas.snapdirector.service.ConfigurationService;
+import com.sungardas.snapdirector.service.StorageService;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -32,8 +42,16 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 
 	@Autowired
 	private AWSCommunticationService awsCommunication;
+	
+	@Autowired
+	StorageService storageService;
 
 	private TaskEntry taskEntry;
+	
+	@Autowired
+	private ConfigurationService configurationService;
+
+	private WorkerConfiguration configuration;
 
 	@Override
 	public void setTaskEntry(TaskEntry taskEntry) {
@@ -44,6 +62,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	@Override
 	public void execute() {
 		String sourceFile = taskEntry.getOptions();
+		configuration = configurationService.getConfiguration();
 
 		changeTaskStatusToRunning();
 
@@ -96,11 +115,41 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		}
 		
 		awsCommunication.attachVolume(instance, volumeToRestore);
+		while (volumeToRestore.getAttachments().size() == 0) {
+			sleep();
+			volumeToRestore = awsCommunication.syncVolume(volumeToRestore);
+		}
+		String attachedDeviceName = volumeToRestore.getAttachments().get(0).getDevice();
 		
-		//TODO: binary copy from backup to volume
+//		try {
+//			storageService.copyFile(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 		
 		awsCommunication.detachVolume(volumeToRestore);
 		
+	}
+	
+	private void sleep() {
+		try {
+			TimeUnit.SECONDS.sleep(10);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private String detectFsDevName(Volume volume) {
+		
+		String devname = volume.getAttachments().get(0).getDevice();
+		File volf = new File(devname);
+		if (!volf.exists() || !volf.isFile()) {
+			LOG.info(format("Cant find attached source: %s", volume));
+			
+			devname = "/dev/xvd" + devname.substring(devname.length()-1);
+			LOG.info(format("New sourcepash : %s", devname));
+		}
+		return devname;
 	}
 
 	
