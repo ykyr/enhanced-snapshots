@@ -12,7 +12,13 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.service.AWSCommunticationService;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
+@Component
+@Scope("prototype")
+@Profile("prod")
 public class AWSRestoreVolumeTask implements RestoreTask {
 	private static final Logger LOG = LogManager.getLogger(AWSRestoreVolumeTask.class);
 

@@ -9,6 +9,7 @@ import com.sungardas.snapdirector.service.StorageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +17,9 @@ import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryS
 import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
 import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
-//@Component
-//@Scope("prototype")
+@Component
+@Scope("prototype")
+@Profile("prod")
 public class AWSDeleteTask implements DeleteTask {
 
     private static final Logger LOG = LogManager.getLogger(DeleteFakeTask.class);

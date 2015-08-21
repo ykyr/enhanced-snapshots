@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import com.sungardas.snapdirector.service.AWSCommunticationService;
 
 @Component
 @Scope("prototype")
+@Profile("dev")
 public class RestoreFakeTask implements RestoreTask {
 	private static final Logger LOG = LogManager.getLogger(RestoreFakeTask.class);
 

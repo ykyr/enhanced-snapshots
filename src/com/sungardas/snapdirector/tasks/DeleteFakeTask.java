@@ -8,6 +8,7 @@ import com.sungardas.snapdirector.exception.DataAccessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryS
 
 @Component
 @Scope("prototype")
+@Profile("dev")
 public class DeleteFakeTask implements DeleteTask {
 
     private static final Logger LOG = LogManager.getLogger(DeleteFakeTask.class);

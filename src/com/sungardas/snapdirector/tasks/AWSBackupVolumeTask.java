@@ -15,13 +15,18 @@ import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
 import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 import static java.lang.String.format;
 
-
+@Component
+@Scope("prototype")
+@Profile("prod")
 public class AWSBackupVolumeTask implements BackupTask {
 	private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeTask.class);
 	@Autowired
