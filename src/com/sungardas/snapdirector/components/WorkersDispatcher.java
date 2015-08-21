@@ -111,6 +111,8 @@ public class WorkersDispatcher {
                     sleep();
                 } catch (Exception e){
                     LOGtw.error(e);
+                    e.printStackTrace();
+                    if (executor.isShutdown() || executor.isTerminated()) break;
                 }
 			}
 		}

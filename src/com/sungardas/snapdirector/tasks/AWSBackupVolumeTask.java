@@ -9,9 +9,12 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.snapdirector.service.AWSCommunticationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
+import com.sungardas.snapdirector.service.StorageService;
 import com.sungardas.snapdirector.tasks.aws.VolumeBackup;
 import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsManager;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +40,15 @@ public class AWSBackupVolumeTask implements BackupTask {
 
 	@Autowired
 	AmazonEC2 ec2client;
+	
+	@Autowired
+	StorageService storageService;
 
 	@Autowired
 	BackupRepository backupRepository;
+	
+	@Autowired
+	private AWSCommunticationService awsCommunication;
 
 	private TaskEntry taskEntry;
 
@@ -65,18 +74,16 @@ public class AWSBackupVolumeTask implements BackupTask {
 
 		Volume tempVolume = null;
 		String attachedDeviceName = null;
-		if (!configuration.isUseFakeEC2()) {
-			tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId,
-					configuration.getConfigurationId());
-			attachedDeviceName = tempVolume.getAttachments().get(0).getDevice();
-		}
+		
+		tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId, configuration.getConfigurationId());
+		attachedDeviceName = tempVolume.getAttachments().get(0).getDevice();
 
 		String backupDate = String.valueOf(System.currentTimeMillis());
 		String backupfileName = volumeId + "." + backupDate + ".backup";
 		
 		String snapshotId = tempVolume.getSnapshotId();
 		String volumeType = tempVolume.getVolumeType();
-		String iops = tempVolume.getIops().toString();
+		String iops = (tempVolume.getIops()!=null)?tempVolume.getIops().toString():"";
 		String sizeGib = tempVolume.getSize().toString();
 		
 		BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS,
@@ -85,12 +92,16 @@ public class AWSBackupVolumeTask implements BackupTask {
 
 		boolean backupStatus = false;
 		try {
+			String source = null;
 			if (configuration.isUseFakeBackup()) {
-				backupStatus = sdfs.backupVolumeToSdfs(configuration.getFakeBackupSource(), backupfileName);
-			} else if (!configuration.isUseFakeEC2()) {
-				backupStatus = sdfs.backupVolumeToSdfs(attachedDeviceName, backupfileName);
-
+				source = configuration.getFakeBackupSource();
+			} else {
+				source = attachedDeviceName;
 			}
+			LOG.info("Starting copying: " + source + " to:" +backupfileName);
+			storageService.copyFile(source, configuration.getSdfsMountPoint()+backupfileName);
+			
+			backupStatus = true;
 		} catch (IOException e) {
 			LOG.fatal(format("Backup of volume %s failed", volumeId));
 			backup.setState(BackupState.FAILED.getState());
@@ -98,8 +109,9 @@ public class AWSBackupVolumeTask implements BackupTask {
 		}
 
 		if (backupStatus) {
-			long backupSize = sdfs.getBackupSize(backupfileName);
-			LOG.info("Backup creation time: " + sdfs.getBackupCreationTime(backupfileName));
+			long backupSize = storageService.getSize(configuration.getSdfsMountPoint()+backupfileName);
+			long backupCreationtime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint()+backupfileName);
+			LOG.info("Backup creation time: " + backupCreationtime);
 			LOG.info("Backup size: " + backupSize);
 
 			LOG.info("Put backup entry to the Backup List: " + backup.toString());
@@ -108,9 +120,8 @@ public class AWSBackupVolumeTask implements BackupTask {
 			backupRepository.save(backup);
 		}
 
-		if (!configuration.isUseFakeEC2()) {
-			VolumeBackup.detachAndDeleteVolume(ec2client, tempVolume);
-		}
+		LOG.info("Detaching volume" + tempVolume.getVolumeId());
+		awsCommunication.detachVolume(tempVolume);
 
 		LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
 		LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
