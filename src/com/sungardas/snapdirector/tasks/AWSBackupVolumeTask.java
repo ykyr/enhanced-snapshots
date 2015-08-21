@@ -122,6 +122,8 @@ public class AWSBackupVolumeTask implements BackupTask {
 
 		LOG.info("Detaching volume" + tempVolume.getVolumeId());
 		awsCommunication.detachVolume(tempVolume);
+		LOG.info("Deleting temporary volume" + tempVolume.getVolumeId());
+		awsCommunication.deleteVolume(tempVolume);
 
 		LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
 		LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
