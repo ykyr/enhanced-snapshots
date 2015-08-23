@@ -24,6 +24,8 @@ public interface AWSCommunticationService {
 
 	Volume syncVolume(Volume volume);
 
+	Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName);
+
 	Volume createVolumeFromSnapshot(Snapshot sourceSnapshot, String availabilityZoneName);
 
 	void deleteVolume(Volume volume);

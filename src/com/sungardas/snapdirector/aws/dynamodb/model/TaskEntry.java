@@ -222,6 +222,11 @@ public class TaskEntry {
             this.status = status;
         }
 
+        @Override
+        public String toString() {
+            return status;
+        }
+
         public String getStatus() {
             return status;
         }

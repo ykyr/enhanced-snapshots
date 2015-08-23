@@ -42,12 +42,12 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 
 	@Autowired
 	private AWSCommunticationService awsCommunication;
-	
+
 	@Autowired
-	StorageService storageService;
+	private StorageService storageService;
 
 	private TaskEntry taskEntry;
-	
+
 	@Autowired
 	private ConfigurationService configurationService;
 
@@ -63,74 +63,79 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	public void execute() {
 		String sourceFile = taskEntry.getOptions();
 		configuration = configurationService.getConfiguration();
-
 		changeTaskStatusToRunning();
-
-		if (sourceFile == null) {
-			restoreFromSnapshot();
-		} else {
-			restoreFromBackupFile();
+		try {
+			if (sourceFile == null || sourceFile.isEmpty()) {
+				restoreFromSnapshot();
+			} else {
+				restoreFromBackupFile();
+			}
+			deleteCompletedTask();
+		} catch (RuntimeException e) {
+			LOG.error("Failed to execute {} task {}. Changing task status to '{}'", taskEntry.getType(), taskEntry.getId(), TaskEntry.TaskEntryStatus.ERROR);
+			taskEntry.setStatus(TaskEntry.TaskEntryStatus.ERROR.getStatus());
+			taskRepository.save(taskEntry);
 		}
-
-		deleteCompletedTask();
 	}
-	
+
 	private void changeTaskStatusToRunning() {
-		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
-		taskEntry.setStatus("running");
+		LOG.info("Status of {} task {} was changed to '{}'", taskEntry.getType(), taskEntry.getId(), TaskEntry.TaskEntryStatus.RUNNING);
+		taskEntry.setStatus(TaskEntry.TaskEntryStatus.RUNNING.getStatus());
 		taskRepository.save(taskEntry);
 	}
 
 	private void deleteCompletedTask() {
-		LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
+		LOG.info("Deleting completed {} task {}", taskEntry.getType(), taskEntry.getId());
 		taskRepository.delete(taskEntry);
-		LOG.info("Task completed.");
+		LOG.info("{} task {} was completed and removed", taskEntry.getType(), taskEntry.getId());
 	}
 
 	private void restoreFromSnapshot() {
-
+		String volumeId = taskEntry.getVolume();
+		BackupEntry backupEntry = backupRepository.getLast(volumeId);
+		awsCommunication.createVolumeFromSnapshot(backupEntry.getSnapshotId(), awsCommunication.getVolume(volumeId).getAvailabilityZone());
 	}
 
 	private void restoreFromBackupFile() {
 		String volumeId = taskEntry.getVolume();
 		String sourceFile = taskEntry.getOptions();
 		String instanceId = taskEntry.getInstanceId();
-		
+
 		BackupEntry backupentry = backupRepository.getLast(volumeId);
 		Instance instance = awsCommunication.getInstance(instanceId);
 		String volumeType = backupentry.getVolumeType();
-		String size =backupentry.getSizeGiB();
+		String size = backupentry.getSizeGiB();
 		String iops = backupentry.getIops();
 		Volume volumeToRestore = null;
 		switch (volumeType) {
-		case "standard":
-			volumeToRestore = awsCommunication.createStandardVolume(Integer.parseInt(size));
-			break;
-		case "gp2":
-			volumeToRestore = awsCommunication.createGP2Volume(Integer.parseInt(size));
-			break;
-		case "io1":
-			volumeToRestore = awsCommunication.createIO1Volume(Integer.parseInt(size), Integer.parseInt(iops));
-			break;
+			case "standard":
+				volumeToRestore = awsCommunication.createStandardVolume(Integer.parseInt(size));
+				break;
+			case "gp2":
+				volumeToRestore = awsCommunication.createGP2Volume(Integer.parseInt(size));
+				break;
+			case "io1":
+				volumeToRestore = awsCommunication.createIO1Volume(Integer.parseInt(size), Integer.parseInt(iops));
+				break;
 		}
-		
+
 		awsCommunication.attachVolume(instance, volumeToRestore);
 		while (volumeToRestore.getAttachments().size() == 0) {
 			sleep();
 			volumeToRestore = awsCommunication.syncVolume(volumeToRestore);
 		}
 		String attachedDeviceName = volumeToRestore.getAttachments().get(0).getDevice();
-		
+
 //		try {
 //			storageService.copyFile(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
 //		} catch (IOException e) {
 //			e.printStackTrace();
 //		}
-		
+
 		awsCommunication.detachVolume(volumeToRestore);
-		
+
 	}
-	
+
 	private void sleep() {
 		try {
 			TimeUnit.SECONDS.sleep(10);
@@ -138,20 +143,19 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private String detectFsDevName(Volume volume) {
-		
+
 		String devname = volume.getAttachments().get(0).getDevice();
 		File volf = new File(devname);
 		if (!volf.exists() || !volf.isFile()) {
 			LOG.info(format("Cant find attached source: %s", volume));
-			
-			devname = "/dev/xvd" + devname.substring(devname.length()-1);
+
+			devname = "/dev/xvd" + devname.substring(devname.length() - 1);
 			LOG.info(format("New sourcepash : %s", devname));
 		}
 		return devname;
 	}
 
-	
 
 }

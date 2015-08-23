@@ -8,47 +8,30 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.AttachVolumeRequest;
-import com.amazonaws.services.ec2.model.AttachVolumeResult;
-import com.amazonaws.services.ec2.model.AvailabilityZone;
-import com.amazonaws.services.ec2.model.CreateSnapshotRequest;
-import com.amazonaws.services.ec2.model.CreateSnapshotResult;
-import com.amazonaws.services.ec2.model.CreateVolumeRequest;
-import com.amazonaws.services.ec2.model.CreateVolumeResult;
-import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
-import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
-import com.amazonaws.services.ec2.model.DescribeAvailabilityZonesResult;
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.DescribeSnapshotsRequest;
-import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
-import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
-import com.amazonaws.services.ec2.model.DescribeVolumesResult;
-import com.amazonaws.services.ec2.model.DetachVolumeRequest;
-import com.amazonaws.services.ec2.model.DetachVolumeResult;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceBlockDeviceMapping;
-import com.amazonaws.services.ec2.model.Reservation;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.SnapshotState;
-import com.amazonaws.services.ec2.model.Volume;
-import com.amazonaws.services.ec2.model.VolumeAttachment;
+import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.ec2.model.VolumeState;
 import com.sungardas.snapdirector.service.AWSCommunticationService;
 
 @Service
 public class AWSCommunticationServiceImpl implements AWSCommunticationService {
-	@Autowired
-	AmazonEC2 ec2client;
 
-	public static final Log LOG = LogFactory.getLog(AWSCommunticationServiceImpl.class);
+	private static final Logger LOG = org.apache.logging.log4j.LogManager.getLogger(AWSCommunticationServiceImpl.class);
+
+	@Autowired
+	private AmazonEC2 ec2client;
+
+	@Value("${sungardas.restore.snapshot.attempts}")
+	private int retryRestoreAttempts;
+
+	@Value("${sungardas.restore.snapshot.timeout}")
+	private int retryRestoreTimeout;
 
 	@Override
 	public Volume createVolume(int size, int iiops, String type) {
@@ -57,22 +40,22 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		Volume result = ec2client.createVolume(createVolumeRequest).getVolume();
 		return result;
 	}
-	
+
 	@Override
 	public Volume createStandardVolume(int size) {
 		return createVolume(size, 0, "standard");
 	}
-	
+
 	@Override
 	public Volume createGP2Volume(int size) {
 		return createVolume(size, 0, "gp2");
 	}
-	
+
 	@Override
-	public Volume createIO1Volume(int size,int iops) {
+	public Volume createIO1Volume(int size, int iops) {
 		return createVolume(size, iops, "io1");
 	}
-	
+
 	@Override
 	public Snapshot createSnapshot(Volume volume) {
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd'_T'hh:mm:ss");
@@ -85,7 +68,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		Snapshot snapshot = crSnapshotResult.getSnapshot();
 		return snapshot;
 	}
-	
+
 	@Override
 	public void deleteSnapshot(Volume associatedVolume) {
 		deleteSnapshot(associatedVolume.getSnapshotId());
@@ -159,80 +142,65 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		DescribeVolumesResult describeVolumesResult = ec2client.describeVolumes(describeVolumesRequest);
 		return describeVolumesResult.getVolumes().get(0);
 	}
-	
+
 	@Override
 	public Instance getInstance(String instanceId) {
 		DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest().withInstanceIds(instanceId);
 		DescribeInstancesResult describeInstancesResult = ec2client.describeInstances(describeInstancesRequest);
 		List<Reservation> reservations = describeInstancesResult.getReservations();
 		for (Reservation res : reservations) {
-			if(res.getInstances().size()>0) {
+			if (res.getInstances().size() > 0) {
 				return res.getInstances().get(0);
 			}
 		}
 		return null;
-		
 	}
 
-	// public static Volume createVolumeFromSnapshot(AmazonEC2 ec2client,
-	// Snapshot sourceSnapshot) {
-	// DescribeAvailabilityZonesResult zonesResult =
-	// ec2client.describeAvailabilityZones();
-	// List<AvailabilityZone> zones = zonesResult.getAvailabilityZones();
-	// Volume vol = null;
-	// if (zones.size() > 0) {
-	// LOG.info(format("Starting creating volume from %s",
-	// sourceSnapshot.getSnapshotId()));
-	//
-	// CreateVolumeRequest crVolumeRequest = new
-	// CreateVolumeRequest(sourceSnapshot.getSnapshotId(), zones.get(1)
-	// .getZoneName());
-	// CreateVolumeResult crVolumeResult =
-	// ec2client.createVolume(crVolumeRequest);
-	// vol = crVolumeResult.getVolume();
-	// }
-	// return vol;
-	// }
-
 	@Override
-	public Volume createVolumeFromSnapshot(Snapshot sourceSnapshot, String availabilityZoneName) {
-		DescribeAvailabilityZonesResult zonesResult = ec2client.describeAvailabilityZones();
-		List<AvailabilityZone> zones = zonesResult.getAvailabilityZones();
+	public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName) {
 		Volume vol = null;
-		if (zones.size() > 0) {
-			LOG.info(format("Starting creating volume from %s", sourceSnapshot.getSnapshotId()));
-
-			boolean incorrectState = true;
-			long timeout = 10L;
-			while (incorrectState) {
-				try {
-					incorrectState = false;
-					CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(sourceSnapshot.getSnapshotId(),
-							availabilityZoneName);
-					CreateVolumeResult crVolumeResult = ec2client.createVolume(crVolumeRequest);
-					vol = crVolumeResult.getVolume();
-				} catch (AmazonServiceException incorrectStateException) {
-					LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
-					incorrectState = true;
-					timeout += timeout < 120 ? timeout * 2 : 0;
+		int attemptNumber = 1;
+		while (attemptNumber <= retryRestoreAttempts) {
+			LOG.info("Starting volume creation from {} snapshot. Attempt number - {}", snapshotId, attemptNumber);
+			try {
+				CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId,
+						availabilityZoneName);
+				CreateVolumeResult crVolumeResult = ec2client.createVolume(crVolumeRequest);
+				vol = crVolumeResult.getVolume();
+				return vol;
+			} catch (AmazonServiceException exception) {
+				// Service error type indicates that request was valid but there was a problem at server side while processing request
+				// in this case we can attempt to resend request again
+				if (exception.getErrorType().equals(AmazonServiceException.ErrorType.Service) && attemptNumber != retryRestoreAttempts) {
+					LOG.info("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getErrorMessage());
+					LOG.info("New retry will occur in {} seconds", retryRestoreTimeout);
 					try {
-						TimeUnit.SECONDS.sleep(timeout);
+						TimeUnit.SECONDS.sleep(retryRestoreTimeout);
 					} catch (InterruptedException e) {
 					}
+				} else {
+					LOG.warn("Failed to create volume from {} snapshot due to amazon service exseption: {}", snapshotId, exception.getErrorMessage());
+					throw exception;
 				}
+				attemptNumber++;
 			}
-
 		}
 		return vol;
+	}
+
+
+	@Override
+	public Volume createVolumeFromSnapshot(Snapshot snapshot, String availabilityZoneName) {
+		return createVolumeFromSnapshot(snapshot.getSnapshotId(), availabilityZoneName);
 	}
 
 	@Override
 	public Volume syncVolume(Volume volume) {
 		DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest().withVolumeIds(volume.getVolumeId());
 		DescribeVolumesResult result = ec2client.describeVolumes(describeVolumesRequest);
-		return  result.getVolumes().get(0);
+		return result.getVolumes().get(0);
 	}
-	
+
 	@Override
 	public void deleteVolume(Volume volume) {
 
@@ -303,12 +271,12 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		LOG.info(format("\nVolume %s unattached", volume.getVolumeId()));
 	}
 
-
 	@Override
 	public List<Volume> getVolumeList() {
 		DescribeVolumesResult volumeResult = ec2client.describeVolumes();
 		return volumeResult.getVolumes();
 	}
+
 
 	@Override
 	public List<Instance> getInstanceList() {
@@ -318,7 +286,6 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		for (Reservation res : reservations) {
 			instances.addAll(res.getInstances());
 		}
-
 		return instances;
 	}
 
@@ -346,6 +313,29 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		return "/dev/sdf";
 	}
 
+	public AmazonEC2 getEc2client() {
+		return ec2client;
+	}
+
+	public void setEc2client(AmazonEC2 ec2client) {
+		this.ec2client = ec2client;
+	}
+
+	public int getRetryRestoreAttempts() {
+		return retryRestoreAttempts;
+	}
+
+	public void setRetryRestoreAttempts(int retryRestoreAttempts) {
+		this.retryRestoreAttempts = retryRestoreAttempts;
+	}
+
+	public int getRetryRestoreTimeout() {
+		return retryRestoreTimeout;
+	}
+
+	public void setRetryRestoreTimeout(int retryRestoreTimeout) {
+		this.retryRestoreTimeout = retryRestoreTimeout;
+	}
 
 
 }
