@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,16 +23,16 @@ import com.sungardas.snapdirector.service.AWSCommunticationService;
 @Service
 public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 
-	private static final Logger LOG = org.apache.logging.log4j.LogManager.getLogger(AWSCommunticationServiceImpl.class);
+	private static final Logger LOG = LogManager.getLogger(AWSCommunticationServiceImpl.class);
 
 	@Autowired
 	private AmazonEC2 ec2client;
 
 	@Value("${sungardas.restore.snapshot.attempts:5}")
-	 private int retryRestoreAttempts;
+	private int retryRestoreAttempts;
 
-	 @Value("${sungardas.restore.snapshot.timeout:5}")
-	 private int retryRestoreTimeout;;
+	@Value("${sungardas.restore.snapshot.timeout:5}")
+	private int retryRestoreTimeout;
 
 	@Override
 	public Volume createVolume(int size, int iiops, String type) {
@@ -159,8 +160,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 	@Override
 	public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName) {
 		Volume vol = null;
-		int attemptNumber = 1;
-		while (attemptNumber <= retryRestoreAttempts) {
+		for (int attemptNumber = 1; attemptNumber <= retryRestoreAttempts; attemptNumber++) {
 			LOG.info("Starting volume creation from {} snapshot. Attempt number - {}", snapshotId, attemptNumber);
 			try {
 				CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId,
@@ -179,10 +179,9 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 					} catch (InterruptedException e) {
 					}
 				} else {
-					LOG.warn("Failed to create volume from {} snapshot due to amazon service exseption: {}", snapshotId, exception.getErrorMessage());
+					LOG.warn("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getErrorMessage());
 					throw exception;
 				}
-				attemptNumber++;
 			}
 		}
 		return vol;
