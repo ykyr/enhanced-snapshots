@@ -79,7 +79,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 		
 		tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId, configuration.getConfigurationId());
 		try {
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.MINUTES.sleep(1);
 		} catch (InterruptedException e1) {	e1.printStackTrace();}
 		attachedDeviceName = storageService.detectFsDevName(tempVolume);
 
