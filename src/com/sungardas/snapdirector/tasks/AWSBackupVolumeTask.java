@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 import static java.lang.String.format;
@@ -77,7 +78,10 @@ public class AWSBackupVolumeTask implements BackupTask {
 		String attachedDeviceName = null;
 		
 		tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId, configuration.getConfigurationId());
-		attachedDeviceName = detectFsDevName(tempVolume);
+		try {
+			TimeUnit.SECONDS.sleep(1);
+		} catch (InterruptedException e1) {	e1.printStackTrace();}
+		attachedDeviceName = storageService.detectFsDevName(tempVolume);
 
 		String backupDate = String.valueOf(System.currentTimeMillis());
 		String backupfileName = volumeId + "." + backupDate + ".backup";
@@ -132,17 +136,4 @@ public class AWSBackupVolumeTask implements BackupTask {
         taskRepository.delete(taskEntry);
         LOG.info("Task completed.");
 	}
-	
-	private String detectFsDevName(Volume volume) {
-		String devname = volume.getAttachments().get(0).getDevice();
-		File volf = new File(devname);
-		if (!volf.exists() || !volf.isFile()) {
-			LOG.info(format("Cant find attached source: %s", volume));
-			
-			devname = "/dev/xvd" + devname.substring(devname.length()-1);
-			LOG.info(format("New sourcepash : %s", devname));
-		}
-		return devname;
-	}
-
 }
