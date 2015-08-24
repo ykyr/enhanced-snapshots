@@ -13,7 +13,6 @@ import com.sungardas.snapdirector.service.AWSCommunticationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.StorageService;
 import com.sungardas.snapdirector.tasks.aws.VolumeBackup;
-import com.sungardas.snapdirector.tasks.aws.sdfs.utils.SdfsManager;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,8 +70,6 @@ public class AWSBackupVolumeTask implements BackupTask {
 		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
         taskEntry.setStatus(RUNNING.getStatus());
         taskRepository.save(taskEntry);
-		
-		SdfsManager sdfs = new SdfsManager(configuration);
 
 		Volume tempVolume = null;
 		String attachedDeviceName = null;

@@ -84,7 +84,11 @@ public class SDFSServiceImpl implements StorageService {
 	
 	@Override
 	public int binaryCopy(String source, String destination) throws IOException, InterruptedException {
-		ProcessBuilder processbuilder = new ProcessBuilder("dd", "if=" + source, "of=" + mountPoint + "/" + destination);
+		File destFile = new File(destination);
+		if (!destFile.exists()) {
+			destFile.createNewFile();
+		}
+		ProcessBuilder processbuilder = new ProcessBuilder("dd", "if=" + source, "of=" + destination);
 
 		Process p = processbuilder.start();
 
