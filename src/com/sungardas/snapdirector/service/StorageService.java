@@ -18,4 +18,6 @@ public interface StorageService {
 	long getBackupCreationTime(String filename);
 
 	String detectFsDevName(Volume volume);
+
+	int binaryCopy(String source, String destination) throws IOException, InterruptedException;
 }

@@ -83,6 +83,15 @@ public class SDFSServiceImpl implements StorageService {
 	}
 	
 	@Override
+	public int binaryCopy(String source, String destination) throws IOException, InterruptedException {
+		ProcessBuilder processbuilder = new ProcessBuilder("dd", "if=" + source, "of=" + mountPoint + "/" + destination);
+
+		Process p = processbuilder.start();
+
+		return p.waitFor();
+	}
+	
+	@Override
 	public long getSize( String filename) {
 		Path file = Paths.get(filename) ; 
 		long size=-1;

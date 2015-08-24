@@ -107,10 +107,10 @@ public class AWSBackupVolumeTask implements BackupTask {
 			}
 			LOG.info("Starting copying: " + source + " to:" +backupfileName);
 			LOG.info("Source size:" + storageService.getSize(source));
-			storageService.copyFile(source, configuration.getSdfsMountPoint()+backupfileName);
+			storageService.binaryCopy(source, configuration.getSdfsMountPoint()+backupfileName);
 			
 			backupStatus = true;
-		} catch (IOException e) {
+		} catch (IOException | InterruptedException e) {
 			LOG.fatal(format("Backup of volume %s failed", volumeId));
 			backup.setState(BackupState.FAILED.getState());
 			backupRepository.save(backup);
