@@ -86,9 +86,10 @@ public class AWSBackupVolumeTask implements BackupTask {
 		String backupDate = String.valueOf(System.currentTimeMillis());
 		String backupfileName = volumeId + "." + backupDate + ".backup";
 		
+		Volume volumeToBackup = awsCommunication.getVolume(volumeId);
 		String snapshotId = tempVolume.getSnapshotId();
-		String volumeType = tempVolume.getVolumeType();
-		String iops = (tempVolume.getIops()!=null)?tempVolume.getIops().toString():"";
+		String volumeType = volumeToBackup.getVolumeType();
+		String iops = (volumeToBackup.getIops()!=null)?volumeToBackup.getIops().toString():"";
 		String sizeGib = tempVolume.getSize().toString();
 		
 		BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS,
