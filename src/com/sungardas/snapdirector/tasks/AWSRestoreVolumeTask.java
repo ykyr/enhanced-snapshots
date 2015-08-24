@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import com.sungardas.snapdirector.exception.DataAccessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +94,10 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	private void restoreFromSnapshot() {
 		String volumeId = taskEntry.getVolume();
 		BackupEntry backupEntry = backupRepository.getLast(volumeId);
+		if (backupEntry == null) {
+			LOG.error("Failed to find backup entry for volume {} ", volumeId);
+			throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
+		}
 		awsCommunication.createVolumeFromSnapshot(backupEntry.getSnapshotId(), awsCommunication.getVolume(volumeId).getAvailabilityZone());
 	}
 
