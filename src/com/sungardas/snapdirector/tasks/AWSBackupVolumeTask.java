@@ -106,6 +106,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 				source = attachedDeviceName;
 			}
 			LOG.info("Starting copying: " + source + " to:" +backupfileName);
+			LOG.info("Source size:" + storageService.getSize(source));
 			storageService.copyFile(source, configuration.getSdfsMountPoint()+backupfileName);
 			
 			backupStatus = true;
