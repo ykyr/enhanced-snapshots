@@ -101,7 +101,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		String sourceFile = taskEntry.getOptions();
 		String instanceId = taskEntry.getInstanceId();
 
-		BackupEntry backupentry = backupRepository.getLast(volumeId);
+		BackupEntry backupentry = backupRepository.getByBackupFileName(sourceFile);
 		Instance instance = awsCommunication.getInstance(instanceId);
 		String volumeType = backupentry.getVolumeType();
 		String size = backupentry.getSizeGiB();
@@ -120,17 +120,21 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		}
 
 		awsCommunication.attachVolume(instance, volumeToRestore);
+		
+		//wait for attached state
+		
 		while (volumeToRestore.getAttachments().size() == 0) {
 			sleep();
 			volumeToRestore = awsCommunication.syncVolume(volumeToRestore);
 		}
-		String attachedDeviceName = volumeToRestore.getAttachments().get(0).getDevice();
-
-//		try {
-//			storageService.copyFile(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+		
+		String attachedDeviceName = storageService.detectFsDevName(volumeToRestore);
+		
+		try {
+			storageService.copyFile(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		awsCommunication.detachVolume(volumeToRestore);
 
@@ -143,19 +147,4 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 			e.printStackTrace();
 		}
 	}
-
-	private String detectFsDevName(Volume volume) {
-
-		String devname = volume.getAttachments().get(0).getDevice();
-		File volf = new File(devname);
-		if (!volf.exists() || !volf.isFile()) {
-			LOG.info(format("Cant find attached source: %s", volume));
-
-			devname = "/dev/xvd" + devname.substring(devname.length() - 1);
-			LOG.info(format("New sourcepash : %s", devname));
-		}
-		return devname;
-	}
-
-
 }

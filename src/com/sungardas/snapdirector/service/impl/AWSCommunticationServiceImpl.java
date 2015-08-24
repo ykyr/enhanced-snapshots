@@ -27,11 +27,11 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 	@Autowired
 	private AmazonEC2 ec2client;
 
-	@Value("${sungardas.restore.snapshot.attempts}")
-	private int retryRestoreAttempts;
+	@Value("${sungardas.restore.snapshot.attempts:5}")
+	 private int retryRestoreAttempts;
 
-	@Value("${sungardas.restore.snapshot.timeout}")
-	private int retryRestoreTimeout;
+	 @Value("${sungardas.restore.snapshot.timeout:5}")
+	 private int retryRestoreTimeout;;
 
 	@Override
 	public Volume createVolume(int size, int iiops, String type) {

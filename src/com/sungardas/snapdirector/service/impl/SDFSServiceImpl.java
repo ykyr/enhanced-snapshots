@@ -1,5 +1,8 @@
 package com.sungardas.snapdirector.service.impl;
 
+import static java.lang.String.format;
+
+import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.exception.SDFSException;
 import com.sungardas.snapdirector.service.ConfigurationService;
@@ -99,6 +102,20 @@ public class SDFSServiceImpl implements StorageService {
 			timestamp= attrs.creationTime().toMillis();
 		} catch (IOException e) { e.printStackTrace();}
 		return timestamp;
+	}
+	
+	@Override
+	public String detectFsDevName(Volume volume) {
+
+		String devname = volume.getAttachments().get(0).getDevice();
+		File volf = new File(devname);
+		if (!volf.exists() || !volf.isFile()) {
+			LOG.info(format("Cant find attached source: %s", volume));
+
+			devname = "/dev/xvd" + devname.substring(devname.length() - 1);
+			LOG.info(format("New sourcepash : %s", devname));
+		}
+		return devname;
 	}
 
 }

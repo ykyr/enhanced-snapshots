@@ -14,4 +14,6 @@ public interface BackupRepository {
 
 	BackupEntry getLast(String volumeId);
 
+	BackupEntry getByBackupFileName(String backupName);
+
 }
