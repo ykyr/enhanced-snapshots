@@ -21,7 +21,7 @@ angular.module('web')
                     // backup deleted
                 })
                 .error(function (msg) {
-                    // TODO: handle 401
+                    // TODO: handle 406
                 });
         };
 
