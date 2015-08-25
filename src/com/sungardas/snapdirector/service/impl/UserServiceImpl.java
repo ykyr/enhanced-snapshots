@@ -48,6 +48,8 @@ public class UserServiceImpl implements UserService {
 			if (isAdmin(currentUserEmail)) {
 				User newUser = UserDtoConverter.convert(userInfo);
 				newUser.setPassword(DigestUtils.sha512Hex(password));
+
+				// convert user email to lowercase
 				newUser.setEmail(newUser.getEmail().toLowerCase());
 				if (newUser.getRole().isEmpty()) {
 					newUser.setRole(Roles.USER.getName());
@@ -60,7 +62,7 @@ public class UserServiceImpl implements UserService {
 			}
 		} catch (RuntimeException e) {
 			LOG.error("Failed to register user.", e);
-			throw new DataAccessException(e);
+			throw e;
 		}
 	}
 
@@ -77,7 +79,7 @@ public class UserServiceImpl implements UserService {
 			User currentUser = userRepository.findOne(currentUserEmail);
 
 			// check whether current user has permission to modify existing user
-			if ((isAdmin(currentUserEmail) || userInfo.getEmail().toLowerCase().equals(currentUserEmail))) {
+			if (isAdmin(currentUserEmail) || userInfo.getEmail().toLowerCase().equals(currentUserEmail)) {
 				User userToBeUpdated = userRepository.findOne(userInfo.getEmail().toLowerCase());
 				User updatedUser = UserDtoConverter.convert(userInfo);
 				// new password setting
@@ -88,7 +90,7 @@ public class UserServiceImpl implements UserService {
 					updatedUser.setPassword(userToBeUpdated.getPassword());
 				}
 				// in case it's last admin in system, ADMIN role can not be changed
-				if (isAdmin(currentUser) && updatedUser.getRole().equals(Roles.USER.getName()) && isLastAdmin()) {
+				if (isAdmin(userToBeUpdated) && updatedUser.getRole().equals(Roles.USER.getName()) && isLastAdmin()) {
 					OperationNotAllowedException e = new OperationNotAllowedException("At least one user with admin role must be in system.");
 					LOG.error("Admin role can not be changed in case it's last admin in system.", e);
 					throw e;
@@ -99,6 +101,8 @@ public class UserServiceImpl implements UserService {
 					LOG.error("Only admin users can create other users with admin roles", e);
 					throw e;
 				}
+				// convert user email to lowercase
+				updatedUser.setEmail(updatedUser.getEmail().toLowerCase());
 				userRepository.save(updatedUser);
 			} else {
 				OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can update users.");
@@ -107,7 +111,7 @@ public class UserServiceImpl implements UserService {
 			}
 		} catch (RuntimeException e) {
 			LOG.error("Failed to update user.", e);
-			throw new DataAccessException(e);
+			throw e;
 		}
 	}
 
@@ -137,7 +141,7 @@ public class UserServiceImpl implements UserService {
 			}
 		} catch (RuntimeException e) {
 			LOG.error("Failed to remove user.", e);
-			throw new DataAccessException(e);
+			throw e;
 		}
 
 	}

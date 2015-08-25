@@ -18,5 +18,8 @@
     "angular-smart-table": "~2.1.1",
     "ng-tags-input": "3.0.0",
     "angular-awesome-slider": "~2.4.1"
+  },
+  "resolutions": {
+    "angular": "~1.4.2"
   }
 }

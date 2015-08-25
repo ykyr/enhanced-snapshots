@@ -14,7 +14,6 @@ import java.util.Map;
 public class User {
 
     private final Map<String, Object> attributes = new LinkedHashMap<>();
-
     public User() {
         super();
     }
@@ -84,5 +83,33 @@ public class User {
         passwordLessUserInfo.putAll(attributes);
         passwordLessUserInfo.remove("password");
         return Jackson.toJsonString(passwordLessUserInfo);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        User user = (User) o;
+
+        if (getFirstName() != null ? !getFirstName().equals(user.getFirstName()) : user.getFirstName() != null)
+            return false;
+        if (getLastName() != null ? !getLastName().equals(user.getLastName()) : user.getLastName() != null)
+            return false;
+        if (getEmail() != null ? !getEmail().equals(user.getEmail()) : user.getEmail() != null) return false;
+        if (getPassword() != null ? !getPassword().equals(user.getPassword()) : user.getPassword() != null)
+            return false;
+        return !(getRole() != null ? !getRole().equals(user.getRole()) : user.getRole() != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getFirstName() != null ? getFirstName().hashCode() : 0;
+        result = 31 * result + (getLastName() != null ? getLastName().hashCode() : 0);
+        result = 31 * result + (getEmail() != null ? getEmail().hashCode() : 0);
+        result = 31 * result + (getPassword() != null ? getPassword().hashCode() : 0);
+        result = 31 * result + (getRole() != null ? getRole().hashCode() : 0);
+        return result;
     }
 }
