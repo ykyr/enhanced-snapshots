@@ -1,20 +1,5 @@
 package com.sungardas.snapdirector.service.impl;
 
-import static java.lang.String.format;
-
-import com.amazonaws.services.ec2.model.Volume;
-import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
-import com.sungardas.snapdirector.exception.SDFSException;
-import com.sungardas.snapdirector.service.ConfigurationService;
-import com.sungardas.snapdirector.service.StorageService;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,10 +10,25 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import javax.annotation.PostConstruct;
+
+import com.amazonaws.services.ec2.model.Volume;
+import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.snapdirector.exception.SDFSException;
+import com.sungardas.snapdirector.service.ConfigurationService;
+import com.sungardas.snapdirector.service.StorageService;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import static java.lang.String.format;
+
 @Service
 public class SDFSServiceImpl implements StorageService {
 
-	public static final Log LOG = LogFactory.getLog(SDFSServiceImpl.class);
+	public static final Logger LOG = LogManager.getLogger(SDFSServiceImpl.class);
 
 	private String sdfs;
 	private String mountPoint;
@@ -93,6 +93,39 @@ public class SDFSServiceImpl implements StorageService {
 		Process p = processbuilder.start();
 
 		return p.waitFor();
+	}
+
+	@Override
+	public void javaBinaryCopy(String source, String destination) throws IOException {
+		FileInputStream fis = null;
+		FileOutputStream fos = null;
+
+		try {
+			fis = new FileInputStream(source);
+			fos = new FileOutputStream(destination);
+
+			byte[] buffer = new byte[4096];
+			int noOfBytes;
+
+			long total = 0;
+
+			LOG.info("Copying file using started");
+
+			while ((noOfBytes = fis.read(buffer)) != -1) {
+				fos.write(buffer, 0, noOfBytes);
+				total += noOfBytes;
+			}
+
+			LOG.info("Copying file finished, "+total);
+		} finally {
+			if (fis != null) {
+				fis.close();
+			}
+			if (fos != null) {
+				fos.close();
+			}
+
+		}
 	}
 	
 	@Override

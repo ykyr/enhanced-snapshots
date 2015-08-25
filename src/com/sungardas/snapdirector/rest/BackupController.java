@@ -26,6 +26,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/backup")
@@ -67,11 +68,16 @@ public class BackupController {
     public ResponseEntity<String> deleteBackup(@PathVariable String backupName) {
         LOG.debug("Removing backup [{}]", backupName);
         try{
-            backupService.deleteBackup(backupName);
+            backupService.deleteBackup(backupName, getCurrentUserEmail());
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (DataAccessException e){
             return new ResponseEntity<>("Failed to remove backup.", HttpStatus.NOT_ACCEPTABLE);
         }
+    }
+
+    private String getCurrentUserEmail() {
+        String session = servletRequest.getSession().getId();
+        return ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
     }
 
     private DynamoDBMapper getMapper(ServletRequest request) {

@@ -102,7 +102,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 				source = attachedDeviceName;
 			}
 			LOG.info("Starting copying: " + source + " to:" +backupfileName);
-			storageService.binaryCopy(source, configuration.getSdfsMountPoint()+backupfileName);
+			storageService.javaBinaryCopy(source, configuration.getSdfsMountPoint()+backupfileName);
 			
 			backupStatus = true;
 		} catch (IOException | InterruptedException e) {

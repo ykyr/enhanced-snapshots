@@ -21,8 +21,8 @@ public class BackupServiceImpl implements BackupService {
     private TaskRepository taskRepository;
 
     @Override
-    public void deleteBackup(String backupName) {
-        TaskEntry taskEntry = getDeleteTask(backupName);
+    public void deleteBackup(String backupName, String user) {
+        TaskEntry taskEntry = getDeleteTask(backupName, user);
         taskRepository.save(taskEntry);
     }
 
@@ -30,7 +30,7 @@ public class BackupServiceImpl implements BackupService {
         return backupName.substring(0, 12);
     }
 
-    private TaskEntry getDeleteTask(String backupName){
+    private TaskEntry getDeleteTask(String backupName, String user){
         String volumeId = getVolumeId(backupName);
 
         TaskEntry taskEntry = new TaskEntry();
@@ -39,13 +39,13 @@ public class BackupServiceImpl implements BackupService {
         taskEntry.setType(DELETE.getType());
         taskEntry.setInstanceId(configurationService.getConfiguration().getConfigurationId());
         taskEntry.setStatus(TaskEntry.TaskEntryStatus.WAITING.getStatus());
-        taskEntry.setOptions(backupName+BACKUP_FILE_EXT);
+        taskEntry.setOptions(backupName + BACKUP_FILE_EXT);
+        taskEntry.setSchedulerName(user);
 
         //TODO Remove hardcode
         taskEntry.setWorker(taskEntry.getInstanceId());
         taskEntry.setPriority(0);
         taskEntry.setSchedulerManual(true);
-        taskEntry.setSchedulerName("schedulerName");
         taskEntry.setSchedulerTime("2015-08-19 14:59:31");
 
         return taskEntry;

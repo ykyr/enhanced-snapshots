@@ -107,7 +107,6 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	}
 
 	private void restoreFromBackupFile() {
-		String volumeId = taskEntry.getVolume();
 		String sourceFile = taskEntry.getOptions();
 		String instanceId = taskEntry.getInstanceId();
 
@@ -145,7 +144,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		String attachedDeviceName = storageService.detectFsDevName(volumeToRestore);
 		LOG.info("Volume was attached as device: " + attachedDeviceName);
 		try {
-			storageService.binaryCopy(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
+			storageService.javaBinaryCopy(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
 		} catch (IOException | InterruptedException e) {
 			LOG.fatal(format("Restore of volume %s failed", volumeToRestore));
 			taskEntry.setStatus("error");
@@ -154,7 +153,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 
 		awsCommunication.detachVolume(volumeToRestore);
 		LOG.info("Detaching volume after restoring data: " + volumeToRestore.toString());
-
+		awsCommunication.setResourceName(volumeToRestore.getVolumeId(), backupentry.getFileName());
 	}
 
 	private void sleep() {

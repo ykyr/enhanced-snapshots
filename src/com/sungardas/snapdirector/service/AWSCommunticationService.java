@@ -50,4 +50,5 @@ public interface AWSCommunticationService {
 
 	void detachVolume(Volume volume);
 
+	void setResourceName(String resourceid, String value);
 }

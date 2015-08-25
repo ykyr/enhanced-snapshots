@@ -4,7 +4,7 @@ import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
-import com.sungardas.snapdirector.exception.DataAccessException;
+import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.StorageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,11 +55,9 @@ public class AWSDeleteTask implements DeleteTask {
             storageService.deleteFile(backupEntry.getFileName());
             taskEntry.setStatus(COMPLETE.getStatus());
             taskRepository.save(taskEntry);
-
-            //TODO check delete logic
             taskRepository.delete(taskEntry);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
-        } catch (DataAccessException e){
+        } catch (SnapdirectorException e){
             LOG.error(e);
             taskEntry.setStatus(ERROR.getStatus());
             taskRepository.save(taskEntry);

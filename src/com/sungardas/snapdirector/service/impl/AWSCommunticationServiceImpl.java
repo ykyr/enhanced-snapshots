@@ -20,6 +20,7 @@ import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.AttachVolumeResult;
 import com.amazonaws.services.ec2.model.CreateSnapshotRequest;
 import com.amazonaws.services.ec2.model.CreateSnapshotResult;
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
@@ -37,6 +38,7 @@ import com.amazonaws.services.ec2.model.InstanceBlockDeviceMapping;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.SnapshotState;
+import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeState;
 import com.sungardas.snapdirector.service.AWSCommunticationService;
@@ -342,6 +344,12 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 			}
 		}
 		return "/dev/sdf";
+	}
+
+	@Override
+	public void setResourceName(String resourceId, String value) {
+		CreateTagsRequest r= new CreateTagsRequest().withResources(resourceId).withTags(new Tag().withKey("Name").withValue(value));
+		ec2client.createTags(r);
 	}
 
 	public AmazonEC2 getEc2client() {
