@@ -97,6 +97,10 @@ ul.nav-main > li.active > a > span {
     margin: 0;
 }
 
+.full-width {
+    width: 100%;
+}
+
 .spin{
     -webkit-transform-origin: 50% 50%;
     transform-origin:50% 50%;
@@ -165,7 +169,13 @@ a:hover.link-white{
 .commands{
     width: 100px;
 }
-.commands .btn{
+
+.command{
+    width: 25px;
+}
+
+.commands .btn,
+.command .btn {
     padding: 0 !important;
 }
 
@@ -260,16 +270,8 @@ ul.dropdown-menu a,
     padding: 20px !important;
 }
 
-@keyframes activeTaskBlinking {
-    from {color: #d9edf7}
-    to {color: rgba(60, 118, 61, 1)}
-}
-
 .bs-callout.active h1 span.glyphicon{
     animation: infinite;
-    animation-name: activeTaskBlinking;
-    animation-duration: 0.75s;
-    animation-direction: alternate;
 }
 
 input.ng-invalid-email{
@@ -352,3 +354,48 @@ td .glyphicon{
 }
 
 /* End of Callouts */
+
+
+
+/* tag filter */
+
+.tag-input {
+    margin-bottom: 0.4em;
+}
+
+.tags,
+.tags .tag {
+    margin-right: 0.6em;
+    margin-bottom: 0.4em;
+    font-size: 18px;
+    float: left;
+}
+.tags .tag[ng-click]:hover {
+    text-decoration: none;
+    cursor: pointer;
+    color: #FFFFFF;
+}
+.tags .tag .glyphicon-remove {
+    font-size: 9px;
+    margin-right: -1.8em;
+    margin-top: -1em;
+    opacity: 0;
+    background-color: #FFFFFF;
+    padding: 2px;
+    border-radius: 9px;
+    border: 1px solid #CCCCCC;
+    color: #FF0000;
+}
+
+.tags .tag:hover .glyphicon-remove {
+    opacity: 1;
+}
+
+.tags .tag span {
+    display: block;
+    float: right;
+}
+
+.tag-value {
+    font-size: 14px;
+}

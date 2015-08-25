@@ -11,16 +11,17 @@ angular.module('web')
             name: "GLOBAL",
             id: ""
         };
-
         $scope.statusColorClass = {
-          "in-use": "success",
-          "creating": "error",
-          "available": "info",
-          "deleting": "error",
-          "deleted": "error",
-          "error": "error"
+            "in-use": "success",
+            "creating": "error",
+            "available": "info",
+            "deleting": "error",
+            "deleted": "error",
+            "error": "error"
         };
 
+        $scope.tags = {};
+        $scope.instances = [];
         Regions.get().then(function (regions) {
             $scope.regions = regions
         });
@@ -28,63 +29,85 @@ angular.module('web')
         $scope.selectedRegion = $scope.globalRegion;
 
         // ---------filtering------------
-        $scope.isCollapsed = true;
-        $scope.tags = [];
-        var getTags = function () {
-            return $scope.tags
-        };
-        $scope.allTags = function (query) {
-            return Tags.loadTags();
+
+        $scope.isFilterCollapsed = true;
+
+        $scope.sliderOptions = {
+            from: 0,
+            to: 16384,
+            step: 4,
+            dimension: " GB",
+            skin: "plastic"
         };
 
-        $scope.filters = {
-            'volumeName': $scope.volumeName,
-            'higher': $scope.higher,
-            'lower': $scope.lower,
-            'instanceId': $scope.instanceId,
-            'tags': []
+        var processVolumes = function (data) {
+            $scope.tags = {};
+            $scope.instances = [""];
+            for (var i = 0; i < data.length; i++){
+                for (var j = 0; j < data[i].tags.length; j++){
+                    var tag = data[i].tags[j];
+                    if (!$scope.tags.hasOwnProperty(tag.key)){
+                        $scope.tags[tag.key] = [tag.value];
+                    } else {
+                        if ($scope.tags[tag.key].indexOf(tag.value) == -1){
+                            $scope.tags[tag.key].push(tag.value);
+                        }
+                    }
+                }
+
+                var instance = data[i].instanceID;
+                if (instance && $scope.instances.indexOf(instance) == -1){
+                    $scope.instances.push(instance);
+                }
+            }
+            return data;
         };
 
         $scope.filter = {
-            "name": "",
-            "size": {
-                "lower": 0,
-                "higher": 0
-            },
-            "instance": "",
-            "tags": []
-
+            name: "",
+            size: "0;16384",
+            instanceID: "",
+            region: $scope.globalRegion,
+            tags: []
         };
 
-        $scope.sizeValue = "0;5";
-        $scope.options = {
-            from: 0,
-            to: 5,
-            step: 1,
-            realtime: true,
-            dimension: " GB",
-            scale: ['|','|','|'],
-            callback: function (value, released) {
-                $scope.higher = parseInt( (value.split(";"))[1]);
-                $scope.lower = parseInt( (value.split(";"))[0]);
-
-            }
-        };
-
-        var volumeSizes = function (data) {
-            for (var i = 0; i < data.length; i++) {
-                if (data[i].size > $scope.options.to) {
-                    $scope.options.to = data[i].size;
+        $scope.applyFilter = function () {
+            var f = angular.copy($scope.filter);
+            $scope.stAdvancedFilter = {
+                "volumeName": {
+                    "type": "str",
+                    "value": f.name
+                },
+                "size": {
+                    "type": "int-range",
+                    "value": {
+                        "lower": parseInt(f.size.split(";")[0], 10),
+                        "higher": parseInt(f.size.split(";")[1], 10)
+                    }
+                },
+                "instanceID": {
+                    "type": "str-strict",
+                    "value": f.instanceID
+                },
+                "availabilityZone": {
+                    "type": "str",
+                    "value": f.region.id
+                },
+                "tags": {
+                    "type": "array-inc",
+                    "value": f.tags
                 }
-            }
+            };
         };
+
         //----------filtering-end-----------
 
         $scope.isLoading = true;
         $scope.volumes = [];
+
+
         Volumes.get().then(function (data) {
-            $scope.volumes = data;
-            volumeSizes(data);
+            $scope.volumes = processVolumes(data);
             $scope.isLoading = false;
         }, function () {
             $scope.isLoading = false;
@@ -94,12 +117,15 @@ angular.module('web')
             $scope.selectedRegion = region;
         };
 
+
         $scope.refresh = function () {
             $scope.isLoading = true;
             $scope.volumes = undefined;
             Volumes.refresh().then(function (data) {
                 $scope.volumes = data;
-                volumeSizes(data);
+                getTags();
+                $scope.isLoading = false;
+            }, function () {
                 $scope.isLoading = false;
             });
         };

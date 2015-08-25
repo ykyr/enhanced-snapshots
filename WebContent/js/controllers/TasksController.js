@@ -3,16 +3,22 @@
 angular.module('web')
     .controller('TasksController', function ($scope, Tasks, $modal) {
         $scope.statusColorClass = {
-            running: "primary",
-            waiting: "info"
+            "waiting": "",
+            "queued": "info",
+            "running": "primary",
+            "completed": "success",
+            "error": "danger"
         };
         $scope.typeColorClass = {
             backup: "success",
-            restore: "danger"
+            restore: "warning",
+            delete: "danger"
+
         };
         $scope.typeIconClass = {
             backup: "cloud-download",
-            restore: "cloud-upload"
+            restore: "cloud-upload",
+            delete: "remove"
         };
         $scope.manualIconClass = {
             true: "user",

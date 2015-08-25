@@ -27,11 +27,11 @@
         <tbody>
         <tr st-select-row="backup" st-select-mode="multiple" ng-repeat="backup in displayedBackups"
             ng-click="checkSelection()">
-            <td class="text-center">
+            <td class="text-center command">
                 <span class="glyphicon glyphicon-{{ iconClass[backup.isSelected] }} text-primary"></span>
                 <input type="checkbox" ng-checked="backup.isSelected" class="hidden"/> &nbsp;
             </td>
-            <td class="text-center commands">
+            <td class="text-center command">
                 <a class="btn btn-link" title="Restore" ng-click="restore(backup); $event.stopPropagation();"><span
                         class="glyphicon glyphicon-cloud-upload text-success"></span></a>
                 <span class="glyphicon glyphicon-refresh spin" ng-show="isRunning(backup)"></span>
