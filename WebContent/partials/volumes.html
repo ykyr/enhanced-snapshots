@@ -16,6 +16,15 @@
 
             <form class="form-horizontal">
                 <div class="form-group">
+                    <label for="volumeId" class="col-sm-2 control-label">ID:</label>
+
+                    <div class="col-sm-10">
+                        <input type="text" id="volumeId" class="form-control"
+                               ng-model="filter.volumeId"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="volumeName" class="col-sm-2 control-label">Name:</label>
 
                     <div class="col-sm-10">
@@ -33,7 +42,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="col-sm-2 control-label">Instance ID:</label>
+                    <label class="col-sm-2 control-label">Instance:</label>
 
                     <div class="col-sm-10">
                         <div class="btn-group full-width" dropdown keyboard-nav>
@@ -125,7 +134,7 @@
                 <th st-sort="snapshotId">Snapshot</th>
                 <th st-sort="tags">Tags</th>
                 <th st-sort="instanceID">Instance</th>
-                <th st-sort="created">Created</th>
+                <th st-sort="createTime">Created</th>
                 <th st-sort="availabilityZone">Zone</th>
             </tr>
             </thead>
@@ -159,7 +168,7 @@
                     </div>
                 </td>
                 <td>{{::volume.instanceID}}</td>
-                <td>{{::volume.created | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+                <td>{{::volume.createTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
                 <td>{{::volume.availabilityZone}}</td>
             </tr>
             </tbody>
