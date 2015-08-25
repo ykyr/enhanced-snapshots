@@ -2,11 +2,11 @@ package com.sungardas.snapdirector.tasks;
 
 import static java.lang.String.format;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import com.sungardas.snapdirector.exception.DataAccessException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
+import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
@@ -62,17 +63,21 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 
 	@Override
 	public void execute() {
+		LOG.info("Executing restore task:\n" +taskEntry.toString());
 		String sourceFile = taskEntry.getOptions();
 		configuration = configurationService.getConfiguration();
 		changeTaskStatusToRunning();
 		try {
 			if (sourceFile == null || sourceFile.isEmpty()) {
+				LOG.info("Task was defined as restore from snapshot.");
 				restoreFromSnapshot();
 			} else {
+				LOG.info("Task was defined as restore from history.");
 				restoreFromBackupFile();
 			}
 			deleteCompletedTask();
 		} catch (RuntimeException e) {
+			e.printStackTrace();
 			LOG.error("Failed to execute {} task {}. Changing task status to '{}'", taskEntry.getType(), taskEntry.getId(), TaskEntry.TaskEntryStatus.ERROR);
 			taskEntry.setStatus(TaskEntry.TaskEntryStatus.ERROR.getStatus());
 			taskRepository.save(taskEntry);
@@ -107,6 +112,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		String instanceId = taskEntry.getInstanceId();
 
 		BackupEntry backupentry = backupRepository.getByBackupFileName(sourceFile);
+		LOG.info("Used backup record:\n" + backupentry.toString());
 		Instance instance = awsCommunication.getInstance(instanceId);
 		String volumeType = backupentry.getVolumeType();
 		String size = backupentry.getSizeGiB();
@@ -115,17 +121,20 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		switch (volumeType) {
 			case "standard":
 				volumeToRestore = awsCommunication.createStandardVolume(Integer.parseInt(size));
+				LOG.info("Created standard volume:\n" + volumeToRestore.toString());
 				break;
 			case "gp2":
 				volumeToRestore = awsCommunication.createGP2Volume(Integer.parseInt(size));
+				LOG.info("Created GP2 volume:\n" + volumeToRestore.toString());
 				break;
 			case "io1":
 				volumeToRestore = awsCommunication.createIO1Volume(Integer.parseInt(size), Integer.parseInt(iops));
+				LOG.info("Created IO1 volume:\n" + volumeToRestore.toString());
 				break;
 		}
 
 		awsCommunication.attachVolume(instance, volumeToRestore);
-		
+		LOG.info("Trying to attach volume to innstance " + instance.getInstanceId());
 		//wait for attached state
 		
 		while (volumeToRestore.getAttachments().size() == 0) {
@@ -134,14 +143,17 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		}
 		
 		String attachedDeviceName = storageService.detectFsDevName(volumeToRestore);
-		
+		LOG.info("Volume was attached as device: " + attachedDeviceName);
 		try {
-			storageService.copyFile(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
-		} catch (IOException e) {
+			storageService.binaryCopy(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
+		} catch (IOException | InterruptedException e) {
+			LOG.fatal(format("Restore of volume %s failed", volumeToRestore));
+			taskEntry.setStatus("error");
 			e.printStackTrace();
 		}
 
 		awsCommunication.detachVolume(volumeToRestore);
+		LOG.info("Detaching volume after restoring data: " + volumeToRestore.toString());
 
 	}
 

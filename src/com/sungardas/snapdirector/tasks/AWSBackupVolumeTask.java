@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -103,7 +102,6 @@ public class AWSBackupVolumeTask implements BackupTask {
 				source = attachedDeviceName;
 			}
 			LOG.info("Starting copying: " + source + " to:" +backupfileName);
-			LOG.info("Source size:" + storageService.getSize(source));
 			storageService.binaryCopy(source, configuration.getSdfsMountPoint()+backupfileName);
 			
 			backupStatus = true;

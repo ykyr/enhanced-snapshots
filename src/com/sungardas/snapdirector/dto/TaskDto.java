@@ -11,6 +11,15 @@ public class TaskDto {
 	private String schedulerName;
 	private String schedulerTime;
 	private String instanceId;
+	private String backupFileName;
+
+	public String getBackupFileName() {
+		return backupFileName;
+	}
+
+	public void setBackupFileName(String backupFileName) {
+		this.backupFileName = backupFileName;
+	}
 
 	public TaskDto() {
 	}

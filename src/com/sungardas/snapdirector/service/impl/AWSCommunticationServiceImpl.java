@@ -16,7 +16,28 @@ import org.springframework.stereotype.Service;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.*;
+import com.amazonaws.services.ec2.model.AttachVolumeRequest;
+import com.amazonaws.services.ec2.model.AttachVolumeResult;
+import com.amazonaws.services.ec2.model.CreateSnapshotRequest;
+import com.amazonaws.services.ec2.model.CreateSnapshotResult;
+import com.amazonaws.services.ec2.model.CreateVolumeRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeResult;
+import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
+import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeSnapshotsRequest;
+import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
+import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesResult;
+import com.amazonaws.services.ec2.model.DetachVolumeRequest;
+import com.amazonaws.services.ec2.model.DetachVolumeResult;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceBlockDeviceMapping;
+import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.Snapshot;
+import com.amazonaws.services.ec2.model.SnapshotState;
+import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeState;
 import com.sungardas.snapdirector.service.AWSCommunticationService;
 
@@ -27,6 +48,10 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 
 	@Autowired
 	private AmazonEC2 ec2client;
+	
+	@Value("${sungardas.worker.configuration}")
+	private String configurationId;
+	
 
 	@Value("${sungardas.restore.snapshot.attempts:5}")
 	private int retryRestoreAttempts;
@@ -34,13 +59,20 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 	@Value("${sungardas.restore.snapshot.timeout:5}")
 	private int retryRestoreTimeout;
 
+	
 	@Override
 	public Volume createVolume(int size, int iiops, String type) {
+		String availabilityZone = getInstance(configurationId).getPlacement().getAvailabilityZone();
+		
 		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest().
-				withSize(size).withIops(iiops).withVolumeType(type);
+				withSize(size).withVolumeType(type).withAvailabilityZone(availabilityZone);
+		if (iiops>0) {
+			createVolumeRequest = createVolumeRequest.withIops(iiops);
+		}
 		Volume result = ec2client.createVolume(createVolumeRequest).getVolume();
 		return result;
 	}
+	
 
 	@Override
 	public Volume createStandardVolume(int size) {

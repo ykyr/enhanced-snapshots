@@ -219,6 +219,11 @@ public class SdfsProcess {
 		ProcessBuilder processbuilder = new ProcessBuilder("dd", "if=" + source, "of=" + mountPoint + "/" + destination);
 
 		Process p = processbuilder.start();
+		try {
+			p.waitFor();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 
 		return p;
 	}
