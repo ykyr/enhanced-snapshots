@@ -15,7 +15,6 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
-import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
@@ -103,7 +102,9 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 			LOG.error("Failed to find backup entry for volume {} ", volumeId);
 			throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
 		}
-		awsCommunication.createVolumeFromSnapshot(backupEntry.getSnapshotId(), awsCommunication.getVolume(volumeId).getAvailabilityZone());
+		Volume volume = awsCommunication.createVolumeFromSnapshot(backupEntry.getSnapshotId(), awsCommunication.getVolume(volumeId).getAvailabilityZone());
+
+		awsCommunication.setResourceName(volume.getVolumeId(), "Restore of "+backupEntry.getVolumeId());
 	}
 
 	private void restoreFromBackupFile() {

@@ -109,14 +109,14 @@ public class SDFSServiceImpl implements StorageService {
 
 			long total = 0;
 
-			LOG.info("Copying file using started");
+			LOG.info("Copying from {} to {} started", source, destination);
 
 			while ((noOfBytes = fis.read(buffer)) != -1) {
 				fos.write(buffer, 0, noOfBytes);
 				total += noOfBytes;
 			}
 
-			LOG.info("Copying file finished, "+total);
+			LOG.info("Copying from {} to {} finished: {}", source, destination, total);
 		} finally {
 			if (fis != null) {
 				fis.close();
@@ -159,7 +159,7 @@ public class SDFSServiceImpl implements StorageService {
 			LOG.info(format("Cant find attached source: %s", volume));
 
 			devname = "/dev/xvd" + devname.substring(devname.length() - 1);
-			LOG.info(format("New sourcepash : %s", devname));
+			LOG.info(format("New source path : %s", devname));
 		}
 		return devname;
 	}
