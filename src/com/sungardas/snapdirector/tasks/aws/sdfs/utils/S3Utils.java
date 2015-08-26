@@ -149,28 +149,6 @@ public class S3Utils {
 		ec2client.deleteSnapshot(deleteSnapshotRequest);
 	}
 
-
-	public static Snapshot waitForCompleteState(AmazonEC2 ec2client, Snapshot snapshot) {
-		String state;
-		Snapshot result;
-		do {
-			try {
-				TimeUnit.SECONDS.sleep(20);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
-			result = syncSnapshot(ec2client, snapshot);
-			state = result.getState();
-			if (state.equals(SnapshotState.Error)) {
-				// TODO:exception
-			}
-		} while (state.equals(SnapshotState.Pending));
-
-		return result;
-	}
-
-
 	public static Snapshot syncSnapshot(AmazonEC2 ec2client, Snapshot snapshot) {
 		DescribeSnapshotsRequest describeSnapshotsRequest = new DescribeSnapshotsRequest();
 		LinkedList<String> ids = new LinkedList<String>();
@@ -210,26 +188,6 @@ public class S3Utils {
 		return describeVolumesResult.getVolumes().get(0);
 	}
 
-
-	// public static Volume createVolumeFromSnapshot(AmazonEC2 ec2client,
-	// Snapshot sourceSnapshot) {
-	// DescribeAvailabilityZonesResult zonesResult =
-	// ec2client.describeAvailabilityZones();
-	// List<AvailabilityZone> zones = zonesResult.getAvailabilityZones();
-	// Volume vol = null;
-	// if (zones.size() > 0) {
-	// LOG.info(format("Starting creating volume from %s",
-	// sourceSnapshot.getSnapshotId()));
-	//
-	// CreateVolumeRequest crVolumeRequest = new
-	// CreateVolumeRequest(sourceSnapshot.getSnapshotId(), zones.get(1)
-	// .getZoneName());
-	// CreateVolumeResult crVolumeResult =
-	// ec2client.createVolume(crVolumeRequest);
-	// vol = crVolumeResult.getVolume();
-	// }
-	// return vol;
-	// }
 
 	public static Volume createVolumeFromSnapshot(AmazonEC2 ec2client, Snapshot sourceSnapshot,
 			String availabilityZoneName) {
