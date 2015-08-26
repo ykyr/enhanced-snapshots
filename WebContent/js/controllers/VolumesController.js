@@ -64,6 +64,7 @@ angular.module('web')
         };
 
         $scope.filter = {
+            volumeId: "",
             name: "",
             size: "0;16384",
             instanceID: "",
@@ -74,6 +75,10 @@ angular.module('web')
         $scope.applyFilter = function () {
             var f = angular.copy($scope.filter);
             $scope.stAdvancedFilter = {
+                "volumeId": {
+                    "type": "str",
+                    "value": f.volumeId
+                },
                 "volumeName": {
                     "type": "str",
                     "value": f.name
@@ -123,7 +128,6 @@ angular.module('web')
             $scope.volumes = undefined;
             Volumes.refresh().then(function (data) {
                 $scope.volumes = data;
-                getTags();
                 $scope.isLoading = false;
             }, function () {
                 $scope.isLoading = false;
