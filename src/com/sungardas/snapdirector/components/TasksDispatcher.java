@@ -76,7 +76,7 @@ public class TasksDispatcher {
 					sendRequest.setDelaySeconds(0);
 					sqs.sendMessage(sendRequest);
 					entry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
-					LOGts.info("Sended message: \n" + entry.toString());
+					LOGts.info("QUEUED message: \n" + entry.toString());
 				}
 				taskRepository.save(taskModels);
 				sleep();

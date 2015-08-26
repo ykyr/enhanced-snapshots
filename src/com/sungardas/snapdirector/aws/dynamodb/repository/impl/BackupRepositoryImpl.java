@@ -63,20 +63,26 @@ public class BackupRepositoryImpl implements BackupRepository {
 		DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
 				.withHashKeyValues(backupEntry).withScanIndexForward(false);
 
-		List<BackupEntry> backupEntries = mapper.query(BackupEntry.class,
-				expression);
+		List<BackupEntry> backupEntries = mapper.query(BackupEntry.class, expression);
 
-		return backupEntries.size()>0?backupEntries.get(0):null;
+        return getFirst(backupEntries);
     }
     
     @Override
     public BackupEntry getByBackupFileName(String backupName) {
-    	BackupEntry backupEntry = new BackupEntry();
     	Condition condition = new Condition().
     			withComparisonOperator(ComparisonOperator.EQ.toString()).withAttributeValueList(new AttributeValue(backupName));
     	DynamoDBScanExpression expression = new DynamoDBScanExpression().withFilterConditionEntry("fileName", condition);
     	List<BackupEntry> backupEntries = mapper.scan(BackupEntry.class, expression);
-    	return backupEntries.size()>0?backupEntries.get(0):null;
+        return getFirst(backupEntries);
+    }
+
+    private BackupEntry getFirst(List<BackupEntry> backupEntries){
+        if(backupEntries.isEmpty()){
+            return null;
+        } else{
+            return backupEntries.get(0);
+        }
     }
 
     @PostConstruct

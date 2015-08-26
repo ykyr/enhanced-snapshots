@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.snapdirector.exception.DataAccessException;
 
 import org.apache.logging.log4j.LogManager;
@@ -118,16 +119,16 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		String size = backupentry.getSizeGiB();
 		String iops = backupentry.getIops();
 		Volume volumeToRestore = null;
-		switch (volumeType) {
-			case "standard":
+		switch (VolumeType.fromValue(volumeType)) {
+            case Standard:
 				volumeToRestore = awsCommunication.createStandardVolume(Integer.parseInt(size));
 				LOG.info("Created standard volume:\n" + volumeToRestore.toString());
 				break;
-			case "gp2":
+            case Gp2:
 				volumeToRestore = awsCommunication.createGP2Volume(Integer.parseInt(size));
 				LOG.info("Created GP2 volume:\n" + volumeToRestore.toString());
 				break;
-			case "io1":
+            case Io1:
 				volumeToRestore = awsCommunication.createIO1Volume(Integer.parseInt(size), Integer.parseInt(iops));
 				LOG.info("Created IO1 volume:\n" + volumeToRestore.toString());
 				break;
