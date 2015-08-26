@@ -192,7 +192,8 @@ public class TaskEntry {
     public enum TaskEntryType {
         BACKUP("backup"),
         RESTORE("restore"),
-        DELETE("delete");
+        DELETE("delete"),
+        UNKNOWN("unknown");
 
         private String type;
 
@@ -205,7 +206,11 @@ public class TaskEntry {
         }
 
         public static TaskEntryType getType(String type){
-            return valueOf(type.toUpperCase());
+            try {
+                return valueOf(type.toUpperCase());
+            }catch (IllegalArgumentException e){
+                return UNKNOWN;
+            }
         }
     }
 

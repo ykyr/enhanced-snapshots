@@ -8,6 +8,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.service.ConfigurationService;
+import com.sungardas.snapdirector.service.TaskService;
 import com.sungardas.snapdirector.tasks.BackupTask;
 import com.sungardas.snapdirector.tasks.DeleteTask;
 import com.sungardas.snapdirector.tasks.RestoreTask;
@@ -36,17 +37,20 @@ public class WorkersDispatcher {
 	@Autowired
 	private AmazonSQS sqs;
 	@Autowired
-    private ObjectFactory<BackupTask> backupTaskObjectFactory;
+	private ObjectFactory<BackupTask> backupTaskObjectFactory;
 
 	@Autowired
-    private ObjectFactory<DeleteTask> deleteTaskObjectFactory;
-	
+	private ObjectFactory<DeleteTask> deleteTaskObjectFactory;
+
 	@Autowired
-    private ObjectFactory<RestoreTask> restoreTaskObjectFactory;
-	
+	private ObjectFactory<RestoreTask> restoreTaskObjectFactory;
+
+	@Autowired
+	private TaskService taskService;
+
 
 	private WorkerConfiguration configuration;
-	private ExecutorService  executor;
+	private ExecutorService executor;
 
 	@PostConstruct
 	private void init() {
@@ -61,7 +65,7 @@ public class WorkersDispatcher {
 	}
 
 	private class TaskWorker implements Runnable {
-		private  final Logger LOGtw = LogManager.getLogger(TaskWorker.class);
+		private final Logger LOGtw = LogManager.getLogger(TaskWorker.class);
 
 		@Override
 		public void run() {
@@ -70,50 +74,48 @@ public class WorkersDispatcher {
 			LOGtw.info(format("Starting listening to tasks queue: %s", queueURL));
 
 			while (true) {
-                try {
-                    ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
-                    ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
-                    List<Message> messages = result.getMessages();
-                    if (messages.size() > 0) {
-                        String body = messages.get(0).getBody();
-                        LOGtw.info(format("Got message : %s", messages.get(0).getMessageId()));
-                        String messageRecieptHandle = messages.get(0).getReceiptHandle();
-                        sqs.deleteMessage(new DeleteMessageRequest(queueURL, messageRecieptHandle));
-
-                        Task task = null;
-                        TaskEntry entry = new TaskEntry(new JSONObject(body));
-                        switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
-                            case BACKUP:
-                                LOGtw.info("Task was identified as backup");
-                                task = backupTaskObjectFactory.getObject();
-                                task.setTaskEntry(entry);
-                                break;
-                            case DELETE: {
-                                LOGtw.info("Task was identified as delete backup");
-                                task = deleteTaskObjectFactory.getObject();
-                                task.setTaskEntry(entry);
-                                break;
-                            }
-                            case RESTORE:
-                                LOGtw.info("Task was identified as restore");
-                                task= restoreTaskObjectFactory.getObject();
-                                task.setTaskEntry(entry);
-                                break;
-                            default:
-                                LOGtw.info("Task type not implemented");
-                        }
-
-                        if (task != null) {
-                            task.execute();
-                        }
-
-                    }
-                    sleep();
-                } catch (Exception e){
-                    LOGtw.error(e);
-                    e.printStackTrace();
-                    if (executor.isShutdown() || executor.isTerminated()) break;
-                }
+				try {
+					ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
+					ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
+					List<Message> messages = result.getMessages();
+					if (messages.size() > 0) {
+						String body = messages.get(0).getBody();
+						LOGtw.info(format("Got message : %s", messages.get(0).getMessageId()));
+						String messageRecieptHandle = messages.get(0).getReceiptHandle();
+						sqs.deleteMessage(new DeleteMessageRequest(queueURL, messageRecieptHandle));
+						Task task = null;
+						TaskEntry entry = new TaskEntry(new JSONObject(body));
+						switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
+							case BACKUP:
+								LOGtw.info("Task was identified as backup");
+								task = backupTaskObjectFactory.getObject();
+								task.setTaskEntry(entry);
+								break;
+							case DELETE: {
+								LOGtw.info("Task was identified as delete backup");
+								task = deleteTaskObjectFactory.getObject();
+								task.setTaskEntry(entry);
+								break;
+							}
+							case RESTORE:
+								LOGtw.info("Task was identified as restore");
+								task = restoreTaskObjectFactory.getObject();
+								task.setTaskEntry(entry);
+								break;
+							case UNKNOWN:
+								LOGtw.warn("Executor for type {} is not implemented. Task {} is going to be removed.", entry.getType(), entry.getId());
+								taskService.removeTask(entry);
+						}
+						if (task != null) {
+							task.execute();
+						}
+					}
+					sleep();
+				} catch (Exception e) {
+					LOGtw.error(e);
+					e.printStackTrace();
+					if (executor.isShutdown() || executor.isTerminated()) break;
+				}
 			}
 		}
 

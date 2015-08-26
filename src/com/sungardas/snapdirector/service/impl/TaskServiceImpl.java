@@ -52,4 +52,21 @@ public class TaskServiceImpl implements TaskService {
 			throw new DataAccessException("Failed to get tasks.", e);
 		}
 	}
+
+	@Override
+	public void removeTask(TaskEntry taskEntry) {
+		try {
+			if (taskRepository.exists(taskEntry.getId())) {
+				taskRepository.delete(taskEntry);
+				LOG.info("TaskEntry {} was removed successfully.", taskEntry.getId());
+			} else {
+				LOG.info("TaskEntry {} can not be removed since it does not exist.", taskEntry.getId());
+			}
+		} catch (RuntimeException e) {
+			LOG.error("Failed to remove taskEntry {}.", taskEntry.getId(), e);
+		}
+
+	}
+
+
 }
