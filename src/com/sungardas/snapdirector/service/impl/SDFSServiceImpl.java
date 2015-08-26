@@ -21,16 +21,17 @@ import com.sungardas.snapdirector.service.StorageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import static java.lang.String.format;
 
 @Service
+@Profile("prod")
 public class SDFSServiceImpl implements StorageService {
 
 	public static final Logger LOG = LogManager.getLogger(SDFSServiceImpl.class);
 
-	private String sdfs;
 	private String mountPoint;
 
 	@Autowired
@@ -39,7 +40,6 @@ public class SDFSServiceImpl implements StorageService {
 	@PostConstruct
 	public void init() {
 		WorkerConfiguration configuration = configurationService.getConfiguration();
-		this.sdfs = configuration.getSdfsVolumeName();
 		this.mountPoint = configuration.getSdfsMountPoint();
 	}
 
@@ -53,46 +53,6 @@ public class SDFSServiceImpl implements StorageService {
 			LOG.error("File not found " + file.getAbsolutePath());
 			throw new SDFSException("File not found " + file.getAbsolutePath());
 		}
-	}
-
-	@Override
-	public void copyFile(File sourceFile, File destFile) throws IOException {
-		if (!destFile.exists()) {
-			destFile.createNewFile();
-		}
-
-		FileChannel source = null;
-		FileChannel destination = null;
-		try {
-			source = new FileInputStream(sourceFile).getChannel();
-			destination = new FileOutputStream(destFile).getChannel();
-			destination.transferFrom(source, 0, source.size());
-		} finally {
-			if (source != null) {
-				source.close();
-			}
-			if (destination != null) {
-				destination.close();
-			}
-		}
-	}
-	
-	@Override
-	public void copyFile(String sourceFileName, String destFileName) throws IOException {
-		copyFile(new File(sourceFileName), new File(destFileName));
-	}
-	
-	@Override
-	public int binaryCopy(String source, String destination) throws IOException, InterruptedException {
-		File destFile = new File(destination);
-		if (!destFile.exists()) {
-			destFile.createNewFile();
-		}
-		ProcessBuilder processbuilder = new ProcessBuilder("dd", "if=" + source, "of=" + destination);
-
-		Process p = processbuilder.start();
-
-		return p.waitFor();
 	}
 
 	@Override
