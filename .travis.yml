@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.15
+# Version 0.16
 
 language: java
 jdk:
@@ -17,7 +17,7 @@ before_install:
   - sudo apt-get install npm
 
 install:
-  - cd '../WebContent'
+  - cd './WebContent'
   - sudo npm install -g bower --silent
   - bower install --config.interactive=false
   - cd '..'
