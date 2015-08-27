@@ -13,7 +13,8 @@ sudo: required
 
 before_install:
   - mkdir npm
-  - curl https://npmjs.org/install.sh | sh
+  - cd './npm'
+  - curl -L https://www.npmjs.com/install.sh | sh
 
 install:
   - cd './WebContent/'
