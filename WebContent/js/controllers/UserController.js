@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('UserController', function ($scope, Users, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
+    .controller('UserController', function ($scope, Users, Storage, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
         $scope.users = [];
@@ -10,6 +10,17 @@ angular.module('web')
         $scope.isAdmin = currentUser.role === "admin";
         $scope.isCurrentUser = function (email) {
             return currentUser.email === email;
+        };
+
+        var updateCurrentUser = function () {
+            if($scope.isCurrentUser($scope.userToEdit.email)) {
+                var user = angular.copy($scope.userToEdit);
+                delete user.isNew;
+                delete user.password;
+                delete user.admin;
+                user.role = $scope.userToEdit.admin ? 'admin' : 'user';
+                Storage.save("currentUser", user);
+            };
         };
 
         $scope.editUser = function (user) {
@@ -26,12 +37,15 @@ angular.module('web')
                 $scope.userToEdit.password = $scope.userToEdit.password || "";
 
                 Users.update($scope.userToEdit).then(function () {
+                    $scope.refreshUsers();
+                    updateCurrentUser();
                     var confirmModal = $modal.open({
                         animation: true,
                         templateUrl: './partials/modal.user-added.html',
                         scope: $scope
                     });
-                    $scope.refreshUsers();
+                }, function (e) {
+                    console.log(e);
                 });
                 $scope.isLoading = false;
             });
@@ -55,6 +69,8 @@ angular.module('web')
                         animation: true,
                         templateUrl: './partials/modal.user-added.html',
                         scope: $scope
+                    }, function (e) {
+                        console.log(e);
                     });
 
                     modalInstance.result.then(function () {
