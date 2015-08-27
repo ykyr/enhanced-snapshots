@@ -17,9 +17,7 @@ before_install:
   - curl -L https://www.npmjs.com/install.sh | sh
 
 install:
-  - pwd
-  - ls -la
-  - cd './WebContent/'
+  - cd '../WebContent'
   - sudo npm install -g bower --silent
   - bower install --config.interactive=false
   - cd '..'
