@@ -1,28 +1,26 @@
 package com.sungardas.snapdirector.tasks;
 
-import java.util.concurrent.TimeUnit;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
+
+import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
 @Component
 @Scope("prototype")
-public class BackupFakeTask implements Task {
+@Profile("dev")
+public class BackupFakeTask implements BackupTask {
 	private static final Logger LOG = LogManager.getLogger(BackupFakeTask.class);
     
     @Autowired
@@ -43,14 +41,15 @@ public class BackupFakeTask implements Task {
     @Override
     public void execute() {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
-        taskEntry.setStatus("running");
+        taskEntry.setStatus(RUNNING.getStatus());
         taskRepository.save(taskEntry);
 
         LOG.info(taskEntry.toString());
         String timestamp = Long.toString(System.currentTimeMillis());
         String volumeId = taskEntry.getVolume();
         String filename = volumeId + "." + timestamp + ".backup";
-        BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId());
+        BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId(),
+        		"snap-00100110","gp2","3000", "10");
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
         backupRepository.save(backup);
 

@@ -1,23 +1,5 @@
 package com.sungardas.snapdirector.components;
 
-import static java.lang.String.format;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Component;
-
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -25,6 +7,21 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.String.format;
 
 @Component
 public class TasksDispatcher {
@@ -73,13 +70,13 @@ public class TasksDispatcher {
 			
 			while (true) {
 				//LOGts.info("\n\nLook for waiting tasks..");
-				List<TaskEntry> taskModels = taskRepository.findByStatusAndInstanceId("waiting", instanceId);
+				List<TaskEntry> taskModels = taskRepository.findByStatusAndInstanceId(TaskEntry.TaskEntryStatus.WAITING.getStatus(), instanceId);
 				for (TaskEntry entry : taskModels) {
 					SendMessageRequest sendRequest = new SendMessageRequest(queueURL, entry.toString());
 					sendRequest.setDelaySeconds(0);
 					sqs.sendMessage(sendRequest);
-					entry.setStatus("sended");
-					LOGts.info("Sended message: \n" + entry.toString());
+					entry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
+					LOGts.info("QUEUED message: \n" + entry.toString());
 				}
 				taskRepository.save(taskModels);
 				sleep();

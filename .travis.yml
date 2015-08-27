@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.10
+# Version 0.15
 
 language: java
 jdk:
@@ -10,6 +10,18 @@ branches:
   - java
 
 sudo: required
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install nodejs
+  - sudo apt-get install npm
+
+install:
+  - cd '../WebContent'
+  - sudo npm install -g bower --silent
+  - bower install --config.interactive=false
+  - cd '..'
+  - sudo mvn clean install
 
 deploy:
   provider: s3

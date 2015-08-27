@@ -10,18 +10,16 @@ import java.io.InputStreamReader;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.util.BinaryUtils;
 import com.amazonaws.util.Md5Utils;
 import com.sungardas.snapdirector.tasks.aws.sdfs.SdfsConfigPathes;
+import org.apache.logging.log4j.Logger;
 
 
 public class SdfsProcess {
 
-	public static final Log LOG = LogFactory.getLog(SdfsProcess.class);
+	public static final Logger LOG = org.apache.logging.log4j.LogManager.getLogger(SdfsProcess.class);
 	private Process mountsdfsProcess;
 	private Process umountsdfsProcess;
 	private String sdfs;
@@ -117,7 +115,6 @@ public class SdfsProcess {
 
 		while (state.equals(SdfsState.Mounting)) {
 			String sdfsData = reader.readLine();
-			// System.out.println(sdfsData);
 			if (error.available() > 0)
 				state = SdfsState.Error;
 			if (sdfsData.equals("Mounted Filesystem"))
@@ -125,8 +122,6 @@ public class SdfsProcess {
 		}
 		
 		LOG.info(format("Sdfs '%s' started with state %s", sdfs, state.toString()));
-		
-
 	}
 
 
@@ -138,9 +133,6 @@ public class SdfsProcess {
 		if (state != SdfsState.Mounted)
 			throw new IllegalSdfsStateException("Expected state is " + SdfsState.Mounted.toString() + ", but " + state.toString());
 		LOG.info(format("Trying to unmount '%s'", sdfs));
-		InputStream sdfsIn = mountsdfsProcess.getInputStream();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(sdfsIn));
-		InputStream error = mountsdfsProcess.getErrorStream();
 
 		ProcessBuilder processbuilder = new ProcessBuilder("umount", mountPoint);
 		umountsdfsProcess = processbuilder.start();
@@ -183,7 +175,7 @@ public class SdfsProcess {
 					System.out.print("*");
 					TimeUnit.SECONDS.sleep(20);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+                    LOG.error(e);
 				}
 			}
 			LOG.info(format("Backup '%s' created", backupFileName));
@@ -195,7 +187,7 @@ public class SdfsProcess {
 				LOG.info(format("MD5: %s", md5Base64));
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+            LOG.error(e);
 		}
 	}
 
@@ -219,6 +211,11 @@ public class SdfsProcess {
 		ProcessBuilder processbuilder = new ProcessBuilder("dd", "if=" + source, "of=" + mountPoint + "/" + destination);
 
 		Process p = processbuilder.start();
+		try {
+			p.waitFor();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 
 		return p;
 	}
@@ -260,8 +257,3 @@ public class SdfsProcess {
 
 	}
 }
-
-/*
- * sudo dd if=/dev/sdb1 of=/mnt/pool0/vdi0.backup - backup sudo dd of=/dev/sdb1
- * if=/mnt/pool0/vdi0.backup - restore
- */
