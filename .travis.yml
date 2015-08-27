@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.13
+# Version 0.14
 
 language: java
 jdk:
@@ -14,6 +14,7 @@ sudo: required
 before_install:
   - mkdir npm
   - cd './npm'
+  - curl -L https://rpm.nodesource.com/setup | sh
   - curl -L https://www.npmjs.com/install.sh | sh
 
 install:
