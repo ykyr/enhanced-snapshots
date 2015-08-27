@@ -13,7 +13,7 @@ public class SchedulerJob implements Job {
 	@Override
 	public void execute(JobExecutionContext context)
 			throws JobExecutionException {
-		LOG.error("SchedulerJob Fired!!!");
+		System.out.println("SchedulerJob Fired!!!");
 
 	}
 

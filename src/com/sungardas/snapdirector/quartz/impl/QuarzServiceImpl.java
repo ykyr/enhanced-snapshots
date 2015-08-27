@@ -13,18 +13,20 @@ import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.stereotype.Service;
 
-import com.sungardas.snapdirector.quartz.QuartzService;
+
 import com.sungardas.snapdirector.quartz.SchedulerJob;
 
-@Service
-public class QuarzServiceImpl implements QuartzService {
+
+public class QuarzServiceImpl {
 
 	private static final Logger LOG = LogManager
 			.getLogger(QuarzServiceImpl.class);
 
-	@PostConstruct
+	
 	private void init() {
 
+		/*System.out.println("Quarz service started");
+		
 		StdSchedulerFactory factory = new StdSchedulerFactory();
 		try {
 			Scheduler scheduler = factory.getScheduler();
@@ -45,7 +47,7 @@ public class QuarzServiceImpl implements QuartzService {
 			scheduler.start();
 		} catch (Exception e) {
 			LOG.error("There was an error scheduling the job.");
-		}
+		}*/
 	}
 
 }
