@@ -50,5 +50,15 @@ public class VolumeServiceImpl implements VolumeService {
 
     }
 
+    @Override
+    public boolean isExists(String volumeId) {
+        for(VolumeDto dto: getVolumes()){
+            if(dto.getVolumeId().equals(volumeId)){
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 }

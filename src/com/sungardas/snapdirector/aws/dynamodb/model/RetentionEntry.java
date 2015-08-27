@@ -1,21 +1,23 @@
-package com.sungardas.snapdirector.dto;
+package com.sungardas.snapdirector.aws.dynamodb.model;
 
-public class RetentionDto {
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
+@DynamoDBTable(tableName = "Retention")
+public class RetentionEntry {
+
+    @DynamoDBHashKey
     private String volumeId;
 
+    @DynamoDBAttribute
     private int size;
 
+    @DynamoDBAttribute
     private int count;
 
+    @DynamoDBAttribute
     private int days;
-
-    public RetentionDto() {
-    }
-
-    public RetentionDto(String volumeId) {
-        this.volumeId = volumeId;
-    }
 
     public String getVolumeId() {
         return volumeId;
