@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.11
+# Version 0.12
 
 language: java
 jdk:
@@ -10,6 +10,10 @@ branches:
   - java
 
 sudo: required
+
+before_install:
+  - mkdir npm
+  - curl https://npmjs.org/install.sh | sh
 
 install:
   - cd './WebContent/'
