@@ -9,7 +9,7 @@
 
 - name: download tomcat
   get_url: >
-    url=http://apache.cp.if.ua/tomcat/tomcat-8/v8.0.24/bin/apache-tomcat-8.0.24.tar.gz
+    url=https://archive.apache.org/dist/tomcat/tomcat-8/v8.0.24/bin/apache-tomcat-8.0.24.tar.gz
     dest=/opt/apache-tomcat-8.0.24.tar.gz
 
 - name: extract archive
