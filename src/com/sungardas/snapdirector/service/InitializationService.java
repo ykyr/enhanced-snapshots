@@ -7,13 +7,13 @@ public interface InitializationService {
 
     boolean checkDefaultUser(String login, String passwd);
 
-    boolean checkDbStructureIsValid();
+    boolean isDbStructureValid();
 
-    boolean checkConfigurationExists();
+    boolean isConfigurationExists();
 
-    boolean checkQueueExists();
+    boolean isQueueExists();
 
-    boolean checkSdfs();
+    boolean isSdfsConfigured();
 
-    boolean checkAdminUserExists();
+    boolean isAdminUserExists();
 }
