@@ -1,7 +1,10 @@
 package com.sungardas.snapdirector.service.impl;
 
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
@@ -50,8 +53,16 @@ public class InitializationServiceImpl implements InitializationService {
 
 
     @Override
-    public boolean AWSCredentialsAreValid() {
+    public boolean AWSCredentialsAreValid(String accessKey, String secretKey) {
+        AmazonDynamoDB client = new AmazonDynamoDBClient(new BasicAWSCredentials(accessKey, secretKey));
+        try{
+            client.listTables();
+        }catch (AmazonServiceException accessError) {
+            LOG.info("AWS Credentials are invalid!");
+            return false;
+        }
         return true;
+
     }
 
     @Override
@@ -108,6 +119,7 @@ public class InitializationServiceImpl implements InitializationService {
         }
         return  adminUserExists;
     }
+
 
     private boolean checkDbStructureIsValid() {
         String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention"};

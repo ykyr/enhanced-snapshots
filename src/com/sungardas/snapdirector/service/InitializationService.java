@@ -1,7 +1,7 @@
 package com.sungardas.snapdirector.service;
 
 public interface InitializationService {
-    boolean AWSCredentialsAreValid();
+    boolean AWSCredentialsAreValid(String accessKey, String secretKey);
 
     boolean isSystemInitialized();
 
