@@ -93,10 +93,10 @@ angular.module('web')
         loadBackups();
 
         $scope.restore = function (backup) {
-            $scope.backupToRestore = backup;
+            $scope.objectToProcess = backup;
             var confirmInstance = $modal.open({
                 animation: true,
-                templateUrl: './partials/modal.backup-restore.html',
+                templateUrl: './partials/modal.history-restore.html',
                 scope: $scope
             });
 
@@ -104,8 +104,8 @@ angular.module('web')
                 var newTask = {
                     id: "",
                     priority: "",
-                    volume: $scope.backupToRestore.volumeId,
-                    backupFileName: $scope.backupToRestore.fileName,
+                    volume: $scope.objectToProcess.volumeId,
+                    backupFileName: $scope.objectToProcess.fileName,
                     type: "restore",
                     status: "waiting",
                     schedulerManual: true,
@@ -115,7 +115,7 @@ angular.module('web')
                 Tasks.insert(newTask).then(function () {
                     var successInstance = $modal.open({
                         animation: true,
-                        templateUrl: './partials/modal.task-restore-created.html',
+                        templateUrl: './partials/modal.task-created.html',
                         scope: $scope
                     });
 
