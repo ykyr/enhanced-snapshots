@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.15
+# Version 0.20
 
 language: java
 jdk:
@@ -13,15 +13,18 @@ sudo: required
 
 before_install:
   - sudo apt-get update
-  - sudo apt-get install nodejs
-  - sudo apt-get install npm
-
-install:
-  - cd '../WebContent'
-  - sudo npm install -g bower --silent
+#  - sudo apt-get install nodejs
+#  - sudo apt-get install npm
+#  - sudo npm config set registry https://registry.npmjs.org/
+  - curl -sL https://deb.nodesource.com/setup | sudo sh
+  - sudo apt-get install -y nodejs
+  - cd './WebContent'
+  - sudo npm install -g bower
   - bower install --config.interactive=false
   - cd '..'
-  - sudo mvn clean install
+
+install:
+  - sudo /usr/local/maven/mvn clean install
 
 deploy:
   provider: s3
