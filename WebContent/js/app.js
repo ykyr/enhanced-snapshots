@@ -14,11 +14,6 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         return true;
     }];
 
-    var logout = ['$q', 'Auth', function ($q, Auth) {
-        Auth.logOut();
-        return $q.reject('Logged out');
-    }];
-
     $stateProvider
         .state('app', {
             abstract: true,
@@ -79,8 +74,9 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         })
         .state('logout', {
             url: "/logout",
-            resolve: {
-                logout: logout
+            controller: function ($state, Auth) {
+                Auth.logOut();
+                $state.go('login');
             }
         });
 
@@ -92,7 +88,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         };
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
-            $state.go('login');
+            $state.go('logout');
         });
     });
 

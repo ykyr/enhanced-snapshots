@@ -63,7 +63,7 @@ ul.nav-user {
 }
 
 ul.nav-main li a,
-ul.nav-user li a{
+ul.nav-user li{
     padding: 6px 10px;
 }
 
@@ -281,10 +281,6 @@ input.ng-invalid-email{
 
 .st-selected {
     background-color: #d9edf7;
-}
-
-.well {
-    margin-bottom: -5px;
 }
 
 td .glyphicon{

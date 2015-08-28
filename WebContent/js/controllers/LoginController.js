@@ -1,7 +1,11 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoginController', function ($scope, $state, Auth, Settings) {
+    .controller('LoginController', function ($scope, $state, Auth, Storage, Settings) {
+
+        if(angular.isDefined(Storage.get("currentUser"))) {
+            Auth.logOut();
+        }
 
         $scope.clearErr = function () {
             $scope.error = "";
