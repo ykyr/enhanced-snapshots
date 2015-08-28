@@ -12,7 +12,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sungardas.snapdirector.aws.PropertyBasedCredentialsProvider;
 
 public class QuartzTestJob implements Job {
 
@@ -24,7 +24,7 @@ public class QuartzTestJob implements Job {
         
         AWSCredentials credentials = null;
         try {
-            credentials = new EnvironmentBasedCredentialsProvider().getCredentials();
+            credentials = new PropertyBasedCredentialsProvider().getCredentials();
         } catch (Exception e) {
             throw new AmazonClientException(
                     "Cannot load the credentials from the credential profiles file. " +

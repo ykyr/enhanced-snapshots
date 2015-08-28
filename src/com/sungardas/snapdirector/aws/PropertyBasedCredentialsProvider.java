@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -16,9 +15,9 @@ import com.amazonaws.auth.BasicAWSCredentials;
 
 import static java.lang.String.format;
 
-public class EnvironmentBasedCredentialsProvider implements
+public class PropertyBasedCredentialsProvider implements
 		AWSCredentialsProvider {
-	private static final Log LOG = LogFactory.getLog(EnvironmentBasedCredentialsProvider.class);
+	private static final Log LOG = LogFactory.getLog(PropertyBasedCredentialsProvider.class);
 	private static BasicAWSCredentials credentials;
 
 	@Override

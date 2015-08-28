@@ -1,19 +1,23 @@
 package com.sungardas.snapdirector.service.impl;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
+import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
+import com.sungardas.snapdirector.aws.PropertyBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.Roles;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.DataAccessException;
+import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.InitializationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
@@ -32,6 +38,7 @@ import java.util.Scanner;
 @Profile("prod")
 public class InitializationServiceImpl implements InitializationService {
     public static final Logger LOG = LogManager.getLogger(InitializationServiceImpl.class);
+	private final static String DEFAULT_USER_LOGIN = "admin";
 
     @Autowired
     private AmazonSQS sqs;
@@ -52,7 +59,19 @@ public class InitializationServiceImpl implements InitializationService {
     private boolean adminUserExists = false;
 
 
-    @Override
+	@Override
+	public boolean ValidAWSCredentialsAreProvided() {
+		AmazonEC2Client ec2Client = new AmazonEC2Client(new PropertyBasedCredentialsProvider().getCredentials());
+		try {
+			ec2Client.describeRegions();
+			return true;
+		} catch (AmazonClientException e) {
+			LOG.warn("Provided AWS credentials are invalid.");
+			return false;
+		}
+	}
+
+	@Override
     public boolean AWSCredentialsAreValid(String accessKey, String secretKey) {
         AmazonDynamoDB client = new AmazonDynamoDBClient(new BasicAWSCredentials(accessKey, secretKey));
         try{
@@ -79,8 +98,22 @@ public class InitializationServiceImpl implements InitializationService {
     }
 
     @Override
-    public boolean checkDefaultUser(String login, String passwd) {
-        return true;
+    public boolean checkDefaultUser(String login, String password) {
+		Process p = null;
+		try (BufferedReader reader =
+					 new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+			p = Runtime.getRuntime().exec("curl -L http://169.254.169.254/latest/meta-data/instance-id");
+			p.waitFor();
+			String line = reader.readLine();
+			if (line != null) {
+				return password.equals(line) && login.equals(DEFAULT_USER_LOGIN);
+			} else {
+				throw new SnapdirectorException();
+			}
+		} catch (Exception e) {
+			LOG.warn("Failed to determine ec2 instance ID");
+			throw new SnapdirectorException("Failed to determine ec2 instance ID", e);
+		}
     }
 
     @Override

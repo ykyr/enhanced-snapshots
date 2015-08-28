@@ -2,7 +2,7 @@ package com.sungardas.snapdirector.aws.dynamodb;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sungardas.snapdirector.aws.PropertyBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
 public class DynamoUtilsTaskTest {
 
     private AmazonDynamoDBClient client = new AmazonDynamoDBClient(
-            new EnvironmentBasedCredentialsProvider());
+            new PropertyBasedCredentialsProvider());
     private DynamoDBMapper mapper = new DynamoDBMapper(client);
 
     private TaskEntry taskToGet;
