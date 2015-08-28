@@ -17,7 +17,9 @@ angular.module('web')
             "available": "info",
             "deleting": "error",
             "deleted": "error",
-            "error": "error"
+            "error": "error",
+            "removed": "danger"
+
         };
 
         $scope.textClass = {
@@ -45,16 +47,27 @@ angular.module('web')
         $scope.isAllSelected = false;
         $scope.selectedAmount = 0;
 
-        $scope.checkSelection = function () {
-            $scope.selectedAmount = $scope.volumes.filter(function (v) { return v.isSelected; }).length;
+        $scope.checkAllSelection = function () {
+            $scope.selectedAmount = $scope.volumes.filter(function (v) { return v.isSelected || $scope.isDisabled(v); }).length;
             $scope.isAllSelected = $scope.selectedAmount == $scope.volumes.length;
         };
 
-        $scope.makeSelection = function () {
+        $scope.selectAll = function () {
             $scope.volumes.forEach(function (volume) {
-                volume.isSelected = !$scope.isAllSelected;
+                doSelection(volume, !$scope.isAllSelected);
             });
-            $scope.checkSelection();
+            $scope.checkAllSelection();
+        };
+
+        $scope.toggleSelection = function (volume) {
+            doSelection(volume, !volume.isSelected);
+            $scope.checkAllSelection();
+        };
+
+        var doSelection = function (volume, value) {
+            if(volume.hasOwnProperty('isSelected')) {
+                volume.isSelected = value;
+            }
         };
 
         $scope.tags = {};
@@ -64,6 +77,10 @@ angular.module('web')
         });
 
         $scope.selectedRegion = $scope.globalRegion;
+
+        $scope.isDisabled = function (volume) {
+          return volume.state === 'removed'
+        };
 
         // ---------filtering------------
 
@@ -96,7 +113,7 @@ angular.module('web')
                 if (instance && $scope.instances.indexOf(instance) == -1){
                     $scope.instances.push(instance);
                 }
-                data[i].isSelected = false;
+                if (data[i].state !== 'removed') data[i].isSelected = false;
             }
             $scope.isAllSelected = false;
             return data;
