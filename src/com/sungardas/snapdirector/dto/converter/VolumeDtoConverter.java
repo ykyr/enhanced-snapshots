@@ -1,12 +1,12 @@
 package com.sungardas.snapdirector.dto.converter;
 
+import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.dto.VolumeDto;
-import com.amazonaws.services.ec2.model.Tag;
 import org.springframework.beans.BeanUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class VolumeDtoConverter {
 
@@ -26,8 +26,8 @@ public class VolumeDtoConverter {
         return volumeDto;
     }
 
-    public static List<VolumeDto> convert(Iterable<Volume> volumes) {
-        List<VolumeDto> volumeDtoList = new ArrayList<>();
+    public static Set<VolumeDto> convert(Iterable<Volume> volumes) {
+        Set<VolumeDto> volumeDtoList = new LinkedHashSet<>();
         for (Volume volume : volumes) {
             volumeDtoList.add(convert(volume));
         }
