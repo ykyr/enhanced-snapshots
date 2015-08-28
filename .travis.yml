@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.19
+# Version 0.20
 
 language: java
 jdk:
@@ -24,7 +24,7 @@ before_install:
   - cd '..'
 
 install:
-  - sudo mvn clean install
+  - sudo /usr/local/maven/mvn clean install
 
 deploy:
   provider: s3
