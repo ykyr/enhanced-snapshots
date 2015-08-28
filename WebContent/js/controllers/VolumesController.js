@@ -2,7 +2,7 @@
 
 angular.module('web')
     .controller('VolumesController', function ($scope, $state, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
-
+        $scope.maxVolumeDisplay = 5;
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
@@ -18,6 +18,43 @@ angular.module('web')
             "deleting": "error",
             "deleted": "error",
             "error": "error"
+        };
+
+        $scope.textClass = {
+            'false': 'select',
+            'true': 'unselect'
+        };
+
+        $scope.iconClass = {
+            'false': 'unchecked',
+            'true': 'check',
+            'restore': 'upload',
+            'backup': 'download'
+        };
+
+        $scope.modalTitle = {
+            'restore': 'Restore Backup',
+            'backup': 'Backup Volume'
+        };
+
+        $scope.bgClass = {
+            'restore': 'success',
+            'backup': 'primary'
+        };
+
+        $scope.isAllSelected = false;
+        $scope.selectedAmount = 0;
+
+        $scope.checkSelection = function () {
+            $scope.selectedAmount = $scope.volumes.filter(function (v) { return v.isSelected; }).length;
+            $scope.isAllSelected = $scope.selectedAmount == $scope.volumes.length;
+        };
+
+        $scope.makeSelection = function () {
+            $scope.volumes.forEach(function (volume) {
+                volume.isSelected = !$scope.isAllSelected;
+            });
+            $scope.checkSelection();
         };
 
         $scope.tags = {};
@@ -59,7 +96,9 @@ angular.module('web')
                 if (instance && $scope.instances.indexOf(instance) == -1){
                     $scope.instances.push(instance);
                 }
+                data[i].isSelected = false;
             }
+            $scope.isAllSelected = false;
             return data;
         };
 
@@ -107,9 +146,10 @@ angular.module('web')
 
         //----------filtering-end-----------
 
+        //-----------Volumes-get/refresh-------------
+
         $scope.isLoading = true;
         $scope.volumes = [];
-
 
         Volumes.get().then(function (data) {
             $scope.volumes = processVolumes(data);
@@ -122,86 +162,85 @@ angular.module('web')
             $scope.selectedRegion = region;
         };
 
-
         $scope.refresh = function () {
             $scope.isLoading = true;
             $scope.volumes = undefined;
             Volumes.refresh().then(function (data) {
-                $scope.volumes = data;
+                $scope.volumes = processVolumes(data);
                 $scope.isLoading = false;
             }, function () {
                 $scope.isLoading = false;
             });
         };
+        //-----------Volumes-get/refresh-end------------
 
-        $scope.backup = function (volumeId) {
-            $scope.backupVolumeId = volumeId;
+        //-----------Volume-backup/restore/retention-------------
+
+        $scope.volumeAction = function (actionType) {
+            $scope.selectedVolumes = $scope.volumes.filter(function (v) { return v.isSelected; });
+            $scope.actionType = actionType;
+
             var confirmInstance = $modal.open({
                 animation: true,
-                templateUrl: './partials/modal.backup-now.html',
+                templateUrl: './partials/modal.volumeAction.html',
                 scope: $scope
             });
 
             confirmInstance.result.then(function () {
-                var newTask = {
-                    id: "",
-                    priority: "",
-                    volume: $scope.backupVolumeId,
-                    backupFileName: "",
-                    type: "backup",
-                    status: "waiting",
-                    schedulerManual: true,
-                    schedulerName: Storage.get('currentUser').email,
-                    schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
-                };
-                Tasks.insert(newTask).then(function () {
-                    var successInstance = $modal.open({
-                        animation: true,
-                        templateUrl: './partials/modal.task-backup-created.html'
-                    });
 
-                    successInstance.result.then(function () {
-                        $state.go('app.tasks');
+                $scope.isLoading = true;
+                $scope.processErrors = [];
+                var remaining = $scope.selectedVolumes.length;
+
+                var checkProcessFinished = function () {
+                    $scope.isLoading = remaining > 0;
+                    if (!$scope.isLoading) {
+                        if ($scope.processErrors.length) {
+                            console.log($scope.processErrors);
+                        }
+                        var successInstance = $modal.open({
+                            animation: true,
+                            templateUrl: './partials/modal.task-created.html',
+                            scope: $scope
+                        });
+
+                        successInstance.result.then(function () {
+                            $state.go('app.tasks');
+                        });
+
+                    }
+                };
+
+                for (var i = 0; i < $scope.selectedVolumes.length; i++) {
+                    $scope.objectToProcess = {
+                        fileName: '',
+                        volumeId: $scope.selectedVolumes[i].volumeId
+                    };
+
+                    var newTask = {
+                        id: "",
+                        priority: "",
+                        volume: $scope.objectToProcess.volumeId,
+                        type: function () {
+                            return actionType;
+                        },
+                        status: "waiting",
+                        schedulerManual: true,
+                        schedulerName: Storage.get('currentUser').email,
+                        schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
+                    };
+
+                    Tasks.insert(newTask).then(function () {
+                        remaining--;
+                        checkProcessFinished();
+                    }, function (e) {
+                        $scope.processErrors.push(e);
+                        remaining--;
+                        checkProcessFinished();
                     });
-                });
+                }
             });
 
         };
-
-        $scope.restore = function (volumeId) {
-            $scope.backupToRestore = {
-                fileName: '',
-                volumeId: volumeId
-            };
-            var confirmInstance = $modal.open({
-                animation: true,
-                templateUrl: './partials/modal.backup-restore.html',
-                scope: $scope
-            });
-
-            confirmInstance.result.then(function () {
-                var newTask = {
-                    id: "",
-                    priority: "",
-                    volume: $scope.backupToRestore.volumeId,
-                    type: "restore",
-                    status: "waiting",
-                    schedulerManual: true,
-                    schedulerName: Storage.get('currentUser').email,
-                    schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
-                };
-                Tasks.insert(newTask).then(function () {
-                    var successInstance = $modal.open({
-                        animation: true,
-                        templateUrl: './partials/modal.task-restore-created.html',
-                        scope: $scope
-                    });
-
-                    successInstance.result.then(function () {
-                        $state.go('app.tasks');
-                    });
-                });
-            });
-
-        };
+        // retention policy
     });
