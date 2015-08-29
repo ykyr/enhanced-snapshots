@@ -30,6 +30,7 @@ deploy:
   acl: public_read_write
   region: us-east-1
   on:
+    repo: SungardAS/snapdirector
     branch: java
 
 env:
