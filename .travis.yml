@@ -1,10 +1,17 @@
+# .travis.yml file for Travis CI Automated Build configuration
+# Version 0.23
+
 language: java
+
 jdk:
 - openjdk7
+
 branches:
   only:
   - java
+
 sudo: required
+
 before_install:
 - sudo apt-get update
 - curl -sL https://deb.nodesource.com/setup | sudo sh
@@ -13,8 +20,10 @@ before_install:
 - sudo npm install -g bower
 - bower install --config.interactive=false
 - cd '..'
+
 install:
 - mvn clean install
+
 deploy:
   provider: s3
   skip_cleanup: true
@@ -22,6 +31,7 @@ deploy:
   region: us-east-1
   on:
     branch: java
+
 env:
   global:
   - secure: aoF2yzFmUtob28iRDYagY6pLUU3EqSRUTw2XlZybn3N46qPiQkeQrt/gNtx64WAwIvKKD+qH1OFrgIKTMKGk8Q0GkllvOWtVnbv2ah6oymXJHHhgLL4Fa6gL9R4Kn7y02oqW2ZPSl8kw5t3NWAaCx5ThjSdhByMdVDrPbMSCvwXpiE7iFlh3ihQG16zc0W6qvCLTzS7oclY2GRjY7xBGvI3cimVlxSRrAIUsrkCrNXVwgKgUUEo+abCagSiLPzd2LxHHfC4GdtYgyNw4piMvOdeT0+KmwdsgYjkgVKruXm6CV2sXriTeX0vXKe/Hy+vCSjNYRbpmDKx12uwoPRZ0+8FHzJLz2ESNph7hrOUFd6W40BVFtbGBSMIALfinZ3mtfU2iuIkVki93DZFZQc7tYv8Wb5CmtVW1MKyqhmMu2/ck5qgOsyLllCtuJXAzjzXctcVZmYlOXD2ipXLg2hsh0OTgNvVqSKT0RSKVqzfj67oQwX7kTur1WlRRqjq2AAtjvJtU+4iAo2s4GmgZ8wehFyGpXa83O16ut3jJTscFMzgRjb+Nf+0hezAf8bKXZG+9VoZKPtEDTE69LNHrCJmy4XmsKLh15EHorNCO5MvB3sdNQ7pq0JeU6p6NWs26hrI0Dk8xOZQLD9uz/BjCysGzf4FKR/IOfs0FeGuh+tODEZk=
