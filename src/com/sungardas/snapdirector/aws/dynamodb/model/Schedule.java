@@ -2,8 +2,6 @@ package com.sungardas.snapdirector.aws.dynamodb.model;
 
 import java.text.ParseException;
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import org.quartz.CronExpression;
 
