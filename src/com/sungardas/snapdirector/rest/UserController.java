@@ -53,17 +53,17 @@ public class UserController {
 	@ExceptionHandler(SnapdirectorException.class)
 	@ResponseBody
 	@ResponseStatus(INTERNAL_SERVER_ERROR)
-	private ExceptionDto internalServerError(SnapdirectorException exception){
+	private Exception internalServerError(SnapdirectorException exception){
 		LOG.error(exception);
-		return new ExceptionDto(INTERNAL_SERVER_ERROR.value(), exception.getLocalizedMessage());
+		return exception;
 	}
 
 	@ExceptionHandler(IOException.class)
 	@ResponseBody
 	@ResponseStatus(INTERNAL_SERVER_ERROR)
-	private ExceptionDto invalidInput(IOException exception){
+	private Exception invalidInput(IOException exception){
 		LOG.error(exception);
-		return new ExceptionDto(INTERNAL_SERVER_ERROR.value(), exception.getLocalizedMessage());
+		return exception;
 	}
 
 
