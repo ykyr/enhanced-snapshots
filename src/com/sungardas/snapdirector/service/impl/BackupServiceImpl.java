@@ -4,6 +4,7 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.service.BackupService;
 import com.sungardas.snapdirector.service.ConfigurationService;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,12 +42,12 @@ public class BackupServiceImpl implements BackupService {
         taskEntry.setStatus(TaskEntry.TaskEntryStatus.WAITING.getStatus());
         taskEntry.setOptions(backupName + BACKUP_FILE_EXT);
         taskEntry.setSchedulerName(user);
+        taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
 
         //TODO Remove hardcode
         taskEntry.setWorker(taskEntry.getInstanceId());
         taskEntry.setPriority(0);
         taskEntry.setSchedulerManual(true);
-        taskEntry.setSchedulerTime("2015-08-19 14:59:31");
 
         return taskEntry;
     }
