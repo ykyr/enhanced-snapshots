@@ -6,4 +6,6 @@ public interface RetentionService {
     void putRetention(RetentionDto retentionDto);
 
     RetentionDto getRetentionDto(String volumeId);
+
+    void apply();
 }

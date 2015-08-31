@@ -19,6 +19,16 @@ public class RetentionEntry {
     @DynamoDBAttribute
     private int days;
 
+    public RetentionEntry() {
+    }
+
+    public RetentionEntry(String volumeId, int size, int count, int days) {
+        this.volumeId = volumeId;
+        this.size = size;
+        this.count = count;
+        this.days = days;
+    }
+
     public String getVolumeId() {
         return volumeId;
     }

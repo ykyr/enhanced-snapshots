@@ -11,12 +11,10 @@ import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.exception.DataAccessException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -88,6 +86,11 @@ public class BackupRepositoryImpl implements BackupRepository {
     @PostConstruct
     private void init() {
         mapper = new DynamoDBMapper(amazonDynamoDB);
+    }
+
+    @Override
+    public List<BackupEntry> findAll() {
+        return mapper.scan(BackupEntry.class, new DynamoDBScanExpression());
     }
 
 }

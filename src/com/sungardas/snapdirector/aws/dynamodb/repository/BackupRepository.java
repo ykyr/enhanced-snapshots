@@ -16,4 +16,5 @@ public interface BackupRepository {
 
 	BackupEntry getByBackupFileName(String backupName);
 
+    List<BackupEntry> findAll();
 }

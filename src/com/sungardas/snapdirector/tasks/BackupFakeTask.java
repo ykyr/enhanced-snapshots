@@ -6,6 +6,7 @@ import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.snapdirector.service.RetentionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class BackupFakeTask implements BackupTask {
 	private BackupRepository backupRepository;
     
     @Autowired
-    private AWSCredentials amazonAWSCredentials;
+    private RetentionService retentionService;
     
     private TaskEntry taskEntry;
 
@@ -61,6 +62,7 @@ public class BackupFakeTask implements BackupTask {
         LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
         taskRepository.delete(taskEntry);
         LOG.info("Task completed.");
+        retentionService.apply();
     }
 
 }
