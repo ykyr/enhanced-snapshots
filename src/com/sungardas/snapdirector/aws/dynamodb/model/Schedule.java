@@ -16,6 +16,8 @@ public class Schedule {
 
 	private final Map<String, Object> attributes = new LinkedHashMap<String, Object>();
 	
+	public Schedule(){}
+	
 	public Schedule(String id, String cron, Boolean enabled, String name, String volumeId) throws ParseException {
 		this.attributes.put("id", id);
 		this.attributes.put("cron", cron);
