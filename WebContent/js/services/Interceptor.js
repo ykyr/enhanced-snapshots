@@ -3,7 +3,7 @@
  */
 
 angular.module('web')
-    .factory('Interceptor', function ($q) {
+    .factory('Interceptor', function ($q, Exception) {
 
         return {
             responseError: function (rejection) {
@@ -11,6 +11,8 @@ angular.module('web')
                     window.location = "#/login";
                 } else if (rejection.status === 404) {
                     window.location = "#/login";
+                } else if (rejection.status === 500 && rejection.data.localizedMessage){
+                    Exception.handle(rejection);
                 }
                 return $q.reject(rejection);
             }

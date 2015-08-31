@@ -1,7 +1,7 @@
 {
   "name": "web",
   "version": "0.0.0",
-  "description": "web client for sungard app",
+  "description": "Web client for SungardAS snapdirector",
   "license": "MIT",
   "ignore": [
     "**/.*",
@@ -11,13 +11,14 @@
     "tests"
   ],
   "dependencies": {
-    "bootstrap": "~3.3.5",
     "angular": "~1.4.2",
+    "angular-awesome-slider": "~2.4.1",
     "angular-bootstrap": "~0.13.0",
-    "angular-ui-router": "~0.2.15",
     "angular-smart-table": "~2.1.1",
-    "ng-tags-input": "3.0.0",
-    "angular-awesome-slider": "~2.4.1"
+    "angular-toastr": "~1.5.0",
+    "angular-ui-router": "~0.2.15",
+    "bootstrap": "~3.3.5",
+    "ng-tags-input": "3.0.0"
   },
   "resolutions": {
     "angular": "~1.4.2"
