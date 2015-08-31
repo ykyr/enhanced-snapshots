@@ -31,6 +31,7 @@ public class QuartzConfiguration {
                             "Some job group")
                     .storeDurably(true)
                     .build();
+            
             return jobDetail;
         }
 
