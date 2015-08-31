@@ -43,6 +43,18 @@
         "ansible/roles/oracle-java8",
         "ansible/roles/tomcat8"
       ]
+          },
+    {
+      "type": "shell",
+      "inline": [
+        "echo 'Starting deploynment process...'",
+        "echo ' ***Clonning repo...*** '",
+        "git clone https://github.com/SungardAS/snapdirector.git",
+        "cd snapdirector/",
+        "sudo chmod +x autobuild.sh",
+        "echo ' ***Building and deploying snapdirector app...*** '",
+        "./autobuild.sh"
+            	]
         	}
 	]
 }

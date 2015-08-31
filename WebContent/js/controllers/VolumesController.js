@@ -239,9 +239,7 @@ angular.module('web')
                         id: "",
                         priority: "",
                         volume: $scope.objectToProcess.volumeId,
-                        type: function () {
-                            return actionType;
-                        },
+                        type: actionType,
                         status: "waiting",
                         schedulerManual: true,
                         schedulerName: Storage.get('currentUser').email,
