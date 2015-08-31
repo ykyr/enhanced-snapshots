@@ -1,0 +1,14 @@
+---
+- hosts: all
+  sudo: yes
+  sudo_user: root
+  remote_user: vagrant
+  tasks:
+  - name: update system
+    yum: name=* state=latest
+  roles:
+    - openjdk
+    - tomcat8
+    - opendedup
+    - maven
+    - nodejs

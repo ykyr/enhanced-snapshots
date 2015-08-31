@@ -1,0 +1,18 @@
+<div class="modal-header bg-{{bgClass[actionType]}}">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-cloud-{{iconClass[actionType]}}"></span>&nbsp; {{modalTitle[actionType]}}</h3>
+</div>
+<div class="modal-body">
+    <p>You are going to start {{actionType}} process for: </p>
+    <blockquote>
+        <div ng-show="selectedVolumes.length<=maxVolumeDisplay">
+            <div class="h4 text-primary" ng-repeat="volume in selectedVolumes">{{volume.volumeId}}</div>
+        </div>
+        <p ng-hide="selectedVolumes.length<=maxVolumeDisplay">{{selectedVolumes.length}} selected volumes</p>
+        <p ng-show="actionType === 'restore'"><span>Volume's last backup will be used</span></p>
+    </blockquote>
+    <p> Do you want to start it now?</p>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-{{bgClass[actionType]}}" ng-click="$close()"><span class="glyphicon glyphicon-cloud-{{iconClass[actionType]}}"></span>&nbsp; Add {{actionType}} task</button>
+    <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
+</div>

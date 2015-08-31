@@ -7,7 +7,9 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
+import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.rest.utils.Constants;
+import com.sungardas.snapdirector.service.BackupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -24,6 +26,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/backup")
@@ -35,6 +38,9 @@ public class BackupController {
     private ServletContext context;
     @Autowired
     private HttpServletRequest servletRequest;
+
+    @Autowired
+    private BackupService backupService;
 
 
     @RequestMapping(value = "/{volumeId}", method = RequestMethod.GET)
@@ -60,14 +66,18 @@ public class BackupController {
 
     @RequestMapping(value = "/{backupName}", method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteBackup(@PathVariable String backupName) {
-        String volumeId = backupName.substring(0, 12);
         LOG.debug("Removing backup [{}]", backupName);
-        boolean backupRemoved = DynamoUtils.removeBackupInfo(volumeId, backupName, getMapper(servletRequest));
-        if (backupRemoved) {
-            return new ResponseEntity<>(HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Failed to remove backup.", HttpStatus.INTERNAL_SERVER_ERROR);
+        try{
+            backupService.deleteBackup(backupName, getCurrentUserEmail());
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (DataAccessException e){
+            return new ResponseEntity<>("Failed to remove backup.", HttpStatus.NOT_ACCEPTABLE);
         }
+    }
+
+    private String getCurrentUserEmail() {
+        String session = servletRequest.getSession().getId();
+        return ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
     }
 
     private DynamoDBMapper getMapper(ServletRequest request) {

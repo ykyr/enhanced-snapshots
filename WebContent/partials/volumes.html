@@ -124,9 +124,12 @@
                 class="table table-condensed bg-white">
             <thead>
             <tr>
-                <th> &nbsp;
-
+                <th class="text-center">
+                    <a class="btn btn-link" ng-click="selectAll()" title="Click to {{ textClass[isAllSelected]}} all">
+                        {{textClass[isAllSelected]}} all
+                    </a>
                 </th>
+                <th> &nbsp;</th>
                 <th st-sort="state">Status</th>
                 <th st-sort="volumeId">ID</th>
                 <th st-sort="volumeName">Name</th>
@@ -139,17 +142,19 @@
             </tr>
             </thead>
             <tbody>
-            <tr ng-repeat="volume in displayedCollection | stAdvancedFilter: stAdvancedFilter track by $index">
+            <tr ng-class="{'row-disabled': isDisabled(volume)}" ng-repeat="volume in displayedCollection | stAdvancedFilter: stAdvancedFilter track by $index" ng-click="toggleSelection(volume)">
+                <td class="text-center command">
+                    <span class="glyphicon glyphicon-{{ iconClass[volume.isSelected] }} text-primary"></span>
+                    <input type="checkbox" ng-checked="volume.isSelected" class="hidden"/> &nbsp;
+                </td>
                 <td class="text-center commands">
-                    <button class="btn btn-link" title="Restore now" ng-click="restore(volume.volumeId)"><span
-                            class="glyphicon glyphicon-cloud-upload text-success"></span></button>
-                    <button class="btn btn-link" title="Backup now" ng-click="backup(volume.volumeId)"><span
-                            class="glyphicon glyphicon-cloud-download"></span></button>
-                    <a ui-sref="app.volume.schedule({ volumeId: volume.volumeId })" class="btn btn-link disabled"
-                       title="Schedule backup"><span
+                    <button class="btn btn-link hidden" title="Retention rule" ng-click="retentionRule(volume); $event.stopPropagation();"><span
+                            class="glyphicon glyphicon-erase" ng-hide="isDisabled(volume)"></span></button>
+                    <a ui-sref="app.volume.schedule({ volumeId: volume.volumeId })" class="btn btn-link "
+                       title="Schedule backup" ng-hide="isDisabled(volume)" ng-click="$event.stopPropagation()"><span
                             class="glyphicon glyphicon-time"></span></a>
                     <a ui-sref="app.volume.history({ volumeId: volume.volumeId })" class="btn btn-link"
-                       title="History"><span
+                       title="History" ng-click="$event.stopPropagation()"><span
                             class="glyphicon glyphicon-list"></span></a>
                 </td>
                 <td>
@@ -174,16 +179,27 @@
             </tbody>
             <tfoot>
             <tr ng-show="isLoading">
-                <td colspan="10" class="text-center spinner-container">
+                <td colspan="11" class="text-center spinner-container">
                     <i class="glyphicon glyphicon-refresh text-muted spin"></i>
                 </td>
             </tr>
             <tr>
-                <td colspan="10" class="text-center">
+                <td colspan="11" class="text-center">
                     <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
                 </td>
             </tr>
             </tfoot>
         </table>
+        <div class="col-xs-12">
+            <div class="pull-right">
+                <button type="button" class="btn btn-primary" ng-disabled="!selectedAmount" ng-click="volumeAction('backup')">
+                    <span class="glyphicon glyphicon-cloud-download" title="Backup now"></span> Backup selected
+                </button>
+
+                <button type="button" class="btn btn-success" ng-disabled="!selectedAmount" ng-click="volumeAction('restore')">
+                    <span class="glyphicon glyphicon-cloud-upload" title="Restore now"></span> Restore selected
+                </button>
+            </div>
+        </div>
     </div>
 </div>

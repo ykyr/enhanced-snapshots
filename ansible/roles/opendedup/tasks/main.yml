@@ -1,0 +1,13 @@
+---
+- name: install packages
+  yum: name="{{item}}" state=installed
+  with_items:
+    - python-setuptools
+
+- name: install sdfs
+  shell: rpm -ivh --force http://www.opendedup.org/downloads/SDFS-2.0.11-2.x86_64.rpm
+
+- lineinfile: dest=/etc/security/limits.conf state=present
+            line='* hardnofile 65535'
+- lineinfile: dest=/etc/security/limits.conf state=present
+            line='* soft nofile 65535'

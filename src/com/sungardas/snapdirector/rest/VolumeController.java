@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.util.Set;
 
 
 @RestController
@@ -25,7 +25,7 @@ public class VolumeController {
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity getAllVolumes() {
         try {
-            List<VolumeDto> volumes = volumeService.getVolumes();
+            Set<VolumeDto> volumes = volumeService.getVolumes();
             return new ResponseEntity(volumes, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity("Failed to get volumes.", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -35,7 +35,7 @@ public class VolumeController {
     @RequestMapping(value = "/{regionId}", method = RequestMethod.GET)
     public ResponseEntity getVolumesByRegion(@PathVariable("regionId") String region) {
         try {
-            List<VolumeDto> volumes = volumeService.getVolumesByRegion(Region.getRegion(Regions.fromName(region)));
+            Set<VolumeDto> volumes = volumeService.getVolumesByRegion(Region.getRegion(Regions.fromName(region)));
             return new ResponseEntity(volumes, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity("Failed to get volumes for region: " + region, HttpStatus.INTERNAL_SERVER_ERROR);
