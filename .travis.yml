@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.26
+# Version 0.27
 
 language: java
 
@@ -42,5 +42,5 @@ deploy:
   bucket:
     secure: TG493s3AwD4Rya5ht+ej27OQSj425Lct9BZZhLlgpFWbYF3R7IA8purs/uo4WoNKeIdSJy+Z7qDGa/bvN4gf3TyTSOdfyb+bvTwcrjryjuR48Zeil3Uvp2Znj/OC0wqbo9v/YrwGWKgk9cXnnNbX7QSZzMkqyEAOzdaCuM8oKi31kVXtogAhxZxWSJThFKv88pxnMIoU1M+NRHfVJG83xsuzBD8KymPMkublWUrns8jAm5SgYEhMdfq8mbO3v7NvGOpTLUoKA9+cvyDTJTRunWARAbL+mYzrbXcmDm9iPUAFlitpFUfej7gF6hl2qwbe8F7Y+7IHDdcxS1yT/j9OEMbBqwCHVb+DkJE7ZWzKaxA3Ogjcn2o4SiPnBeguZ62IC86c0zvuvOF8Gb5m1CftO0USCipRZBMOBhUYx+wzA3Ri2taKerAE+wkQMLPNN/uJiiiK3zHlDTI3O6catQkdVyRHZmQjViwVzK2BBqZGSThHEacoiLGIZnYXVsjNiIocqn/ZOjDSCmg2jTlR0Liumnff2dFEDnYR2uZ9bFUSKUgSplNitQaMH9/v/mHjVHa5iUzhhZOu1fgbFxTmqfAYrTORCnLrWHhI/c+NX9jOVWp1+K4mcKpv0yL9RV9ZunC3p1xk6/7DCfaN6FXj+klboxufiKC38uW+wkuNE6XopPA=
   on:
-    repo: SungardAS/snapdirector
+    upload-dir: travis-builds
     branch: java
