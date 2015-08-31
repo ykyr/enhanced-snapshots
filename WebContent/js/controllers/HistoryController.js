@@ -59,7 +59,12 @@ angular.module('web')
                             templateUrl: './partials/modal.backup-delete-result.html',
                             scope: $scope
                         });
-                        loadBackups();
+
+                        finishedInstance.result.then(function () {
+                            $state.go('app.tasks');
+                        }, function () {
+                            loadBackups();
+                        });
                     }
                 };
 

@@ -21,6 +21,7 @@
                 <span class="label label-default">
                     <span class="glyphicon glyphicon-{{ manualIconClass[task.schedulerManual] }}"></span>&nbsp;
                     {{task.schedulerName}}</span>
+                <a class="btn btn-danger btn-xs pull-right" ng-click="reject(task)"><span class="glyphicon glyphicon-remove"></span></a>
             </p>
         </div>
         <div class="col-xs-1 text-right hidden">

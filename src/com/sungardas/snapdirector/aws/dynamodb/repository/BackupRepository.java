@@ -18,4 +18,5 @@ public interface BackupRepository {
 
     List<BackupEntry> findAll();
 
+    List<BackupEntry> findAll();
 }

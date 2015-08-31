@@ -258,5 +258,53 @@ angular.module('web')
             });
 
         };
-        // retention policy
+
+
+        $scope.showRetentionRule = {
+            never: true,
+            size: false,
+            count: false,
+            days: false
+        };
+
+        $scope.$watchCollection('showRetentionRule', function () {
+            $scope.checkResults = [];
+            angular.forEach($scope.showRetentionRule, function (value, key) {
+                if (value) {
+                    $scope.checkResults.push(key);
+                }
+            });
+        });
+
+        $scope.checkRetentionRule = function (option) {
+            if (option === 'never') {
+                $scope.showRetentionRule = {
+                    never: false,
+                    size: false,
+                    count: false,
+                    days: false
+                };
+            } else {
+                $scope.showRetentionRule.never = !!($scope.checkResults.length == 1 && $scope.checkResults[0] == option);
+            }
+        };
+
+        $scope.retentionRule = function (volume) {
+            $scope.rule = {
+                volumeId: volume.volumeId,
+                size: 0,
+                count: 0,
+                days: 0
+            };
+
+            var retentionModalInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.retention-edit.html',
+                scope: $scope
+            });
+
+            retentionModalInstance.result.then(function () {
+                //retention REST method
+            })
+        }
     });

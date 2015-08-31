@@ -1,16 +1,25 @@
 package com.sungardas.snapdirector.service.impl;
 
+import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.service.BackupService;
 import com.sungardas.snapdirector.service.ConfigurationService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryType.DELETE;
 
 @Service
 public class BackupServiceImpl implements BackupService {
+
+    private static final Logger LOG = LogManager.getLogger(BackupServiceImpl.class);
 
     private static final String BACKUP_FILE_EXT = ".backup";
 
@@ -24,6 +33,18 @@ public class BackupServiceImpl implements BackupService {
     public void deleteBackup(String backupName, String user) {
         TaskEntry taskEntry = getDeleteTask(backupName, user);
         taskRepository.save(taskEntry);
+    }
+
+    @Override
+    public void deleteBackup(Collection<BackupEntry> backupEntries, String user) {
+        LOG.debug("Removing backups: {}", backupEntries);
+        List<TaskEntry> tasks = new ArrayList<>();
+
+        for (BackupEntry entry : backupEntries) {
+            tasks.add(getDeleteTask(entry.getFileName(), user));
+        }
+
+        taskRepository.save(tasks);
     }
 
     private String getVolumeId(String backupName){
