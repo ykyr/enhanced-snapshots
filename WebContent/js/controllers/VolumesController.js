@@ -243,7 +243,7 @@ angular.module('web')
                         status: "waiting",
                         schedulerManual: true,
                         schedulerName: Storage.get('currentUser').email,
-                        schedulerTime: new Date()
+                        schedulerTime: Date.now()
                     };
 
                     Tasks.insert(newTask).then(function () {
