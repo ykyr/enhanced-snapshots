@@ -11,12 +11,10 @@ import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.exception.DataAccessException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +25,11 @@ public class BackupRepositoryImpl implements BackupRepository {
     @Autowired
     AmazonDynamoDB amazonDynamoDB;
     private DynamoDBMapper mapper;
+
+    @PostConstruct
+    private void init() {
+        mapper = new DynamoDBMapper(amazonDynamoDB);
+    }
 
     @Override
     public void save(BackupEntry backup) {
@@ -42,52 +45,52 @@ public class BackupRepositoryImpl implements BackupRepository {
             throw new DataAccessException("Can`t delete: " + backupEntry.getVolumeId() + " " + backupEntry.getFileName());
         }
     }
-    
+
     @Override
     public List<BackupEntry> get(String volumeId) {
-    	BackupEntry backupEntry = new BackupEntry();
-		backupEntry.setVolumeId(volumeId);
-		DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
-				.withHashKeyValues(backupEntry);
+        BackupEntry backupEntry = new BackupEntry();
+        backupEntry.setVolumeId(volumeId);
+        DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
+                .withHashKeyValues(backupEntry);
 
-		List<BackupEntry> backupEntries = mapper.query(BackupEntry.class,
-				expression);
+        List<BackupEntry> backupEntries = mapper.query(BackupEntry.class,
+                expression);
 
-		return backupEntries;
+        return backupEntries;
     }
-    
+
     @Override
     public BackupEntry getLast(String volumeId) {
-    	BackupEntry backupEntry = new BackupEntry();
-		backupEntry.setVolumeId(volumeId);
-		DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
-				.withHashKeyValues(backupEntry).withScanIndexForward(false);
+        BackupEntry backupEntry = new BackupEntry();
+        backupEntry.setVolumeId(volumeId);
+        DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
+                .withHashKeyValues(backupEntry).withScanIndexForward(false);
 
-		List<BackupEntry> backupEntries = mapper.query(BackupEntry.class, expression);
+        List<BackupEntry> backupEntries = mapper.query(BackupEntry.class, expression);
 
         return getFirst(backupEntries);
     }
-    
+
     @Override
     public BackupEntry getByBackupFileName(String backupName) {
-    	Condition condition = new Condition().
-    			withComparisonOperator(ComparisonOperator.EQ.toString()).withAttributeValueList(new AttributeValue(backupName));
-    	DynamoDBScanExpression expression = new DynamoDBScanExpression().withFilterConditionEntry("fileName", condition);
-    	List<BackupEntry> backupEntries = mapper.scan(BackupEntry.class, expression);
+        Condition condition = new Condition().
+                withComparisonOperator(ComparisonOperator.EQ.toString()).withAttributeValueList(new AttributeValue(backupName));
+        DynamoDBScanExpression expression = new DynamoDBScanExpression().withFilterConditionEntry("fileName", condition);
+        List<BackupEntry> backupEntries = mapper.scan(BackupEntry.class, expression);
         return getFirst(backupEntries);
     }
 
-    private BackupEntry getFirst(List<BackupEntry> backupEntries){
-        if(backupEntries.isEmpty()){
-            return null;
-        } else{
-            return backupEntries.get(0);
-        }
+    @Override
+    public List<BackupEntry> findAll() {
+        return mapper.scan(BackupEntry.class, new DynamoDBScanExpression());
     }
 
-    @PostConstruct
-    private void init() {
-        mapper = new DynamoDBMapper(amazonDynamoDB);
+    private BackupEntry getFirst(List<BackupEntry> backupEntries) {
+        if (backupEntries.isEmpty()) {
+            return null;
+        } else {
+            return backupEntries.get(0);
+        }
     }
 
 }
