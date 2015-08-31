@@ -48,8 +48,9 @@ angular.module('web')
         $scope.selectedAmount = 0;
 
         $scope.checkAllSelection = function () {
-            $scope.selectedAmount = $scope.volumes.filter(function (v) { return v.isSelected || $scope.isDisabled(v); }).length;
-            $scope.isAllSelected = $scope.selectedAmount == $scope.volumes.length;
+            var disabledAmount = $scope.volumes.filter(function (v) { return $scope.isDisabled(v)}).length;
+            $scope.selectedAmount = $scope.volumes.filter(function (v) { return v.isSelected}).length;
+            $scope.isAllSelected = ($scope.selectedAmount + disabledAmount == $scope.volumes.length);
         };
 
         $scope.selectAll = function () {
@@ -60,8 +61,8 @@ angular.module('web')
         };
 
         $scope.toggleSelection = function (volume) {
-            doSelection(volume, !volume.isSelected);
-            $scope.checkAllSelection();
+                doSelection(volume, !volume.isSelected);
+                $scope.checkAllSelection();
         };
 
         var doSelection = function (volume, value) {
