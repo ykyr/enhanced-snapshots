@@ -4,10 +4,11 @@ import java.util.List;
 
 import org.springframework.data.repository.CrudRepository;
 
-import com.sungardas.snapdirector.aws.dynamodb.model.ScheduleEntry;
+import com.sungardas.snapdirector.aws.dynamodb.model.Schedule;
 
-public interface ScheduleRepository extends CrudRepository<ScheduleEntry, String> {
+public interface ScheduleRepository extends CrudRepository<Schedule, String> {
 
-	List<ScheduleEntry> findByEnabled(Boolean enabled);
+	List<Schedule> findByEnabled(Boolean enabled);
 	
+	List<Schedule> findByEnabledAndNextFireLessThanEqual(Boolean enabled, Long nextFire);
 }

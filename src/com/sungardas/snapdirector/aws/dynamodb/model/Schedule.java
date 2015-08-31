@@ -1,24 +1,30 @@
 package com.sungardas.snapdirector.aws.dynamodb.model;
 
+import java.text.ParseException;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.quartz.CronExpression;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
 @DynamoDBTable(tableName = "Schedule")
-public class ScheduleEntry {
+public class Schedule {
 
 	private final Map<String, Object> attributes = new LinkedHashMap<String, Object>();
 	
-	public ScheduleEntry(String id, String cron, Boolean enabled, String name, String volumeId) {
+	public Schedule(String id, String cron, Boolean enabled, String name, String volumeId) throws ParseException {
 		this.attributes.put("id", id);
 		this.attributes.put("cron", cron);
 		this.attributes.put("enabled", enabled);
 		this.attributes.put("name", name);
 		this.attributes.put("volumeId", volumeId);
-		//TODO: Implement cron parsing for nextFire and others
+		CronExpression exp = new CronExpression(cron);
+		long nextFire = exp.getNextValidTimeAfter(new Date()).getTime();
+		this.attributes.put("nextFire", nextFire);
 	}
 	
 	@DynamoDBHashKey(attributeName = "id")
@@ -58,11 +64,11 @@ public class ScheduleEntry {
     }
     
     @DynamoDBAttribute(attributeName = "nextFire")
-    public String getNextFire() {
-        return (String) attributes.get("nextFire");
+    public Long getNextFire() {
+        return (Long) attributes.get("nextFire");
     }
 
-    public void setNextFire(String nextFire) {
+    public void setNextFire(Long nextFire) {
         attributes.put("nextFire", nextFire);
     }
     
