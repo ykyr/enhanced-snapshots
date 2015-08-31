@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 
 import static com.sungardas.snapdirector.dto.converter.RetentionConverter.toDto;
@@ -38,6 +39,11 @@ public class RetentionServiceImpl implements RetentionService {
 
     @Autowired
     private VolumeService volumeService;
+
+    @PostConstruct
+    private void init(){
+        apply();
+    }
 
     @Override
     public void putRetention(RetentionDto retentionDto) {
