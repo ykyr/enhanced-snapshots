@@ -1,74 +1,109 @@
 package com.sungardas.snapdirector.rest.controllers;
 
+import com.sungardas.snapdirector.aws.dynamodb.Roles;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
+import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.rest.filters.FilterProxy;
-import com.sungardas.snapdirector.rest.utils.Constants;
+import com.sungardas.snapdirector.service.CredentialsService;
+import com.sungardas.snapdirector.service.DefaultUserAuthenticationService;
 import com.sungardas.snapdirector.service.InitializationService;
-import com.sungardas.snapdirector.service.impl.InitializationServiceImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.XmlWebApplicationContext;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.Filter;
-import javax.servlet.http.HttpServletResponse;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 
 @RequestMapping("/session")
 public class InitController implements ApplicationContextAware {
+
+	@ExceptionHandler(SnapdirectorException.class)
+	@ResponseBody
+	@ResponseStatus(INTERNAL_SERVER_ERROR)
+	private Exception internalServerError(SnapdirectorException exception){
+		LOG.error(exception);
+		return exception;
+	}
 
 	private static final Logger LOG = LogManager.getLogger(InitController.class);
 
 	@Autowired
 	private FilterProxy filterProxy;
 
-	private InitializationService initializationService = new InitializationServiceImpl();
+	@Autowired
+	private ObjectFactory<InitializationService> initializationServiceObjectFactory;
+
+	@Autowired
+	private CredentialsService credentialsService;
+
+	@Autowired
+	private DefaultUserAuthenticationService defaultUserAuthenticationService;
 
 	@Autowired
 	private ApplicationContext applicationContext;
+	private boolean awsPropertyFileExists = false;
 
 
 	private static boolean CONTEXT_REFRESH_IN_PROCESS = false;
 
 	@RequestMapping(method = RequestMethod.POST)
-	public String init(@RequestBody User user, RedirectAttributes model, HttpServletResponse response) {
+	public ResponseEntity<String> init(@RequestBody User user) {
+		ResponseEntity<String> responseEntity = null;
 		if (CONTEXT_REFRESH_IN_PROCESS) {
-			return HttpStatus.NO_CONTENT.toString();
+			responseEntity = new ResponseEntity<>("", HttpStatus.NO_CONTENT);
 		}
-		if (initializationService.ValidAWSCredentialsAreProvided()) {
+		// check that aws credentials are provided
+		// try to authenticate as real admin user
+		else if (awsPropertyFileExists && credentialsService.areCredentialsValid()) {
 			LOG.info("Valid aws credentials were provided.");
 			refreshContext();
 			// update initialization service
-			initializationService = (InitializationService) applicationContext.getBean("initializationServiceImpl");
+			InitializationService initializationService = initializationServiceObjectFactory.getObject();
 			if (initializationService.isAdminUserExists()) {
-				model.addFlashAttribute(Constants.JSON_AUTHENTIFICATION_EMAIL, user.getEmail());
-				model.addFlashAttribute(Constants.JSON_AUTHENTIFICATION_PASSWORD, user.getPassword());
-				return "redirect:/rest/session";
+				HttpHeaders headers = new HttpHeaders();
+
+				try {
+					headers.setLocation(new URI("/rest/session"));
+				} catch (URISyntaxException e) {
+					e.printStackTrace();
+				}
+				responseEntity = new ResponseEntity<>(headers, HttpStatus.CREATED);
 			}
 		}
-		try {
-			if (initializationService.checkDefaultUser(user.getEmail(), user.getPassword())) {
-				//TODO: should we redirect request somewhere or should we sent status OK and UI team will create request to conf controller from there side?
-				return "redirect:/rest/configuration";
-			}
-		} catch (Exception e) {
-			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			return null;
+
+		// no aws credentials are provided
+		// try to authenticate as default user admin@snapdirector:<instance-id>
+		else if (defaultUserAuthenticationService.checkDefaultUser(user.getEmail(), user.getPassword())) {
+			User defaultUser = new User();
+			defaultUser.setRole(Roles.CONFIGURATOR.getName());
+			String result = defaultUser.toString();
+			responseEntity = new ResponseEntity<>(result, HttpStatus.OK);
+		} else {
+			responseEntity = new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 		}
-		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		return null;
+	return responseEntity;
 	}
 
 	public void init() {
-		if (initializationService.ValidAWSCredentialsAreProvided()) {
+		awsPropertyFileExists = credentialsService.isAwsPropertyFileExists();
+		if (awsPropertyFileExists && credentialsService.areCredentialsValid()) {
 			refreshContext();
 		}
+
+
 	}
 
 	@Override

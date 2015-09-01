@@ -8,13 +8,13 @@ import com.sungardas.snapdirector.rest.controllers.InitController;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.rest.utils.JsonFromStream;
 import com.sungardas.snapdirector.rest.utils.MultiReadHttpServletRequest;
+import com.sungardas.snapdirector.service.DefaultUserAuthenticationService;
 import com.sungardas.snapdirector.service.InitializationService;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.FlashMap;
 
@@ -35,6 +35,9 @@ public class RestAuthenticationFilter implements Filter {
 
 	@Autowired
 	private InitializationService initializationService;
+
+	@Autowired
+	private DefaultUserAuthenticationService defaultUserAuthenticationService;
 
 	public void destroy() {
 	}
@@ -74,7 +77,7 @@ public class RestAuthenticationFilter implements Filter {
 				if (initializationService.isAdminUserExists()) {
 					allowed = DynamoUtils.authenticateUser(email, password, getMapper(request));
 				} else {
-					allowed = initializationService.checkDefaultUser(email,password);
+					allowed = defaultUserAuthenticationService.checkDefaultUser(email,password);
 				}
 				if (allowed) {
 					allowedSessions.put(session.getId(), email);

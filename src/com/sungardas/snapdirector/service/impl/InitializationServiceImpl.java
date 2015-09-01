@@ -22,14 +22,16 @@ import com.sungardas.snapdirector.service.InitializationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -37,8 +39,12 @@ import java.util.Scanner;
 @Service
 @Profile("prod")
 public class InitializationServiceImpl implements InitializationService {
-    public static final Logger LOG = LogManager.getLogger(InitializationServiceImpl.class);
-	private final static String DEFAULT_USER_LOGIN = "admin";
+    public final Logger LOG = LogManager.getLogger(InitializationServiceImpl.class);
+
+    private static String DEFAULT_SDFS_CONFIG_LOCATION = "/etc/sdfs";
+    private static String DEFAULT_VOLUME_CONFIG_FILE_SUFFIX = "-";
+
+    private static String DEFAULT_LOGIN = "admin";
 
     @Autowired
     private AmazonSQS sqs;
@@ -58,32 +64,6 @@ public class InitializationServiceImpl implements InitializationService {
     private boolean queueExists = false;
     private boolean adminUserExists = false;
 
-
-	@Override
-	public boolean ValidAWSCredentialsAreProvided() {
-		AmazonEC2Client ec2Client = new AmazonEC2Client(new PropertyBasedCredentialsProvider().getCredentials());
-		try {
-			ec2Client.describeRegions();
-			return true;
-		} catch (AmazonClientException e) {
-			LOG.warn("Provided AWS credentials are invalid.");
-			return false;
-		}
-	}
-
-	@Override
-    public boolean AWSCredentialsAreValid(String accessKey, String secretKey) {
-        AmazonDynamoDB client = new AmazonDynamoDBClient(new BasicAWSCredentials(accessKey, secretKey));
-        try{
-            client.listTables();
-        }catch (AmazonServiceException accessError) {
-            LOG.info("AWS Credentials are invalid!");
-            return false;
-        }
-        return true;
-
-    }
-
     @Override
     public boolean isSystemInitialized() {
         boolean isOk= true;
@@ -97,24 +77,6 @@ public class InitializationServiceImpl implements InitializationService {
         return isOk;
     }
 
-    @Override
-    public boolean checkDefaultUser(String login, String password) {
-		Process p = null;
-		try (BufferedReader reader =
-					 new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-			p = Runtime.getRuntime().exec("curl -L http://169.254.169.254/latest/meta-data/instance-id");
-			p.waitFor();
-			String line = reader.readLine();
-			if (line != null) {
-				return password.equals(line) && login.equals(DEFAULT_USER_LOGIN);
-			} else {
-				throw new SnapdirectorException();
-			}
-		} catch (Exception e) {
-			LOG.warn("Failed to determine ec2 instance ID");
-			throw new SnapdirectorException("Failed to determine ec2 instance ID", e);
-		}
-    }
 
     @Override
     public boolean isDbStructureValid() {
@@ -142,6 +104,8 @@ public class InitializationServiceImpl implements InitializationService {
 
     @Override
     public boolean isSdfsConfigured() {
+        Path sdfsConfPath = Paths.get(DEFAULT_SDFS_CONFIG_LOCATION);
+        boolean configPathExists = Files.exists(sdfsConfPath) && Files.isDirectory(sdfsConfPath);
         return true;
     }
 
@@ -227,8 +191,8 @@ public class InitializationServiceImpl implements InitializationService {
             }
             s.close();
         } catch (IOException e) {
-            LOG.error("Cant get configuration id from metadata!");
-            throw new ConfigurationException("Cant get Instance Id from metadata!");
+            LOG.warn("Failed to determine ec2 instance ID");
+            throw new SnapdirectorException("Failed to determine ec2 instance ID", e);
         }
         return instanceId;
     }

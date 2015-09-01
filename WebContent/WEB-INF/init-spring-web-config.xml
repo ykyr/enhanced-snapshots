@@ -6,6 +6,11 @@
 
     <bean id="initController" class="com.sungardas.snapdirector.rest.controllers.InitController" init-method="init"/>
 
+    <bean id="CredentialsService" class="com.sungardas.snapdirector.service.impl.CredentialsServiceImpl"/>
+    <bean id="DefaultUserAuthenticationService" class="com.sungardas.snapdirector.service.impl.DefaultUserAuthentificationServiceFake"/>
+
+    <bean id="InitializationService"  class="com.sungardas.snapdirector.service.impl.InitializationServiceImpl" scope="prototype"/>
+
     <mvc:annotation-driven />
     <context:annotation-config/>
 </beans>

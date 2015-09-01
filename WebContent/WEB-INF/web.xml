@@ -35,7 +35,7 @@
 
     <filter-mapping>
         <filter-name>filterProxy</filter-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>/rest/*</url-pattern>
     </filter-mapping>
 
     <!-- For web context -->
@@ -58,7 +58,7 @@
 
     <context-param>
         <param-name>spring.profiles.active</param-name>
-        <param-value>dev</param-value>
+        <param-value>prod</param-value>
     </context-param>
 
 </web-app>

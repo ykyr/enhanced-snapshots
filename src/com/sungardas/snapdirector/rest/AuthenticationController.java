@@ -47,10 +47,10 @@ public class AuthenticationController {
 		ResponseEntity<String> responseEntity;
 		String result = DynamoUtils.getFullUserInfoByEmail(user.getEmail(), getMapper(servletRequest));
 		if (result == null) {
-			responseEntity = new ResponseEntity("No appropriate user was found", HttpStatus.NO_CONTENT);
+			responseEntity = new ResponseEntity<>("No appropriate user was found", HttpStatus.NO_CONTENT);
 			LOG.debug("No user registered with email [{}] was found.", user.getEmail());
 		} else {
-			responseEntity = new ResponseEntity(result, HttpStatus.OK);
+			responseEntity = new ResponseEntity<>(result, HttpStatus.OK);
 		}
 		return responseEntity;
 	}
