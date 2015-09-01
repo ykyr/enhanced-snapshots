@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.32
+# Version 0.33
 
 language: java
 
@@ -30,6 +30,7 @@ script:
 
 deploy:
   provider: s3
+  edge: true
   skip_cleanup: true
   acl: public_read_write
   region: us-east-1
