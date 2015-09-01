@@ -30,11 +30,10 @@ script:
 
 deploy:
   provider: s3
-  edge: true
   bucket: "com.sungardas.releases"
-  endpoint: "com.sungardas.releases.s3-website-us-east-1.amazonaws.com"
+  endpoint: "s3-us-east-1.amazonaws.com"
   skip_cleanup: true
-  region: "us-east-1""
+  region: "us-east-1"
   upload-dir: "travis-builds"
   access_key_id:
     secure: nU4//jueP4gkzXNFoYF+0BVon5lai9kTV5kLq25m1PXemzjoqyZRvhPCgEc6OLXGmpZ+6NztByBZEjrV0sqEAotv/gKpWgvp98GPD3F8t+bDDT5R4Cjt/eeSXVhpwjYhlIEn8jlk9+wFpqU9u6MeqQsz6WipuvSiqCrmGd67r9kHfeZQdO82qBhqyT43/QFQE+DFW0NB97oKoBO98n/r98ERJ10BGGRtIW8tN6qmZE/2C7lmrKBgwuCf6MkC1iBEq7YI9fGwu7XnaqrmBxkBWBBbWhciKpbscA6DNZQoJTtnuEWdv0B4SabaE8VtRqn0gqNhfzJYkiiVJfOUmf/qGednZaoYv5OawMeR4rpsV8T2tcJb5QA7SiuS55Y8UDB+LFK1o/2zJUoevl2dvS3+9ZC9FWD6tCNW2qBKv0OKwax1iA5B7cY6CGumnCTaopZJSNQOgsgKeCKRvKgL6HrhyftqcJ11G5gEuxTYtfzXgKqdqASeVY5Z93gPiOKv5kvoZMhZ9VH6zWxUSBBznCXWrGTZwT1LKi3E8yBHIRQH87qi41RyE+msyW06AsI+R0ijrYDiv/BD4xEKv5iCz3agVx6KzwqcfnGC6CNVi0ZyfqGf9LoXf7prUb0llsIxA45DCWGE9e8w7UEOPSXCoVeybL2Jo1h22uSzIKzjmIYdiqo=
