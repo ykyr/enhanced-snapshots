@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.41
+# Version 0.42
 
 language: java
 
@@ -34,8 +34,9 @@ deploy:
   endpoint: "s3-us-east-1.amazonaws.com"
   skip_cleanup: true
   region: "us-east-1"
+  local_dir: /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1
   upload-dir: "travis-builds"
-  file: "snapdirector-0.0.1.war"
+  file: "*.war"
   access_key_id:
     secure: WGnaBAbjdkEl/NmYLZ9aY294jQwmK4uQIs2MDKFrmbZDTRoKB5cbrjrCKrtH2WyL+1qH8lE+tio+jqjLPUd2tC/ourpsmDypYTZ5ZaeNAqb9Dz5w+eb9eZZXbYs/4MnXVKSvXKx6ua7Hs8Sw4OfKa7VPdT7XQMm6Ibti6znetZ/VECs5fvE8WSbW6qmjpuOYbja+VqLRBpI1Y3Fv5GR4PaGeoowiC+11ZGd53EyUqwvmK10LboWEAmg5Kc8C6qAwY7ELoO59IXV7jgQK0tswISGghYE3gJqupBHfr400G8E9XCUG+WWcUEXzdUiIk3ZU0RVp9fNLst87voy+AUcacbJLbkg5pOpawWgeTmQeOo8r7QvMXoFLC3jj1ra3Fmym7l1Rlv+yXB+/rglxesU0k4QXJHHE9bLuC0t4wYvpCgFuv3cWAZB9JqPCk1WgwiljAUlBY6YC08OsSe+Ne4ezumkKWfjCFkiJ0akLQKG9/ydalBFVDHgw2pkOGU35SIYC67vZoereIyo1LjRPsKPdRCka+wiOyHsxZfOe8ZlQctRmiSN4Huz2Z1TI6uHQTocveQcGNcFJmmwmRHSCVOpjMXCmIU7fI+XfB5bVpL05n3Aq17aC9Oldwikt+Fodb3OlhTe+QfmHIVS03cuWSMcK/TUdTj0mtoeVdyvKdzpuS4I=
   secret_access_key:
