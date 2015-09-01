@@ -41,7 +41,7 @@ public class RetentionServiceImpl implements RetentionService {
     private VolumeService volumeService;
 
     @PostConstruct
-    private void init(){
+    private void init() {
         apply();
     }
 
@@ -126,7 +126,7 @@ public class RetentionServiceImpl implements RetentionService {
             int size = 0;
             int i;
             for (i = 0; i < backups.length && size < retention.getSize(); i++) {
-                size += Integer.parseInt(backups[i].getSize());
+                size += parseInt(backups[i].getSize());
             }
             for (; i < backups.length; i++) {
                 backupsToRemove.add(backups[i]);
@@ -178,6 +178,15 @@ public class RetentionServiceImpl implements RetentionService {
         }
 
         return retentionEntryMap;
+    }
+
+    private int parseInt(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            LOG.error(e);
+            return 0;
+        }
     }
 
     private static final Comparator<BackupEntry> backupComparatorByCreationTime = new Comparator<BackupEntry>() {
