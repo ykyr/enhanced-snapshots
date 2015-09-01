@@ -66,7 +66,7 @@ public class BackupServiceImpl implements BackupService {
         //TODO Remove hardcode
         taskEntry.setWorker(taskEntry.getInstanceId());
         taskEntry.setPriority(0);
-        taskEntry.setSchedulerManual(true);
+        taskEntry.setSchedulerManual(false);
         taskEntry.setSchedulerTime("2015-08-19 14:59:31");
 
         return taskEntry;

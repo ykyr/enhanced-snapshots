@@ -21,8 +21,10 @@
 
     <mvc:resources mapping="/resources/**" location="/resources/" />
 
-    <context:property-placeholder location="classpath:/amazon.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
+    <context:property-placeholder location="classpath:/snapdirector.properties,file:${canalina.home}/conf/snapdirector.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
 
     <mvc:annotation-driven />
+
+    <bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"/>
 
 </beans>

@@ -6,13 +6,12 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.RetentionRepository;
 import com.sungardas.snapdirector.dto.RetentionDto;
 import com.sungardas.snapdirector.exception.DataAccessException;
-import com.sungardas.snapdirector.service.BackupService;
-import com.sungardas.snapdirector.service.RetentionService;
-import com.sungardas.snapdirector.service.VolumeService;
+import com.sungardas.snapdirector.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -40,8 +39,15 @@ public class RetentionServiceImpl implements RetentionService {
     @Autowired
     private VolumeService volumeService;
 
+    @Autowired
+    private SchedulerService schedulerService;
+
+    @Value("${snapdirector.retention.cron}")
+    private String cronExpression;
+
     @PostConstruct
-    private void init(){
+    private void init() {
+        schedulerService.addTask(getJob(this), cronExpression);
         apply();
     }
 
@@ -73,8 +79,6 @@ public class RetentionServiceImpl implements RetentionService {
         }
     }
 
-
-    //add cron job to call this method every day
     @Override
     public void apply() {
         LOG.debug("Retention started");
@@ -126,7 +130,7 @@ public class RetentionServiceImpl implements RetentionService {
             int size = 0;
             int i;
             for (i = 0; i < backups.length && size < retention.getSize(); i++) {
-                size += Integer.parseInt(backups[i].getSize());
+                size += parseInt(backups[i].getSize());
             }
             for (; i < backups.length; i++) {
                 backupsToRemove.add(backups[i]);
@@ -180,10 +184,33 @@ public class RetentionServiceImpl implements RetentionService {
         return retentionEntryMap;
     }
 
+    private int parseInt(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            LOG.error(e);
+            return 0;
+        }
+    }
+
     private static final Comparator<BackupEntry> backupComparatorByCreationTime = new Comparator<BackupEntry>() {
         @Override
         public int compare(BackupEntry o1, BackupEntry o2) {
             return o2.getTimeCreated().compareTo(o1.getTimeCreated());
         }
     };
+
+    public Job getJob(final RetentionService retentionService) {
+        return new Job() {
+            @Override
+            public void execute() {
+                retentionService.apply();
+            }
+
+            @Override
+            public String getId() {
+                return retentionService.getClass().toString();
+            }
+        };
+    }
 }
