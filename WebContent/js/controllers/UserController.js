@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('UserController', function ($scope, Users, Storage, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
+    .controller('UserController', function ($scope, Users, Storage, toastr, $modal, ITEMS_BY_PAGE, DISPLAY_PAGES) {
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
         $scope.users = [];
@@ -44,10 +44,10 @@ angular.module('web')
                         templateUrl: './partials/modal.user-added.html',
                         scope: $scope
                     });
+                    $scope.isLoading = false;
                 }, function (e) {
-                    console.log(e);
+                    $scope.isLoading = false;
                 });
-                $scope.isLoading = false;
             });
         };
 
@@ -77,8 +77,9 @@ angular.module('web')
                         $scope.refreshUsers();
                     });
                     $scope.isLoading = false;
+                }, function (e) {
+                    $scope.isLoading = false;
                 });
-                $scope.isLoading = false;
             });
         };
 
