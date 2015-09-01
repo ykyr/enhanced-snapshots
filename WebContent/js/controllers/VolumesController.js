@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('VolumesController', function ($scope, $state, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
+    .controller('VolumesController', function ($scope, $state, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
         $scope.maxVolumeDisplay = 5;
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
@@ -61,8 +61,8 @@ angular.module('web')
         };
 
         $scope.toggleSelection = function (volume) {
-                doSelection(volume, !volume.isSelected);
-                $scope.checkAllSelection();
+            doSelection(volume, !volume.isSelected);
+            $scope.checkAllSelection();
         };
 
         var doSelection = function (volume, value) {
@@ -80,7 +80,7 @@ angular.module('web')
         $scope.selectedRegion = $scope.globalRegion;
 
         $scope.isDisabled = function (volume) {
-          return volume.state === 'removed'
+            return volume.state === 'removed'
         };
 
         // ---------filtering------------
@@ -259,52 +259,62 @@ angular.module('web')
 
         };
 
-
-        $scope.showRetentionRule = {
-            never: true,
-            size: false,
-            count: false,
-            days: false
-        };
-
-        $scope.$watchCollection('showRetentionRule', function () {
-            $scope.checkResults = [];
-            angular.forEach($scope.showRetentionRule, function (value, key) {
-                if (value) {
-                    $scope.checkResults.push(key);
+        var getShowRule = function (rule) {
+            var showRules = {};
+            angular.forEach($scope.rule, function (value, key) {
+                showRules[key] = value > 0;
+            });
+            Object.defineProperty(showRules, 'never', {
+                get: function() {
+                    return !$scope.showRetentionRule.size && !$scope.showRetentionRule.count && !$scope.showRetentionRule.days;
+                },
+                set: function(value) {
+                    if (value){
+                        $scope.showRetentionRule.size = false;
+                        $scope.showRetentionRule.count = false;
+                        $scope.showRetentionRule.days = false;
+                    }
                 }
             });
-        });
-
-        $scope.checkRetentionRule = function (option) {
-            if (option === 'never') {
-                $scope.showRetentionRule = {
-                    never: false,
-                    size: false,
-                    count: false,
-                    days: false
-                };
-            } else {
-                $scope.showRetentionRule.never = !!($scope.checkResults.length == 1 && $scope.checkResults[0] == option);
-            }
+            return showRules;
         };
-
         $scope.retentionRule = function (volume) {
-            $scope.rule = {
-                volumeId: volume.volumeId,
-                size: 0,
-                count: 0,
-                days: 0
-            };
+            $scope.isLoading = true;
+            Retention.get(volume.volumeId).then(function (data) {
 
-            var retentionModalInstance = $modal.open({
-                animation: true,
-                templateUrl: './partials/modal.retention-edit.html',
-                scope: $scope
+                $scope.rule = {
+                    size: data.size,
+                    count: data.count,
+                    days: data.days
+                };
+                $scope.showRetentionRule = getShowRule($scope.rule);
+
+                $scope.isLoading = false;
+
+                var retentionModalInstance = $modal.open({
+                    animation: true,
+                    templateUrl: './partials/modal.retention-edit.html',
+                    scope: $scope
+                });
+
+                retentionModalInstance.result.then(function () {
+                    $scope.isLoading = true;
+                    var rule = angular.copy($scope.rule);
+                    angular.forEach(rule, function (value, key) {
+                        rule[key] = $scope.showRetentionRule[key] ? rule[key] : 0
+                    });
+                    rule.volumeId = data.volumeId;
+
+                    Retention.update(rule).then(function () {
+                        $scope.isLoading = false;
+                    }, function () {
+                        $scope.isLoading = false;
+                    })
+                });
+
+            }, function () {
+                $scope.isLoading = false;
             });
 
-            retentionModalInstance.result.then(function () {
-                //retention REST method
-            })
         }
     });

@@ -1,0 +1,60 @@
+<div class="modal-header bg-primary">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-erase" aria-hidden="true"> </span> Edit Retention Rule
+    </h3>
+</div>
+<div class="modal-body">
+
+
+    <div class="form-group">
+        <div class="btn-group btn-group-justified">
+            <label class="btn btn-default" ng-model="showRetentionRule.never"  btn-checkbox>Never</label>
+            <label class="btn btn-default" ng-model="showRetentionRule.size"  btn-checkbox>Size Limit</label>
+            <label class="btn btn-default" ng-model="showRetentionRule.count"  btn-checkbox>Count Limit</label>
+            <label class="btn btn-default" ng-model="showRetentionRule.days"  btn-checkbox>Days Limit</label>
+        </div>
+    </div>
+
+
+
+ <div class="well">
+     <form class="form-horizontal">
+
+         <div ng-show="showRetentionRule.never">
+             <p class="text-center"><em> Never delete backups automatically</em></p>
+         </div>
+
+         <div ng-hide="showRetentionRule.never">
+             <p class="text-center"> <strong>Delete backups when:</strong></p>
+         </div>
+
+         <div class="form-group" ng-show="showRetentionRule.size">
+             <label for="size" class="col-sm-6 control-label"> backup size exceeds </label>
+             <div class="col-sm-3">
+                 <input type="text" ng-model="rule.size" class="form-control" id="size">
+             </div>
+             <label for="size" class="col-sm-1 control-label"> GB </label>
+         </div>
+
+         <div class="form-group" ng-show="showRetentionRule.count">
+             <label for="count" class="col-sm-6 control-label"> total files count exceeds</label>
+             <div class="col-sm-3">
+                 <input type="text" ng-model="rule.count" class="form-control" id="count">
+             </div>
+         </div>
+
+         <div class="form-group" ng-show="showRetentionRule.days">
+             <label for="days" class="col-sm-6 control-label"> backup creation date is over </label>
+             <div class="col-sm-3">
+                 <input type="text" ng-model="rule.days" class="form-control" id="days">
+             </div>
+                 <label for="size" class="col-sm-1 control-label"> days </label>
+         </div>
+
+     </form>
+ </div>
+
+    <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="$close()"> Save Rule</button>
+        <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
+    </div>
+</div>
