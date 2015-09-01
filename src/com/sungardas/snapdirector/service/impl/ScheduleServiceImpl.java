@@ -11,7 +11,6 @@ import org.quartz.CronExpression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.util.JodaTime;
 import com.sungardas.snapdirector.aws.dynamodb.model.Schedule;
 import com.sungardas.snapdirector.aws.dynamodb.repository.ScheduleRepository;
 import com.sungardas.snapdirector.dto.ScheduleDto;

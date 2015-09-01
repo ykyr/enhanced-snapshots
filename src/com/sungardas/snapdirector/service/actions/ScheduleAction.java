@@ -2,11 +2,11 @@ package com.sungardas.snapdirector.service.actions;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,11 +60,11 @@ public class ScheduleAction {
 			taskDto.setVolume(schedule.getVolumeId());
 			taskDto.setType(TaskEntryType.BACKUP.getType());
 			taskDto.setStatus(TaskEntryStatus.WAITING.getStatus());
-			taskDto.setSchedulerTime(format.format(new Date(schedule.getNextFire())).toString());
+			taskDto.setSchedulerTime(format.format(new DateTime(schedule.getNextFire())).toString());
 			taskDto.setSchedulerManual("false");
 			
 			taskService.createTask(taskDto);
-			LOG.info("Backup task created from schedule");
+			LOG.debug("Backup task created from schedule");
 			scheduleService.setNewFireTime(schedule);
 			LOG.info("Schedule updated");
 			

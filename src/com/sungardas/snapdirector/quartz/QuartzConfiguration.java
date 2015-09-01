@@ -31,7 +31,7 @@ public class QuartzConfiguration {
 	 */
 
 	@Bean
-	public JobDetail someJobDetails() {
+	public JobDetail schedulerJobDetails() {
 		JobDetail jobDetail = JobBuilder.newJob(SchedulerJob.class)
 				.withIdentity("Scheduler Job", "Scheduler Job group")
 				.storeDurably(true).build();
@@ -45,20 +45,20 @@ public class QuartzConfiguration {
 		AutowiringSpringBeanJobFactory springBeanJobFactory = new AutowiringSpringBeanJobFactory();
 		springBeanJobFactory.setApplicationContext(applicationContext);
 		schedulerFactoryBean.setJobFactory(springBeanJobFactory);
-		schedulerFactoryBean.setJobDetails(someJobDetails());
-		schedulerFactoryBean.setTriggers(someTrigger());
+		schedulerFactoryBean.setJobDetails(schedulerJobDetails());
+		schedulerFactoryBean.setTriggers(schedulerTrigger());
 		return schedulerFactoryBean;
 	}
 
 	@Bean
-	public Trigger someTrigger() {
+	public Trigger schedulerTrigger() {
 		Trigger trigger = TriggerBuilder
 				.newTrigger()
 				.withIdentity("Scheduler Job", "Scheduler Job group")
 				.withSchedule(
 						CronScheduleBuilder
 								.cronSchedule(cronExpressionForStart))
-				.forJob(someJobDetails().getKey()).build();
+				.forJob(schedulerJobDetails().getKey()).build();
 		return trigger;
 	}
 }

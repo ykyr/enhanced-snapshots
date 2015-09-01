@@ -26,8 +26,8 @@ public class SchedulerJob implements Job {
 		try {
 			scheduleAction.createScheduledTasks();
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			LOG.error("Failed to execute job");
+			LOG.error("Failed to execute job", e);
+			throw new JobExecutionException(e);
 		}
 
 	}
