@@ -6,13 +6,12 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.RetentionRepository;
 import com.sungardas.snapdirector.dto.RetentionDto;
 import com.sungardas.snapdirector.exception.DataAccessException;
-import com.sungardas.snapdirector.service.BackupService;
-import com.sungardas.snapdirector.service.RetentionService;
-import com.sungardas.snapdirector.service.VolumeService;
+import com.sungardas.snapdirector.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -40,8 +39,15 @@ public class RetentionServiceImpl implements RetentionService {
     @Autowired
     private VolumeService volumeService;
 
+    @Autowired
+    private SchedulerService schedulerService;
+
+    @Value("${snapdirector.retention.cron}")
+    private String cronExpression;
+
     @PostConstruct
     private void init() {
+        schedulerService.addTask(getJob(this), cronExpression);
         apply();
     }
 
@@ -73,8 +79,6 @@ public class RetentionServiceImpl implements RetentionService {
         }
     }
 
-
-    //add cron job to call this method every day
     @Override
     public void apply() {
         LOG.debug("Retention started");
@@ -195,4 +199,18 @@ public class RetentionServiceImpl implements RetentionService {
             return o2.getTimeCreated().compareTo(o1.getTimeCreated());
         }
     };
+
+    public Job getJob(final RetentionService retentionService) {
+        return new Job() {
+            @Override
+            public void execute() {
+                retentionService.apply();
+            }
+
+            @Override
+            public String getId() {
+                return retentionService.getClass().toString();
+            }
+        };
+    }
 }

@@ -31,102 +31,104 @@ import static java.lang.String.format;
 
 @Component
 public class WorkersDispatcher {
-	@Autowired
-	private ConfigurationService configurationService;
+    @Autowired
+    private ConfigurationService configurationService;
 
-	@Autowired
-	private AmazonSQS sqs;
-	@Autowired
-	private ObjectFactory<BackupTask> backupTaskObjectFactory;
+    @Autowired
+    private AmazonSQS sqs;
+    @Autowired
+    private ObjectFactory<BackupTask> backupTaskObjectFactory;
 
-	@Autowired
-	private ObjectFactory<DeleteTask> deleteTaskObjectFactory;
+    @Autowired
+    private ObjectFactory<DeleteTask> deleteTaskObjectFactory;
 
-	@Autowired
-	private ObjectFactory<RestoreTask> restoreTaskObjectFactory;
+    @Autowired
+    private ObjectFactory<RestoreTask> restoreTaskObjectFactory;
 
-	@Autowired
-	private TaskService taskService;
+    @Autowired
+    private TaskService taskService;
 
 
-	private WorkerConfiguration configuration;
-	private ExecutorService executor;
+    private WorkerConfiguration configuration;
+    private ExecutorService executor;
 
-	@PostConstruct
-	private void init() {
-		configuration = configurationService.getConfiguration();
-		executor = Executors.newSingleThreadExecutor();
-		executor.execute(new TaskWorker());
-	}
+    @PostConstruct
+    private void init() {
+        configuration = configurationService.getConfiguration();
+        executor = Executors.newSingleThreadExecutor();
+        executor.execute(new TaskWorker());
+    }
 
-	@PreDestroy
-	public void destroy() {
-		executor.shutdownNow();
-	}
+    @PreDestroy
+    public void destroy() {
+        executor.shutdownNow();
+    }
 
-	private class TaskWorker implements Runnable {
-		private final Logger LOGtw = LogManager.getLogger(TaskWorker.class);
+    private class TaskWorker implements Runnable {
+        private final Logger LOGtw = LogManager.getLogger(TaskWorker.class);
 
-		@Override
-		public void run() {
-			String queueURL = configuration.getTaskQueueURL();
+        @Override
+        public void run() {
+            String queueURL = configuration.getTaskQueueURL();
 
-			LOGtw.info(format("Starting listening to tasks queue: %s", queueURL));
+            LOGtw.info(format("Starting listening to tasks queue: %s", queueURL));
 
-			while (true) {
-				try {
-					ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
-					ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
-					List<Message> messages = result.getMessages();
-					if (messages.size() > 0) {
-						String body = messages.get(0).getBody();
-						LOGtw.info(format("Got message : %s", messages.get(0).getMessageId()));
-						String messageRecieptHandle = messages.get(0).getReceiptHandle();
-						sqs.deleteMessage(new DeleteMessageRequest(queueURL, messageRecieptHandle));
-						Task task = null;
-						TaskEntry entry = new TaskEntry(new JSONObject(body));
-						switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
-							case BACKUP:
-								LOGtw.info("Task was identified as backup");
-								task = backupTaskObjectFactory.getObject();
-								task.setTaskEntry(entry);
-								break;
-							case DELETE: {
-								LOGtw.info("Task was identified as delete backup");
-								task = deleteTaskObjectFactory.getObject();
-								task.setTaskEntry(entry);
-								break;
-							}
-							case RESTORE:
-								LOGtw.info("Task was identified as restore");
-								task = restoreTaskObjectFactory.getObject();
-								task.setTaskEntry(entry);
-								break;
-							case UNKNOWN:
-								LOGtw.warn("Executor for type {} is not implemented. Task {} is going to be removed.", entry.getType(), entry.getId());
-								taskService.removeTask(entry);
-						}
-						if (task != null) {
-							task.execute();
-						}
-					}
-					sleep();
-				} catch (Exception e) {
-					LOGtw.error(e);
-					e.printStackTrace();
-					if (executor.isShutdown() || executor.isTerminated()) break;
-				}
-			}
-		}
+            while (true) {
+                try {
+                    ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
+                    ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
+                    List<Message> messages = result.getMessages();
+                    if (messages.size() > 0) {
+                        String body = messages.get(0).getBody();
+                        LOGtw.info(format("Got message : %s", messages.get(0).getMessageId()));
+                        String messageRecieptHandle = messages.get(0).getReceiptHandle();
+                        sqs.deleteMessage(new DeleteMessageRequest(queueURL, messageRecieptHandle));
+                        Task task = null;
+                        TaskEntry entry = new TaskEntry(new JSONObject(body));
+                        if (!taskService.isCanceled(entry.getId())) {
+                            switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
+                                case BACKUP:
+                                    LOGtw.info("Task was identified as backup");
+                                    task = backupTaskObjectFactory.getObject();
+                                    task.setTaskEntry(entry);
+                                    break;
+                                case DELETE: {
+                                    LOGtw.info("Task was identified as delete backup");
+                                    task = deleteTaskObjectFactory.getObject();
+                                    task.setTaskEntry(entry);
+                                    break;
+                                }
+                                case RESTORE:
+                                    LOGtw.info("Task was identified as restore");
+                                    task = restoreTaskObjectFactory.getObject();
+                                    task.setTaskEntry(entry);
+                                    break;
+                                case UNKNOWN:
+                                    LOGtw.warn("Executor for type {} is not implemented. Task {} is going to be removed.", entry.getType(), entry.getId());
+                                    taskService.removeTask(entry.getId());
+                            }
+                        }
+                        if (task != null) {
+                            task.execute();
+                        }
+                    }
+                    sleep();
+                } catch (Exception e) {
+                    LOGtw.error(e);
+                    e.printStackTrace();
+                    if (executor.isShutdown() || executor.isTerminated()) break;
+                }
+            }
+        }
 
-		private void sleep() {
-			try {
-				TimeUnit.SECONDS.sleep(20);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+        private void sleep() {
+            try {
+                TimeUnit.SECONDS.sleep(20);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 
 }
