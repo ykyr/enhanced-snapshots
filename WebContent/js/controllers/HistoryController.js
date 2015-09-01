@@ -110,7 +110,7 @@ angular.module('web')
                     status: "waiting",
                     schedulerManual: true,
                     schedulerName: Storage.get('currentUser').email,
-                    schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
+                    schedulerTime: Date.now()
                 };
                 Tasks.insert(newTask).then(function () {
                     var successInstance = $modal.open({
