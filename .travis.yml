@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.44
+# Version 0.45
 
 language: java
 
