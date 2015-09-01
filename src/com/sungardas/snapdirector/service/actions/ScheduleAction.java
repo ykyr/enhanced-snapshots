@@ -37,7 +37,7 @@ public class ScheduleAction {
 
 	private List<ScheduleDto> getScheduledTasks() {
 		
-		System.out.println("Attempting to find schedules to be fired now");
+		LOG.info("Attempting to find schedules to be fired now");
 		
 		List<ScheduleDto> schedulesToFire = scheduleService
 				.findSchedulersToFire();
@@ -60,13 +60,13 @@ public class ScheduleAction {
 			taskDto.setVolume(schedule.getVolumeId());
 			taskDto.setType(TaskEntryType.BACKUP.getType());
 			taskDto.setStatus(TaskEntryStatus.WAITING.getStatus());
-			taskDto.setSchedulerTime(Long.valueOf(format.format(new Date(schedule.getNextFire()))).toString());
+			taskDto.setSchedulerTime(format.format(new Date(schedule.getNextFire())).toString());
 			taskDto.setSchedulerManual("false");
 			
 			taskService.createTask(taskDto);
-			
+			LOG.info("Backup task created from schedule");
 			scheduleService.setNewFireTime(schedule);
-			
+			LOG.info("Schedule updated");
 			
 		}
 	}

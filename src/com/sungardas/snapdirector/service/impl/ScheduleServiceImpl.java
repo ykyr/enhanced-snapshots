@@ -6,10 +6,12 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 import org.quartz.CronExpression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.amazonaws.util.JodaTime;
 import com.sungardas.snapdirector.aws.dynamodb.model.Schedule;
 import com.sungardas.snapdirector.aws.dynamodb.repository.ScheduleRepository;
 import com.sungardas.snapdirector.dto.ScheduleDto;
@@ -23,15 +25,17 @@ public class ScheduleServiceImpl implements ScheduleService {
 	private static final Logger LOG = LogManager.getLogger(ScheduleServiceImpl.class);
 	
 	@Autowired
-	ScheduleRepository scheduleRepository;
+	private ScheduleRepository scheduleRepository;
 	
 	@Override
 	public List<ScheduleDto> findSchedulersToFire() {
 		
-		Date nowDate = new Date();
-		long now  = nowDate.getTime();
+		DateTime nowDate = new DateTime();
+		long now  = nowDate.getMillis();
 		
-		return ScheduleDtoConverter.convert(scheduleRepository.findByEnabledAndNextFireLessThanEqual(true, now));
+		List<Schedule> records = scheduleRepository.findByNextFireLessThanEqual(now);
+		
+		return ScheduleDtoConverter.convert(records);
 	}
 
 	@Override
