@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.39
+# Version 0.40
 
 language: java
 
@@ -34,6 +34,7 @@ deploy:
   endpoint: "s3-us-east-1.amazonaws.com"
   skip_cleanup: true
   region: "us-east-1"
+  local-dir: /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1
   upload-dir: "travis-builds"
   file:
     - "target/snapdirector*.war"
