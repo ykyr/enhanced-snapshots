@@ -76,7 +76,7 @@ public class QuartzSchedulerService implements SchedulerService {
 
             CronTriggerImpl cronTrigger = new CronTriggerImpl();
             cronTrigger.setName(job.getId() + "CRON");
-            cronTrigger.setCronExpression(cronExpression);
+            cronTrigger.setCronExpression("0 "+cronExpression);
 
             scheduler.scheduleJob(jobDetail.getObject(), cronTrigger);
         } catch (Exception e) {

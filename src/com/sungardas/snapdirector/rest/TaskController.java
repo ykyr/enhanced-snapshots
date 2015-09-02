@@ -1,15 +1,24 @@
 package com.sungardas.snapdirector.rest;
 
+import java.text.ParseException;
+
 import com.sungardas.snapdirector.dto.TaskDto;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.TaskService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.text.ParseException;
-
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
 
@@ -19,6 +28,13 @@ public class TaskController {
 
     @Autowired
     private TaskService taskService;
+
+    @ExceptionHandler(SnapdirectorException.class)
+    @ResponseStatus(INTERNAL_SERVER_ERROR)
+    @ResponseBody
+    private SnapdirectorException snapdirectorException(SnapdirectorException e) {
+        return e;
+    }
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity getTasks() throws ParseException {
@@ -40,13 +56,9 @@ public class TaskController {
 
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity addTask(@RequestBody TaskDto taskInfo) {
-        try {
-            taskInfo.setId(null);
-            taskService.createTask(taskInfo);
-            return new ResponseEntity("", OK);
-        } catch (SnapdirectorException e) {
-            return new ResponseEntity(e.getMessage(), HttpStatus.NO_CONTENT);
-        }
+        taskInfo.setId(null);
+        taskService.createTask(taskInfo);
+        return new ResponseEntity(OK);
     }
 
     @RequestMapping(method = RequestMethod.PUT)

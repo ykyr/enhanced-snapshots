@@ -47,6 +47,7 @@ public class TaskServiceImpl implements TaskService {
                 } catch (SnapdirectorException e) {
                     taskRepository.delete(newTask);
                     LOG.error(e);
+                    throw e;
                 }
             }
         } catch (RuntimeException e) {
