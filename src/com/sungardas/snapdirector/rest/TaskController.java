@@ -41,6 +41,7 @@ public class TaskController {
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity addTask(@RequestBody TaskDto taskInfo) {
         try {
+            taskInfo.setId(null);
             taskService.createTask(taskInfo);
             return new ResponseEntity("", OK);
         } catch (SnapdirectorException e) {

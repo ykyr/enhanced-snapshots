@@ -28,14 +28,21 @@ public class TasksDispatcher {
 
     @Autowired
     private WorkerConfigurationRepository confRepository;
+
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
+
     @Autowired
     private AmazonSQS sqs;
+
     @Autowired
     private TaskRepository taskRepository;
 
-    WorkerConfiguration configuration;
+    @Value("${snapdirector.polling.rate}")
+    private int pollingRate;
+
+    private WorkerConfiguration configuration;
+
     private ExecutorService executor;
 
     @PostConstruct
@@ -84,7 +91,7 @@ public class TasksDispatcher {
 
         private void sleep() {
             try {
-                TimeUnit.SECONDS.sleep(20);
+                TimeUnit.MILLISECONDS.sleep(pollingRate);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

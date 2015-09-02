@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -36,6 +37,7 @@ public class WorkersDispatcher {
 
     @Autowired
     private AmazonSQS sqs;
+
     @Autowired
     private ObjectFactory<BackupTask> backupTaskObjectFactory;
 
@@ -48,8 +50,14 @@ public class WorkersDispatcher {
     @Autowired
     private TaskService taskService;
 
+    @Value("${snapdirector.worker.maxNumberOfMessages}")
+    private int maxNumberOfMessages;
+
+    @Value("${snapdirector.polling.rate}")
+    private int pollingRate;
 
     private WorkerConfiguration configuration;
+
     private ExecutorService executor;
 
     @PostConstruct
@@ -76,12 +84,14 @@ public class WorkersDispatcher {
             while (true) {
                 try {
                     ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
+                    receiveMessageRequest.setMaxNumberOfMessages(maxNumberOfMessages);
                     ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
                     List<Message> messages = result.getMessages();
-                    if (messages.size() > 0) {
-                        String body = messages.get(0).getBody();
-                        LOGtw.info(format("Got message : %s", messages.get(0).getMessageId()));
-                        String messageRecieptHandle = messages.get(0).getReceiptHandle();
+                    for(int i = 0; i < messages.size(); i++) {
+                        Message message = messages.get(i);
+                        String body = message.getBody();
+                        LOGtw.info(format("Got message : %s", message.getMessageId()));
+                        String messageRecieptHandle = message.getReceiptHandle();
                         sqs.deleteMessage(new DeleteMessageRequest(queueURL, messageRecieptHandle));
                         Task task = null;
                         TaskEntry entry = new TaskEntry(new JSONObject(body));
@@ -107,6 +117,8 @@ public class WorkersDispatcher {
                                     LOGtw.warn("Executor for type {} is not implemented. Task {} is going to be removed.", entry.getType(), entry.getId());
                                     taskService.removeTask(entry.getId());
                             }
+                        } else {
+                            LOGtw.debug("Task canceled: {}", entry);
                         }
                         if (task != null) {
                             task.execute();
@@ -123,7 +135,7 @@ public class WorkersDispatcher {
 
         private void sleep() {
             try {
-                TimeUnit.SECONDS.sleep(20);
+                TimeUnit.MILLISECONDS.sleep(pollingRate);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

@@ -14,7 +14,7 @@ public class TaskDto {
     private String instanceId;
     private String backupFileName;
     private String cron;
-    private String regular;
+    private String regular = Boolean.FALSE.toString();
     private String enabled;
 
     public String getBackupFileName() {
