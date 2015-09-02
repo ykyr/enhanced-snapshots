@@ -13,16 +13,20 @@ angular.module('web')
             return deferred.promise;
         };
 
-        var save = function (item) {
-            return getAll().then(function (data) {
-                for (var i = 0; i < data.length; i++) {
-                    if (data[i].id == item.id) {
-                        data[i] = item;
-                        Storage.save(storageKey, data);
-                        return true;
-                    }
-                }
+        var _getRegular = function (vol) {
+            var deferred = $q.defer();
+            $http.get(url + '/' + vol).success(function (data) {
+                deferred.resolve(data);
             });
+            return deferred.promise;
+        };
+
+        var save = function (item) {
+            return $http({
+                url: url,
+                method: 'PUT',
+                data: item
+            })
         };
 
         var remove = function (id) {
@@ -43,6 +47,9 @@ angular.module('web')
         return {
             get: function () {
                 return getAll();
+            },
+            getRegular: function (vol) {
+                return _getRegular(vol);
             },
             update: function (item) {
                 return save(item);
