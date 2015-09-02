@@ -1,5 +1,7 @@
 package com.sungardas.snapdirector.service.impl;
 
+import java.util.List;
+
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.dto.TaskDto;
@@ -9,19 +11,18 @@ import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.SchedulerService;
 import com.sungardas.snapdirector.service.TaskService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public class TaskServiceImpl implements TaskService {
 
-
     private static final Logger LOG = LogManager.getLogger(TaskServiceImpl.class);
+
     @Autowired
     private TaskRepository taskRepository;
     @Value("${sungardas.worker.configuration}")
@@ -39,20 +40,15 @@ public class TaskServiceImpl implements TaskService {
         String configurationId = configuration.getConfiguration().getConfigurationId();
         newTask.setWorker(configurationId);
         newTask.setInstanceId(configurationId);
-        try {
-            taskRepository.save(newTask);
-            if (Boolean.valueOf(newTask.getRegular())) {
-                try {
-                    schedulerService.addTask(newTask);
-                } catch (SnapdirectorException e) {
-                    taskRepository.delete(newTask);
-                    LOG.error(e);
-                    throw e;
-                }
+        taskRepository.save(newTask);
+        if (Boolean.valueOf(newTask.getRegular())) {
+            try {
+                schedulerService.addTask(newTask);
+            } catch (SnapdirectorException e) {
+                taskRepository.delete(newTask);
+                LOG.error(e);
+                throw e;
             }
-        } catch (RuntimeException e) {
-            LOG.error("Failed to save restore task.", e);
-            throw new DataAccessException("Failed to save restore task.", e);
         }
     }
 
@@ -78,24 +74,19 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void removeTask(String id) {
-        try {
-            if (taskRepository.exists(id)) {
-                TaskEntry taskEntry = taskRepository.findOne(id);
-                if (TaskEntry.TaskEntryStatus.RUNNING.getStatus().equals(taskEntry.getStatus())) {
-                    throw new SnapdirectorException("Can`t remove task " + id + ", task in status: " + taskEntry.getStatus());
-                }
-                taskRepository.delete(id);
-                if (!Boolean.valueOf(taskEntry.getRegular())) {
-                    schedulerService.removeTask(taskEntry.getId());
-                }
-                LOG.info("TaskEntry {} was removed successfully.", id);
-            } else {
-                LOG.info("TaskEntry {} can not be removed since it does not exist.", id);
+        if (taskRepository.exists(id)) {
+            TaskEntry taskEntry = taskRepository.findOne(id);
+            if (TaskEntry.TaskEntryStatus.RUNNING.getStatus().equals(taskEntry.getStatus())) {
+                throw new SnapdirectorException("Can`t remove task " + id + ", task in status: " + taskEntry.getStatus());
             }
-        } catch (RuntimeException e) {
-            LOG.error("Failed to remove taskEntry {}.", id, e);
+            taskRepository.delete(id);
+            if (!Boolean.valueOf(taskEntry.getRegular())) {
+                schedulerService.removeTask(taskEntry.getId());
+            }
+            LOG.info("TaskEntry {} was removed successfully.", id);
+        } else {
+            LOG.info("TaskEntry {} can not be removed since it does not exist.", id);
         }
-
     }
 
     @Override
