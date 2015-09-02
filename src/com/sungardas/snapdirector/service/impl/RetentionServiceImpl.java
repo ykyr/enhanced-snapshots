@@ -57,6 +57,7 @@ public class RetentionServiceImpl implements RetentionService {
             RetentionEntry entry = toEntry(retentionDto);
 
             retentionRepository.save(entry);
+            apply();
         } else {
             LOG.error("Volume with id: {} not found", retentionDto.getVolumeId());
             throw new DataAccessException("Volume with id:" + retentionDto.getVolumeId() + " not found");

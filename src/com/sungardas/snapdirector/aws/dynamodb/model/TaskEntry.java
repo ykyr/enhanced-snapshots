@@ -49,7 +49,7 @@ public class TaskEntry {
     private String cron;
 
     @DynamoDBAttribute
-    private String regular;
+    private String regular = Boolean.FALSE.toString();
 
     @DynamoDBAttribute
     private String enabled;

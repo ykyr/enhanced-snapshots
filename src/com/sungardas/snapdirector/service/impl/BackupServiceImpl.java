@@ -3,6 +3,7 @@ package com.sungardas.snapdirector.service.impl;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.snapdirector.exception.DataException;
 import com.sungardas.snapdirector.service.BackupService;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +12,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,10 +32,23 @@ public class BackupServiceImpl implements BackupService {
     @Autowired
     private TaskRepository taskRepository;
 
+    private String instanceId;
+
+    @PostConstruct
+    private void init(){
+        instanceId = configurationService.getConfiguration().getConfigurationId();
+    }
+
     @Override
     public void deleteBackup(String backupName, String user) {
-        TaskEntry taskEntry = getDeleteTask(backupName, user);
-        taskRepository.save(taskEntry);
+        TaskEntry taskEntry = getDeleteTask(backupName, user, true);
+        if(taskRepository.findByVolumeAndTypeAndInstanceIdAndOptions(taskEntry.getVolume(),
+                taskEntry.getType(), instanceId, taskEntry.getOptions()).isEmpty()) {
+            taskRepository.save(taskEntry);
+        } else {
+            LOG.error("Task already exist: {}", taskEntry);
+            throw new DataException("Task already exist");
+        }
     }
 
     @Override
@@ -42,7 +57,14 @@ public class BackupServiceImpl implements BackupService {
         List<TaskEntry> tasks = new ArrayList<>();
 
         for (BackupEntry entry : backupEntries) {
-            tasks.add(getDeleteTask(entry.getFileName(), user));
+            TaskEntry taskEntry = getDeleteTask(entry.getFileName(), user, false);
+            if(taskRepository.findByVolumeAndTypeAndInstanceIdAndOptions(taskEntry.getVolume(),
+                    taskEntry.getType(), instanceId, taskEntry.getOptions()).isEmpty()) {
+
+                tasks.add(getDeleteTask(entry.getFileName(), user, false));
+            } else {
+                LOG.debug("Task ignored: {}", taskEntry);
+            }
         }
 
         taskRepository.save(tasks);
@@ -52,14 +74,14 @@ public class BackupServiceImpl implements BackupService {
         return backupName.substring(0, 12);
     }
 
-    private TaskEntry getDeleteTask(String backupName, String user){
+    private TaskEntry getDeleteTask(String backupName, String user, boolean schedulerManual){
         String volumeId = getVolumeId(backupName);
 
         TaskEntry taskEntry = new TaskEntry();
 
         taskEntry.setVolume(volumeId);
         taskEntry.setType(DELETE.getType());
-        taskEntry.setInstanceId(configurationService.getConfiguration().getConfigurationId());
+        taskEntry.setInstanceId(instanceId);
         taskEntry.setStatus(TaskEntry.TaskEntryStatus.WAITING.getStatus());
         taskEntry.setOptions(backupName + BACKUP_FILE_EXT);
         taskEntry.setSchedulerName(user);
@@ -68,7 +90,8 @@ public class BackupServiceImpl implements BackupService {
         //TODO Remove hardcode
         taskEntry.setWorker(taskEntry.getInstanceId());
         taskEntry.setPriority(0);
-        taskEntry.setSchedulerManual(true);
+        taskEntry.setSchedulerManual(schedulerManual);
+        taskEntry.setRegular(false);
 
         return taskEntry;
     }

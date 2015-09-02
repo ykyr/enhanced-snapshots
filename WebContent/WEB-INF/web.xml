@@ -26,10 +26,6 @@
     </context-param>
 
     <context-param>
-        <param-name>aws:worker-configuration</param-name>
-        <param-value>ogorVagrantDev</param-value>
-    </context-param>
-    <context-param>
         <param-name>aws:routine-inst-id</param-name>
         <param-value>ogorVagrantDev</param-value>
     </context-param>
