@@ -1,5 +1,22 @@
 package com.sungardas.snapdirector.components;
 
+import static java.lang.String.format;
+
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
+import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
@@ -13,24 +30,12 @@ import com.sungardas.snapdirector.tasks.BackupTask;
 import com.sungardas.snapdirector.tasks.DeleteTask;
 import com.sungardas.snapdirector.tasks.RestoreTask;
 import com.sungardas.snapdirector.tasks.Task;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.json.JSONObject;
-import org.springframework.beans.factory.ObjectFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.String.format;
-
-@Component
+@Service
 public class WorkersDispatcher {
+	
+	private final Logger LOGwd = LogManager.getLogger(WorkersDispatcher.class);
+	
 	@Autowired
 	private ConfigurationService configurationService;
 
@@ -56,7 +61,9 @@ public class WorkersDispatcher {
 	private void init() {
 		configuration = configurationService.getConfiguration();
 		executor = Executors.newSingleThreadExecutor();
-		executor.execute(new TaskWorker());
+		TaskWorker tw = new TaskWorker();
+		executor.execute(tw);
+		LOGwd.debug("TaskWorker with hashCode %s created.", tw.hashCode());
 	}
 
 	@PreDestroy
