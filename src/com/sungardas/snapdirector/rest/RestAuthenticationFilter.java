@@ -4,8 +4,6 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sungardas.snapdirector.aws.PropertyBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
-import com.sungardas.snapdirector.rest.controllers.InitContextListener;
-import com.sungardas.snapdirector.rest.controllers.InitController;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.rest.utils.JsonFromStream;
 import com.sungardas.snapdirector.rest.utils.MultiReadHttpServletRequest;
@@ -40,18 +38,11 @@ public class RestAuthenticationFilter implements Filter {
 	@Autowired
 	private DefaultUserAuthenticationService defaultUserAuthenticationService;
 
-	@Autowired
-	private InitContextListener initContextListener;
-
 	public void destroy() {
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException,
 			IOException {
-
-		if (initContextListener.isContextRefreshInProcess()) {
-			return;
-		}
 		Map<String, String> allowedSessions = (Map<String, String>) request.getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
 		if (allowedSessions == null) {
 			request.getServletContext().setAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME, new HashMap<String, String>());
@@ -79,7 +70,7 @@ public class RestAuthenticationFilter implements Filter {
 					password = (String) attributes.get(0).get(Constants.JSON_AUTHENTIFICATION_PASSWORD);
 				}
 				if (initializationService.isAdminUserExists()) {
-					allowed = DynamoUtils.authenticateUser(email, password, getMapper(request));
+					allowed = DynamoUtils.authenticateUser(email, password, getMapper());
 				} else {
 					allowed = defaultUserAuthenticationService.checkDefaultUser(email,password);
 				}
@@ -108,9 +99,8 @@ public class RestAuthenticationFilter implements Filter {
 	public void init(FilterConfig fConfig) throws ServletException {
 	}
 
-	private DynamoDBMapper getMapper(ServletRequest request) {
+	private DynamoDBMapper getMapper() {
 		AmazonDynamoDBClient client = new AmazonDynamoDBClient(new PropertyBasedCredentialsProvider());
-		String region = request.getServletContext().getInitParameter("aws:dynamodb-region");
 		return new DynamoDBMapper(client);
 	}
 }
