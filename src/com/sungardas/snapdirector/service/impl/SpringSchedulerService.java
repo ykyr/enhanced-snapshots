@@ -4,30 +4,29 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.ConfigurationService;
-import com.sungardas.snapdirector.service.Job;
 import com.sungardas.snapdirector.service.SchedulerService;
+import com.sungardas.snapdirector.service.Task;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.impl.triggers.CronTriggerImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 @Service
-public class QuartzSchedulerService implements SchedulerService {
+public class SpringSchedulerService implements SchedulerService {
 
-    private static final Logger LOG = LogManager.getLogger(QuartzSchedulerService.class);
+    private static final Logger LOG = LogManager.getLogger(SpringSchedulerService.class);
 
     @Autowired
-    private Scheduler scheduler;
+    private TaskScheduler scheduler;
 
     @Autowired
     private ConfigurationService configurationService;
@@ -35,9 +34,10 @@ public class QuartzSchedulerService implements SchedulerService {
     @Autowired
     private TaskRepository taskRepository;
 
+    private Map<String, ScheduledFuture> jobs = new HashMap<>();
+
     @PostConstruct
-    private void init() throws SchedulerException {
-        scheduler.start();
+    private void init() {
         List<TaskEntry> tasks = taskRepository.findByInstanceIdAndRegular(configurationService.getConfiguration().getConfigurationId(), Boolean.TRUE.toString());
         for (TaskEntry taskEntry : tasks) {
             try {
@@ -48,16 +48,11 @@ public class QuartzSchedulerService implements SchedulerService {
         }
     }
 
-    @PreDestroy
-    private void destroy() throws SchedulerException {
-        scheduler.shutdown();
-    }
-
     @Override
     public void addTask(TaskEntry taskEntry) {
         if (TaskEntry.TaskEntryType.BACKUP.getType().equals(taskEntry.getType()) && taskEntry.getCron() != null && !taskEntry.getCron().isEmpty()) {
-            if(Boolean.valueOf(taskEntry.getEnabled())) {
-                addTask(new JobImpl(taskEntry), taskEntry.getCron());
+            if (Boolean.valueOf(taskEntry.getEnabled())) {
+                addTask(new TaskImpl(taskEntry), taskEntry.getCron());
             }
         } else {
             throw new SnapdirectorException("Invalid task: " + taskEntry);
@@ -65,43 +60,31 @@ public class QuartzSchedulerService implements SchedulerService {
     }
 
     @Override
-    public void addTask(Job job, String cronExpression) {
-        try {
-            MethodInvokingJobDetailFactoryBean jobDetail = new MethodInvokingJobDetailFactoryBean();
-            jobDetail.setTargetObject(job);
-            jobDetail.setTargetMethod("execute");
-            jobDetail.setName(job.getId());
-            jobDetail.setConcurrent(false);
-            jobDetail.afterPropertiesSet();
-
-            CronTriggerImpl cronTrigger = new CronTriggerImpl();
-            cronTrigger.setName(job.getId() + "CRON");
-            cronTrigger.setCronExpression("0 "+cronExpression.substring(0, cronExpression.length()-1) +"?");
-
-            scheduler.scheduleJob(jobDetail.getObject(), cronTrigger);
-        } catch (Exception e) {
-            throw new SnapdirectorException(e);
-        }
+    public void addTask(Task task, String cronExpression) {
+        ScheduledFuture<?> future = scheduler.schedule(task, new CronTrigger("0 " + cronExpression));
+        jobs.put(task.getId(), future);
     }
 
     @Override
     public void removeTask(String id) {
-        try {
-            scheduler.deleteJob(new JobKey(id));
-        } catch (SchedulerException e) {
-            LOG.error(e);
+        ScheduledFuture future = jobs.remove(id);
+        if (future != null) {
+            future.cancel(false);
+        } else {
+            LOG.debug("Task with id: {} not found", id);
         }
     }
 
-    private class JobImpl implements Job {
+    private class TaskImpl implements Task {
 
         private TaskEntry taskEntry;
 
-        public JobImpl(TaskEntry taskEntry) {
+        public TaskImpl(TaskEntry taskEntry) {
             this.taskEntry = taskEntry;
         }
 
-        public void execute() {
+        @Override
+        public void run() {
             taskEntry.setId(null);
             taskEntry.setSchedulerManual(false);
             taskEntry.setRegular(false);

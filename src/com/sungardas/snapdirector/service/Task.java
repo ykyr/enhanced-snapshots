@@ -1,7 +1,5 @@
 package com.sungardas.snapdirector.service;
 
-public interface Job {
-    void execute();
-
+public interface Task extends Runnable{
     String getId();
 }

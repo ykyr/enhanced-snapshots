@@ -1,7 +1,5 @@
 package com.sungardas.snapdirector.service.impl;
 
-import java.util.List;
-
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.dto.TaskDto;
@@ -11,12 +9,13 @@ import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.SchedulerService;
 import com.sungardas.snapdirector.service.TaskService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -80,7 +79,7 @@ public class TaskServiceImpl implements TaskService {
                 throw new SnapdirectorException("Can`t remove task " + id + ", task in status: " + taskEntry.getStatus());
             }
             taskRepository.delete(id);
-            if (!Boolean.valueOf(taskEntry.getRegular())) {
+            if (Boolean.valueOf(taskEntry.getRegular())) {
                 schedulerService.removeTask(taskEntry.getId());
             }
             LOG.info("TaskEntry {} was removed successfully.", id);

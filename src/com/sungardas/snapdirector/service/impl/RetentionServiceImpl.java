@@ -201,10 +201,10 @@ public class RetentionServiceImpl implements RetentionService {
         }
     };
 
-    public Job getJob(final RetentionService retentionService) {
-        return new Job() {
+    public Task getJob(final RetentionService retentionService) {
+        return new Task() {
             @Override
-            public void execute() {
+            public void run() {
                 retentionService.apply();
             }
 
