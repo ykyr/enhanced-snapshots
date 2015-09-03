@@ -22,22 +22,20 @@ public class SnapshotDtoConverter {
 		return snapshotDto;
 	}
 	
-	/*public static List<Snapshot> convert(List<SnapshotDto> snapshotDtos){
-		
-		List<Snapshot> snapshots = new ArrayList<Snapshot>();		
-		
-		for (SnapshotDto snapshotDto : snapshotDtos) {
-			snapshots.add(SnapshotDtoConverter.convert(snapshotDto));
-		}
-		return snapshots;
-	}
-	
-	public static List<SnapshotDto> convert(List<Snapshot> snapshots) {
+	public static List<SnapshotDto> convertToSnapshotDtoList(List<Snapshot> snapshots) {
 		List<SnapshotDto> snapshotDtos = new ArrayList<SnapshotDto>();
 		for (Snapshot snapshot : snapshots) {
 			snapshotDtos.add(SnapshotDtoConverter.convert(snapshot));
 		}
 		return snapshotDtos;
-	}*/
+	}
+	
+	public static List<Snapshot> convertToSnapshotList(List<SnapshotDto> snapshotDtos) {
+		List<Snapshot> snapshots = new ArrayList<Snapshot>();
+		for (SnapshotDto snapshotDto : snapshotDtos) {
+			snapshots.add(SnapshotDtoConverter.convert(snapshotDto));
+		}
+		return snapshots;
+	}
 	
 }
