@@ -1,18 +1,12 @@
 package com.sungardas.snapdirector.service.impl;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
-import com.sungardas.snapdirector.aws.PropertyBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.Roles;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
@@ -25,7 +19,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -215,6 +208,33 @@ public class InitializationServiceImpl implements InitializationService {
         String queueName = currentConfiguration.getTaskQueueURL();
         ListQueuesResult lqResult = sqs.listQueues();
         return lqResult.getQueueUrls().contains(queueName);
+    }
+
+    public void createQueue() {
+        if(currentConfiguration==null) {
+            throw new ConfigurationException("Can't check SQS queue. No configuration loaded");
+        }
+
+        String queueToCreate = currentConfiguration.getTaskQueueURL();
+        sqs.createQueue(queueToCreate);
+    }
+
+
+    public void createSdfs() {
+            String pathToExec = InitializationServiceImpl.class.getResource("mount_sdfs.sh").getFile();
+            String[] paramethers = {"$sdfs_volume_size", "$aws_key_id","$bucket_name", "$aws_sec_key"};
+
+        try {
+            Process p = Runtime.getRuntime().exec("." +pathToExec, paramethers);
+            p.waitFor();
+            if(p.exitValue()!=0)
+                throw new ConfigurationException("Error creating sdfs");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     protected String getConfigurationId() {

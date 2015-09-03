@@ -69,6 +69,7 @@ public class ConfigurationControllerFake {
             conf.put("s3",s3);
             conf.put("queue",s3);
             conf.put("sdfs",s3);
+            conf.put("dbStructureBroken", true);
 
         } catch (JSONException e) {
             e.printStackTrace();
