@@ -1,23 +1,23 @@
 package com.sungardas.snapdirector.dto;
 
 public class CredentialsDto {
-    public String getAccessKey() {
-        return accessKey;
+    private String awsPublicKey;
+
+    private String awsSecretKey;
+
+    public String getAwsPublicKey() {
+        return awsPublicKey;
     }
 
-    public void setAccessKey(String accessKey) {
-        this.accessKey = accessKey;
+    public void setAwsPublicKey(String awsPublicKey) {
+        this.awsPublicKey = awsPublicKey;
     }
 
-    private String accessKey;
-
-    public String getSecretKey() {
-        return secretKey;
+    public String getAwsSecretKey() {
+        return awsSecretKey;
     }
 
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
+    public void setAwsSecretKey(String awsSecretKey) {
+        this.awsSecretKey = awsSecretKey;
     }
-
-    private String secretKey;
 }

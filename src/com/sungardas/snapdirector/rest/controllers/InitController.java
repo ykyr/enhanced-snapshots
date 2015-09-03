@@ -17,6 +17,7 @@ import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
-
+@Profile("prod")
 @RestController
 public class InitController implements ApplicationContextAware, InitContextListener {
 
@@ -127,7 +128,7 @@ public class InitController implements ApplicationContextAware, InitContextListe
 
     @RequestMapping(value="/awscreds", method = RequestMethod.POST)
     public ResponseEntity<String> setAwsCredential(@RequestBody CredentialsDto credentials) {
-        credentialsService.setCredentials(credentials.getAccessKey(), credentials.getSecretKey());
+        credentialsService.setCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
 
         if(credentialsService.areCredentialsValid()) {
             return new ResponseEntity<>(OK);

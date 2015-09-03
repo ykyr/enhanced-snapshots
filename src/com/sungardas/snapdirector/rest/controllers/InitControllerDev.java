@@ -1,10 +1,7 @@
 package com.sungardas.snapdirector.rest.controllers;
 
-import com.amazonaws.util.json.JSONException;
-import com.amazonaws.util.json.JSONObject;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.dto.CredentialsDto;
-import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.rest.filters.FilterProxy;
@@ -24,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -104,7 +100,7 @@ public class InitControllerDev implements ApplicationContextAware, InitContextLi
 
     @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.POST)
     public ResponseEntity<String> setAwsCredential(@RequestBody CredentialsDto credentials) {
-        if (credentials.getAccessKey().length() == 0 || credentials.getAccessKey().length() == 0) {
+        if (credentials.getAwsPublicKey().isEmpty() || credentials.getAwsSecretKey().isEmpty()) {
             throw new ConfigurationException("Provided credentials aren't valid");
         } else {
             LOG.info("provided avs keys");
@@ -142,10 +138,10 @@ public class InitControllerDev implements ApplicationContextAware, InitContextLi
         CONTEXT_REFRESH_IN_PROCESS = true;
 
         applicationContext.setConfigLocation("/WEB-INF/spring-web-config.xml");
-        applicationContext.refresh();
-
-        // enabling auth filter
-        filterProxy.setFilter((Filter) applicationContext.getBean("restAuthenticationFilter"));
+//        applicationContext.refresh();
+//
+//        // enabling auth filter
+//        filterProxy.setFilter((Filter) applicationContext.getBean("restAuthenticationFilter"));
 
         LOG.info("Context refreshed successfully.");
         CONTEXT_REFRESH_IN_PROCESS = false;
