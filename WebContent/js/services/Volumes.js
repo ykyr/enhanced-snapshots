@@ -11,9 +11,11 @@ angular.module('web')
                 if (Storage.get(storageKey)) {
                     deferred.resolve(Storage.get(storageKey));
                 } else {
-                    $http.get(url).success(function (data) {
+                    $http.get(url).then(function (data) {
                         Storage.save(storageKey, data);
                         deferred.resolve(data);
+                    }, function (data, status) {
+                        deferred.reject(data, status)
                     });
                 }
                 return deferred.promise;

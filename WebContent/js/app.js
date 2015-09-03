@@ -14,6 +14,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         return true;
     }];
 
+    var isConfig = ['$rootScope', function ($rootScope) {
+        if (!$rootScope.isConfigState()) throw "System is not in configuration state!";
+        return true;
+    }];
+
     var logout = ['$q', 'Auth', function ($q, Auth) {
         Auth.logOut();
         return $q.reject('Logged out');
@@ -59,12 +64,12 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             templateUrl: "partials/users.html",
             controller: "UserController"
         })
-        .state('aws', {
-            url: "/aws",
-            templateUrl: "partials/aws.html",
-            controller: "AwsController",
+        .state('config', {
+            url: "/config",
+            templateUrl: "partials/config.html",
+            controller: "ConfigController",
             resolve: {
-                authenticated: authenticated
+                isConfig: isConfig
             }
         })
         .state('login', {
@@ -90,6 +95,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;
         };
+
+        $rootScope.isConfigState = function () {
+            return (Storage.get("currentUser") || {}).role === 'configurator';
+        };
+
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
             $state.go('login');

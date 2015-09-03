@@ -1,0 +1,25 @@
+<div class="modal-body">
+
+    <div ng-show="progressState === 'running'">
+        <h2>Please wait while we are creating environment for you...</h2>
+
+        <div>
+            <progressbar class="progress-striped active" max="100" value="100" type="info"></progressbar>
+        </div>
+    </div>
+
+    <div ng-show="progressState === 'success'">
+        <h2>Congratulation! Your configurations completed. Please, go and login with provided user credentials.</h2>
+    </div>
+
+    <div ng-show="progressState === 'failed'">
+        <h2>Sorry, system is not responding. Please, try again later.</h2>
+    </div>
+
+    <div class="text-right">
+        <button class="btn btn-info" ng-show="progressState === 'success'" ng-click="$close()"><span
+                class="glyphicon glyphicon-ok"></span>&nbsp; Done
+        </button>
+        <button class="btn btn-default" ng-show="progressState === 'failed'" ng-click="$dismiss()">Close</button>
+    </div>
+</div>

@@ -1,0 +1,102 @@
+<div class="container">
+    <div class="row centered-form">
+        <div class="col-xs-12 col-sm-8 col-md-7 col-sm-offset-2 col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h2 class="panel-title"><span class="glyphicon glyphicon-cog"></span>&nbsp; Settings</h2>
+                </div>
+                <div class="panel-body">
+
+                    <form ng-show="isAWS">
+                        <div class="form-group">
+                            <label>AWS Public Key:</label>
+                            <input type="text" class="form-control input-sm" ng-model="awsPublicKey"
+                                   required
+                                   autofocus>
+                        </div>
+
+                        <div class="form-group">
+                            <label>AWS Secret Key:</label>
+                            <input type="password" class="form-control input-sm" ng-model="awsSecretKey" required>
+                        </div>
+
+                        <div class="form-group text-danger" ng-show="error">
+                            <span class="glyphicon glyphicon-alert"></span>&nbsp; {{error}}
+                        </div>
+
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-success" ng-click="sendAWS()">OK</button>
+                            <a ui-sref="login" href class="btn btn-default">Cancel</a>
+                        </div>
+                    </form>
+
+                    <form role="form"  ng-hide="isAWS">
+
+                        <table class="table table-condensed">
+
+                            <tr>
+                                <td rowspan="2"><h2><span class="glyphicon glyphicon-{{iconClass[settings.s3.isCreated]}} text-{{statusColorClass[settings.s3.isCreated]}}"></span></h2></td>
+                                <td><strong>S3 Bucket:</strong>
+                                <a class="link-white pull-right" href="http://aws.amazon.com/s3/config.html" target="_blank" title="What is S3 Bucket"><span class="glyphicon glyphicon-question-sign text-primary"></span></a></td>
+                            </tr>
+                            <tr>
+
+                                <td>{{ settings.s3.isCreated ? settings.s3.bucketName + STRINGS.s3.existing : STRINGS.s3.new + settings.s3.bucketName}}</td>
+
+                            </tr>
+
+                            <tr>
+                                <td rowspan="4"><h2><span class="glyphicon glyphicon-{{iconClass[settings.sdfs.isCreated]}} text-{{statusColorClass[settings.sdfs.isCreated]}}"></span></h2></td>
+                                <td><strong>SDFS settings:</strong>
+                                <a class="link-white pull-right" href="http://aws.amazon.com/s3/config.html" target="_blank" title="What is S3"><span class="glyphicon glyphicon-question-sign text-primary"></span></a></td>
+                            </tr>
+
+                            <tr>
+                                <td>Volume name: {{settings.sdfs.isCreated ? settings.sdfs.volumeName + STRINGS.sdfs.name.existing : STRINGS.sdfs.name.new + settings.sdfs.volumeName }}</td>
+
+                            </tr>
+
+                            <tr>
+                                <td>Volume size: {{settings.sdfs.isCreated ? settings.sdfs.volumeSize : STRINGS.sdfs.size.new + settings.sdfs.volumeSize}} GB</td>
+                            </tr>
+
+                            <tr>
+                                <td>Mount point: {{settings.sdfs.isCreated ? settings.sdfs.mountPoint : STRINGS.sdfs.point.new + settings.sdfs.mountPoint}}</td>
+                            </tr>
+
+                            <tr>
+                                <td rowspan="2"><h2><span class="glyphicon glyphicon-{{iconClass[settings.queue.isCreated] }} text-{{statusColorClass[settings.queue.isCreated]}}"></span></h2></td>
+                                <td><strong>Queue:</strong>
+                                    <a class="link-white pull-right" href="http://aws.amazon.com/s3/config.html" target="_blank" title="What is Queue"><span class="glyphicon glyphicon-question-sign text-primary"></span></a></td>
+                            </tr>
+                            <tr>
+                                <td>{{ settings.queue.isCreated ? settings.queue.queueName + STRINGS.queue.existing : STRINGS.queue.new + settings.queue.queueName}}</td>
+                            </tr>
+
+
+                            <tr>
+                                <th rowspan="2"><h2><span class="glyphicon glyphicon-{{iconClass[settings.db.isValid]}} text-{{statusColorClass[settings.db.isValid]}}"></span></h2></th>
+                                <td><strong>DynamoDB:</strong>
+                                <a class="link-white pull-right" href="http://aws.amazon.com/s3/config.html" target="_blank" title="What is DynamoDB"><span class="glyphicon glyphicon-question-sign text-primary"></span></a></td>
+                            </tr>
+                            <tr>
+                                <td>{{ settings.db.isValid ? STRINGS.db.true : STRINGS.db.false }}</td>
+                            </tr>
+
+                        </table>
+
+
+
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-success" ng-click="sendSettings()">OK</button>
+                            <a ui-sref="login" href class="btn btn-default">Cancel</a>
+                        </div>
+
+
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

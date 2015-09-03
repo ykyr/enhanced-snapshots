@@ -287,7 +287,8 @@ input.ng-invalid-email{
     margin-bottom: -5px;
 }
 
-td .glyphicon{
+.commands .glyphicon,
+.command .glyphicon{
     cursor: pointer;
 }
 
