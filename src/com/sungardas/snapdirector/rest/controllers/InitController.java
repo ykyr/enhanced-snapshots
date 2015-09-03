@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -97,6 +98,7 @@ public class InitController implements ApplicationContextAware {
 	return responseEntity;
 	}
 
+	@PostConstruct
 	public void init() {
 		awsPropertyFileExists = credentialsService.isAwsPropertyFileExists();
 		if (awsPropertyFileExists && credentialsService.areCredentialsValid()) {

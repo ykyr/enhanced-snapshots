@@ -29,18 +29,13 @@ public class CredentialsServiceImpl implements CredentialsService {
     private AWSCredentials credentials = null;
 
     @Override
-    public void setCredentials(@NotNull String acessKey, @NotNull String secretKey) {
-        if(acessKey==null || acessKey.length()==0) {
-            throw new ConfigurationException("Null or empty AWS AccessKey");
-        }
-        if(secretKey==null || secretKey.length()==0) {
-            throw new ConfigurationException("Null or empty AWS SecretKey");
-        }
+    public void setCredentials(@NotNull String accessKey, @NotNull String secretKey) {
+        validateCredentials(accessKey,secretKey);
 
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
             try {
-                properties.setProperty(accessKeyPropName, acessKey);
+                properties.setProperty(accessKeyPropName, accessKey);
                 properties.setProperty(secretKeyPropName, secretKey);
 
                 properties.store(new FileOutputStream(file), "AWS Credentials");
@@ -48,6 +43,15 @@ public class CredentialsServiceImpl implements CredentialsService {
                 throw new ConfigurationException("Can not create amazon.properties file\n" +
                         "Check path or permission: " + file.getAbsolutePath(), ioException);
             }
+    }
+
+    private void validateCredentials(String accessKey, String secretKey) {
+        if(accessKey==null || accessKey.length()==0) {
+            throw new ConfigurationException("Null or empty AWS AccessKey");
+        }
+        if(secretKey==null || secretKey.length()==0) {
+            throw new ConfigurationException("Null or empty AWS SecretKey");
+        }
     }
 
     @Override
