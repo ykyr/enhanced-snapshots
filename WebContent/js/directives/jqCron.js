@@ -5,14 +5,17 @@ angular.module('web')
         return {
             restrict: 'E',
             require: 'ngModel',
-            link:function(scope, ele, attr, ngModel){
-                if (!ngModel) return;
+            scope: {
+                ngModel: '='
+            },
+            link:function(scope, ele){
+                if (!scope.ngModel) return;
 
                 var options = {
-                    initial: ngModel.$viewValue || "* * * * *",
+                    initial: scope.ngModel || "* * * * *",
                     onChange: function () {
                         var value = $(this).cron("value");
-                        ngModel.$setViewValue(value);
+                        scope.ngModel =value;
                     }
                 };
                 $(ele).cron(options);
