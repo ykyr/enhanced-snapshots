@@ -14,4 +14,8 @@ public interface SnapshotRepository extends CrudRepository<Snapshot, String> {
 	
 	List<Snapshot> deleteByVolumeId(String volumeId);
 	
+	List<Snapshot> deleteBySnapshotId(String snapshotId);
+	
+	List<Snapshot> deleteBySnapshotIdNot(String snapshotId);
+	
 }
