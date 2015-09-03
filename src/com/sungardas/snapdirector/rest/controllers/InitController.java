@@ -2,6 +2,9 @@ package com.sungardas.snapdirector.rest.controllers;
 
 import com.sungardas.snapdirector.aws.dynamodb.Roles;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
+import com.sungardas.snapdirector.dto.CredentialsDto;
+import com.sungardas.snapdirector.dto.WorkerConfigurationDto;
+import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.rest.filters.FilterProxy;
 import com.sungardas.snapdirector.service.CredentialsService;
@@ -26,18 +29,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
 
 
-@RequestMapping("/session")
-public class InitController implements ApplicationContextAware {
-
-	@ExceptionHandler(SnapdirectorException.class)
-	@ResponseBody
-	@ResponseStatus(INTERNAL_SERVER_ERROR)
-	private Exception internalServerError(SnapdirectorException exception){
-		LOG.error(exception);
-		return exception;
-	}
+@RestController
+public class InitController implements ApplicationContextAware, InitContextListener {
 
 	private static final Logger LOG = LogManager.getLogger(InitController.class);
 
@@ -55,12 +52,31 @@ public class InitController implements ApplicationContextAware {
 
 	@Autowired
 	private ApplicationContext applicationContext;
+
+    @Autowired
+    private InitializationService initializationService;
+
 	private boolean awsPropertyFileExists = false;
 
+	private boolean CONTEXT_REFRESH_IN_PROCESS = false;
 
-	private static boolean CONTEXT_REFRESH_IN_PROCESS = false;
+	@PostConstruct
+	public void init() {
+		awsPropertyFileExists = credentialsService.isAwsPropertyFileExists();
+		if (awsPropertyFileExists && credentialsService.areCredentialsValid()) {
+			refreshContext();
+		}
+	}
 
-	@RequestMapping(method = RequestMethod.POST)
+	@ExceptionHandler(SnapdirectorException.class)
+	@ResponseBody
+	@ResponseStatus(INTERNAL_SERVER_ERROR)
+	private Exception internalServerError(SnapdirectorException exception){
+		LOG.error(exception);
+		return exception;
+	}
+
+	@RequestMapping(method = RequestMethod.POST, value = "/session")
 	public ResponseEntity<String> init(@RequestBody User user) {
 		ResponseEntity<String> responseEntity = null;
 		if (CONTEXT_REFRESH_IN_PROCESS) {
@@ -98,17 +114,45 @@ public class InitController implements ApplicationContextAware {
 	return responseEntity;
 	}
 
-	@PostConstruct
-	public void init() {
-		awsPropertyFileExists = credentialsService.isAwsPropertyFileExists();
-		if (awsPropertyFileExists && credentialsService.areCredentialsValid()) {
-			refreshContext();
-		}
+    @RequestMapping(value="/awscreds", method = RequestMethod.GET)
+    public ResponseEntity<String> checkAwsCredentialAreProvided() {
+        ResponseEntity<String> responseEntity;
+        if (credentialsService.isAwsPropertyFileExists() && credentialsService.areCredentialsValid()) {
+            responseEntity = new ResponseEntity<>(OK);
+        }else {
+            responseEntity = new ResponseEntity<>(NO_CONTENT);
+        }
+        return responseEntity;
+    }
 
+    @RequestMapping(value="/awscreds", method = RequestMethod.POST)
+    public ResponseEntity<String> setAwsCredential(@RequestBody CredentialsDto credentials) {
+        credentialsService.setCredentials(credentials.getAccessKey(), credentials.getSecretKey());
 
-	}
+        if(credentialsService.areCredentialsValid()) {
+            return new ResponseEntity<>(OK);
+        }
+        else {
+            throw new ConfigurationException("Provided credentials aren't valid");
+        }
+    }
 
-	@Override
+    @RequestMapping(value= "/{configurationId}", method = RequestMethod.GET)
+    public ResponseEntity<WorkerConfigurationDto> getConfiguration(@PathVariable String configurationId) {
+        ResponseEntity<WorkerConfigurationDto> responseEntity=null;
+        if(configurationId.equals("predefined")) {
+            responseEntity = new ResponseEntity<WorkerConfigurationDto>(getPredefinedConfiguration(), OK);
+        }
+        return responseEntity;
+    }
+
+    private WorkerConfigurationDto getPredefinedConfiguration() {
+        initializationService.isDbStructureValid();
+
+        return new WorkerConfigurationDto();
+    }
+
+    @Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
 	}
@@ -127,9 +171,8 @@ public class InitController implements ApplicationContextAware {
 		CONTEXT_REFRESH_IN_PROCESS = false;
 	}
 
-	public static boolean isContextRefreshInProcess() {
-		return CONTEXT_REFRESH_IN_PROCESS;
-	}
-
-
+    @Override
+    public boolean isContextRefreshInProcess() {
+        return CONTEXT_REFRESH_IN_PROCESS;
+    }
 }

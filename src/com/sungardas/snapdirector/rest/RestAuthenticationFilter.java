@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sungardas.snapdirector.aws.PropertyBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
+import com.sungardas.snapdirector.rest.controllers.InitContextListener;
 import com.sungardas.snapdirector.rest.controllers.InitController;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.rest.utils.JsonFromStream;
@@ -39,13 +40,16 @@ public class RestAuthenticationFilter implements Filter {
 	@Autowired
 	private DefaultUserAuthenticationService defaultUserAuthenticationService;
 
+	@Autowired
+	private InitContextListener initContextListener;
+
 	public void destroy() {
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException,
 			IOException {
 
-		if (InitController.isContextRefreshInProcess()) {
+		if (initContextListener.isContextRefreshInProcess()) {
 			return;
 		}
 		Map<String, String> allowedSessions = (Map<String, String>) request.getServletContext().getAttribute(CONTEXT_ALLOWED_SESSIONS_ATR_NAME);
