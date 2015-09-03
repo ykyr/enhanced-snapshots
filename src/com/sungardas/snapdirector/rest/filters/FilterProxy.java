@@ -4,6 +4,8 @@ package com.sungardas.snapdirector.rest.filters;
 import javax.servlet.*;
 import java.io.IOException;
 
+import org.apache.tomcat.util.http.fileupload.ThresholdingOutputStream;
+
 
 public class FilterProxy implements Filter {
 
@@ -21,7 +23,6 @@ public class FilterProxy implements Filter {
 		} else {
 			filter.doFilter(request, response, chain);
 		}
-
 	}
 
 	@Override

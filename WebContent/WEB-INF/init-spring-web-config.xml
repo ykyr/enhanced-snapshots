@@ -10,14 +10,14 @@
     <bean id="InitializationService"  class="com.sungardas.snapdirector.service.impl.InitializationServiceImpl" scope="prototype"/>
 
     <mvc:annotation-driven />
-    <!--mvc:resources mapping="/resources/**" location="/resources/" /-->
+
     <context:annotation-config/>
 
     <beans profile="dev">
-        <bean class="com.sungardas.snapdirector.rest.controllers.InitControllerDev"/>
+        <bean class="com.sungardas.init.controllers.InitControllerDev"/>
     </beans>
 
     <beans profile="prod">
-        <bean class="com.sungardas.snapdirector.rest.controllers.InitController"/>
+        <bean class="com.sungardas.init.controllers.InitController"/>
     </beans>
 </beans>

@@ -1,4 +1,4 @@
-package com.sungardas.snapdirector.rest.controllers;
+package com.sungardas.init.controllers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
