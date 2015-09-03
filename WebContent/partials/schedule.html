@@ -11,10 +11,12 @@
         <tr>
             <th>&nbsp;</th>
             <th>Name</th>
+            <th>Cron</th>
+            <th>Status</th>
         </tr>
         </thead>
         <tbody>
-        <tr ng-repeat="schedule in schedules track by $index" ng-class="{'disabled': !scedule.enabled}">
+        <tr ng-repeat="schedule in schedules track by $index" ng-class="{'row-disabled': !scedule.enabled}">
             <td class="text-center commands">
                 <button class="btn btn-link" title="Edit" ng-click="edit(schedule)"><span
                         class="glyphicon glyphicon-pencil"></span></button>
@@ -22,6 +24,8 @@
                         class="glyphicon glyphicon-remove"></span></a>
             </td>
             <td>{{schedule.schedulerName}}</td>
+            <td>{{schedule.cron}}</td>
+            <td>{{schedule.enabled ? 'enabled' : 'disabled'}}</td>
         </tr>
         </tbody>
     </table>
