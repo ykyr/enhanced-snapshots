@@ -1,6 +1,7 @@
 package com.sungardas.snapdirector.service.impl;
 
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
@@ -207,7 +208,17 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     }
 
     private void dropDbTables() {
+        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention"};
+        int counter = 0;
+        for(String tabletoDelete :tables) {
+            try {
+                amazonDynamoDB.deleteTable(tabletoDelete);
+            }catch(AmazonServiceException tableNotFoundOrCredError) {
+                counter++;
+            }
+        }
 
+        if(counter==tables.length) throw new ConfigurationException("Can't delete tables. check AWS credentials");
     }
 
     private String getInstanceId() {
