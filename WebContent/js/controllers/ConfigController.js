@@ -1,7 +1,10 @@
 'use strict';
 
 angular.module('web')
-    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state, Settings) {
+    .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state) {
+        var DELAYTIME = 10000;
+        var POSTREPEATS = 12;
+
         $scope.STRINGS = {
             s3: {
                 new: 'Will be created new as',
@@ -97,10 +100,10 @@ angular.module('web')
                             if (status === 403) {
                                 $scope.progressState = 'success';
                             }
-                            else if (counter++ >= 12) {
+                            else if (counter++ >= POSTREPEATS) {
                                 $scope.progressState = 'failed';
                             } else {
-                                setTimeout(myTimeoutFunction, 500);
+                                setTimeout(myTimeoutFunction, DELAYTIME);
                             }
                         });
                     }
