@@ -18,9 +18,11 @@ import com.sungardas.snapdirector.service.CreateAppConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +30,11 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     private static final Log LOG = LogFactory.getLog(CreateAppConfigurationImpl.class);
+
+    @Value("${amazon.aws.accesskey:}")
+    private String amazonAWSAccessKey;
+    @Value("${amazon.aws.secretkey}")
+    private String amazonAWSSecretKey;
 
     @Autowired private SharedDataserviceImpl sharedDataService;
 
@@ -147,7 +154,25 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     }
 
     private void createSDFS() {
+        boolean bucketAlreadyExists = sharedDataService.getInitConfigurationDto().getS3().isCreated();
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
+        if(sdfs.isCreated() && bucketAlreadyExists) return;
+
+        String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
+        String pathToExec = CreateAppConfigurationImpl.class.getResource("mount_sdfs.sh").getFile();
+        String[] parameters = {sdfs.getVolumeSize(), amazonAWSAccessKey ,bucketName, amazonAWSSecretKey};
+        try {
+            Process p = Runtime.getRuntime().exec("." + pathToExec, parameters);
+            p.waitFor();
+            if (p.exitValue() != 0)
+                throw new ConfigurationException("Error creating sdfs");
+        }catch (IOException e) {
+            //TODO: creation error handling
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
 
     }
 }
