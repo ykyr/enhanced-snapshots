@@ -1,7 +1,111 @@
 package com.sungardas.snapdirector.service.impl;
 
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.sungardas.snapdirector.dto.InitConfigurationDto;
+import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.service.CreateAppConfiguration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+
+@Service
 public class CreateAppConfigurationImpl implements CreateAppConfiguration {
+    private static final Log LOG = LogFactory.getLog(CreateAppConfigurationImpl.class);
+
+    @Autowired SharedDataserviceImpl sharedDataService;
+
+    @Autowired  AmazonDynamoDB amazonDynamoDB;
+
+    @Autowired  AmazonSQS amazonSQS;
+
+    @PostConstruct
+    private void createConfiguration() {
+        InitConfigurationDto initConfigurationDto =  sharedDataService.getInitConfigurationDto();
+        boolean createDB = initConfigurationDto.getDb().isValid();
+
+    }
+
+    private void createDB() {
+
+    }
+
+
+    public void createDbStructure() throws ConfigurationException {
+        createTable("BackupList", 1L, 1L, "volumeId", "S", "fileName ", "S");
+        createTable("Configurations", 1L, 1L, "configurationId ", "S");
+        createTable("Retention", 1L, 1L, "volumeId  ", "S");
+        createTable("Schedule", 1L, 1L, "id  ", "S");
+        createTable("Tasks", 1L, 1L, "id  ", "S");
+        createTable("Users", 1L, 1L, "email   ", "S");
+    }
+
+    private void createTable(
+            String tableName, long readCapacityUnits, long writeCapacityUnits,
+            String hashKeyName, String hashKeyType) {
+
+        createTable(tableName, readCapacityUnits, writeCapacityUnits,
+                hashKeyName, hashKeyType, null, null);
+    }
+
+    private void createTable(
+            String tableName, long readCapacityUnits, long writeCapacityUnits,
+            String hashKeyName, String hashKeyType,
+            String rangeKeyName, String rangeKeyType) {
+
+        DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
+
+        try {
+
+            ArrayList<KeySchemaElement> keySchema = new ArrayList<>();
+            keySchema.add(new KeySchemaElement()
+                    .withAttributeName(hashKeyName)
+                    .withKeyType(KeyType.HASH));
+
+            ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<AttributeDefinition>();
+            attributeDefinitions.add(new AttributeDefinition()
+                    .withAttributeName(hashKeyName)
+                    .withAttributeType(hashKeyType));
+
+            if (rangeKeyName != null) {
+                keySchema.add(new KeySchemaElement()
+                        .withAttributeName(rangeKeyName)
+                        .withKeyType(KeyType.RANGE));
+                attributeDefinitions.add(new AttributeDefinition()
+                        .withAttributeName(rangeKeyName)
+                        .withAttributeType(rangeKeyType));
+            }
+
+            CreateTableRequest request = new CreateTableRequest()
+                    .withTableName(tableName)
+                    .withKeySchema(keySchema)
+                    .withProvisionedThroughput( new ProvisionedThroughput()
+                            .withReadCapacityUnits(readCapacityUnits)
+                            .withWriteCapacityUnits(writeCapacityUnits));
+
+
+            request.setAttributeDefinitions(attributeDefinitions);
+
+            LOG.info("Issuing CreateTable request for " + tableName);
+            CreateTableResult createResult = amazonDynamoDB.createTable(request);
+
+            Table table = dynamoDB.createTable(request);
+            LOG.info("Waiting for " + tableName
+                    + " to be created...this may take a while...");
+            table.waitForActive();
+
+        } catch (Exception e) {
+            LOG.error("CreateTable request failed for " + tableName, e);
+            throw new ConfigurationException("CreateTable request failed for " + tableName,e);
+        }
+    }
 }
