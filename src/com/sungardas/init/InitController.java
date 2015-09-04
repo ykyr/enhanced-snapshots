@@ -72,7 +72,7 @@ public class InitController implements ApplicationContextAware {
     @PostConstruct
     public void init() {
         awsPropertyFileExists = credentialsService.isAwsPropertyFileExists();
-        if (awsPropertyFileExists && credentialsService.areCredentialsValid()) {
+        if (awsPropertyFileExists && credentialsService.areStoredCredentialsValid()) {
             refreshContext();
         }
     }
@@ -93,7 +93,7 @@ public class InitController implements ApplicationContextAware {
         }
         // check that aws credentials are provided
         // try to authenticate as real admin user
-        else if (awsPropertyFileExists && credentialsService.areCredentialsValid()) {
+        else if (awsPropertyFileExists && credentialsService.areStoredCredentialsValid()) {
             LOG.info("Valid aws credentials were provided.");
             refreshContext();
             // update initialization service
@@ -126,7 +126,7 @@ public class InitController implements ApplicationContextAware {
     @RequestMapping(value = "/awscreds", method = RequestMethod.GET)
     public ResponseEntity<String> checkAwsCredentialAreProvided() {
         ResponseEntity<String> responseEntity;
-        if (credentialsService.isAwsPropertyFileExists() && credentialsService.areCredentialsValid()) {
+        if (credentialsService.isAwsPropertyFileExists() && credentialsService.areStoredCredentialsValid()) {
             responseEntity = new ResponseEntity<>(OK);
         } else {
             responseEntity = new ResponseEntity<>(NO_CONTENT);
@@ -138,7 +138,7 @@ public class InitController implements ApplicationContextAware {
     public ResponseEntity<String> setAwsCredential(@RequestBody CredentialsDto credentials) {
         credentialsService.setCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
 
-        if (credentialsService.areCredentialsValid()) {
+        if (credentialsService.areStoredCredentialsValid()) {
             return new ResponseEntity<>(OK);
         } else {
             throw new ConfigurationException("Provided credentials aren't valid");
