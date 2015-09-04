@@ -150,7 +150,10 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private boolean sdfsAlreadyExists(String volumeName, String mountPoint) {
-        return false;
+        String volumeConfigPath = "/ets/sdfs/" + volumeName + "-volume-cfg.xml";
+        File configf = new File(volumeConfigPath);
+        File mountPointf = new File(mountPoint);
+        return configf.exists() && mountPointf.exists();
     }
 
     private int getSdfsVolumeMaxAvailableSizeInGB() {
