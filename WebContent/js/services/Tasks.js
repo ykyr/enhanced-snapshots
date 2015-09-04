@@ -3,26 +3,33 @@
 angular.module('web')
     .service('Tasks', function ($q, $http, Storage, BASE_URL) {
         var url = BASE_URL + 'rest/task';
-        var storageKey = '_tasks';
 
         var getAll = function () {
             var deferred = $q.defer();
-            $http.get(url).success(function (data) {
-                deferred.resolve(data);
+            $http.get(url).then(function (result) {
+                deferred.resolve(result.data);
+            }, function (e) {
+                deferred.reject(e);
+            });
+            return deferred.promise;
+        };
+
+        var _getRegular = function (vol) {
+            var deferred = $q.defer();
+            $http.get(url + '/' + vol).then(function (result) {
+                deferred.resolve(result.data);
+            }, function (e) {
+                deferred.reject(e);
             });
             return deferred.promise;
         };
 
         var save = function (item) {
-            return getAll().then(function (data) {
-                for (var i = 0; i < data.length; i++) {
-                    if (data[i].id == item.id) {
-                        data[i] = item;
-                        Storage.save(storageKey, data);
-                        return true;
-                    }
-                }
-            });
+            return $http({
+                url: url,
+                method: 'PUT',
+                data: item
+            })
         };
 
         var remove = function (id) {
@@ -43,6 +50,9 @@ angular.module('web')
         return {
             get: function () {
                 return getAll();
+            },
+            getRegular: function (vol) {
+                return _getRegular(vol);
             },
             update: function (item) {
                 return save(item);

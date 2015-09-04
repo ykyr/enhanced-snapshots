@@ -12,4 +12,5 @@ public interface VolumeService {
     Set<VolumeDto> getVolumesByRegion(Region region);
 
     boolean isExists(String volumeId);
+
 }

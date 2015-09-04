@@ -31,7 +31,7 @@ public class TaskEntry {
     private String volume;
 
     @DynamoDBAttribute(attributeName = "schedulerManual")
-    private boolean schedulerManual;
+    private String schedulerManual;
 
     @DynamoDBAttribute(attributeName = "schedulerName")
     private String schedulerName;
@@ -45,15 +45,26 @@ public class TaskEntry {
     @DynamoDBAttribute(attributeName = "options")
     private String options;
 
+    @DynamoDBAttribute
+    private String cron;
+
+    @DynamoDBAttribute
+    private String regular = Boolean.FALSE.toString();
+
+    @DynamoDBAttribute
+    private String enabled;
+
     public TaskEntry() {
         super();
     }
 
+    @Deprecated
     public TaskEntry(String priority, String status, String type, String volume,
                      String schedulerManual, String schedulerName, String schedulerTime, String instanceId) {
         this(priority, instanceId, status, type, volume, schedulerManual, schedulerName, schedulerTime, instanceId, null);
     }
 
+    @Deprecated
     public TaskEntry(String priority, String worker, String status, String type, String volume,
                      String schedulerManual, String schedulerName, String schedulerTime, String instanceId,
                      String options) {
@@ -62,7 +73,7 @@ public class TaskEntry {
         this.status = status;
         this.type = type;
         this.volume = volume;
-        this.schedulerManual = Boolean.getBoolean(schedulerManual);
+        this.schedulerManual = schedulerManual;
         this.schedulerName = schedulerName;
         this.schedulerTime = schedulerTime;
         this.instanceId = instanceId;
@@ -143,11 +154,11 @@ public class TaskEntry {
     }
 
     public void setSchedulerManual(boolean schedulerManual) {
-        this.schedulerManual = schedulerManual;
+        this.schedulerManual = String.valueOf(schedulerManual);
     }
 
     public void setSchedulerManual(String schedulerManual) {
-        this.schedulerManual = Boolean.getBoolean(schedulerManual);
+        this.schedulerManual = schedulerManual;
     }
 
     public String getSchedulerName() {
@@ -182,6 +193,38 @@ public class TaskEntry {
         this.options = options;
     }
 
+    public String getCron() {
+        return cron;
+    }
+
+    public void setCron(String cron) {
+        this.cron = cron;
+    }
+
+    public String getRegular() {
+        return regular;
+    }
+
+    public void setRegular(String regular) {
+        this.regular = regular;
+    }
+
+    public void setRegular(boolean regular) {
+        this.regular = String.valueOf(regular);
+    }
+
+    public String getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(String enabled) {
+        this.enabled = enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = String.valueOf(enabled);
+    }
+
     @Deprecated
     @Override
     public String toString() {
@@ -205,10 +248,10 @@ public class TaskEntry {
             return type;
         }
 
-        public static TaskEntryType getType(String type){
+        public static TaskEntryType getType(String type) {
             try {
                 return valueOf(type.toUpperCase());
-            }catch (IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 return UNKNOWN;
             }
         }

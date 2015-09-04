@@ -1,6 +1,6 @@
 package com.sungardas.snapdirector.exception;
 
-public class DataAccessException extends SnapdirectorException {
+public class DataAccessException extends DataException {
     public DataAccessException() {
     }
 
