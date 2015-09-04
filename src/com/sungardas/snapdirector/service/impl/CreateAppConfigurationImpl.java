@@ -46,14 +46,15 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     @PostConstruct
     private void createConfiguration() {
         InitConfigurationDto initConfigurationDto =  sharedDataService.getInitConfigurationDto();
+        if(initConfigurationDto==null) return;
+
+
         boolean createDB = !initConfigurationDto.getDb().isValid();
        if(createDB) createDB();
         createTaskQueue();
         if(initConfigurationDto.getSdfs().isCreated()) createSDFS();
 
         createSDFS();
-
-
     }
 
     private void createDB() {
