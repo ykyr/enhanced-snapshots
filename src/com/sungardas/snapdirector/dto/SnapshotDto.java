@@ -6,6 +6,13 @@ public class SnapshotDto {
 	private String snapshotId;
 	private String volumeId;
 	
+	public SnapshotDto(){}
+	
+	public SnapshotDto(String snapshotId, String volumeId){
+		this.snapshotId = snapshotId;
+		this.volumeId = volumeId;
+	}
+	
 	public String getId() {
 		return id;
 	}

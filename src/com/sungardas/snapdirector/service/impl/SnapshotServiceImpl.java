@@ -1,5 +1,7 @@
 package com.sungardas.snapdirector.service.impl;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,16 +27,6 @@ public class SnapshotServiceImpl implements SnapshotService {
 	}
 
 	@Override
-	public void removeAllSnapshotsExceptOne(String snapshotToLeave) {
-		if (snapshotToLeave == null || snapshotToLeave.length() != 13){
-			throw new IllegalArgumentException("Incorrect SnapshotID");
-		}
-		
-		snapshotRepository.deleteBySnapshotIdNot(snapshotToLeave);
-
-	}
-
-	@Override
 	public void removeSnapshot(String snapshotId) {
 		if (snapshotId == null || snapshotId.length() != 13){
 			throw new IllegalArgumentException("Incorrect SnapshotID");
@@ -42,6 +34,13 @@ public class SnapshotServiceImpl implements SnapshotService {
 		
 		snapshotRepository.deleteBySnapshotId(snapshotId);
 
+	}
+
+	@Override
+	public List<SnapshotDto> getSnapshotsToDelete(String volumeId,
+			String snapshotToLeave) {
+		
+		return SnapshotDtoConverter.convertToSnapshotDtoList(snapshotRepository.findByVolumeIdAndSnapshotIdNot(volumeId, snapshotToLeave));
 	}
 
 }

@@ -41,13 +41,18 @@ import com.amazonaws.services.ec2.model.SnapshotState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeState;
+import com.sungardas.snapdirector.dto.SnapshotDto;
 import com.sungardas.snapdirector.service.AWSCommunticationService;
+import com.sungardas.snapdirector.service.SnapshotService;
 
 @Service
 public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 
 	private static final Logger LOG = LogManager.getLogger(AWSCommunticationServiceImpl.class);
 
+	@Autowired
+	private SnapshotService snapshotService;
+	
 	@Autowired
 	private AmazonEC2 ec2client;
 	
@@ -101,6 +106,8 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 				+ formatter.format(new Date(System.currentTimeMillis())));
 		CreateSnapshotResult crSnapshotResult = ec2client.createSnapshot(snapshotRequest);
 		Snapshot snapshot = crSnapshotResult.getSnapshot();
+		SnapshotDto snapDto = new SnapshotDto(snapshot.getSnapshotId(), volumeId);
+		snapshotService.addSnapshot(snapDto);
 		return snapshot;
 	}
 
@@ -115,6 +122,22 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		DeleteSnapshotRequest deleteSnapshotRequest = new DeleteSnapshotRequest();
 		deleteSnapshotRequest.setSnapshotId(snapshotId);
 		ec2client.deleteSnapshot(deleteSnapshotRequest);
+		snapshotService.removeSnapshot(snapshotId);
+	}
+	
+	@Override
+	public void cleanupSnapshots(String volumeId, String snapshotIdToLeave) {
+		List<SnapshotDto> snapshotsToDelete = snapshotService.getSnapshotsToDelete(volumeId, snapshotIdToLeave);
+		for (SnapshotDto snapshotDto : snapshotsToDelete) {
+			deleteSnapshot(snapshotDto.getSnapshotId());
+		}
+		
+		
+	}
+	
+	@Override
+	public void cleanupSnapshots(Volume volume, Snapshot snapshotToLeave) {
+		cleanupSnapshots(volume.getVolumeId(), snapshotToLeave.getSnapshotId());
 	}
 
 	@Override

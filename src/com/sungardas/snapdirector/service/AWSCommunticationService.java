@@ -15,6 +15,10 @@ public interface AWSCommunticationService {
 	void deleteSnapshot(Volume associatedVolume);
 
 	void deleteSnapshot(String snapshotId);
+	
+	void cleanupSnapshots(String volumeId, String snapshotIdToLeave);
+	
+	void cleanupSnapshots(Volume volume, Snapshot snapshotToLeave);
 
 	Snapshot waitForCompleteState(Snapshot snapshot);
 
