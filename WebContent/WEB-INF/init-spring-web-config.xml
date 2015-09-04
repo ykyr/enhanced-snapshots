@@ -4,7 +4,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <bean id="CredentialsService" class="com.sungardas.snapdirector.service.impl.CredentialsServiceImpl"/>
+    <bean id="CredentialsService" class="com.sungardas.init.CredentialsServiceImpl"/>
     <bean id="DefaultUserAuthenticationService" class="com.sungardas.snapdirector.service.impl.DefaultUserAuthentificationServiceFake"/>
 
     <bean id="InitializationService"  class="com.sungardas.snapdirector.service.impl.InitializationServiceImpl" scope="prototype"/>
@@ -14,10 +14,10 @@
     <context:annotation-config/>
 
     <beans profile="dev">
-        <bean class="com.sungardas.init.controllers.InitControllerDev"/>
+        <bean class="com.sungardas.init.InitControllerDev"/>
     </beans>
 
     <beans profile="prod">
-        <bean class="com.sungardas.init.controllers.InitController"/>
+        <bean class="com.sungardas.init.InitController"/>
     </beans>
 </beans>

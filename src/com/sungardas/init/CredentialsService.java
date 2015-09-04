@@ -1,4 +1,4 @@
-package com.sungardas.snapdirector.service;
+package com.sungardas.init;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 

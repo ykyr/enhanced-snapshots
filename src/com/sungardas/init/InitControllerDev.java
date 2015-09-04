@@ -1,19 +1,16 @@
-package com.sungardas.init.controllers;
+package com.sungardas.init;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
 
-import com.sungardas.snapdirector.aws.dynamodb.Roles;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.dto.CredentialsDto;
-import com.sungardas.snapdirector.dto.WorkerConfigurationDto;
+import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.rest.filters.FilterProxy;
-import com.sungardas.snapdirector.service.CredentialsService;
 import com.sungardas.snapdirector.service.DefaultUserAuthenticationService;
 import com.sungardas.snapdirector.service.InitializationService;
 
@@ -24,12 +21,10 @@ import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -39,14 +34,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
-@Profile("prod")
-@RestController
-public class InitController implements ApplicationContextAware {
 
-    private static final Logger LOG = LogManager.getLogger(InitController.class);
+@RestController
+public class InitControllerDev implements ApplicationContextAware {
+
+    private static final Logger LOG = LogManager.getLogger(InitControllerDev.class);
 
     @Autowired
     private FilterProxy filterProxy;
@@ -61,22 +55,13 @@ public class InitController implements ApplicationContextAware {
     private DefaultUserAuthenticationService defaultUserAuthenticationService;
 
     @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
-    private InitializationService initializationService;
+    private XmlWebApplicationContext applicationContext;
 
     private boolean awsPropertyFileExists = false;
 
-    private boolean CONTEXT_REFRESH_IN_PROCESS = false;
+    private boolean isCredsProvided = false;
 
-    @PostConstruct
-    public void init() {
-        awsPropertyFileExists = credentialsService.isAwsPropertyFileExists();
-        if (awsPropertyFileExists && credentialsService.areCredentialsValid()) {
-            refreshContext();
-        }
-    }
+    private boolean CONTEXT_REFRESH_IN_PROCESS = false;
 
     @ExceptionHandler(SnapdirectorException.class)
     @ResponseBody
@@ -114,69 +99,87 @@ public class InitController implements ApplicationContextAware {
         // no aws credentials are provided
         // try to authenticate as default user admin@snapdirector:<instance-id>
         else if (defaultUserAuthenticationService.checkDefaultUser(user.getEmail(), user.getPassword())) {
-            User defaultUser = new User();
-            defaultUser.setRole(Roles.CONFIGURATOR.getName());
-            String result = defaultUser.toString();
-            responseEntity = new ResponseEntity<>(result, HttpStatus.OK);
+            responseEntity = new ResponseEntity<>("{ \"role\":\"configurator\" }", HttpStatus.OK);
         } else {
             responseEntity = new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return responseEntity;
     }
 
-    @RequestMapping(value = "/awscreds", method = RequestMethod.GET)
-    public ResponseEntity<String> checkAwsCredentialAreProvided() {
-        ResponseEntity<String> responseEntity;
-        if (credentialsService.isAwsPropertyFileExists() && credentialsService.areCredentialsValid()) {
-            responseEntity = new ResponseEntity<>(OK);
-        } else {
-            responseEntity = new ResponseEntity<>(NO_CONTENT);
-        }
-        return responseEntity;
-    }
-
-    @RequestMapping(value = "/awscreds", method = RequestMethod.POST)
+    @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.POST)
     public ResponseEntity<String> setAwsCredential(@RequestBody CredentialsDto credentials) {
-        credentialsService.setCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
-
-        if (credentialsService.areCredentialsValid()) {
-            return new ResponseEntity<>(OK);
-        } else {
+        if (credentials.getAwsPublicKey().isEmpty() || credentials.getAwsSecretKey().isEmpty()) {
             throw new ConfigurationException("Provided credentials aren't valid");
+        } else {
+            LOG.info("provided avs keys");
+            isCredsProvided = true;
+            return new ResponseEntity<>(OK);
         }
     }
 
-    @RequestMapping(value = "/{configurationId}", method = RequestMethod.GET)
-    public ResponseEntity<WorkerConfigurationDto> getConfiguration(@PathVariable String configurationId) {
-        ResponseEntity<WorkerConfigurationDto> responseEntity = null;
-        if (configurationId.equals("predefined")) {
-            responseEntity = new ResponseEntity<WorkerConfigurationDto>(getPredefinedConfiguration(), OK);
+
+    @RequestMapping(value = "/configuration/current", method = RequestMethod.GET)
+    public ResponseEntity<InitConfigurationDto> getConfiguration() {
+        if (!isCredsProvided) {
+            throw new ConfigurationException("Credentials aren't present");
         }
-        return responseEntity;
+        return new ResponseEntity<>(getConfig(), HttpStatus.OK);
     }
 
-    private WorkerConfigurationDto getPredefinedConfiguration() {
-        initializationService.isDbStructureValid();
 
-        return new WorkerConfigurationDto();
+    @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
+    public ResponseEntity<String> setConfiguration(@RequestBody String userInfo) {
+        if (userInfo == null && !userInfo.isEmpty() && !getConfig().getDb().isValid()) {
+            throw new ConfigurationException("Please create default user");
+        }
+        refreshContext();
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+        this.applicationContext = (XmlWebApplicationContext) applicationContext;
     }
 
     private void refreshContext() {
         LOG.info("Context refresh process started.");
         CONTEXT_REFRESH_IN_PROCESS = true;
 
-        ((XmlWebApplicationContext) applicationContext).setConfigLocation("/WEB-INF/spring-web-config.xml");
-        ((XmlWebApplicationContext) applicationContext).refresh();
+        applicationContext.setConfigLocation("/WEB-INF/spring-web-config.xml");
+        applicationContext.refresh();
 
         // enabling auth filter
         filterProxy.setFilter((Filter) applicationContext.getBean("restAuthenticationFilter"));
 
         LOG.info("Context refreshed successfully.");
         CONTEXT_REFRESH_IN_PROCESS = false;
+    }
+
+    private InitConfigurationDto getConfig() {
+        InitConfigurationDto config = new InitConfigurationDto();
+
+        InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
+        s3.setBucketName("com.sungardas.snapdirector_i-12f5a345");
+        s3.setCreated(true);
+
+        InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
+        sdfs.setCreated(true);
+        sdfs.setMountPoint("/mnt/awspool");
+        sdfs.setVolumeName("awspool");
+        sdfs.setVolumeSize("40");
+
+        InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
+        queue.setQueueName("snapdirector_i-12f5a345");
+        queue.setCreated(true);
+
+        InitConfigurationDto.DB db = new InitConfigurationDto.DB();
+        db.setValid(false);
+
+        config.setS3(s3);
+        config.setSdfs(sdfs);
+        config.setQueue(queue);
+        config.setDb(db);
+
+        return config;
     }
 }

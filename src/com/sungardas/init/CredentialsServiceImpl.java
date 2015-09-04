@@ -1,11 +1,10 @@
-package com.sungardas.snapdirector.service.impl;
+package com.sungardas.init;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.sungardas.snapdirector.exception.ConfigurationException;
-import com.sungardas.snapdirector.service.CredentialsService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
@@ -45,7 +44,11 @@ public class CredentialsServiceImpl implements CredentialsService {
             }
     }
 
-    private void validateCredentials(String accessKey, String secretKey) {
+    public void storeCredentials() {
+
+    }
+
+    public void validateCredentials(String accessKey, String secretKey) {
         if(accessKey==null || accessKey.length()==0) {
             throw new ConfigurationException("Null or empty AWS AccessKey");
         }

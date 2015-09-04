@@ -1,8 +1,8 @@
-package com.sungardas.init.controllers;
+package com.sungardas.snapdirector.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-class InitConfigurationDto {
+public class InitConfigurationDto {
     private S3 s3;
     private SDFS sdfs;
     private Queue queue;
@@ -40,7 +40,7 @@ class InitConfigurationDto {
         this.db = db;
     }
 
-    static class S3 {
+    public static class S3 {
         @JsonProperty("isCreated")
         private boolean created;
         private String bucketName;
@@ -62,7 +62,7 @@ class InitConfigurationDto {
         }
     }
 
-    static class SDFS {
+    public static class SDFS {
         @JsonProperty("isCreated")
         private boolean created;
         private String volumeName;
@@ -102,7 +102,7 @@ class InitConfigurationDto {
         }
     }
 
-    static class Queue {
+    public static class Queue {
         @JsonProperty("isCreated")
         private boolean created;
         private String queueName;
@@ -124,7 +124,7 @@ class InitConfigurationDto {
         }
     }
 
-    static class DB {
+    public static class DB {
         @JsonProperty("isValid")
         private boolean valid;
 
