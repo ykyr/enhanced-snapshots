@@ -1,18 +1,12 @@
 package com.sungardas.snapdirector.rest;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sungardas.snapdirector.aws.PropertyBasedCredentialsProvider;
-import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.rest.utils.JsonFromStream;
 import com.sungardas.snapdirector.rest.utils.MultiReadHttpServletRequest;
-import com.sungardas.snapdirector.service.InitializationService;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.FlashMap;
 
@@ -31,9 +25,6 @@ import static com.sungardas.snapdirector.rest.utils.Constants.*;
 @Service
 public class RestAuthenticationFilter implements Filter {
     private static final Logger LOG = LogManager.getLogger(RestAuthenticationFilter.class);
-
-    @Autowired
-    private InitializationService initializationService;
 
     public void destroy() {
     }
@@ -66,9 +57,6 @@ public class RestAuthenticationFilter implements Filter {
                     email = ((String) attributes.get(0).get(Constants.JSON_AUTHENTIFICATION_EMAIL)).toLowerCase();
                     password = (String) attributes.get(0).get(Constants.JSON_AUTHENTIFICATION_PASSWORD);
                 }
-                if (initializationService.isAdminUserExists()) {
-                    allowed = DynamoUtils.authenticateUser(email, password, getMapper());
-                }
                 if (allowed) {
                     allowedSessions.put(session.getId(), email);
                     LOG.info("Add session to allowed list: [{}] [{}]", session.getId(), email);
@@ -94,8 +82,4 @@ public class RestAuthenticationFilter implements Filter {
     public void init(FilterConfig fConfig) throws ServletException {
     }
 
-    private DynamoDBMapper getMapper() {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(new PropertyBasedCredentialsProvider());
-        return new DynamoDBMapper(client);
-    }
 }

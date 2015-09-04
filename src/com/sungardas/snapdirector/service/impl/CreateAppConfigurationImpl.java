@@ -46,16 +46,19 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     @PostConstruct
     private void createConfiguration() {
         InitConfigurationDto initConfigurationDto =  sharedDataService.getInitConfigurationDto();
-        boolean createDB = initConfigurationDto.getDb().isValid();
+        boolean createDB = !initConfigurationDto.getDb().isValid();
+       if(createDB) createDB();
+        createTaskQueue();
+        if(initConfigurationDto.getSdfs().isCreated()) createSDFS();
+
+        createSDFS();
+
 
     }
 
     private void createDB() {
         createDbStructure();
         createAdminUserIfProvided();
-
-        createTaskQueue();
-        createSDFS();
     }
 
     private void createDbStructure() throws ConfigurationException {
@@ -65,6 +68,7 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
         createTable("Schedule", 1L, 1L, "id  ", "S");
         createTable("Tasks", 1L, 1L, "id  ", "S");
         createTable("Users", 1L, 1L, "email   ", "S");
+        createTable("Snapshots", 1L, 1L, "id   ", "S");
     }
 
     private void createTable(
@@ -156,7 +160,6 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     private void createSDFS() {
         boolean bucketAlreadyExists = sharedDataService.getInitConfigurationDto().getS3().isCreated();
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
-        if(sdfs.isCreated() && bucketAlreadyExists) return;
 
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
         String pathToExec = CreateAppConfigurationImpl.class.getResource("mount_sdfs.sh").getFile();
