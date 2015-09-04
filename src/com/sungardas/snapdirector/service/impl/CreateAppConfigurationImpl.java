@@ -174,8 +174,13 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    private void storeAsWorkerConfiguration() {
 
+    }
+
+    private void dropDbTables() {
 
     }
 }
