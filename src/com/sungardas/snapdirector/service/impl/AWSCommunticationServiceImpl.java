@@ -298,6 +298,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 				try {
 					TimeUnit.SECONDS.sleep(timeout);
 				} catch (InterruptedException e) {
+					LOG.error(3);
 				}
 			}
 		}

@@ -132,164 +132,32 @@ public class AWSBackupVolumeTask implements BackupTask {
         LOG.info("Task completed.");
     }
 
-    //TODO: review this quick fix
-
     private Volume createAndAttachBackupVolume(String volumeId, String instanceId) {
-        Instance instance = getInstance(instanceId);
+        Instance instance = awsCommunication.getInstance(instanceId);
         if (instance == null) {
             LOG.error("\nCan't get access to " + instanceId + " instance");
-            System.exit(-1);
+            
         }
         LOG.info("\ninst:" + instance);
 
         // create snapshot for AMI
-        Volume volumeSrc = getVolume(volumeId);
+        Volume volumeSrc = awsCommunication.getVolume(volumeId);
         if (volumeSrc == null) {
             LOG.error("\nCan't get access to " + volumeId + " volume");
-            System.exit(-1);
+            
         }
 
 
-        Snapshot snapshot = createSnapshot(volumeSrc);
+        Snapshot snapshot = awsCommunication.createSnapshot(volumeSrc);
         LOG.info("\nSnapshot created. Check snapshot data:\n" + snapshot.toString());
 
         // create volume
         String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
-        Volume volumeDest = createVolumeFromSnapshot(snapshot, instanceAvailabilityZone);
+        Volume volumeDest = awsCommunication.createVolumeFromSnapshot(snapshot, instanceAvailabilityZone);
         LOG.info("\nVolume created. Check volume data:\n" + volumeDest.toString());
 
         // mount AMI volume
-        attachVolume(instance, volumeDest);
-        return syncVolume(ec2client, volumeDest);
-    }
-
-    private Instance getInstance(String instanceId) {
-        LinkedList<String> instanceIds = new LinkedList<>();
-        instanceIds.add(instanceId);
-        DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
-        describeInstancesRequest.setInstanceIds(instanceIds);
-        DescribeInstancesResult describeInstancesResult = ec2client.describeInstances(describeInstancesRequest);
-        List<Reservation> reservations = describeInstancesResult.getReservations();
-        List<Instance> insts = new LinkedList<>();
-        for (Reservation r : reservations) {
-            insts.addAll(r.getInstances());
-        }
-
-        if (insts.size() > 0) {
-            return insts.get(0);
-        }
-
-        return null;
-    }
-
-    private Volume getVolume(String volumeId) {
-        LinkedList<String> volumeIds = new LinkedList<>();
-        volumeIds.add(volumeId);
-        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest(volumeIds);
-        DescribeVolumesResult describeVolumesResult = ec2client.describeVolumes(describeVolumesRequest);
-        if (describeVolumesResult.getVolumes().size() > 0) {
-            return describeVolumesResult.getVolumes().get(0);
-        }
-        return null;
-    }
-
-    private Snapshot createSnapshot(Volume volume) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd'_T'hh:mm:ss");
-
-        String volumeId = volume.getVolumeId();
-        LOG.info(format("Starting creating snapshot for %s", volumeId));
-        CreateSnapshotRequest snapshotRequest = new CreateSnapshotRequest(volumeId, volumeId + "__"
-                + formatter.format(new Date(System.currentTimeMillis())));
-        CreateSnapshotResult crSnapshotResult = ec2client.createSnapshot(snapshotRequest);
-        Snapshot snapshot = crSnapshotResult.getSnapshot();
-        return snapshot;
-    }
-
-    private Volume createVolumeFromSnapshot(Snapshot sourceSnapshot, String availabilityZoneName) {
-        DescribeAvailabilityZonesResult zonesResult = ec2client.describeAvailabilityZones();
-        List<AvailabilityZone> zones = zonesResult.getAvailabilityZones();
-        Volume vol = null;
-        if (zones.size() > 0) {
-            LOG.info(format("Starting creating volume from %s", sourceSnapshot.getSnapshotId()));
-
-            boolean incorrectState = true;
-            long timeout = 10L;
-            while (incorrectState) {
-                try {
-                    incorrectState = false;
-                    CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(sourceSnapshot.getSnapshotId(),
-                            availabilityZoneName);
-                    CreateVolumeResult crVolumeResult = ec2client.createVolume(crVolumeRequest);
-                    vol = crVolumeResult.getVolume();
-                } catch (AmazonServiceException incorrectStateException) {
-                    LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
-                    incorrectState = true;
-                    timeout += timeout < 120 ? timeout * 2 : 0;
-                    try {
-                        TimeUnit.SECONDS.sleep(timeout);
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-
-        }
-        return vol;
-    }
-
-    private void attachVolume(Instance instance, Volume volume) {
-        String deviceName = getNextAvailableDeviceName(instance);
-        boolean incorrectState = true;
-        long timeout = 10L;
-        while (incorrectState) {
-            try {
-                incorrectState = false;
-                AttachVolumeRequest attachVolumeRequest = new AttachVolumeRequest(volume.getVolumeId(),
-                        instance.getInstanceId(), deviceName);
-                AttachVolumeResult res = ec2client.attachVolume(attachVolumeRequest);
-            } catch (AmazonServiceException incorrectStateException) {
-                LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
-                incorrectState = true;
-                timeout += timeout < 120 ? timeout * 2 : 0;
-                try {
-                    TimeUnit.SECONDS.sleep(timeout);
-                } catch (InterruptedException e) {
-                    LOG.error(3);
-                }
-            }
-        }
-        LOG.info(format("\nVolume attached. check instance data\n %s", instance.toString()));
-    }
-
-    private String getNextAvailableDeviceName(Instance instance) {
-        String devName = "";
-
-        List<InstanceBlockDeviceMapping> devList = instance.getBlockDeviceMappings();
-        for (InstanceBlockDeviceMapping map : devList) {
-            String tmp = map.getDeviceName();
-            if (tmp.compareToIgnoreCase(devName) > 0) {
-                devName = tmp;
-            }
-        }
-
-        if (devName.length() > 0) {
-            char ch = devName.charAt(devName.length() - 1);
-            if (ch < 'f') {
-                ch = 'f' - 1;
-            }
-            if (ch < 'p') {
-                ch += 1;
-                return "/dev/sd" + (char) ch;
-            }
-        }
-        return "/dev/sdf";
-    }
-
-    private Volume syncVolume(AmazonEC2 ec2client, Volume volume) {
-        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest();
-        LinkedList<String> ids = new LinkedList<>();
-        ids.add(volume.getVolumeId());
-        describeVolumesRequest.setVolumeIds(ids);
-        DescribeVolumesResult describeVolumesResult = ec2client.describeVolumes(describeVolumesRequest);
-        return describeVolumesResult.getVolumes().get(0);
+        awsCommunication.attachVolume(instance, volumeDest);
+        return awsCommunication.syncVolume(volumeDest);
     }
 }
