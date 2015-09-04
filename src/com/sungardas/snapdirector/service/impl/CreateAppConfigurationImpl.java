@@ -208,7 +208,7 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     }
 
     private void dropDbTables() {
-        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention"};
+        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention" ,"Snapshots"};
         int counter = 0;
         for(String tabletoDelete :tables) {
             try {
