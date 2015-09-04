@@ -4,6 +4,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -79,6 +80,11 @@ public class CredentialsServiceImpl implements CredentialsService {
             LOG.error("Set AWS Credentials before use areStoredCredentialsValid method");
             throw credentialsNotProvided;
         }
+    }
+
+    @Override
+    public InitConfigurationDto getInitConfigurationDto() {
+        return null;
     }
 
     @Override
