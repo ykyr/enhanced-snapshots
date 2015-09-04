@@ -153,12 +153,12 @@ public class AWSBackupVolumeTask implements BackupTask {
         }
 
 
-        Snapshot snapshot = awsCommunication.createSnapshot(volumeSrc);
+        Snapshot snapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(volumeSrc));
         LOG.info("\nSnapshot created. Check snapshot data:\n" + snapshot.toString());
 
         // create volume
         String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
-        Volume volumeDest = awsCommunication.createVolumeFromSnapshot(snapshot, instanceAvailabilityZone);
+        Volume volumeDest = awsCommunication.waitForAvailableState(awsCommunication.createVolumeFromSnapshot(snapshot, instanceAvailabilityZone));
         LOG.info("\nVolume created. Check volume data:\n" + volumeDest.toString());
 
         // mount AMI volume
