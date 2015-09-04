@@ -4,7 +4,7 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
+import com.sungardas.snapdirector.aws.PropertyBasedCredentialsProvider;
 import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.exception.DataAccessException;
@@ -86,7 +86,7 @@ public class BackupController {
     }
 
     private DynamoDBMapper getMapper(ServletRequest request) {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
+        AmazonDynamoDBClient client = new AmazonDynamoDBClient(new PropertyBasedCredentialsProvider());
         String region = request.getServletContext().getInitParameter(Constants.JSON_DYNAMODB_REGION);
         client.setRegion(Region.getRegion(Regions.fromName(region)));
         return new DynamoDBMapper(client);

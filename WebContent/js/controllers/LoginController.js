@@ -7,17 +7,21 @@ angular.module('web')
             Auth.logOut();
         }
 
+        if (Storage.get("currentUser") && Storage.get("currentUser").length > 1) {
+            Auth.logOut();
+        }
+
         $scope.clearErr = function () {
             $scope.error = "";
         };
 
         $scope.login = function () {
-            Auth.logIn($scope.email, $scope.password).then(function () {
-                if (Settings.get()) {
+            Auth.logIn($scope.email, $scope.password).then(function (data) {
+
+                if (data.role === 'configurator') {
+                    $state.go('config');
+                } else {
                     $state.go('app.volume.list');
-                }
-                else {
-                    $state.go('aws');
                 }
             }, function (res) {
                 $scope.error = res;

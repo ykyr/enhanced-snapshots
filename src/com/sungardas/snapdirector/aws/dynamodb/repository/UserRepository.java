@@ -9,4 +9,6 @@ import java.util.List;
 @EnableScan
 public interface UserRepository extends CrudRepository<User, String> {
     List<User> findByRole(String lastName);
+
+    List<User> findByEmailAndPassword(String email, String password);
 }

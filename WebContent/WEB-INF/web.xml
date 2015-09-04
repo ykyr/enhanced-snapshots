@@ -8,10 +8,6 @@
         <param-value>./mockjson/</param-value>
     </context-param>
     <context-param>
-        <param-name>aws:worker-configuration</param-name>
-        <param-value>ogorVagrantDev</param-value>
-    </context-param>
-    <context-param>
         <param-name>tmp:sdfsbackup-properties</param-name>
         <param-value>./aws/sdfsbackup.properties</param-value>
     </context-param>
@@ -25,26 +21,21 @@
         <param-value>us-east-1</param-value>
     </context-param>
 
-    <context-param>
-        <param-name>aws:routine-inst-id</param-name>
-        <param-value>ogorVagrantDev</param-value>
-    </context-param>
-    <context-param>
-        <param-name>aws:sqs-queue-url</param-name>
-        <param-value>815082807540/sungard_ogor</param-value>
-    </context-param>
-
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
     <filter>
-        <display-name>CorsFilter</display-name>
-        <filter-name>CorsFilter</filter-name>
-        <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+        <filter-name>filterProxy</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
     </filter>
+
     <filter-mapping>
-        <filter-name>CorsFilter</filter-name>
-        <url-pattern>/*</url-pattern>
+        <filter-name>filterProxy</filter-name>
+        <url-pattern>/rest/*</url-pattern>
     </filter-mapping>
 
     <!-- For web context -->
@@ -55,7 +46,7 @@
         </servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
-            <param-value>/WEB-INF/spring-web-config.xml</param-value>
+            <param-value>/WEB-INF/init-spring-web-config.xml</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
@@ -67,7 +58,7 @@
 
     <context-param>
         <param-name>spring.profiles.active</param-name>
-        <param-value>prod</param-value>
+        <param-value>dev</param-value>
     </context-param>
 
 </web-app>

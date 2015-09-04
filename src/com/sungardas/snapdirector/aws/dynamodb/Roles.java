@@ -4,7 +4,8 @@ package com.sungardas.snapdirector.aws.dynamodb;
 public enum Roles {
 
 	ADMIN("admin"),
-	USER("user");
+	USER("user"),
+	CONFIGURATOR("configurator");
 
 	private final String name;
 

@@ -24,8 +24,8 @@
         </div>
 
         <div class="form-group">
-            <label for="password" class="control-label">Set password:<span class="text-danger" ng-show="userToEdit.isNew">*</span></label>
-            <input type="password" id="password" name="setPassword" class="form-control"
+            <label class="control-label">Set password:<span class="text-danger" ng-show="userToEdit.isNew">*</span></label>
+            <input type="text" id="password" class="form-control"
                    ng-model="userToEdit.password"
                    ng-required="userToEdit.isNew">
         </div>
