@@ -1,19 +1,23 @@
 package com.sungardas.init;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ListBucketsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
+import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,6 +32,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -118,14 +123,18 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private InitConfigurationDto getInitConfigurationDtoTemplate() {
+
+
         InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
+
+        initConfigurationDto.getDb().setValid(isDbValidOrAbsent());
 
         String bucketName =  "com.sungardas.snapdirector." + instanceId;
         InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
         s3.setBucketName(bucketName);
         s3.setCreated(bucketAlreadyExists(bucketName));
 
-        String queueName = "snapdirector_" + instanceId;
+        String queueName = getUserId() + "/snapdirector_" + instanceId;
         InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
         queue.setQueueName(queueName);
         queue.setCreated(queueAlreadyExists(queueName));
@@ -145,14 +154,48 @@ class CredentialsServiceImpl implements CredentialsService {
         return initConfigurationDto;
     }
 
+    private boolean isDbValidOrAbsent() {
+        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention"};
+        AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
+        try {
+            ListTablesResult listResult = amazonDynamoDB.listTables();
+            List<String> tableNames = listResult.getTableNames();
+            return containsAllOrAny(tables, tableNames);
+        }catch (AmazonServiceException accessError) {
+            LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
+            throw new DataAccessException(accessError);
+        }
+
+    }
+
+    private boolean containsAllOrAny(String[] toCheck, List<String> where) {
+        if(where.size()==0) return true;
+        int expectedCount = toCheck.length;
+        int actualCount = 0;
+        for(String value: toCheck) {
+            if(where.contains(value)) actualCount++;
+        }
+        return expectedCount==actualCount;
+    }
+
     private boolean bucketAlreadyExists(String bucketName) {
         AmazonS3Client amazonS3Client = new AmazonS3Client(credentials);
+        try {
         return amazonS3Client.listBuckets().contains(bucketName);
+        }catch (AmazonServiceException accessError) {
+            LOG.info("Can't get a list of S3 buckets. Check AWS credentials!", accessError);
+            throw new DataAccessException(accessError);
+        }
     }
 
     private boolean queueAlreadyExists(String queueName) {
         AmazonSQSClient amazonSQSClient = new AmazonSQSClient(credentials);
+        try {
         return amazonSQSClient.listQueues().getQueueUrls().contains(queueName);
+        }catch (AmazonServiceException accessError) {
+            LOG.info("Can't get a list of queues. Check AWS credentials!", accessError);
+            throw new DataAccessException(accessError);
+        }
     }
 
     private boolean sdfsAlreadyExists(String volumeName, String mountPoint) {
@@ -180,6 +223,16 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private File getPropertyFile() {
         return Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
+    }
+
+    private String getUserId() {
+        AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentials);
+        try {
+        return iamClient.getUser().getUser().getUserId();
+        }catch (AmazonServiceException accessError) {
+            LOG.info("Can't get userId. Check AWS credentials!", accessError);
+            throw new DataAccessException(accessError);
+        }
     }
 
     private String getInstanceId() {
