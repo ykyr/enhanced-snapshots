@@ -7,16 +7,20 @@ angular.module('web')
 
         var getAll = function () {
             var deferred = $q.defer();
-            $http.get(url).success(function (data) {
-                deferred.resolve(data);
+            $http.get(url).then(function (result) {
+                deferred.resolve(result.data);
+            }, function (e) {
+                deferred.reject(e);
             });
             return deferred.promise;
         };
 
         var _getRegular = function (vol) {
             var deferred = $q.defer();
-            $http.get(url + '/' + vol).success(function (data) {
-                deferred.resolve(data);
+            $http.get(url + '/' + vol).then(function (result) {
+                deferred.resolve(result.data);
+            }, function (e) {
+                deferred.reject(e);
             });
             return deferred.promise;
         };
