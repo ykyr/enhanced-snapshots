@@ -140,16 +140,8 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
             } catch (InterruptedException e) {}
         }
 
-        HashMap<String, String> queueAttributes = new HashMap<>();
-        queueAttributes.put("DelaySeconds","");
-        queueAttributes.put("MaximumMessageSize","");
-        queueAttributes.put("MessageRetentionPeriod","");
-        queueAttributes.put("ReceiveMessageWaitTimeSeconds","");
-        queueAttributes.put("VisibilityTimeout","");
-        queueAttributes.put("Policy","");
-
         CreateQueueRequest createQueueRequest = new CreateQueueRequest()
-                .withQueueName(queue).withAttributes(queueAttributes);
+                .withQueueName(queue);
         amazonSQS.createQueue(createQueueRequest);
 
     }
