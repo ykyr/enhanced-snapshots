@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.48 9/4/2015 2:42 PM
+# Version 0.49 9/4/2015 2:46 PM
 
 language: java
 
@@ -28,6 +28,7 @@ before_script:
 script:
   - mvn clean install
   - rm -f /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1/*.pom
+  - rm -f /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1/_remote.repositories
 
 deploy:
   provider: s3
