@@ -117,14 +117,6 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
-        InitConfigurationDto initConfigurationDto = getInitConfigurationDtoTemplate();
-
-        return initConfigurationDto;
-    }
-
-    private InitConfigurationDto getInitConfigurationDtoTemplate() {
-
-
         InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
 
         initConfigurationDto.getDb().setValid(isDbValidOrAbsent());
@@ -155,7 +147,7 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private boolean isDbValidOrAbsent() {
-        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention"};
+        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
         AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
         try {
             ListTablesResult listResult = amazonDynamoDB.listTables();

@@ -1,18 +1,25 @@
 package com.sungardas.snapdirector.service.impl;
 
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
+import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
+import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.dto.UserDto;
+import com.sungardas.snapdirector.dto.WorkerConfigurationDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
+import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.CreateAppConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,7 +30,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 @Profile("prod")
@@ -42,18 +52,20 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     @Autowired private AmazonSQS amazonSQS;
 
     @Autowired private UserRepository userRepository;
+    @Autowired private WorkerConfigurationRepository configurationRepository;
 
     @PostConstruct
     private void createConfiguration() {
         InitConfigurationDto initConfigurationDto =  sharedDataService.getInitConfigurationDto();
+        if(initConfigurationDto==null) return;
+
+
         boolean createDB = !initConfigurationDto.getDb().isValid();
        if(createDB) createDB();
         createTaskQueue();
         if(initConfigurationDto.getSdfs().isCreated()) createSDFS();
 
         createSDFS();
-
-
     }
 
     private void createDB() {
@@ -174,8 +186,56 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    private void storeAsWorkerConfiguration() {
+        InitConfigurationDto dto =  sharedDataService.getInitConfigurationDto();
+        WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
+        configurationRepository.save(workerConfiguration);
+    }
 
+    private WorkerConfiguration convertToWorkerConfiguration(InitConfigurationDto dto) {
+        WorkerConfiguration workerConfiguration = new WorkerConfiguration();
+        workerConfiguration.setConfigurationId(getInstanceId());
+        workerConfiguration.setEc2Region(Regions.getCurrentRegion().getName());
+        workerConfiguration.setFakeBackupSource(null);
+        workerConfiguration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
+        workerConfiguration.setSdfsVolumeName(dto.getSdfs().getVolumeName());
+        workerConfiguration.setTaskQueueURL(dto.getQueue().getQueueName());
+        workerConfiguration.setUseFakeBackup(false);
+        workerConfiguration.setUseFakeEC2(false);
+        return workerConfiguration;
+    }
 
+    private void dropDbTables() {
+        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention" ,"Snapshots"};
+        int counter = 0;
+        for(String tabletoDelete :tables) {
+            try {
+                amazonDynamoDB.deleteTable(tabletoDelete);
+            }catch(AmazonServiceException tableNotFoundOrCredError) {
+                counter++;
+            }
+        }
+
+        if(counter==tables.length) throw new ConfigurationException("Can't delete tables. check AWS credentials");
+    }
+
+    private String getInstanceId() {
+        String instanceId = null;
+        try {
+            URL url = new URL("http://169.254.169.254/latest/meta-data/instance-id");
+            URLConnection conn = url.openConnection();
+            Scanner s = new Scanner(conn.getInputStream());
+            if (s.hasNext()) {
+                instanceId = s.next();
+                LOG.info("Getting configuration id from metadata: " + instanceId);
+            }
+            s.close();
+        } catch (IOException e) {
+            LOG.warn("Failed to determine ec2 instance ID");
+            throw new SnapdirectorException("Failed to determine ec2 instance ID", e);
+        }
+        return instanceId;
     }
 }
