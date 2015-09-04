@@ -117,14 +117,6 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
-        InitConfigurationDto initConfigurationDto = getInitConfigurationDtoTemplate();
-
-        return initConfigurationDto;
-    }
-
-    private InitConfigurationDto getInitConfigurationDtoTemplate() {
-
-
         InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
 
         initConfigurationDto.getDb().setValid(isDbValidOrAbsent());
