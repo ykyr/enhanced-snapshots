@@ -9,8 +9,6 @@ angular.module('web')
                 ngModel: '='
             },
             link:function(scope, ele){
-                if (!scope.ngModel) return;
-
                 var options = {
                     initial: scope.ngModel || "* * * * *",
                     onChange: function () {
