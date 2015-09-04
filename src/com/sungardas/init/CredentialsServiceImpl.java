@@ -4,7 +4,13 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ListBucketsRequest;
+import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
@@ -32,6 +38,8 @@ class CredentialsServiceImpl implements CredentialsService {
     private final String accessKeyPropName = "amazon.aws.accesskey";
     private final String secretKeyPropName = "amazon.aws.secretkey";
     private static final Log LOG = LogFactory.getLog(CredentialsServiceImpl.class);
+    private static final long bytesInGB = 1073741824;
+    private static final long defaultChunkSize = 4096;
     private AWSCredentials credentials = null;
     private final String DEFAULT_LOGIN = "admin@snapdirector";
     private String instanceId;
@@ -98,10 +106,58 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
-        InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
-
+        InitConfigurationDto initConfigurationDto = getInitConfigurationDtoTemplate();
 
         return initConfigurationDto;
+    }
+
+    private InitConfigurationDto getInitConfigurationDtoTemplate() {
+        InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
+
+        String bucketName =  "com.sungardas.snapdirector." + instanceId;
+        InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
+        s3.setBucketName(bucketName);
+        s3.setCreated(bucketAlreadyExists(bucketName));
+
+        String queueName = "snapdirector_" + instanceId;
+        InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
+        queue.setQueueName(queueName);
+        queue.setCreated(queueAlreadyExists(queueName));
+
+        String volumeName = "awspool";
+        String mountPoint = "/mnt/awspool";
+        InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
+        sdfs.setMountPoint(mountPoint);
+        sdfs.setVolumeName(volumeName);
+        sdfs.setVolumeSize(Integer.toString(getSdfsVolumeMaxAvailableSizeInGB()) + "GB");
+        sdfs.setCreated(sdfsAlreadyExists(volumeName, mountPoint));
+
+        initConfigurationDto.setS3(s3);
+        initConfigurationDto.setQueue(queue);
+        initConfigurationDto.setSdfs(sdfs);
+
+        return initConfigurationDto;
+    }
+
+    private boolean bucketAlreadyExists(String bucketName) {
+        AmazonS3Client amazonS3Client = new AmazonS3Client(credentials);
+        return amazonS3Client.listBuckets().contains(bucketName);
+    }
+
+    private boolean queueAlreadyExists(String queueName) {
+        AmazonSQSClient amazonSQSClient = new AmazonSQSClient(credentials);
+        return amazonSQSClient.listQueues().getQueueUrls().contains(queueName);
+    }
+
+    private boolean sdfsAlreadyExists(String volumeName, String mountPoint) {
+        return false;
+    }
+
+    private int getSdfsVolumeMaxAvailableSizeInGB() {
+        long freeMem = Runtime.getRuntime().freeMemory();
+        long maxVolumeSize = (freeMem*defaultChunkSize)/33;
+
+        return (int)(maxVolumeSize/bytesInGB);
     }
 
     private void validateCredentials(String accessKey, String secretKey) {
