@@ -10,4 +10,8 @@ public interface SharedDataService {
     UserDto getAdminUser();
 
     String getAdminPassword();
+
+    void setUserInfo(String userInfo);
+
+    void setInitConfigurationDto(InitConfigurationDto initConfigurationDto);
 }

@@ -4,4 +4,5 @@
         http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="filterProxy" class="com.sungardas.snapdirector.rest.filters.FilterProxy"/>
+    <bean class="com.sungardas.snapdirector.service.impl.SharedDataServiceImpl"/>
 </beans>

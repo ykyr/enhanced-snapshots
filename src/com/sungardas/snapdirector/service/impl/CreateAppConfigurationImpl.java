@@ -1,7 +1,6 @@
 package com.sungardas.snapdirector.service.impl;
 
 
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -36,7 +34,7 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     @Value("${amazon.aws.secretkey}")
     private String amazonAWSSecretKey;
 
-    @Autowired private SharedDataserviceImpl sharedDataService;
+    @Autowired private SharedDataServiceImpl sharedDataService;
 
     @Autowired private AmazonDynamoDB amazonDynamoDB;
     @Autowired private AmazonSQS amazonSQS;

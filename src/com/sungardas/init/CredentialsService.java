@@ -1,10 +1,12 @@
 package com.sungardas.init;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSCredentials;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 
-public interface CredentialsService extends AWSCredentialsProvider {
-    void setCredentials(String acessKey, String secretKey);
+import javax.validation.constraints.NotNull;
+
+public interface CredentialsService {
+    void setCredentialsIfValid(@NotNull CredentialsDto credentials);
 
     void storeCredentials();
 
@@ -12,7 +14,9 @@ public interface CredentialsService extends AWSCredentialsProvider {
 
     InitConfigurationDto getInitConfigurationDto();
 
-    boolean areStoredCredentialsValid();
-
     boolean isAwsPropertyFileExists();
+
+    AWSCredentials getCredentials();
+
+    boolean checkDefaultUser(String login, String password);
 }

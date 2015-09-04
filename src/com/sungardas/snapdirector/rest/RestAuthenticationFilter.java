@@ -7,7 +7,6 @@ import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.rest.utils.JsonFromStream;
 import com.sungardas.snapdirector.rest.utils.MultiReadHttpServletRequest;
-import com.sungardas.snapdirector.service.DefaultUserAuthenticationService;
 import com.sungardas.snapdirector.service.InitializationService;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.logging.log4j.LogManager;

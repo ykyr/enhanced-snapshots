@@ -32,41 +32,31 @@ import java.util.List;
 public class InitServiceImpl implements InitService {
     private static final Logger LOG = LogManager.getLogger(InitServiceImpl.class);
 
-    @Autowired private CredentialsService credentialsService;
+    @Autowired
+    private CredentialsService credentialsService;
 
     private Region currentRegion;
     private AmazonDynamoDB amazonDynamoDB;
     private AmazonS3 amazonS3;
-    private InitConfigurationDto initConfigurationDto;
 
-    @PostConstruct private void init() {
+    @PostConstruct
+    private void init() {
         currentRegion = Regions.getCurrentRegion();
         amazonDynamoDB = getDynamoDbClient();
-        initConfigurationDto = getInitConfigurationDto();
     }
 
     private AmazonDynamoDBClient getDynamoDbClient() {
-        return new AmazonDynamoDBClient(credentialsService);
+        return new AmazonDynamoDBClient(credentialsService.getCredentials());
     }
 
     private AmazonS3Client getS3client() {
-        return new AmazonS3Client(credentialsService);
+        return new AmazonS3Client(credentialsService.getCredentials());
     }
 
     private AmazonSQSClient getSQSClient() {
-        return new AmazonSQSClient(credentialsService);
+        return new AmazonSQSClient(credentialsService.getCredentials());
     }
 
-    private InitConfigurationDto getInitConfigurationDto() {
-        ObjectMapper mapper = new ObjectMapper();
-        String templateFile = "";
-        try {
-            return mapper.readValue( new File(templateFile), InitConfigurationDto.class);
-        } catch (IOException cantReadConfigurationTemplate) {
-            LOG.error("Can't read configuration from file{}", templateFile, cantReadConfigurationTemplate);
-            throw new ConfigurationException(cantReadConfigurationTemplate);
-        }
-    }
 
     @Override
     public boolean isDbStructureValid() {
@@ -160,12 +150,4 @@ public class InitServiceImpl implements InitService {
             throw new ConfigurationException("CreateTable request failed for " + tableName,e);
         }
     }
-
-    private void isDefaultConfigurationValid() {
-        initConfigurationDto.getQueue().getQueueName();
-        initConfigurationDto.getS3().getBucketName();
-        initConfigurationDto.getSdfs().getMountPoint();
-        initConfigurationDto.getSdfs().getVolumeName();
-    }
-
 }

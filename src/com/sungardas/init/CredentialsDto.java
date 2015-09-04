@@ -1,4 +1,4 @@
-package com.sungardas.snapdirector.dto;
+package com.sungardas.init;
 
 public class CredentialsDto {
     private String awsPublicKey;
