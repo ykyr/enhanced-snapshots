@@ -5,7 +5,6 @@
     <p ng-show="!deleteErrors || deleteErrors.length == 0">Backup delete operation successfully added to the task queue!</p>
 
     <p ng-show="deleteErrors && deleteErrors.length == selectedBackups.length"> Failed to add delete operation to task queue! </p>
-
     <div ng-show="deleteErrors && deleteErrors.length > 0 && deleteErrors.length < selectedBackups.length">
         <p>Some of selected backups failed to be added to task queue.
             <blockquote>
@@ -14,7 +13,6 @@
             </blockquote>
         </p>
     </div>
-
 </div>
 <div class="modal-footer">
     <a class="btn btn-info" ng-click="$close()"><span class="glyphicon glyphicon-tasks"></span>&nbsp; Go to Tasks</a>

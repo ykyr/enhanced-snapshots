@@ -148,7 +148,7 @@
                     <input type="checkbox" ng-checked="volume.isSelected" class="hidden"/> &nbsp;
                 </td>
                 <td class="text-center commands">
-                    <button class="btn btn-link hidden" title="Retention rule" ng-click="retentionRule(volume); $event.stopPropagation();"><span
+                    <button class="btn btn-link" title="Retention rule" ng-click="retentionRule(volume); $event.stopPropagation();"><span
                             class="glyphicon glyphicon-erase" ng-hide="isDisabled(volume)"></span></button>
                     <a ui-sref="app.volume.schedule({ volumeId: volume.volumeId })" class="btn btn-link "
                        title="Schedule backup" ng-hide="isDisabled(volume)" ng-click="$event.stopPropagation()"><span

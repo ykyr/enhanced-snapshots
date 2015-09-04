@@ -8,7 +8,5 @@ import java.util.List;
 
 @EnableScan
 public interface UserRepository extends CrudRepository<User, String> {
-    List<User> findByLastName(String lastName);
-
     List<User> findByRole(String lastName);
 }

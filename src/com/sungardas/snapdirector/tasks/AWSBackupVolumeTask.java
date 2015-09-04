@@ -11,6 +11,7 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.service.AWSCommunticationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
+import com.sungardas.snapdirector.service.RetentionService;
 import com.sungardas.snapdirector.service.StorageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,6 +54,9 @@ public class AWSBackupVolumeTask implements BackupTask {
 
     @Autowired
     private ConfigurationService configurationService;
+
+    @Autowired
+    private RetentionService retentionService;
 
     private WorkerConfiguration configuration;
 
@@ -130,6 +134,7 @@ public class AWSBackupVolumeTask implements BackupTask {
         LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
         taskRepository.delete(taskEntry);
         LOG.info("Task completed.");
+        retentionService.apply();
     }
 
     private Volume createAndAttachBackupVolume(String volumeId, String instanceId) {
