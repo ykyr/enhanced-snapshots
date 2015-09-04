@@ -4,6 +4,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.ec2.AmazonEC2Client;
@@ -37,6 +38,8 @@ class CredentialsServiceImpl implements CredentialsService {
     private final String propFileName = "amazon.properties";
     private final String accessKeyPropName = "amazon.aws.accesskey";
     private final String secretKeyPropName = "amazon.aws.secretkey";
+    private static final String AMAZON_AWS_REGION = "amazon.aws.region";
+    private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
     private static final Log LOG = LogFactory.getLog(CredentialsServiceImpl.class);
     private static final long bytesInGB = 1073741824;
     private static final long defaultChunkSize = 4096;
@@ -62,8 +65,11 @@ class CredentialsServiceImpl implements CredentialsService {
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
+
             properties.setProperty(accessKeyPropName, credentials.getAWSAccessKeyId());
             properties.setProperty(secretKeyPropName, credentials.getAWSSecretKey());
+            properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
+            properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, getInstanceId());
 
             properties.store(new FileOutputStream(file), "AWS Credentials");
         } catch (IOException ioException) {

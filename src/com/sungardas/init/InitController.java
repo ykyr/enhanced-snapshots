@@ -4,9 +4,11 @@ import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
 
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
+import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
+import com.sungardas.snapdirector.rest.RestAuthenticationFilter;
 import com.sungardas.snapdirector.rest.filters.FilterProxy;
 
 import com.sungardas.snapdirector.service.SharedDataService;
@@ -127,7 +129,9 @@ class InitController implements ApplicationContextAware {
         applicationContext.refresh();
 
         // enabling auth filter
-        filterProxy.setFilter((Filter) applicationContext.getBean("restAuthenticationFilter"));
+        RestAuthenticationFilter filter = applicationContext.getBean(RestAuthenticationFilter.class);
+        filter.setUserRepository(applicationContext.getBean(UserRepository.class));
+        filterProxy.setFilter(filter);
 
         LOG.info("Context refreshed successfully.");
         CONTEXT_REFRESH_IN_PROCESS = false;
