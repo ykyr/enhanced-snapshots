@@ -1,6 +1,6 @@
 package com.sungardas.init;
 
-public class CredentialsDto {
+class CredentialsDto {
     private String awsPublicKey;
 
     private String awsSecretKey;

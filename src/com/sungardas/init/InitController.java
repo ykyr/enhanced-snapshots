@@ -32,7 +32,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 
 @RestController
-public class InitController implements ApplicationContextAware {
+class InitController implements ApplicationContextAware {
 
     private static final Logger LOG = LogManager.getLogger(InitController.class);
 
@@ -98,14 +98,20 @@ public class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody String userInfo) {
-        if (userInfo == null && !userInfo.isEmpty() && !credentialsService.getInitConfigurationDto().getDb().isValid()) {
-            throw new ConfigurationException("Please create default user");
-        }
-        sharedDataService.setUserInfo(userInfo);
-        sharedDataService.setInitConfigurationDto(credentialsService.getInitConfigurationDto());
+        if(credentialsService.areCredentialsValid()){
+            InitConfigurationDto initConfigurationDto = credentialsService.getInitConfigurationDto();
+            if (userInfo == null && !userInfo.isEmpty() && !initConfigurationDto.getDb().isValid()) {
+                throw new ConfigurationException("Please create default user");
+            }
+            sharedDataService.setUserInfo(userInfo);
+            sharedDataService.setInitConfigurationDto(initConfigurationDto);
+            credentialsService.storeCredentials();
 
-        refreshContext();
-        return new ResponseEntity<>("", HttpStatus.OK);
+            refreshContext();
+            return new ResponseEntity<>("", HttpStatus.OK);
+        } else {
+            throw new ConfigurationException("AWS credentials invalid");
+        }
     }
 
     @Override

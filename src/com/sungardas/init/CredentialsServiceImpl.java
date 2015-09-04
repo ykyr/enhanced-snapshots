@@ -25,7 +25,7 @@ import java.util.Properties;
 import java.util.Scanner;
 
 @Service
-public class CredentialsServiceImpl implements CredentialsService {
+class CredentialsServiceImpl implements CredentialsService {
     private final String catalinaHomeEnvPropName = "catalina.home";
     private final String confFolderName = "conf";
     private final String propFileName = "amazon.properties";

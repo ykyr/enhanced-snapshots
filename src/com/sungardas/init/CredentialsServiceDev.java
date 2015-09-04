@@ -5,7 +5,7 @@ import com.sungardas.snapdirector.dto.InitConfigurationDto;
 
 import javax.validation.constraints.NotNull;
 
-public class CredentialsServiceDev implements CredentialsService {
+class CredentialsServiceDev implements CredentialsService {
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
