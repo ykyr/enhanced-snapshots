@@ -7,7 +7,12 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.sungardas.snapdirector.aws.dynamodb.model.User;
+import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
+import com.sungardas.snapdirector.dto.UserDto;
+import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.service.CreateAppConfiguration;
 import org.apache.commons.logging.Log;
@@ -17,16 +22,19 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     private static final Log LOG = LogFactory.getLog(CreateAppConfigurationImpl.class);
 
-    @Autowired SharedDataserviceImpl sharedDataService;
+    @Autowired private SharedDataserviceImpl sharedDataService;
 
-    @Autowired  AmazonDynamoDB amazonDynamoDB;
+    @Autowired private AmazonDynamoDB amazonDynamoDB;
+    @Autowired private AmazonSQS amazonSQS;
 
-    @Autowired  AmazonSQS amazonSQS;
+    @Autowired private UserRepository userRepository;
 
     @PostConstruct
     private void createConfiguration() {
@@ -36,11 +44,14 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     }
 
     private void createDB() {
+        createDbStructure();
+        createAdminUserIfProvided();
 
+        createTaskQueue();
+        createSDFS();
     }
 
-
-    public void createDbStructure() throws ConfigurationException {
+    private void createDbStructure() throws ConfigurationException {
         createTable("BackupList", 1L, 1L, "volumeId", "S", "fileName ", "S");
         createTable("Configurations", 1L, 1L, "configurationId ", "S");
         createTable("Retention", 1L, 1L, "volumeId  ", "S");
@@ -107,5 +118,44 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
             LOG.error("CreateTable request failed for " + tableName, e);
             throw new ConfigurationException("CreateTable request failed for " + tableName,e);
         }
+    }
+
+    private void createAdminUserIfProvided() {
+        UserDto userDto = sharedDataService.getAdminUser();
+        String password = sharedDataService.getAdminPassword();
+        if(userDto!=null && password != null) {
+            User userToCreate = UserDtoConverter.convert(userDto);
+            userToCreate.setPassword(password);
+            userRepository.save(userToCreate);
+        }
+    }
+
+    private void createTaskQueue() {
+        boolean deleteFirst = sharedDataService.getInitConfigurationDto().getQueue().isCreated();
+        String queue =  sharedDataService.getInitConfigurationDto().getQueue().getQueueName();
+        if(deleteFirst) {
+            amazonSQS.deleteQueue(queue);
+            try {
+                TimeUnit.SECONDS.sleep(65);
+            } catch (InterruptedException e) {}
+        }
+
+        HashMap<String, String> queueAttributes = new HashMap<>();
+        queueAttributes.put("DelaySeconds","");
+        queueAttributes.put("MaximumMessageSize","");
+        queueAttributes.put("MessageRetentionPeriod","");
+        queueAttributes.put("ReceiveMessageWaitTimeSeconds","");
+        queueAttributes.put("VisibilityTimeout","");
+        queueAttributes.put("Policy","");
+
+        CreateQueueRequest createQueueRequest = new CreateQueueRequest()
+                .withQueueName(queue).withAttributes(queueAttributes);
+        amazonSQS.createQueue(createQueueRequest);
+
+    }
+
+    private void createSDFS() {
+        InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
+
     }
 }
