@@ -2,8 +2,7 @@
 
 angular.module('web')
     .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state) {
-        var DELAYTIME = 10000;
-        var POSTREPEATS = 12;
+        var DELAYTIME = 120*1000;
 
         $scope.STRINGS = {
             s3: {
@@ -85,37 +84,19 @@ angular.module('web')
                     var newUser = $scope.userToEdit;
                     delete newUser.isNew;
 
-                    Configuration.send('current', newUser).then(
-
-                    );
-
                     $scope.progressState = 'running';
-                    var counter = 0;
+                    Configuration.send('current', newUser, DELAYTIME).then(function () {
+                        $scope.progressState = 'success';
+                    }, function () {
+                        $scope.progressState = 'failed';
+                    });
 
-                    function myTimeoutFunction() {
-                        Volumes.get().then(function () {
-
-                        }, function (data, status) {
-
-                            if (status === 403) {
-                                $scope.progressState = 'success';
-                            }
-                            else if (counter++ >= POSTREPEATS) {
-                                $scope.progressState = 'failed';
-                            } else {
-                                setTimeout(myTimeoutFunction, DELAYTIME);
-                            }
-                        });
-                    }
-
-                    myTimeoutFunction();
                     wizardCreationProgress();
 
                 });
             } else {
-                Configuration.send('current').then();
+                Configuration.send('current');
             }
-
         };
 
         var wizardCreationProgress = function () {

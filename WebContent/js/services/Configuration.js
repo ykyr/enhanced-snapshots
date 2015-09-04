@@ -18,13 +18,16 @@ angular.module('web')
         };
 
 
-        var _send = function (type, item) {
+        var _send = function (type, item, timeout) {
             var deferred = $q.defer();
-            $http({
+            var request = {
                 url: url + "/" + type,
                 method: "POST",
-                data: item
-            }).then(function () {
+                data: item || {}
+            };
+            if (timeout) {request.timeout = timeout;}
+
+            $http(request).then(function () {
                 deferred.resolve()
             }, function (data, status) {
                 deferred.reject(data, status)
@@ -36,8 +39,8 @@ angular.module('web')
             get: function (type) {
                 return _get(type);
             },
-            send: function (type, item) {
-                return _send(type, item);
+            send: function (type, item, timeout) {
+                return _send(type, item, timeout);
             }
         }
     });
