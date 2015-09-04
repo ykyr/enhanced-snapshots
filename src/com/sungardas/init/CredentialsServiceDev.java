@@ -4,8 +4,13 @@ import com.amazonaws.auth.AWSCredentials;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 
 import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.nio.file.Paths;
 
 class CredentialsServiceDev implements CredentialsService {
+    private final String catalinaHomeEnvPropName = "catalina.home";
+    private final String confFolderName = "conf";
+    private final String propFileName = "amazon.properties";
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
@@ -53,7 +58,7 @@ class CredentialsServiceDev implements CredentialsService {
 
     @Override
     public boolean isAwsPropertyFileExists() {
-        return false;
+        return getPropertyFile().exists();
     }
 
     @Override
@@ -64,5 +69,9 @@ class CredentialsServiceDev implements CredentialsService {
     @Override
     public boolean checkDefaultUser(String login, String password) {
         return true;
+    }
+
+    private File getPropertyFile() {
+        return Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
     }
 }

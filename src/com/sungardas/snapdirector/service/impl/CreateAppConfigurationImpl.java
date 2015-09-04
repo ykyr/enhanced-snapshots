@@ -4,7 +4,6 @@ package com.sungardas.snapdirector.service.impl;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
@@ -16,7 +15,6 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.dto.UserDto;
-import com.sungardas.snapdirector.dto.WorkerConfigurationDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
@@ -59,18 +57,22 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
         InitConfigurationDto initConfigurationDto =  sharedDataService.getInitConfigurationDto();
         if(initConfigurationDto==null) return;
 
-
         boolean createDB = !initConfigurationDto.getDb().isValid();
-       if(createDB) createDB();
+        if(createDB) {
+            dropDbTables();
+            createDbAndStoreData();
+        }
         createTaskQueue();
-        if(initConfigurationDto.getSdfs().isCreated()) createSDFS();
 
-        createSDFS();
+        if(initConfigurationDto.getSdfs().isCreated()) {
+            createSDFS();
+        }
     }
 
-    private void createDB() {
+    private void createDbAndStoreData() {
         createDbStructure();
-        createAdminUserIfProvided();
+        storeAdminUserIfProvided();
+        storeWorkerConfiguration();
     }
 
     private void createDbStructure() throws ConfigurationException {
@@ -143,7 +145,7 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
         }
     }
 
-    private void createAdminUserIfProvided() {
+    private void storeAdminUserIfProvided() {
         UserDto userDto = sharedDataService.getAdminUser();
         String password = sharedDataService.getAdminPassword();
         if(userDto!=null && password != null) {
@@ -166,7 +168,6 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
         CreateQueueRequest createQueueRequest = new CreateQueueRequest()
                 .withQueueName(queue);
         amazonSQS.createQueue(createQueueRequest);
-
     }
 
     private void createSDFS() {
@@ -188,7 +189,7 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
         }
     }
 
-    private void storeAsWorkerConfiguration() {
+    private void storeWorkerConfiguration() {
         InitConfigurationDto dto =  sharedDataService.getInitConfigurationDto();
         WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
         configurationRepository.save(workerConfiguration);
