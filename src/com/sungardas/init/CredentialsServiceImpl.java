@@ -118,7 +118,7 @@ class CredentialsServiceImpl implements CredentialsService {
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
         InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
-
+        initConfigurationDto.setDb(new InitConfigurationDto.DB());
         initConfigurationDto.getDb().setValid(isDbValidOrAbsent());
 
         String bucketName =  "com.sungardas.snapdirector." + instanceId;
