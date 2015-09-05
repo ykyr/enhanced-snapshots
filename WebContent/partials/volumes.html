@@ -159,12 +159,12 @@
                 </td>
                 <td>
                     <i class="glyphicon glyphicon-record text-{{statusColorClass[volume.state]}}"></i>
-                    {{::volume.state}}
+                    {{volume.state}}
                 </td>
-                <td>{{::volume.volumeId}}</td>
-                <td>{{::volume.volumeName}}</td>
-                <td>{{::volume.size}} GB</td>
-                <td>{{::volume.snapshotId}}</td>
+                <td>{{volume.volumeId}}</td>
+                <td>{{volume.volumeName}}</td>
+                <td>{{volume.size}} GB</td>
+                <td>{{volume.snapshotId}}</td>
                 <td>
                     <div class="tags">
                         <div ng-repeat="tag in volume.tags track by $index" class="tag label label-primary">
@@ -172,9 +172,9 @@
                         </div>
                     </div>
                 </td>
-                <td>{{::volume.instanceID}}</td>
-                <td>{{::volume.createTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
-                <td>{{::volume.availabilityZone}}</td>
+                <td>{{volume.instanceID}}</td>
+                <td>{{volume.createTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+                <td>{{volume.availabilityZone}}</td>
             </tr>
             </tbody>
             <tfoot>
