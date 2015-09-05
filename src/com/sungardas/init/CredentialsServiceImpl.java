@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
@@ -114,7 +115,8 @@ class CredentialsServiceImpl implements CredentialsService {
     public InitConfigurationDto getInitConfigurationDto() {
         InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
-        initConfigurationDto.getDb().setValid(isDbValidOrAbsent());
+        initConfigurationDto.getDb().setValid(false);
+        initConfigurationDto.getDb().setValid(isDbExists());
 
         String bucketName =  "com.sungardas.snapdirector." + instanceId;
         InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
@@ -141,9 +143,26 @@ class CredentialsServiceImpl implements CredentialsService {
         return initConfigurationDto;
     }
 
+    private boolean isDbExists() {
+        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
+        AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
+        amazonDynamoDB.setRegion(Regions.getCurrentRegion());
+        try {
+            ListTablesResult listResult = amazonDynamoDB.listTables();
+            List<String> tableNames = listResult.getTableNames();
+            LOG.info("List db structure: {}", tableNames.toArray());
+            LOG.info("Check db structure is present: {}", tableNames.containsAll(Arrays.asList(tables)));
+            return tableNames.containsAll(Arrays.asList(tables));
+        }catch (AmazonServiceException accessError) {
+            LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
+            throw new DataAccessException(accessError);
+        }
+    }
+
     private boolean isDbValidOrAbsent() {
         String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
         AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
+        amazonDynamoDB.setRegion(Regions.getCurrentRegion());
         try {
             ListTablesResult listResult = amazonDynamoDB.listTables();
             List<String> tableNames = listResult.getTableNames();
@@ -152,7 +171,6 @@ class CredentialsServiceImpl implements CredentialsService {
             LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);
         }
-
     }
 
     private boolean containsAllOrAny(String[] toCheck, List<String> where) {
@@ -167,6 +185,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private boolean bucketAlreadyExists(String bucketName) {
         AmazonS3Client amazonS3Client = new AmazonS3Client(credentials);
+        amazonS3Client.setRegion(Regions.getCurrentRegion());
         try {
         return amazonS3Client.listBuckets().contains(bucketName);
         }catch (AmazonServiceException accessError) {
@@ -177,6 +196,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private boolean queueAlreadyExists(String queueName) {
         AmazonSQSClient amazonSQSClient = new AmazonSQSClient(credentials);
+        amazonSQSClient.setRegion(Regions.getCurrentRegion());
         try {
         return amazonSQSClient.listQueues().getQueueUrls().contains(queueName);
         }catch (AmazonServiceException accessError) {
