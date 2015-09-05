@@ -3,30 +3,25 @@ package com.sungardas.init;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.ListBucketsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -45,7 +40,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private final String secretKeyPropName = "amazon.aws.secretkey";
     private static final String AMAZON_AWS_REGION = "amazon.aws.region";
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
-    private static final Log LOG = LogFactory.getLog(CredentialsServiceImpl.class);
+    private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
     private static final long bytesInGB = 1073741824;
     private static final long defaultChunkSize = 4096;
     private AWSCredentials credentials = null;
@@ -126,7 +121,7 @@ class CredentialsServiceImpl implements CredentialsService {
         s3.setBucketName(bucketName);
         s3.setCreated(bucketAlreadyExists(bucketName));
 
-        String queueName = getUserId() + "/snapdirector_" + instanceId;
+        String queueName = getAccountId() + "/snapdirector_" + instanceId;
         InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
         queue.setQueueName(queueName);
         queue.setCreated(queueAlreadyExists(queueName));
@@ -199,8 +194,10 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private int getSdfsVolumeMaxAvailableSizeInGB() {
         long freeMem = Runtime.getRuntime().freeMemory();
+        LOG.info("Memory available: {}", freeMem);
+        LOG.info("Default chunk size: {}", defaultChunkSize);
         long maxVolumeSize = (freeMem*defaultChunkSize)/33;
-
+        LOG.info("Maximum volume size can be set: {}", maxVolumeSize);
         return (int)(maxVolumeSize/bytesInGB);
     }
 
@@ -217,10 +214,10 @@ class CredentialsServiceImpl implements CredentialsService {
         return Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
     }
 
-    private String getUserId() {
+    private String getAccountId() {
         AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentials);
         try {
-        return iamClient.getUser().getUser().getUserId();
+            return iamClient.getUser().getUser().getArn().replaceAll("[^\\d]", "");
         }catch (AmazonServiceException accessError) {
             LOG.info("Can't get userId. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);
