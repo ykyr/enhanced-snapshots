@@ -11,7 +11,7 @@ angular.module('web')
             name: "GLOBAL",
             id: ""
         };
-        $scope.statusColorClass = {
+        $scope.stateColorClass = {
             "in-use": "success",
             "creating": "error",
             "available": "info",
