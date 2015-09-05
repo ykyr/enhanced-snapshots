@@ -21,12 +21,14 @@ import com.sungardas.snapdirector.service.StorageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import static java.lang.String.format;
 
 @Service
+@DependsOn("CreateAppConfiguration")
 @Profile("prod")
 public class SDFSServiceImpl implements StorageService {
 

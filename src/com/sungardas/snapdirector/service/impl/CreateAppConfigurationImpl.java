@@ -1,12 +1,29 @@
 package com.sungardas.snapdirector.service.impl;
 
 
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
+import com.amazonaws.services.dynamodbv2.model.DeleteTableResult;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
@@ -18,54 +35,55 @@ import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
-import com.sungardas.snapdirector.service.CreateAppConfiguration;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
-
-@Profile("prod")
-@Service
-public class CreateAppConfigurationImpl implements CreateAppConfiguration {
-    private static final Log LOG = LogFactory.getLog(CreateAppConfigurationImpl.class);
+class CreateAppConfigurationImpl {
+    private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
 
     @Value("${amazon.aws.accesskey:}")
     private String amazonAWSAccessKey;
     @Value("${amazon.aws.secretkey}")
     private String amazonAWSSecretKey;
 
-    @Autowired private SharedDataServiceImpl sharedDataService;
+    @Autowired
+    private SharedDataServiceImpl sharedDataService;
 
-    @Autowired private AmazonDynamoDB amazonDynamoDB;
-    @Autowired private AmazonSQS amazonSQS;
+    @Autowired
+    private AmazonDynamoDB amazonDynamoDB;
+    @Autowired
+    private AmazonSQS amazonSQS;
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private WorkerConfigurationRepository configurationRepository;
+    private boolean init = false;
 
     @PostConstruct
-    private void createConfiguration() {
-        InitConfigurationDto initConfigurationDto =  sharedDataService.getInitConfigurationDto();
-        if(initConfigurationDto==null) return;
+    private void init() {
+        if (!init) {
+            LOG.info("Initialization started");
+            init = true;
+            InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
+            if (initConfigurationDto == null) {
+                return;
+            }
 
-        boolean createDB = !initConfigurationDto.getDb().isValid();
-        if(createDB) {
-            dropDbTables();
-            createDbAndStoreData();
-        }
-        createTaskQueue();
+            boolean createDB = !initConfigurationDto.getDb().isValid();
+            if (createDB) {
+                LOG.info("Initialization DB");
+                dropDbTables();
+                createDbAndStoreData();
+            }
+            LOG.info("Initialization Queue");
+            createTaskQueue();
 
-        if(initConfigurationDto.getSdfs().isCreated()) {
-            createSDFS();
+            if (initConfigurationDto.getSdfs().isCreated()) {
+                LOG.info("Initialization SDFS");
+                createSDFS();
+            }
+            LOG.info("Initialization finished");
         }
     }
 
@@ -76,13 +94,12 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     }
 
     private void createDbStructure() throws ConfigurationException {
-        createTable("BackupList", 1L, 1L, "volumeId", "S", "fileName ", "S");
-        createTable("Configurations", 1L, 1L, "configurationId ", "S");
-        createTable("Retention", 1L, 1L, "volumeId  ", "S");
-        createTable("Schedule", 1L, 1L, "id  ", "S");
-        createTable("Tasks", 1L, 1L, "id  ", "S");
-        createTable("Users", 1L, 1L, "email   ", "S");
-        createTable("Snapshots", 1L, 1L, "id   ", "S");
+        createTable("BackupList", 1L, 1L, "volumeId", "S", "fileName", "S");
+        createTable("Configurations", 1L, 1L, "configurationId", "S");
+        createTable("Retention", 1L, 1L, "volumeId", "S");
+        createTable("Tasks", 1L, 1L, "id", "S");
+        createTable("Users", 1L, 1L, "email", "S");
+        createTable("Snapshots", 1L, 1L, "id", "S");
     }
 
     private void createTable(
@@ -124,7 +141,7 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
             CreateTableRequest request = new CreateTableRequest()
                     .withTableName(tableName)
                     .withKeySchema(keySchema)
-                    .withProvisionedThroughput( new ProvisionedThroughput()
+                    .withProvisionedThroughput(new ProvisionedThroughput()
                             .withReadCapacityUnits(readCapacityUnits)
                             .withWriteCapacityUnits(writeCapacityUnits));
 
@@ -132,7 +149,6 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
             request.setAttributeDefinitions(attributeDefinitions);
 
             LOG.info("Issuing CreateTable request for " + tableName);
-            CreateTableResult createResult = amazonDynamoDB.createTable(request);
 
             Table table = dynamoDB.createTable(request);
             LOG.info("Waiting for " + tableName
@@ -141,28 +157,30 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
 
         } catch (Exception e) {
             LOG.error("CreateTable request failed for " + tableName, e);
-            throw new ConfigurationException("CreateTable request failed for " + tableName,e);
+            throw new ConfigurationException("CreateTable request failed for " + tableName, e);
         }
     }
 
     private void storeAdminUserIfProvided() {
         UserDto userDto = sharedDataService.getAdminUser();
         String password = sharedDataService.getAdminPassword();
-        if(userDto!=null && password != null) {
+        if (userDto != null && password != null) {
             User userToCreate = UserDtoConverter.convert(userDto);
-            userToCreate.setPassword(password);
-            userRepository.save(userToCreate);
+            userToCreate.setPassword(DigestUtils.sha512Hex(password));
+            DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
+            mapper.save(userToCreate);
         }
     }
 
     private void createTaskQueue() {
         boolean deleteFirst = sharedDataService.getInitConfigurationDto().getQueue().isCreated();
-        String queue =  sharedDataService.getInitConfigurationDto().getQueue().getQueueName();
-        if(deleteFirst) {
+        String queue = sharedDataService.getInitConfigurationDto().getQueue().getQueueName();
+        if (deleteFirst) {
             amazonSQS.deleteQueue(queue);
             try {
                 TimeUnit.SECONDS.sleep(65);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         }
 
         CreateQueueRequest createQueueRequest = new CreateQueueRequest()
@@ -176,13 +194,14 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
 
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
         String pathToExec = CreateAppConfigurationImpl.class.getResource("mount_sdfs.sh").getFile();
-        String[] parameters = {sdfs.getVolumeSize(), amazonAWSAccessKey ,bucketName, amazonAWSSecretKey};
+        String[] parameters = {sdfs.getVolumeSize(), amazonAWSAccessKey, bucketName, amazonAWSSecretKey};
         try {
             Process p = Runtime.getRuntime().exec("." + pathToExec, parameters);
             p.waitFor();
-            if (p.exitValue() != 0)
+            if (p.exitValue() != 0) {
                 throw new ConfigurationException("Error creating sdfs");
-        }catch (IOException e) {
+            }
+        } catch (IOException e) {
             //TODO: creation error handling
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -190,9 +209,10 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     }
 
     private void storeWorkerConfiguration() {
-        InitConfigurationDto dto =  sharedDataService.getInitConfigurationDto();
+        InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();
         WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
-        configurationRepository.save(workerConfiguration);
+        DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
+        mapper.save(workerConfiguration);
     }
 
     private WorkerConfiguration convertToWorkerConfiguration(InitConfigurationDto dto) {
@@ -209,17 +229,24 @@ public class CreateAppConfigurationImpl implements CreateAppConfiguration {
     }
 
     private void dropDbTables() {
-        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention" ,"Snapshots"};
+        DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
+        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
         int counter = 0;
-        for(String tabletoDelete :tables) {
+        for (String tabletoDelete : tables) {
             try {
-                amazonDynamoDB.deleteTable(tabletoDelete);
-            }catch(AmazonServiceException tableNotFoundOrCredError) {
+                Table table = dynamoDB.getTable(tabletoDelete);
+                table.delete();
+                table.waitForDelete();
+            } catch (AmazonServiceException tableNotFoundOrCredError) {
                 counter++;
+            } catch (InterruptedException e) {
+                throw new ConfigurationException(e);
             }
         }
 
-        if(counter==tables.length) throw new ConfigurationException("Can't delete tables. check AWS credentials");
+        if (counter == tables.length) {
+            throw new ConfigurationException("Can't delete tables. check AWS credentials");
+        }
     }
 
     private String getInstanceId() {

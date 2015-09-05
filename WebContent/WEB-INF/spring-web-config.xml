@@ -15,4 +15,11 @@
     <context:property-placeholder location="classpath:/amazon.properties,file:${catalina.home}/conf/amazon.properties"
                                   ignore-resource-not-found="true"/>
     <mvc:annotation-driven/>
+
+  <beans profile="prod">
+    <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationImpl"/>
+  </beans>
+  <beans profile="dev">
+    <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationDev"/>
+  </beans>
 </beans>

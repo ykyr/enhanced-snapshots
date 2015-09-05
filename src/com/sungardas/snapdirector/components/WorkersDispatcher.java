@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 
 @Component
+@DependsOn("CreateAppConfiguration")
 public class WorkersDispatcher {
 	@Autowired
 	private ConfigurationService configurationService;
