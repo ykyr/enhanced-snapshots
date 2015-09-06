@@ -1,17 +1,25 @@
-<div>
-    <div class="pull-right">
-        <button class="btn btn-link" ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span></button>
-        <button class="btn btn-link" ng-click="isFilterCollapsed = !isFilterCollapsed"><span
-                class="glyphicon glyphicon-filter"></span></button>
+<div class="header-page">
+    <div class="container">
+        <div class="sub-nav pull-right">
+            <div class="user">
+                <a ui-sref="logout" title="logout">{{getUserName()}}&nbsp;<span class="glyphicon glyphicon-off text-danger"></span></a>
+            </div>
+            <div class="page-btns">
+                <a href ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Refresh</a>
+                <span class="separator"></span>
+                <a href ng-click="isFilterCollapsed = !isFilterCollapsed"><span class="glyphicon glyphicon-filter"></span>&nbsp;Filter</a>
+            </div>
+        </div>
+        <div class="page-name">
+            <div class="go-back"><a ui-sref="app.volume.list">&lt;&nbsp;Back to Volumes</a></div>
+            <div class="current">EBS Volumes</div>
+        </div>
     </div>
 </div>
+<div class="table-header-placeholder"></div>
 
 
-<div class="form-inline">
-    <h2><span class="glyphicon glyphicon-hdd"></span>&nbsp; EBS Volumes</h2>
-</div>
-
-<div>
+<div class="container app">
     <div collapse="isFilterCollapsed">
         <div class="well">
 
@@ -143,12 +151,26 @@
                     </div>
 
                 </div>
-                <div class="tr state-{{volume.state}}" ng-repeat="volume in displayedCollection | stAdvancedFilter: stAdvancedFilter track by $index">
+                <div class="tr state-{{volume.state}}"
+                     ng-repeat="volume in displayedCollection | stAdvancedFilter: stAdvancedFilter track by $index"
+                     ng-class="{'row-disabled': isDisabled(volume)}">
+                    <div class="row-hover">
+                        <div class="flex-container data-container">
+                            <div class="flex-3 flex-center">
+                                <a href><span class="glyphicon glyphicon-erase"></span>&nbsp;Retention</a>
+                            </div>
+                            <div class="flex-3 flex-center">
+                                <a href><span class="glyphicon glyphicon-time"></span>&nbsp;Schedule</a>
+                            </div>
+                            <div class="flex-3 flex-center">
+                                <a href><span class="glyphicon glyphicon-calendar"></span>&nbsp;Backup&nbsp;history</a>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex-container data-container">
                         <div class="flex-2 flex-center">
                             <div>
-                                <span class="glyphicon glyphicon-{{ iconClass[volume.isSelected] }} text-primary"></span>
-                                <input type="checkbox" ng-checked="volume.isSelected" class="hidden"/> &nbsp;
+                                <span class="chb" ng-class="{'checked': volume.isSelected}" ng-click="toggleSelection(volume)"></span>
                             </div>
                         </div>
                         <div class="flex-3 flex-center">{{volume.volumeId}}</div>
@@ -159,6 +181,13 @@
                         <div class="flex-3 flex-center">{{volume.createTime | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
                         <div class="flex-3 flex-center">{{volume.availabilityZone}}</div>
                     </div>
+                    <div class="row-tags" ng-show="volume.tags && volume.tags.length">
+                        <div class="tags">
+                            <div ng-repeat="tag in volume.tags track by $index" class="tag label label-green">
+                                <div class="tag-value">{{tag.key}} : {{tag.value}}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -166,6 +195,7 @@
                 <thead>
                 <tr>
                     <th class="text-center">
+                        <input type="checkbox" ng-checked="volume.isSelected" class="hidden"/> &nbsp;
                         <a class="btn btn-link" ng-click="selectAll()" title="Click to {{ textClass[isAllSelected]}} all">
                             {{textClass[isAllSelected]}} all
                         </a>

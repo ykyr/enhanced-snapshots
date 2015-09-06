@@ -33,44 +33,8 @@ body > .container {
     min-height: 100%;
 }
 .container.app{
-
-}
-
-.navbar {
-    min-height: 80px;
-    margin-bottom: 0;
-    border: 1px solid transparent;
-}
-
-ul.nav-user {
-    margin: 0;
-}
-
-ul.nav-main li a,
-ul.nav-user li{
-    padding: 6px 10px;
-}
-
-ul.nav-main > li > a:hover,
-ul.nav-main > li.active > a{
-    color: #000;
-    background-color: transparent !important;
-}
-
-ul.nav-main > li > a > span {
-    display: inline-block;
-    padding: 6px 0;
-    border-bottom: 2px solid transparent;
-    text-transform: uppercase;
-    font-size: 14px;
-}
-
-ul.nav-main > li:hover > a > span {
-    border-bottom: 2px solid #1e1e1e;
-}
-
-ul.nav-main > li.active > a > span {
-    border-bottom: 2px solid #a1a9ac;
+    padding-top: 140px;
+    padding-bottom: 20px;
 }
 
 .clear-right {
@@ -332,6 +296,15 @@ input.ng-invalid-email{
     margin-bottom: 0.4em;
 }
 
+.row-tags {
+    text-align: right;
+    padding: 0 6px;
+}
+
+.tags {
+    display: inline-block;
+}
+
 .tags .tag {
     margin-right: 0.4em;
     margin-bottom: 0.4em;
@@ -368,13 +341,6 @@ input.ng-invalid-email{
     font-size: 14px;
 }
 
-
-.volumes-table-header {
-    position: fixed;
-    top: 70px;
-    z-index: 9999;
-    width: 100%;
-}
 
 
 table.bg-white {
@@ -473,15 +439,52 @@ div.data-container > div {
 
 
 div.tr {
+    position: relative;
     margin-bottom: 10px;
     background-color: white;
     border-radius: 3px;
     box-shadow: rgba(0, 0, 0, 0.3) 0 2px 10px -5px;
+    overflow: hidden;
 }
 
 div.tr:hover {
     box-shadow: rgba(0, 0, 0, 0.3) 0 7px 10px -5px;
 }
+
+div.tr:hover div.row-hover {
+    opacity: 1;
+    width: 40%;
+    right: 0;
+}
+
+div.tr div.row-hover {
+    transition: .2s linear all;
+    width: 40%;
+    opacity: 0;
+    position: absolute;
+    right: -40%;
+    top: 0;
+    bottom: 0;
+    background-color: #263f66;
+    border-bottom-right-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+div.tr div.row-hover a {
+    color: white;
+    font-weight: bold;
+}
+
+div.tr div.row-hover a:hover,
+div.tr div.row-hover a:focus {
+    color: #009f65;
+    text-decoration: none;
+}
+
+div.tr div.row-hover .data-container {
+    height: 100%;
+}
+
 
 div.tr.state-in-use {
     border-left: 3px solid #009f65;
@@ -494,12 +497,17 @@ div.tr.state-available {
 
 div.page-table div.thead {
     position: fixed;
-    top: 92px;
+    top: 90px;
     height: 35px;
 }
 
 div.table-header-placeholder {
-    height: 35px;
+    position: fixed;
+    right: 0;
+    left: 0;
+    top: 90px;
+    z-index: 1030;
+    height: 34px;
     background-color: #f1f2f6;
     box-shadow: rgba(0, 0, 0, 0.2) 0 7px 10px;
 }
@@ -551,9 +559,6 @@ div.thead div.th a {
 
 
 /* HEADER */
-.navbar {
-    background-color: white;
-}
 
 /* header-top */
 
@@ -613,12 +618,22 @@ div.thead div.th a {
 
 /* header-page */
 
+.header-page {
+    background-color: white;
+    position: fixed;
+    right: 0;
+    left: 0;
+    z-index: 1030;
+    top: 45px;
+}
+
 .header-page,
 .header-page a {
     color: #263f66;
 }
 
-.header-page a:hover {
+.header-page a:hover,
+.header-page a:focus {
     color: #172e52;
     text-decoration: none;
 }
@@ -662,3 +677,69 @@ div.thead div.th a {
 /* end of header-page */
 
 /* end of HEADER */
+
+
+/* Checkbox */
+
+.chb {
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-family: 'Glyphicons Halflings';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    color: transparent;
+
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+    padding: 4px;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.chb:before {
+    content: "\e013";
+}
+
+.chb:hover {
+    border-color: #7d7d7d;
+}
+
+.chb.checked {
+    background-color: #009f65;
+    color: white;
+    border: none;
+}
+
+.chb.checked:hover {
+    background-color: #007b4e;
+}
+/* end of Checkbox */
+
+/* Color scheme */
+
+.label-red {
+    background-color: #cc2130;
+}
+
+.label-green {
+    background-color: #009f65;
+}
+
+.label-yellow {
+    background-color: #febe11;
+}
+
+.label-blue {
+    background-color: #263f66;
+}
+
+.label-grey {
+    background-color: #7d7d7d;
+}
+
+/* end of Color scheme */
