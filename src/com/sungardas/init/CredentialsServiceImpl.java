@@ -129,7 +129,7 @@ class CredentialsServiceImpl implements CredentialsService {
         queue.setCreated(queueAlreadyExists(queueName));
 
         String volumeName = "awspool";
-        String mountPoint = "/mnt/awspool";
+        String mountPoint = "/mnt/awspool/";
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
