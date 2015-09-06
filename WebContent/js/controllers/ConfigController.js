@@ -7,33 +7,33 @@ angular.module('web')
         $scope.STRINGS = {
             s3: {
                 new: 'Will be created new as',
-                existing: ' bucket will be used'
+                existing: 'Will be used existing bucket:'
             },
             db: {
-                true: 'Database exists',
-                false: 'No database found. You will be proposed to create a new user on the next step'
+                isValid: {
+                    true: 'Database exists',
+                    false: 'No database found'
+                },
+                hasAdminUser: {
+                    false: 'You will need to create a new user on the next step'
+                }
             },
             queue: {
                 new: 'Will be created new as ',
-                existing: ' queue will be used'
+                existing: 'Will be used existing queue:'
             },
             sdfs: {
                 name: {
-                    new: 'Will be created new as',
-                    existing: ' name will be used'
+                    new: 'Will be created new volume:',
+                    existing: 'Will be used existing volume:'
                 },
-                size: {
-                    new: 'Will be set as'
-                },
-                point: {
-                    new: 'Will be at'
-                }
+                point:  'At mounting point:'
             }
         };
 
         $scope.iconClass = {
             true: 'ok',
-            false: 'minus'
+            false: 'cog'
         };
 
         $scope.statusColorClass = {

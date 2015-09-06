@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoginController', function ($scope, $state, Auth, Storage, Settings) {
+    .controller('LoginController', function ($scope, $state, Auth, Storage) {
 
         if(angular.isDefined(Storage.get("currentUser"))) {
             Auth.logOut();

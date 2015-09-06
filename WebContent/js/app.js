@@ -15,7 +15,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     }];
 
     var isConfig = ['$rootScope', function ($rootScope) {
-        if (!$rootScope.isConfigState()) throw "System is not in configuration state!";
+        if (!$rootScope.isConfigState())  throw "System is not in configuration state!";
         return true;
     }];
 

@@ -791,6 +791,35 @@ div.thead div.th a {
 
 /* end of text */
 
+/* bg */
+
+.snap .bg-danger {
+    color: #ffffff;
+    background-color: #cc2130;
+}
+
+.snap .bg-success {
+    color: #ffffff;
+    background-color: #009f65;
+}
+
+.snap .bg-warning {
+    color: #ffffff;
+    background-color: #febe11;
+}
+
+.snap .bg-primary {
+    color: #ffffff;
+    background-color: #263f66;
+}
+
+.snap .bg-default {
+    color: #ffffff;
+    background-color: #7d7d7d;
+}
+
+/* end of bg */
+
 
 /* buttons */
 
@@ -1068,4 +1097,34 @@ div.thead div.th a {
 
 /* end of st-table */
 
+/* modals */
+
+.snap .modal-header .modal-title {
+    font-size: 20px;
+}
+
+.snap .modal-header .modal-title .glyphicon{
+    font-size: 24px ;
+    padding-right: 6px;
+}
+
+.snap .modal-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+}
+/* end of modals */
+
+/* forms */
+.snap .form-group.form-buttons{
+    position: relative;
+    min-height: 1px;
+    padding-top: 15px;
+    padding-right: 15px;
+    padding-left: 15px;
+    width: 100%;
+    text-align: right;
+    margin-bottom: 0;
+}
+
+/* end of forms*/
 /* end of Color scheme */
