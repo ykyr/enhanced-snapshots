@@ -45,6 +45,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.context.support.XmlWebApplicationContext;
 
 class CreateAppConfigurationImpl {
     private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
@@ -64,6 +65,9 @@ class CreateAppConfigurationImpl {
 
     private boolean init = false;
 
+    @Autowired
+    private XmlWebApplicationContext applicationContext;
+
     @PostConstruct
     private void init() {
         if (!init) {
@@ -82,11 +86,11 @@ class CreateAppConfigurationImpl {
             }
             LOG.info("Initialization Queue");
             createTaskQueue();
-//
-//            if (initConfigurationDto.getSdfs().isCreated()) {
-//                LOG.info("Initialization SDFS");
-//                createSDFS();
-//            }
+
+            if (initConfigurationDto.getSdfs().isCreated()) {
+                LOG.info("Initialization SDFS");
+                createSDFS();
+            }
             System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
         }
@@ -212,18 +216,18 @@ class CreateAppConfigurationImpl {
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
 
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
-        String pathToExec = CreateAppConfigurationImpl.class.getResource("mount_sdfs.sh").getFile();
         String[] parameters = {sdfs.getVolumeSize(), amazonAWSAccessKey, bucketName, amazonAWSSecretKey};
         try {
+            String pathToExec = applicationContext.getResource("classpath:mount_sdfs.sh").getFile().getAbsolutePath();
             Process p = Runtime.getRuntime().exec("." + pathToExec, parameters);
             p.waitFor();
             if (p.exitValue() != 0) {
                 throw new ConfigurationException("Error creating sdfs");
             }
         } catch (IOException e) {
-            //TODO: creation error handling
+            LOG.error(e);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOG.error(e);
         }
     }
 

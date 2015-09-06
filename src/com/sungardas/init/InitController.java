@@ -1,7 +1,6 @@
 package com.sungardas.init;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.Filter;
 
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
@@ -10,8 +9,8 @@ import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.rest.RestAuthenticationFilter;
 import com.sungardas.snapdirector.rest.filters.FilterProxy;
-
 import com.sungardas.snapdirector.service.SharedDataService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -100,12 +99,14 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody String userInfo) {
-        if(credentialsService.areCredentialsValid()){
+        if(credentialsService.areCredentialsValid()) {
             InitConfigurationDto initConfigurationDto = credentialsService.getInitConfigurationDto();
-            if (userInfo == null && !userInfo.isEmpty() && !initConfigurationDto.getDb().isValid()) {
-                throw new ConfigurationException("Please create default user");
+            if (!initConfigurationDto.getDb().isValid()){
+                if (userInfo == null && !userInfo.isEmpty() && "{}".equals(userInfo)) {
+                    throw new ConfigurationException("Please create default user");
+                }
+                sharedDataService.setUserInfo(userInfo);
             }
-            sharedDataService.setUserInfo(userInfo);
             sharedDataService.setInitConfigurationDto(initConfigurationDto);
             credentialsService.storeCredentials();
 

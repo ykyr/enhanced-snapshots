@@ -31,13 +31,15 @@ public class SharedDataServiceImpl implements SharedDataService {
 
     @Override
     public void setUserInfo(String userInfo) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        try {
-            userDto = mapper.readValue(userInfo, UserDto.class);
-            password = mapper.readValue(userInfo, ObjectNode.class).get("password").asText();
-        } catch (IOException e) {
-            throw new ConfigurationException(e);
+        if(userInfo != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            try {
+                userDto = mapper.readValue(userInfo, UserDto.class);
+                password = mapper.readValue(userInfo, ObjectNode.class).get("password").asText();
+            } catch (IOException e) {
+                throw new ConfigurationException(e);
+            }
         }
     }
 
