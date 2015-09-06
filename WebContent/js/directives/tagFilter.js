@@ -13,7 +13,7 @@ angular.module('web')
                 '<span class="input-group-btn"><button class="btn btn-primary" ng-click="add()"><span class="glyphicon glyphicon-plus"></span></button></span>' +
             '</div>' +
             '<div class="tags">' +
-                '<div ng-repeat="tag in tags track by $index" class="tag label label-green" ng-click="remove($index)">' +
+                '<div ng-repeat="tag in tags track by $index" class="tag label label-success" ng-click="remove($index)">' +
                     '<span class="glyphicon glyphicon-remove"></span>' +
                     '<div class="tag-value">{{tag.key}} : {{tag.value}}</div>' +
                 '</div>' +

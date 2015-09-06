@@ -4,7 +4,7 @@ app.constant('BASE_URL', './');
 
 // Settings for table paging
 app.constant('ITEMS_BY_PAGE', 25);
-app.constant('DISPLAY_PAGES', 5);
+app.constant('DISPLAY_PAGES', 7);
 
 app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $urlRouterProvider.otherwise("/app/volumes");

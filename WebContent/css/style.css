@@ -53,10 +53,10 @@ body > .container {
     -webkit-transform-origin: 50% 50%;
     transform-origin:50% 50%;
     -ms-transform-origin:50% 50%; /* IE 9 */
-    -webkit-animation: spin .45s infinite linear;
-    -moz-animation: spin .45s infinite linear;
-    -o-animation: spin .45s infinite linear;
-    animation: spin .45s infinite linear;
+    -webkit-animation: spin .9s infinite linear;
+    -moz-animation: spin .9s infinite linear;
+    -o-animation: spin .9s infinite linear;
+    animation: spin .9s infinite linear;
 }
 
 @-moz-keyframes spin {
@@ -202,8 +202,12 @@ ul.dropdown-menu a,
 }
 
 .spinner-container {
-    font-size: large !important;
-    padding: 20px !important;
+    font-size: xx-large;
+    padding: 40px;
+}
+
+.noitems-container {
+    padding: 40px;
 }
 
 .bs-callout.active h1 span.glyphicon{
@@ -447,6 +451,12 @@ div.tr {
     overflow: hidden;
 }
 
+
+div.tr.row-disabled {
+    background-color: #dbdbdb;
+    color: #7d7d7d;
+}
+
 div.tr:hover {
     box-shadow: rgba(0, 0, 0, 0.3) 0 7px 10px -5px;
 }
@@ -481,6 +491,11 @@ div.tr div.row-hover a:focus {
     text-decoration: none;
 }
 
+div.tr div.row-hover .icon {
+    font-size: 18px;
+    padding-right: 3px;
+}
+
 div.tr div.row-hover .data-container {
     height: 100%;
 }
@@ -492,6 +507,10 @@ div.tr.state-in-use {
 
 div.tr.state-available {
     border-left: 3px solid #263f66;
+}
+
+div.tr.state-removed {
+    border-left: none;
 }
 
 
@@ -514,7 +533,7 @@ div.table-header-placeholder {
 
 div.thead {
     font-weight: bold;
-    z-index: 9999;
+    z-index: 1040;
 }
 
 div.thead div.th {
@@ -672,8 +691,6 @@ div.thead div.th a {
     content: '|';
 }
 
-
-
 /* end of header-page */
 
 /* end of HEADER */
@@ -720,26 +737,335 @@ div.thead div.th a {
 }
 /* end of Checkbox */
 
+
+
+
 /* Color scheme */
 
-.label-red {
+/* label */
+
+.snap .label-danger {
     background-color: #cc2130;
 }
 
-.label-green {
+.snap .label-success {
     background-color: #009f65;
 }
 
-.label-yellow {
+.snap .label-warning {
     background-color: #febe11;
 }
 
-.label-blue {
+.snap .label-primary {
     background-color: #263f66;
 }
 
-.label-grey {
+.snap .label-default {
     background-color: #7d7d7d;
 }
+
+/* end of label */
+
+
+/* text */
+
+.snap .text-danger {
+    color: #cc2130;
+}
+
+.snap .text-success {
+    color: #009f65;
+}
+
+.snap .text-warning {
+    color: #febe11;
+}
+
+.snap .text-primary {
+    color: #263f66;
+}
+
+.snap .text-default {
+    color: #7d7d7d;
+}
+
+/* end of text */
+
+
+/* buttons */
+
+/* btn-primary */
+
+.snap .btn-primary.disabled,
+.snap .btn-primary[disabled],
+.snap fieldset[disabled] .btn-primary,
+.snap .btn-primary.disabled:hover,
+.snap .btn-primary[disabled]:hover,
+.snap fieldset[disabled] .btn-primary:hover,
+.snap .btn-primary.disabled:focus,
+.snap .btn-primary[disabled]:focus,
+.snap fieldset[disabled] .btn-primary:focus,
+.snap .btn-primary.disabled.focus,
+.snap .btn-primary[disabled].focus,
+.snap fieldset[disabled] .btn-primary.focus,
+.snap .btn-primary.disabled:active,
+.snap .btn-primary[disabled]:active,
+.snap fieldset[disabled] .btn-primary:active,
+.snap .btn-primary.disabled.active,
+.snap .btn-primary[disabled].active,
+.snap fieldset[disabled] .btn-primary.active {
+    background-color: #263f66;
+    border-color: #263f66;
+}
+
+.snap .btn-primary {
+    color: #fff;
+    background-color: #263f66;
+    border-color: #263f66;
+}
+
+.snap .btn-primary:hover {
+    color: #fff;
+    background-color: #172e52;
+    border-color: #172e52;
+}
+
+/* btn-success */
+
+.snap .btn-success.disabled,
+.snap .btn-success[disabled],
+.snap fieldset[disabled] .btn-success,
+.snap .btn-success.disabled:hover,
+.snap .btn-success[disabled]:hover,
+.snap fieldset[disabled] .btn-success:hover,
+.snap .btn-success.disabled:focus,
+.snap .btn-success[disabled]:focus,
+.snap fieldset[disabled] .btn-success:focus,
+.snap .btn-success.disabled.focus,
+.snap .btn-success[disabled].focus,
+.snap fieldset[disabled] .btn-success.focus,
+.snap .btn-success.disabled:active,
+.snap .btn-success[disabled]:active,
+.snap fieldset[disabled] .btn-success:active,
+.snap .btn-success.disabled.active,
+.snap .btn-success[disabled].active,
+.snap fieldset[disabled] .btn-success.active {
+    background-color: #009f65;
+    border-color: #009f65;
+}
+
+.snap .btn-success {
+    color: #fff;
+    background-color: #009f65;
+    border-color: #009f65;
+}
+
+.snap .btn-success:hover {
+    color: #fff;
+    background-color: #007b4e;
+    border-color: #007b4e;
+}
+
+/* btn-danger */
+
+.snap .btn-danger.disabled,
+.snap .btn-danger[disabled],
+.snap fieldset[disabled] .btn-danger,
+.snap .btn-danger.disabled:hover,
+.snap .btn-danger[disabled]:hover,
+.snap fieldset[disabled] .btn-danger:hover,
+.snap .btn-danger.disabled:focus,
+.snap .btn-danger[disabled]:focus,
+.snap fieldset[disabled] .btn-danger:focus,
+.snap .btn-danger.disabled.focus,
+.snap .btn-danger[disabled].focus,
+.snap fieldset[disabled] .btn-danger.focus,
+.snap .btn-danger.disabled:active,
+.snap .btn-danger[disabled]:active,
+.snap fieldset[disabled] .btn-danger:active,
+.snap .btn-danger.disabled.active,
+.snap .btn-danger[disabled].active,
+.snap fieldset[disabled] .btn-danger.active {
+    background-color: #cc2130;
+    border-color: #cc2130;
+}
+
+.snap .btn-danger {
+    color: #fff;
+    background-color: #cc2130;
+    border-color: #cc2130;
+}
+
+.snap .btn-danger:hover {
+    color: #fff;
+    background-color: #89161e;
+    border-color: #89161e;
+}
+
+/* btn-warning */
+
+.snap .btn-warning.disabled,
+.snap .btn-warning[disabled],
+.snap fieldset[disabled] .btn-warning,
+.snap .btn-warning.disabled:hover,
+.snap .btn-warning[disabled]:hover,
+.snap fieldset[disabled] .btn-warning:hover,
+.snap .btn-warning.disabled:focus,
+.snap .btn-warning[disabled]:focus,
+.snap fieldset[disabled] .btn-warning:focus,
+.snap .btn-warning.disabled.focus,
+.snap .btn-warning[disabled].focus,
+.snap fieldset[disabled] .btn-warning.focus,
+.snap .btn-warning.disabled:active,
+.snap .btn-warning[disabled]:active,
+.snap fieldset[disabled] .btn-warning:active,
+.snap .btn-warning.disabled.active,
+.snap .btn-warning[disabled].active,
+.snap fieldset[disabled] .btn-warning.active {
+    background-color: #febe11;
+    border-color: #febe11;
+}
+
+.snap .btn-warning {
+    color: #fff;
+    background-color: #febe11;
+    border-color: #febe11;
+}
+
+.snap .btn-warning:hover {
+    color: #fff;
+    background-color: #dea202;
+    border-color: #dea202;
+}
+
+/* btn-default */
+
+.snap .btn-default.disabled,
+.snap .btn-default[disabled],
+.snap fieldset[disabled] .btn-default,
+.snap .btn-default.disabled:hover,
+.snap .btn-default[disabled]:hover,
+.snap fieldset[disabled] .btn-default:hover,
+.snap .btn-default.disabled:focus,
+.snap .btn-default[disabled]:focus,
+.snap fieldset[disabled] .btn-default:focus,
+.snap .btn-default.disabled.focus,
+.snap .btn-default[disabled].focus,
+.snap fieldset[disabled].btn-default.focus,
+.snap .btn-default.disabled:active,
+.snap .btn-default[disabled]:active,
+.snap fieldset[disabled] .btn-default:active,
+.snap .btn-default.disabled.active,
+.snap .btn-default[disabled].active,
+.snap fieldset[disabled] .btn-default.active {
+    background-color: #7d7d7d;
+    border-color: #dbdbdb;
+}
+
+.snap .btn-default {
+    color: #333333;
+    background-color: #f1f2f6;
+    border-color: #7d7d7d;
+}
+
+.snap .btn-default:hover {
+    color: #333333;
+    background-color: #ffffff;
+    border-color: #dbdbdb;
+}
+
+
+/* btn-group btn-default */
+
+.snap .btn-group .btn-default.disabled,
+.snap .btn-group .btn-default[disabled],
+.snap .btn-group .btn-default.disabled:hover,
+.snap .btn-group .btn-default[disabled]:hover,
+.snap .btn-group .btn-default.disabled:focus,
+.snap .btn-group .btn-default[disabled]:focus,
+.snap .btn-group .btn-default.disabled.focus,
+.snap .btn-group .btn-default[disabled].focus,
+.snap .btn-group .btn-default.disabled:active,
+.snap .btn-group .btn-default[disabled]:active,
+.snap .btn-group .btn-default.disabled.active,
+.snap .btn-group .btn-default[disabled].active {
+    background-color: #dbdbdb;
+    color: #7d7d7d;
+}
+
+.snap .btn-group .btn-default {
+    background-color: #f1f2f6;
+    color: #333333;
+}
+
+.snap .btn-group .btn-default:hover {
+    background-color: #ffffff;
+}
+
+.snap .btn-group .btn-default:active,
+.snap .btn-group .btn-default.active {
+    color: #ffffff;
+    background-color: #009f65;
+}
+
+/* btn:active */
+
+.snap .btn:active,
+.snap .btn.active {
+    background-image: none;
+    outline: 0;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+/* end of btn:active */
+
+/* end of buttons */
+
+
+/* focus */
+
+.snap a:focus {
+    outline: none;
+}
+
+/* end of focus */
+
+
+/* st-table */
+
+.snap .pagination {
+    display: inline-block;
+    padding-left: 0;
+    margin: 0 0;
+    border-radius: 4px;
+}
+
+.snap .pagination > li > a,
+.snap .pagination > li > span {
+    position: relative;
+    float: left;
+    padding: 5px 20px;
+    margin-left: -1px;
+    line-height: 1.42857143;
+    color: #333333;
+    text-decoration: none;
+    background-color: #f1f2f6;
+    border: 1px solid #7d7d7d;
+}
+
+.snap .pagination > .active > a,
+.snap .pagination > .active > span,
+.snap .pagination > .active > a:hover,
+.snap .pagination > .active > span:hover,
+.snap .pagination > .active > a:focus,
+.snap .pagination > .active > span:focus {
+    z-index: 2;
+    color: #fff;
+    cursor: default;
+    background-color: #009f65;
+    border-color: #009f65;
+}
+
+/* end of st-table */
 
 /* end of Color scheme */
