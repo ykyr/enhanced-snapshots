@@ -33,6 +33,7 @@ public class AmazonConfigProvider {
     @Bean
     public AmazonDynamoDB amazonDynamoDB() {
         AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
+        amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
         return amazonDynamoDB;
     }
 
