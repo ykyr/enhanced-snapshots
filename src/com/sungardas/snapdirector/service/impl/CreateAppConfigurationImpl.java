@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -13,6 +15,7 @@ import javax.annotation.PostConstruct;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
@@ -34,6 +37,7 @@ import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
+import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -78,11 +82,12 @@ class CreateAppConfigurationImpl {
             }
             LOG.info("Initialization Queue");
             createTaskQueue();
-
-            if (initConfigurationDto.getSdfs().isCreated()) {
-                LOG.info("Initialization SDFS");
-                createSDFS();
-            }
+//
+//            if (initConfigurationDto.getSdfs().isCreated()) {
+//                LOG.info("Initialization SDFS");
+//                createSDFS();
+//            }
+            System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
         }
     }
@@ -100,6 +105,19 @@ class CreateAppConfigurationImpl {
         createTable("Tasks", 1L, 1L, "id", "S");
         createTable("Users", 1L, 1L, "email", "S");
         createTable("Snapshots", 1L, 1L, "id", "S");
+        System.out.println(">> after createDbStructure");
+    }
+
+    private boolean isDbExists() {
+        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
+        try {
+            ListTablesResult listResult = amazonDynamoDB.listTables();
+            List<String> tableNames = listResult.getTableNames();
+            return tableNames.containsAll(Arrays.asList(tables));
+        }catch (AmazonServiceException accessError) {
+            LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
+            throw new DataAccessException(accessError);
+        }
     }
 
     private void createTable(
@@ -175,6 +193,7 @@ class CreateAppConfigurationImpl {
     private void createTaskQueue() {
         boolean deleteFirst = sharedDataService.getInitConfigurationDto().getQueue().isCreated();
         String queue = sharedDataService.getInitConfigurationDto().getQueue().getQueueName();
+        queue = queue.substring(queue.lastIndexOf("/")+1);
         if (deleteFirst) {
             amazonSQS.deleteQueue(queue);
             try {
@@ -230,22 +249,21 @@ class CreateAppConfigurationImpl {
 
     private void dropDbTables() {
         DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
+        ListTablesResult listResult = amazonDynamoDB.listTables();
+        List<String> tableNames = listResult.getTableNames();
         String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
-        int counter = 0;
-        for (String tabletoDelete : tables) {
-            try {
-                Table table = dynamoDB.getTable(tabletoDelete);
-                table.delete();
-                table.waitForDelete();
-            } catch (AmazonServiceException tableNotFoundOrCredError) {
-                counter++;
-            } catch (InterruptedException e) {
-                throw new ConfigurationException(e);
+        for (String tableToDelete : tables) {
+            if(tableNames.contains(tableToDelete)) {
+                try {
+                    Table table = dynamoDB.getTable(tableToDelete);
+                    table.delete();
+                    table.waitForDelete();
+                } catch (AmazonServiceException tableNotFoundOrCredError) {
+                    throw new ConfigurationException("Can't delete tables. check AWS credentials");
+                } catch (InterruptedException e) {
+                    throw new ConfigurationException(e);
+                }
             }
-        }
-
-        if (counter == tables.length) {
-            throw new ConfigurationException("Can't delete tables. check AWS credentials");
         }
     }
 
