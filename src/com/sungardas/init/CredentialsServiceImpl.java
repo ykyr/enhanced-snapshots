@@ -11,6 +11,7 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.sun.management.UnixOperatingSystemMXBean;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.DataAccessException;
@@ -24,6 +25,8 @@ import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
@@ -213,7 +216,9 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private int getSdfsVolumeMaxAvailableSizeInGB() {
-        long freeMem = Runtime.getRuntime().freeMemory();
+        UnixOperatingSystemMXBean osBean= (UnixOperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
+
+        long freeMem = osBean.getFreePhysicalMemorySize();
         LOG.info("Memory available: {}", freeMem);
         LOG.info("Default chunk size: {}", defaultChunkSize);
         long maxVolumeSize = (freeMem*defaultChunkSize)/33;
