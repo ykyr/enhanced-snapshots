@@ -201,7 +201,10 @@ class CredentialsServiceImpl implements CredentialsService {
         AmazonSQSClient amazonSQSClient = new AmazonSQSClient(credentials);
         amazonSQSClient.setRegion(Regions.getCurrentRegion());
         try {
-        return amazonSQSClient.listQueues().getQueueUrls().contains(queueName);
+            for(String s: amazonSQSClient.listQueues().getQueueUrls()) {
+                if (s.contains(queueName)) return true;
+            }
+            return false;
         }catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of queues. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);
