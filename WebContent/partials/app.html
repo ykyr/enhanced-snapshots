@@ -1,4 +1,35 @@
-<nav class="navbar navbar-default navbar-fixed-top">
+<nav class="navbar navbar-fixed-top">
+    <div class="header-top">
+        <div class="container">
+            <div>
+                <ul class="nav nav-pills navbar-right clear-right">
+                    <li ui-sref="app.volume.list" ui-sref-active="active"><a ui-sref="app.volume.list"><span>Volumes</span></a>
+                    </li>
+                    <li ui-sref-active="active"><a ui-sref="app.tasks"><span>Tasks</span></a></li>
+                    <li ui-sref-active="active"><a ui-sref="app.users"><span>Users</span></a></li>
+                </ul>
+            </div>
+            <a class="navbar-brand" ui-sref="app.volume.list">Sungard Availability Sevices <span class="separator"></span> Labs <span class="separator"></span> Enhanced Snapshot</a>
+        </div>
+    </div>
+    <div class="header-page">
+        <div class="container">
+            <div class="sub-nav pull-right">
+                <div class="user">
+                    <a ui-sref="logout" title="logout">{{getUserName()}}&nbsp;<span class="glyphicon glyphicon-off text-danger"></span></a>
+                </div>
+                <div class="page-btns">
+                    <a href ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Refresh</a>
+                    <span class="separator"></span>
+                    <a href ng-click="isFilterCollapsed = !isFilterCollapsed"><span class="glyphicon glyphicon-filter"></span>&nbsp;Filter</a>
+                </div>
+            </div>
+            <div class="page-name">
+                <div class="go-back"><a ui-sref="app.volume.list">&lt;&nbsp;Back to Volumes</a></div>
+                <div class="current">EBS Volumes</div>
+            </div>
+        </div>
+    </div>
     <div class="container">
         <div class="navbar-header">
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
@@ -8,35 +39,17 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" ui-sref="app.volume.list">
-                <!--?xml version="1.0" encoding="utf-8"?-->
-                <svg xmlns="http://www.w3.org/2000/svg" width="205.51" height="30.781" viewBox="0 0 205.51 30.781">
-                    <path fill="#5B6770"
-                          d="M201.158 2.21c0-1.223.972-2.21 2.177-2.21 1.2 0 2.175.988 2.175 2.21s-.974 2.215-2.175 2.215v-.41c.975-.004 1.768-.81 1.768-1.804 0-.99-.793-1.8-1.768-1.8-.982 0-1.773.81-1.773 1.81.004 1 .79 1.8 1.773 1.81v.41c-1.205 0-2.177-.99-2.177-2.21m2.31-.15c.22 0 .33-.08.33-.28 0-.1-.056-.26-.295-.26h-.527v.55h.492v.01zm-.906-.9h1.02c.538 0 .635.4.635.58 0 .22-.113.42-.313.49.164.08.257.14.257.52 0 .3 0 .38.09.41v.06h-.46c-.03-.1-.04-.2-.04-.41 0-.28-.01-.39-.32-.39H203v.8h-.414V1.15v.016zm-16.1 22.08h1.977c4.34 0 6.7-2.32 6.7-7.79 0-6.02-1.94-7.63-6.91-7.63h-1.78v15.42h.01zM177.14 30V1.064h12.48c9.148 0 14.84 4.336 14.84 13.86 0 10.88-5.96 15.057-15.09 15.057h-12.23v.01zm-19.13-16.4h3.68c2.884 0 4.403-.72 4.403-2.74 0-2.04-1.57-3.004-3.748-3.004h-4.338V13.6h.003zm0 6.338V30.02h-9.32V1.102h13.43c9.48 0 12.593 2.608 12.593 8.23 0 3.338-1.462 6.15-4.793 7.072 3.01 1.117 4.83 1.85 4.83 7.668 0 3.775-.12 5.063.98 5.063v.883h-9.43c-.24-.645-.477-2.49-.477-5.063 0-3.776-.624-5.022-4.98-5.022h-2.84l.007.005zM132.3 9.82l-2.88 10.36h5.888L132.3 9.82zm-14.84 20.2L127.638 1.1h9.48l10.192 28.92h-9.292l-1.1-3.818h-9.29l-1.07 3.82h-9.11.012zm-1.813.078h-5.994l-.366-2.852c-1.536 1.85-4.106 3.535-8.565 3.535-7.268 0-13.786-4.78-13.786-14.86 0-9.23 5.688-15.58 14.888-15.58 6.837 0 12.317 3.62 13.47 10.73h-8.845c-.69-2.37-2.37-3.65-4.79-3.65-3.66 0-5.41 3.37-5.41 8.47 0 4.1 1.27 7.84 5.97 7.84 1.89 0 4.29-1.33 4.78-3.33h-4.11v-6.26h12.75V30.1v-.002zM76.173 16.883l-.36-6.582V1.11h8.926v28.92h-8.73L65.86 14.28l.35 6.586v9.163h-8.92V1.1h8.73l10.153 15.78v.003zm-48.67-15.78h9.32v17.304c0 2.86.555 5.306 4.38 5.306 3.36 0 4.348-2.166 4.348-5.306V1.103h9.32V17.45c0 9.27-4.23 13.33-13.66 13.33-8.8 0-13.7-3.414-13.7-13.37V1.103zm-11.24 8.39c-.145-1.005-.66-1.604-1.336-1.963-.672-.37-1.503-.526-2.4-.526-2.06 0-2.972.605-2.972 1.647 0 4.34 16.356 1.65 16.356 12.17 0 6.71-5.49 9.96-13.3 9.96C5.1 30.78.2 26.33.01 21.11h8.93c.19 1.042.744 1.8 1.537 2.29.74.486 1.74.722 2.64.722 2.324 0 3.877-.757 3.877-2.13C16.987 17.61.63 20.624.63 9.574.63 3.436 5.843.34 12.957.34c7.883 0 11.487 4.093 12.16 9.153h-8.854z"></path>
-                </svg>
-            </a>
+        </div>
+        <div class="header-page">
         </div>
         <div id="navbar" class="collapse navbar-collapse">
             <ul class="nav navbar-nav navbar-right nav-user">
-                <li id="plccontent_0_gloAccountLi">
-                    <span class="glyphicon glyphicon-user"></span>&nbsp; {{getUserName()}}
-                    <button class="btn btn-danger btn-xs" title="Log out" ui-sref="logout"><span
-                            class="glyphicon glyphicon-log-out"></span></button>
-                </li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right nav-main clear-right">
-                <li ui-sref="app.volume.list" ui-sref-active="active"><a ui-sref="app.volume.list"><span>Volumes</span></a>
-                </li>
-                <li ui-sref-active="active"><a ui-sref="app.tasks"><span>Tasks</span></a></li>
-                <li ui-sref-active="active"><a ui-sref="app.users"><span>Users</span></a></li>
             </ul>
         </div>
         <!--/.nav-collapse -->
-        <div class="row">
-            <div class="table-header-placeholder" ng-show="isVolume">
-            </div>
-        </div>
     </div>
+    <div class="table-header-placeholder"></div>
 </nav>
+
 
 <div class="container app" ui-view></div>

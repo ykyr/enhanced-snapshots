@@ -23,8 +23,8 @@ angular.module('web')
         };
 
         $scope.textClass = {
-            'false': 'select',
-            'true': 'unselect'
+            'false': 'Select',
+            'true': 'Unselect'
         };
 
         $scope.iconClass = {
