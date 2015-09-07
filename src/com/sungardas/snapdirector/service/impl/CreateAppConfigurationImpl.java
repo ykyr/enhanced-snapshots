@@ -44,6 +44,9 @@ class CreateAppConfigurationImpl {
     @Value("${amazon.aws.secretkey}")
     private String amazonAWSSecretKey;
 
+    @Value("${amazon.s3.bucket}")
+    private String s3Bucket;
+
     @Autowired
     private SharedDataServiceImpl sharedDataService;
 
@@ -64,7 +67,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                createSDFS("", "");
+                createSDFS("", s3Bucket);
                 return;
             }
 

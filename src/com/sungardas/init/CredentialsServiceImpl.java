@@ -42,6 +42,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private final String propFileName = "amazon.properties";
     private final String accessKeyPropName = "amazon.aws.accesskey";
     private final String secretKeyPropName = "amazon.aws.secretkey";
+    private static final String AMAZON_S3_BUCKET = "amazon.s3.bucket";
     private static final String AMAZON_AWS_REGION = "amazon.aws.region";
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
@@ -50,6 +51,8 @@ class CredentialsServiceImpl implements CredentialsService {
     private AWSCredentials credentials = null;
     private final String DEFAULT_LOGIN = "admin@snapdirector";
     private String instanceId;
+
+    private InitConfigurationDto initConfigurationDto=null;
 
     @PostConstruct
     private void init(){
@@ -74,6 +77,7 @@ class CredentialsServiceImpl implements CredentialsService {
             properties.setProperty(secretKeyPropName, credentials.getAWSSecretKey());
             properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, getInstanceId());
+            properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().getBucketName());
 
             properties.store(new FileOutputStream(file), "AWS Credentials");
         } catch (IOException ioException) {
@@ -116,7 +120,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
-        InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
+        initConfigurationDto = new InitConfigurationDto();
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
         initConfigurationDto.getDb().setValid(false);
         initConfigurationDto.getDb().setValid(isDbExists());
@@ -142,7 +146,6 @@ class CredentialsServiceImpl implements CredentialsService {
         initConfigurationDto.setS3(s3);
         initConfigurationDto.setQueue(queue);
         initConfigurationDto.setSdfs(sdfs);
-
         return initConfigurationDto;
     }
 
