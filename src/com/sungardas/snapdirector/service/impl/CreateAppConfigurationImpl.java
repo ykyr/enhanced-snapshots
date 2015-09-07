@@ -64,7 +64,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                createSDFS();
+                createSDFS("", "");
                 return;
             }
 
@@ -108,7 +108,7 @@ class CreateAppConfigurationImpl {
             ListTablesResult listResult = amazonDynamoDB.listTables();
             List<String> tableNames = listResult.getTableNames();
             return tableNames.containsAll(Arrays.asList(tables));
-        }catch (AmazonServiceException accessError) {
+        } catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);
         }
@@ -187,7 +187,7 @@ class CreateAppConfigurationImpl {
     private void createTaskQueue() {
         boolean deleteFirst = sharedDataService.getInitConfigurationDto().getQueue().isCreated();
         String queue = sharedDataService.getInitConfigurationDto().getQueue().getQueueName();
-        queue = queue.substring(queue.lastIndexOf("/")+1);
+        queue = queue.substring(queue.lastIndexOf("/") + 1);
         if (deleteFirst) {
             amazonSQS.deleteQueue(queue);
             try {
@@ -203,13 +203,17 @@ class CreateAppConfigurationImpl {
 
     private void createSDFS() {
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
-
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
+
+        createSDFS(sdfs.getVolumeSize(), bucketName);
+    }
+
+    private void createSDFS(String size, String bucketName) {
         try {
             File file = applicationContext.getResource("classpath:mount_sdfs.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, sdfs.getVolumeSize(), bucketName};
+            String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, size, bucketName};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             switch (p.exitValue()) {
@@ -235,6 +239,7 @@ class CreateAppConfigurationImpl {
             LOG.error(e);
         }
     }
+
 
     private void storeWorkerConfiguration() {
         InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();
@@ -262,7 +267,7 @@ class CreateAppConfigurationImpl {
         List<String> tableNames = listResult.getTableNames();
         String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
         for (String tableToDelete : tables) {
-            if(tableNames.contains(tableToDelete)) {
+            if (tableNames.contains(tableToDelete)) {
                 try {
                     Table table = dynamoDB.getTable(tableToDelete);
                     table.delete();
