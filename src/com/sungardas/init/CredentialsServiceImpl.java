@@ -10,6 +10,7 @@ import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sun.management.UnixOperatingSystemMXBean;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
@@ -195,6 +196,10 @@ class CredentialsServiceImpl implements CredentialsService {
         AmazonS3Client amazonS3Client = new AmazonS3Client(credentials);
         amazonS3Client.setRegion(Regions.getCurrentRegion());
         try {
+            for(Bucket b: amazonS3Client.listBuckets()) {
+                if (b.getName().contains(bucketName)) return true;
+            }
+
         return amazonS3Client.listBuckets().contains(bucketName);
         }catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of S3 buckets. Check AWS credentials!", accessError);
@@ -217,7 +222,7 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private boolean sdfsAlreadyExists(String volumeName, String mountPoint) {
-        String volumeConfigPath = "/ets/sdfs/" + volumeName + "-volume-cfg.xml";
+        String volumeConfigPath = "/etc/sdfs/" + volumeName + "-volume-cfg.xml";
         File configf = new File(volumeConfigPath);
         File mountPointf = new File(mountPoint);
         return configf.exists() && mountPointf.exists();
