@@ -148,7 +148,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(String user, String password) {
-        List<UserDto> list = UserDtoConverter.convert(userRepository.findByEmailAndPassword(user, password));
+        List<UserDto> list = UserDtoConverter.convert(userRepository.findByEmailAndPassword(user, DigestUtils.sha512Hex(password)));
         if (list.isEmpty()) {
             return null;
         } else {
