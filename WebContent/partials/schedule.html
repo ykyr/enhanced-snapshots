@@ -2,7 +2,7 @@
     <a ui-sref="app.volume.list" class="btn btn-link pull-right"><span class="glyphicon glyphicon-chevron-left"> </span>Back to volumes</a>
 </div>
 
-<h2 class="pull-right"><small><span class="glyphicon glyphicon-hdd"></span>&nbsp; {{volumeID}}</small></h2>
+<h2 class="pull-right"><small><span class="glyphicon glyphicon-hdd"></span>&nbsp; {{volumeId}}</small></h2>
 <h2><span class="glyphicon glyphicon-time"></span>&nbsp; Schedule </h2>
 
 <div class="row">
@@ -11,27 +11,21 @@
         <tr>
             <th>&nbsp;</th>
             <th>Name</th>
-            <th>Every</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Week</th>
-            <th>Comment</th>
+            <th>Cron</th>
+            <th>Status</th>
         </tr>
         </thead>
         <tbody>
-        <tr ng-repeat="schedule in schedules track by $index">
+        <tr ng-repeat="schedule in schedules track by $index" ng-class="{'row-disabled': !scedule.enabled}">
             <td class="text-center commands">
                 <button class="btn btn-link" title="Edit" ng-click="edit(schedule)"><span
                         class="glyphicon glyphicon-pencil"></span></button>
                 <a class="text-danger" title="Remove" ng-click="remove(schedule)"><span
                         class="glyphicon glyphicon-remove"></span></a>
             </td>
-            <td>{{schedule.name}}</td>
-            <td>{{schedule.interval.amount}} {{schedule.interval.unit}}</td>
-            <td>{{schedule.start | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
-            <td>{{displayEnd(schedule.end)}}</td>
-            <td>{{schedule.week.join(", ")}}</td>
-            <td>{{schedule.comment}}</td>
+            <td>{{schedule.schedulerName}}</td>
+            <td>{{schedule.cron}}</td>
+            <td>{{schedule.enabled == 'true' ? 'enabled' : 'disabled'}}</td>
         </tr>
         </tbody>
     </table>

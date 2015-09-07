@@ -10,8 +10,10 @@ angular.module('web')
             $http({
                 url: url,
                 method: 'GET'
-            }).success(function (data) {
-                deferred.resolve(data);
+            }).then(function (result) {
+                deferred.resolve(result.data);
+            },function (e) {
+                deferred.reject(e);
             });
             return deferred.promise;
         };
@@ -22,8 +24,10 @@ angular.module('web')
                 url: url,
                 method: 'POST',
                 data: user
-            }).success(function (data) {
-                deferred.resolve(data);
+            }).then(function (result) {
+                deferred.resolve(result.data);
+            },function (e) {
+                deferred.reject(e);
             });
             return deferred.promise;
         };

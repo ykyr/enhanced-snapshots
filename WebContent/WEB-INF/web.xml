@@ -21,6 +21,15 @@
         <param-value>us-east-1</param-value>
     </context-param>
 
+    <context-param>
+        <param-name>aws:routine-inst-id</param-name>
+        <param-value>ogorVagrantDev</param-value>
+    </context-param>
+    <context-param>
+        <param-name>aws:sqs-queue-url</param-name>
+        <param-value>815082807540/sungard_ogor</param-value>
+    </context-param>
+
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>

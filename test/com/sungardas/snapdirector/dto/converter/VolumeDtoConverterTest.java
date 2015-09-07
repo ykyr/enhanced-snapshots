@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 
 public class VolumeDtoConverterTest {
@@ -58,10 +59,10 @@ public class VolumeDtoConverterTest {
         volumeList.add(createVolume(VOLUME_ID + "_", SNAPSHOT_ID + "_", CREATE_TIME, AVAILABILITY_ZONE + "_",
                 SIZE + 1, STATE + "_", new ArrayList<Tag>(), INSTANCE_ID + "_"));
 
-        List<VolumeDto> volumeDtoList = VolumeDtoConverter.convert(volumeList);
+        Set<VolumeDto> volumeDtoList = VolumeDtoConverter.convert(volumeList);
         Assert.assertTrue(volumeDtoList.size() == 2);
-        assertVolumeDtoFields(volumeDtoList.get(0), VOLUME_ID, SNAPSHOT_ID, CREATE_TIME, AVAILABILITY_ZONE, SIZE, STATE, tags, INSTANCE_ID);
-        assertVolumeDtoFields(volumeDtoList.get(1), VOLUME_ID + "_", SNAPSHOT_ID + "_", CREATE_TIME, AVAILABILITY_ZONE + "_",
+        assertVolumeDtoFields((VolumeDto) volumeDtoList.toArray()[0], VOLUME_ID, SNAPSHOT_ID, CREATE_TIME, AVAILABILITY_ZONE, SIZE, STATE, tags, INSTANCE_ID);
+        assertVolumeDtoFields((VolumeDto) volumeDtoList.toArray()[1], VOLUME_ID + "_", SNAPSHOT_ID + "_", CREATE_TIME, AVAILABILITY_ZONE + "_",
                 SIZE + 1, STATE + "_", new ArrayList<Tag>(), INSTANCE_ID + "_");
     }
 

@@ -59,7 +59,12 @@ angular.module('web')
                             templateUrl: './partials/modal.backup-delete-result.html',
                             scope: $scope
                         });
-                        loadBackups();
+
+                        finishedInstance.result.then(function () {
+                            $state.go('app.tasks');
+                        }, function () {
+                            loadBackups();
+                        });
                     }
                 };
 
@@ -93,10 +98,10 @@ angular.module('web')
         loadBackups();
 
         $scope.restore = function (backup) {
-            $scope.backupToRestore = backup;
+            $scope.objectToProcess = backup;
             var confirmInstance = $modal.open({
                 animation: true,
-                templateUrl: './partials/modal.backup-restore.html',
+                templateUrl: './partials/modal.history-restore.html',
                 scope: $scope
             });
 
@@ -104,18 +109,18 @@ angular.module('web')
                 var newTask = {
                     id: "",
                     priority: "",
-                    volume: $scope.backupToRestore.volumeId,
-                    backupFileName: $scope.backupToRestore.fileName,
+                    volume: $scope.objectToProcess.volumeId,
+                    backupFileName: $scope.objectToProcess.fileName,
                     type: "restore",
                     status: "waiting",
                     schedulerManual: true,
                     schedulerName: Storage.get('currentUser').email,
-                    schedulerTime: $filter('date')(new Date(), "yyyy-MM-dd HH:mm:ss") // TODO: Move time format to global setting
+                    schedulerTime: Date.now()
                 };
                 Tasks.insert(newTask).then(function () {
                     var successInstance = $modal.open({
                         animation: true,
-                        templateUrl: './partials/modal.task-restore-created.html',
+                        templateUrl: './partials/modal.task-created.html',
                         scope: $scope
                     });
 

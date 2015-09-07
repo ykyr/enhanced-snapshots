@@ -33,7 +33,7 @@
 
         <div class="form-group" ng-show="isAdmin">
             <button type="button" class="btn" ng-class="{'btn-primary': userToEdit.admin, 'btn-default': !userToEdit.admin}" ng-model="userToEdit.admin"
-                    ng-click="userToEdit.admin = !userToEdit.admin">
+                    ng-click="userToEdit.admin = !userToEdit.admin" ng-disabled="isCurrentUser(userToEdit.email)">
                 <span class="glyphicon glyphicon-{{userToEdit.admin ? 'check': 'unchecked'}}"></span> Admin
             </button>
         </div>

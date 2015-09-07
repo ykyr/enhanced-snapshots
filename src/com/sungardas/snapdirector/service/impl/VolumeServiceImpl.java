@@ -23,10 +23,10 @@ public class VolumeServiceImpl implements VolumeService {
     private AmazonEC2 amazonEC2;
 
     @Override
-    public List<VolumeDto> getVolumes() {
+    public Set<VolumeDto> getVolumes() {
         try {
             LOG.debug("Getting volume list ...");
-            List<VolumeDto> result = VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes());
+            Set<VolumeDto> result = VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes());
             LOG.debug("Volume list: [{}]", result);
             return result;
         } catch (RuntimeException e) {
@@ -36,11 +36,11 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public List<VolumeDto> getVolumesByRegion(Region region) {
+    public Set<VolumeDto> getVolumesByRegion(Region region) {
         try {
             LOG.debug("Getting volume list for region [{}]", region);
             amazonEC2.setRegion(region);
-            List<VolumeDto> result = VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes());
+            Set<VolumeDto> result = VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes());
             LOG.debug("Volume list for region [{}]: [{}]", region, result);
             return result;
         } catch (RuntimeException e) {
@@ -48,6 +48,16 @@ public class VolumeServiceImpl implements VolumeService {
             throw new DataAccessException("Failed to get volume list.", e);
         }
 
+    }
+
+    @Override
+    public boolean isExists(String volumeId) {
+        for(VolumeDto dto: getVolumes()){
+            if(dto.getVolumeId().equals(volumeId)){
+                return true;
+            }
+        }
+        return false;
     }
 
 

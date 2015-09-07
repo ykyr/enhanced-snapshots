@@ -1,4 +1,4 @@
-var app = angular.module('web', ['ui.router', 'angularAwesomeSlider', 'ui.bootstrap', 'smart-table', 'ngTagsInput']);
+var app = angular.module('web', ['ui.router', 'angularAwesomeSlider', 'ui.bootstrap', 'smart-table', 'ngTagsInput', 'toastr']);
 
 app.constant('BASE_URL', './');
 
@@ -84,8 +84,9 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         })
         .state('logout', {
             url: "/logout",
-            resolve: {
-                logout: logout
+            controller: function ($state, Auth) {
+                Auth.logOut();
+                $state.go('login');
             }
         });
 
@@ -102,7 +103,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
-            $state.go('login');
+            $state.go('logout');
         });
     });
 

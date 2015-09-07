@@ -10,7 +10,7 @@ angular.module('web')
                 if (rejection.status === 401) {
                     window.location = "#/login";
                 } else if (rejection.status === 404) {
-
+ 
                 }
                 return $q.reject(rejection);
             }

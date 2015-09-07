@@ -51,8 +51,8 @@ public class AWSDeleteTask implements DeleteTask {
         backupEntry.setFileName(taskEntry.getOptions());
 
         try {
-            backupRepository.delete(backupEntry);
             storageService.deleteFile(backupEntry.getFileName());
+            backupRepository.delete(backupEntry);
             taskEntry.setStatus(COMPLETE.getStatus());
             taskRepository.save(taskEntry);
             taskRepository.delete(taskEntry);
