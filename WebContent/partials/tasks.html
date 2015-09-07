@@ -20,7 +20,7 @@
 <div class="container app">
 
 <div class="card with-hover status-{{task.status}}"
-        ng-repeat="task in tasks | orderBy: 'schedulerTime' | orderBy: 'status' ">
+        ng-repeat="task in tasks | orderBy: 'schedulerTime' | orderBy:statusPriority:true ">
     <div class="flex-container">
         <div class="flex-1 flex-center">
             <span class="icon glyphicon glyphicon-{{ typeIconClass[task.type] }} text-{{ typeColorClass[task.type] }}"></span>
@@ -62,12 +62,12 @@
                     <span class="glyphicon glyphicon-{{ manualIconClass[task.schedulerManual] }}"></span>&nbsp;
                     {{task.schedulerName}}</span>
                 </p>
-            </div>
-            <div class="col-xs-1 text-right hidden">
-                <div class="btn-group-vertical btn-group-xs task-control" ng-hide="isRunning(task)">
-                    <a class="btn btn-danger" title="Reject" ng-click="reject(task)"><span
-                            class="glyphicon glyphicon-remove"></span></a>
-                </div>
+            </p>
+        </div>
+        <div class="col-xs-1 text-right hidden">
+            <div class="btn-group-vertical btn-group-xs task-control" ng-hide="isRunning(task)">
+                <a class="btn btn-danger" title="Reject" ng-click="reject(task)"><span
+                        class="glyphicon glyphicon-remove"></span></a>
             </div>
         </div>
         <div class="row progress-row" ng-show="isRunning(task)">
