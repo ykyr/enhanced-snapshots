@@ -1,11 +1,15 @@
 package com.sungardas.snapdirector.service.impl;
 
+import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
+import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.service.BackupService;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryType.DELETE;
 
@@ -18,12 +22,20 @@ public class BackupServiceImpl implements BackupService {
     private ConfigurationService configurationService;
 
     @Autowired
+    private BackupRepository backupRepository;
+
+    @Autowired
     private TaskRepository taskRepository;
 
     @Override
     public void deleteBackup(String backupName, String user) {
         TaskEntry taskEntry = getDeleteTask(backupName, user);
         taskRepository.save(taskEntry);
+    }
+
+    @Override
+    public List<BackupEntry> getBackupList(String volumeId) {
+        return backupRepository.get(volumeId);
     }
 
     private String getVolumeId(String backupName){

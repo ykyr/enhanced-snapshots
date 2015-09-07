@@ -45,7 +45,7 @@ public class BackupController {
 
     @RequestMapping(value = "/{volumeId}", method = RequestMethod.GET)
     public ResponseEntity<String> get(@PathVariable(value = "volumeId") String volumeId) {
-        List<BackupEntry> items = DynamoUtils.getBackupInfo(volumeId, getMapper(servletRequest));
+        List<BackupEntry> items = backupService.getBackupList(volumeId);
         LOG.debug("Available backups for volume {}: [{}] .", volumeId, jsonArrayRepresentation(items).toString());
         return new ResponseEntity<>(jsonArrayRepresentation(items).toString(), HttpStatus.OK);
     }
@@ -78,13 +78,6 @@ public class BackupController {
     private String getCurrentUserEmail() {
         String session = servletRequest.getSession().getId();
         return ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
-    }
-
-    private DynamoDBMapper getMapper(ServletRequest request) {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(new PropertyBasedCredentialsProvider());
-        String region = request.getServletContext().getInitParameter(Constants.JSON_DYNAMODB_REGION);
-        client.setRegion(Region.getRegion(Regions.fromName(region)));
-        return new DynamoDBMapper(client);
     }
 
 }
