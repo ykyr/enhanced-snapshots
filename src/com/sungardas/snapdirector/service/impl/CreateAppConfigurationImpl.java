@@ -1,6 +1,32 @@
 package com.sungardas.snapdirector.service.impl;
 
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.sungardas.snapdirector.aws.dynamodb.model.User;
+import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.snapdirector.dto.InitConfigurationDto;
+import com.sungardas.snapdirector.dto.UserDto;
+import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
+import com.sungardas.snapdirector.exception.ConfigurationException;
+import com.sungardas.snapdirector.exception.DataAccessException;
+import com.sungardas.snapdirector.exception.SnapdirectorException;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.context.support.XmlWebApplicationContext;
+
+import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -9,43 +35,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PostConstruct;
-
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
-import com.amazonaws.services.dynamodbv2.model.DeleteTableResult;
-import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
-import com.amazonaws.services.dynamodbv2.model.KeyType;
-import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
-import com.sungardas.snapdirector.aws.dynamodb.model.User;
-import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
-import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
-import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
-import com.sungardas.snapdirector.dto.InitConfigurationDto;
-import com.sungardas.snapdirector.dto.UserDto;
-import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
-import com.sungardas.snapdirector.exception.ConfigurationException;
-import com.sungardas.snapdirector.exception.DataAccessException;
-import com.sungardas.snapdirector.exception.SnapdirectorException;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.context.support.XmlWebApplicationContext;
 
 class CreateAppConfigurationImpl {
     private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
@@ -75,6 +64,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
+                createSDFS();
                 return;
             }
 
@@ -212,18 +202,33 @@ class CreateAppConfigurationImpl {
     }
 
     private void createSDFS() {
-        boolean bucketAlreadyExists = sharedDataService.getInitConfigurationDto().getS3().isCreated();
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
 
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
-        String[] parameters = {sdfs.getVolumeSize(), amazonAWSAccessKey, bucketName, amazonAWSSecretKey};
         try {
-            String pathToExec = applicationContext.getResource("classpath:mount_sdfs.sh").getFile().getAbsolutePath();
-            Process p = Runtime.getRuntime().exec(pathToExec, parameters);
+            File file = applicationContext.getResource("classpath:mount_sdfs.sh").getFile();
+            file.setExecutable(true);
+            String pathToExec = file.getAbsolutePath();
+            String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, sdfs.getVolumeSize(), bucketName};
+            Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
-            if (p.exitValue() != 0) {
-                throw new ConfigurationException("Error creating sdfs");
+            switch (p.exitValue()) {
+                case 0:
+                    LOG.info("SDFS mounted");
+                    break;
+                case 1:
+                    LOG.info("SDFS unmounted");
+                    p = Runtime.getRuntime().exec(parameters);
+                    p.waitFor();
+                    if (p.exitValue() != 0) {
+                        throw new ConfigurationException("Error creating sdfs");
+                    }
+                    LOG.info("SDFS mounted");
+                    break;
+                default:
+                    throw new ConfigurationException("Error creating sdfs");
             }
+            throw new ConfigurationException("Error creating sdfs");
         } catch (IOException e) {
             LOG.error(e);
         } catch (InterruptedException e) {

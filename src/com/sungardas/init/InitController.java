@@ -3,6 +3,7 @@ package com.sungardas.init;
 import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
 
+import com.amazonaws.AmazonClientException;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
@@ -68,6 +69,14 @@ class InitController implements ApplicationContextAware {
     private Exception internalServerError(SnapdirectorException exception) {
         LOG.error(exception);
         return exception;
+    }
+
+    @ExceptionHandler(AmazonClientException.class)
+    @ResponseBody
+    @ResponseStatus(INTERNAL_SERVER_ERROR)
+    private Exception amazonException(AmazonClientException exception) {
+        LOG.error(exception);
+        return new SnapdirectorException("Invalid credentials", exception);
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/session")
