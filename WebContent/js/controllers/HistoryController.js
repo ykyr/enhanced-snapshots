@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('HistoryController', function ($scope, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
+    .controller('HistoryController', function ($scope, $rootScope, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
         $scope.maxDeleteBackupDisplay = 5;
 
         $scope.itemsByPage = ITEMS_BY_PAGE;
@@ -10,8 +10,8 @@ angular.module('web')
         $scope.volumeId = $stateParams.volumeId;
 
         $scope.textClass = {
-            'false': 'select',
-            'true': 'unselect'
+            'false': 'Select',
+            'true': 'Unselect'
         };
 
         $scope.iconClass = {

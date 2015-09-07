@@ -151,8 +151,8 @@
                         <div class="flex-3 flex-center th"><span st-sort="createTime">Created</span></div>
                         <div class="flex-3 flex-center th"><span st-sort="availabilityZone">Zone</span></div>
                     </div>
-
                 </div>
+
                 <div class="tr state-{{volume.state}}"
                      ng-repeat="volume in filteredVolumes = (displayedCollection | stAdvancedFilter: stAdvancedFilter) track by $index"
                      ng-class="{'row-disabled': isDisabled(volume)}">

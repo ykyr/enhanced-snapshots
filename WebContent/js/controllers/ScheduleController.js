@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('ScheduleController', function ($scope, $stateParams, $filter, Tasks, $modal) {
+    .controller('ScheduleController', function ($scope, $rootScope, $stateParams, $filter, Tasks, $modal) {
 
         $scope.volumeId = $stateParams.volumeId;
         $scope.schedules = [];
@@ -56,7 +56,7 @@ angular.module('web')
                 var newTask = scheduleToTask($scope.scheduleToEdit);
                 Tasks.insert(newTask).then(function () {
                     refreshList();
-                    $rootScope.isLoading = false;
+                    $scope.isLoading = false;
                 }, function () {
                     $rootScope.isLoading = false;
                 });
@@ -77,7 +77,7 @@ angular.module('web')
                 var newTask = scheduleToTask($scope.scheduleToEdit);
                 Tasks.update(newTask).then(function () {
                     refreshList();
-                    $rootScope.isLoading = false;
+                    $scope.isLoading = false;
                 }, function () {
                     $rootScope.isLoading = false;
                 });

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('TasksController', function ($scope, Tasks, $modal) {
+    .controller('TasksController', function ($scope, $rootScope, Tasks, $modal) {
         $scope.statusColorClass = {
             "waiting": "",
             "queued": "info",
