@@ -7,7 +7,9 @@ angular.module('web')
         var getAll = function () {
             var deferred = $q.defer();
             $http.get(url).then(function (result) {
-                deferred.resolve(result.data);
+                deferred.resolve(Storage.get('_tasks'));
+                // TODO uncomment this:
+                // deferred.resolve(result.data);
             }, function (e) {
                 deferred.reject(e);
             });

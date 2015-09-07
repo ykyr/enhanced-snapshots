@@ -128,16 +128,11 @@
 }
 
 
-
 .snap .card.status-running .show-on-hover a{
     display: none;
 }
-/* end of card statuses */
 
-.snap .btn,
-.snap .btn:focus {
-    outline: none;
-}
+/* end of card statuses */
 
 .snap .form-horizontal .form-group.error-notification {
     margin-bottom: 0;
