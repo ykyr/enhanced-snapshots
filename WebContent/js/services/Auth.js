@@ -19,7 +19,7 @@ angular.module('web')
             $http.post(sessionUrl, userData).success(
                 function(data){
                     Storage.save("currentUser", data);
-                    deferred.resolve();
+                    deferred.resolve(data);
                 })
                 .error(function (err, status) {
                     deferred.reject(statuses[status]);
@@ -29,10 +29,8 @@ angular.module('web')
         };
         
         var _logout= function () {
+            Storage.remove("currentUser");
             return $http.delete(sessionUrl)
-                .success(function(data){
-                    Storage.remove("currentUser");
-                })
             };
 
         return {

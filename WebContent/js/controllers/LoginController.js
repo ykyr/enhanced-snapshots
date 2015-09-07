@@ -1,9 +1,13 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoginController', function ($scope, $state, Auth, Storage, Settings) {
+    .controller('LoginController', function ($scope, $state, Auth, Storage) {
 
         if(angular.isDefined(Storage.get("currentUser"))) {
+            Auth.logOut();
+        }
+
+        if (Storage.get("currentUser") && Storage.get("currentUser").length > 1) {
             Auth.logOut();
         }
 
@@ -12,12 +16,12 @@ angular.module('web')
         };
 
         $scope.login = function () {
-            Auth.logIn($scope.email, $scope.password).then(function () {
-                if (Settings.get()) {
+            Auth.logIn($scope.email, $scope.password).then(function (data) {
+
+                if (data.role === 'configurator') {
+                    $state.go('config');
+                } else {
                     $state.go('app.volume.list');
-                }
-                else {
-                    $state.go('aws');
                 }
             }, function (res) {
                 $scope.error = res;

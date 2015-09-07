@@ -13,7 +13,7 @@ bucket_name="$4"
 io_chunk_size="${5:-4}"
 
 ### creating SDFS file system
-mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --cloud-access-key=$aws_key_id --cloud-bucket-name=$bucket_name --cloud-secret-key=$aws_sec_key --chunk-store-encrypt=true --io-chunk-size=$io_chunk_size
+/sbin/mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --cloud-access-key=$aws_key_id --cloud-bucket-name=$bucket_name --cloud-secret-key=$aws_sec_key --chunk-store-encrypt=true --io-chunk-size=$io_chunk_size
 
 sleep 5
 
@@ -26,7 +26,7 @@ if [[ -e /etc/sdfs/awspool-volume-cfg.xml ]]; then
   fi
 else
     echo ' Could not find /etc/sdfs/awspool-volume-cfg.xml check if SDFS volume created! '
-    exit 1
+    exit -1
 fi
 
 ### creating mount directory
@@ -42,7 +42,7 @@ touch /var/log/sdfs_mount.log
 if mount | grep /mnt/awspool > /dev/null; then
     umount /mnt/awspool
     echo ' ********** SDFS sucessfully unmounted ********** '
-    exit 0
+    exit 1
 else
     mount.sdfs awspool /mnt/awspool &> /var/log/sdfs_mount.log &
     echo ' ********** SDFS sucessfully mounted ********** '

@@ -22,7 +22,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.snapdirector.aws.dynamodb.repository")
 public class AmazonConfigProvider {
 
-    @Value("${amazon.aws.accesskey}")
+    @Value("${amazon.aws.accesskey:}")
     private String amazonAWSAccessKey;
 
     @Value("${amazon.aws.secretkey}")
@@ -35,6 +35,7 @@ public class AmazonConfigProvider {
     @Bean
     public AmazonDynamoDB amazonDynamoDB() {
         AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
+        amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
         return amazonDynamoDB;
     }
 

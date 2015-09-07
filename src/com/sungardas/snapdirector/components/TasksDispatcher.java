@@ -1,5 +1,6 @@
 package com.sungardas.snapdirector.components;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -24,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 
 @Component
+@DependsOn("CreateAppConfiguration")
 public class TasksDispatcher {
 
     @Autowired
@@ -76,15 +79,19 @@ public class TasksDispatcher {
 
             while (true) {
                 //LOGts.info("\n\nLook for waiting tasks..");
-                List<TaskEntry> taskModels = taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.WAITING.getStatus(), instanceId, Boolean.FALSE.toString());
-                for (TaskEntry entry : taskModels) {
-                    SendMessageRequest sendRequest = new SendMessageRequest(queueURL, entry.toString());
-                    sendRequest.setDelaySeconds(0);
-                    sqs.sendMessage(sendRequest);
-                    entry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
-                    LOGts.info("QUEUED message: \n" + entry.toString());
+                try {
+                    List<TaskEntry> taskModels = taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.WAITING.getStatus(), instanceId, Boolean.FALSE.toString());
+                    for (TaskEntry entry : taskModels) {
+                        SendMessageRequest sendRequest = new SendMessageRequest(queueURL, entry.toString());
+                        sendRequest.setDelaySeconds(0);
+                        sqs.sendMessage(sendRequest);
+                        entry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
+                        LOGts.info("QUEUED message: \n" + entry.toString());
+                    }
+                    taskRepository.save(taskModels);
+                } catch (AmazonClientException e){
+
                 }
-                taskRepository.save(taskModels);
                 sleep();
             }
         }

@@ -1,5 +1,6 @@
 package com.sungardas.snapdirector.service.impl;
 
+import com.amazonaws.AmazonClientException;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
@@ -10,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
 @Service
+@DependsOn("CreateAppConfiguration")
 public class SpringSchedulerService implements SchedulerService {
 
     private static final Logger LOG = LogManager.getLogger(SpringSchedulerService.class);
@@ -38,13 +41,17 @@ public class SpringSchedulerService implements SchedulerService {
 
     @PostConstruct
     private void init() {
-        List<TaskEntry> tasks = taskRepository.findByInstanceIdAndRegular(configurationService.getConfiguration().getConfigurationId(), Boolean.TRUE.toString());
-        for (TaskEntry taskEntry : tasks) {
-            try {
-                addTask(taskEntry);
-            } catch (SnapdirectorException e) {
-                LOG.error(e);
+        try {
+            List<TaskEntry> tasks = taskRepository.findByInstanceIdAndRegular(configurationService.getConfiguration().getConfigurationId(), Boolean.TRUE.toString());
+            for (TaskEntry taskEntry : tasks) {
+                try {
+                    addTask(taskEntry);
+                } catch (SnapdirectorException e) {
+                    LOG.error(e);
+                }
             }
+        }catch (AmazonClientException e){
+            LOG.error(e);
         }
     }
 

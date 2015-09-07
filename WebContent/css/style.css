@@ -285,7 +285,8 @@ input.ng-invalid-email{
     background-color: #d9edf7;
 }
 
-td .glyphicon{
+.commands .glyphicon,
+.command .glyphicon{
     cursor: pointer;
 }
 

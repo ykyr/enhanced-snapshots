@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Properties;
 
+import com.sungardas.snapdirector.exception.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -16,9 +16,9 @@ import com.amazonaws.auth.BasicAWSCredentials;
 
 import static java.lang.String.format;
 
-public class EnvironmentBasedCredentialsProvider implements
+public class PropertyBasedCredentialsProvider implements
 		AWSCredentialsProvider {
-	private static final Log LOG = LogFactory.getLog(EnvironmentBasedCredentialsProvider.class);
+	private static final Log LOG = LogFactory.getLog(PropertyBasedCredentialsProvider.class);
 	private static BasicAWSCredentials credentials;
 
 	@Override
@@ -37,8 +37,10 @@ public class EnvironmentBasedCredentialsProvider implements
             properties.load(new FileInputStream(file));
             credentials = new BasicAWSCredentials(properties.getProperty("amazon.aws.accesskey"),
                     properties.getProperty("amazon.aws.secretkey"));
-        } catch (IOException e){
-            LOG.error(e);
+        } catch (IOException ioException){
+            ConfigurationException awsPropsNotExists = new ConfigurationException("amazon.properties file does not exists" , ioException);
+            LOG.error(awsPropsNotExists);
+            throw awsPropsNotExists;
         }
 	}
 
