@@ -77,7 +77,7 @@ angular.module('web')
                 var newTask = scheduleToTask($scope.scheduleToEdit);
                 Tasks.update(newTask).then(function () {
                     refreshList();
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 }, function () {
                     $rootScope.isLoading = false;
                 });
