@@ -25,6 +25,16 @@ angular.module('web')
             false: "time"
         };
 
+        $scope.statusPriority = function (task) {
+            var priorities = {
+                running: 4,
+                queued: 3,
+                error: 2,
+                waiting: 1
+            };
+            return priorities[task.status] || 0;
+        };
+
         $scope.tasks = [];
         $scope.isLoading = false;
         $scope.refresh = function () {
