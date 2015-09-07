@@ -13,7 +13,7 @@
             </div>
         </div>
         <div class="page-name">
-            <div class="go-back"><a ui-sref="app.volume.list">&lt;&nbsp;Back to Volumes</a></div>
+            <div class="go-back">&nbsp;</div>
             <div class="current">EBS Volumes</div>
         </div>
     </div>
@@ -196,9 +196,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="text-center spinner-container" ng-show="isLoading">
-                    <span class="glyphicon glyphicon-refresh text-muted spin"></span>
                 </div>
                 <div class="text-center noitems-container" ng-hide="isLoading || filteredVolumes.length">
                     <h2>No volumes to display...</h2>

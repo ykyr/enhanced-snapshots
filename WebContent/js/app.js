@@ -108,6 +108,8 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             return (Storage.get("currentUser") || {}).role === 'configurator';
         };
 
+        $rootScope.isLoading = false;
+
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
             $state.go('logout');

@@ -33,7 +33,7 @@ angular.module('web')
             });
 
             editUserModal.result.then(function () {
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
                 $scope.userToEdit.password = $scope.userToEdit.password || "";
 
                 Users.update($scope.userToEdit).then(function () {
@@ -44,9 +44,9 @@ angular.module('web')
                         templateUrl: './partials/modal.user-added.html',
                         scope: $scope
                     });
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 }, function (e) {
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 });
             });
         };
@@ -62,7 +62,7 @@ angular.module('web')
             });
 
             modalInstance.result.then(function () {
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
 
                 Users.insert($scope.userToEdit).then(function () {
                     var modalInstance = $modal.open({
@@ -76,9 +76,9 @@ angular.module('web')
                     modalInstance.result.then(function () {
                         $scope.refreshUsers();
                     });
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 }, function (e) {
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 });
             });
         };
@@ -88,13 +88,13 @@ angular.module('web')
         });
 
         $scope.refreshUsers = function () {
-            $scope.isLoading = true;
+            $rootScope.isLoading = true;
             $scope.users = [];
             Users.getAll().then(function (data) {
                 $scope.users = data;
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             }, function () {
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             })
         };
 
@@ -107,12 +107,12 @@ angular.module('web')
             });
 
             modalInstance.result.then(function () {
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
                 Users.delete(user.email).then(function () {
                     $scope.refreshUsers();
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 }, function () {
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 });
             })
         };

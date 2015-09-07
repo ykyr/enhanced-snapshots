@@ -53,6 +53,18 @@ body > .container {
     width: 100%;
 }
 
+.loading {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    background-color: rgba(230,232,235,.9);
+    padding-top: 200px;
+}
+
 .spin{
     -webkit-transform-origin: 50% 50%;
     transform-origin:50% 50%;
@@ -467,18 +479,17 @@ div.tr:hover {
 
 div.tr:hover div.row-hover {
     opacity: 1;
-    width: 40%;
-    right: 0;
 }
 
 div.tr div.row-hover {
     transition: .2s linear all;
-    width: 40%;
     opacity: 0;
+    width: 40%;
+    min-width: 450px;
     position: absolute;
-    right: -40%;
     top: 0;
     bottom: 0;
+    right: 0;
     background-color: #263f66;
     border-bottom-right-radius: 3px;
     border-top-right-radius: 3px;

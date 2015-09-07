@@ -36,14 +36,14 @@ angular.module('web')
         };
 
         $scope.tasks = [];
-        $scope.isLoading = false;
+        $rootScope.isLoading = false;
         $scope.refresh = function () {
-            $scope.isLoading = true;
+            $rootScope.isLoading = true;
             Tasks.get().then(function (data) {
                 $scope.tasks = data;
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             }, function () {
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             });
 
         };

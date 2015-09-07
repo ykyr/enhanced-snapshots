@@ -52,13 +52,13 @@ angular.module('web')
             });
 
             modalInstance.result.then(function () {
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
                 var newTask = scheduleToTask($scope.scheduleToEdit);
                 Tasks.insert(newTask).then(function () {
                     refreshList();
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 }, function () {
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 });
             });
         };
@@ -73,13 +73,13 @@ angular.module('web')
             });
 
             modalInstance.result.then(function () {
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
                 var newTask = scheduleToTask($scope.scheduleToEdit);
                 Tasks.update(newTask).then(function () {
                     refreshList();
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 }, function () {
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 });
             });
         };
