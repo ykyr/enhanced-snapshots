@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.sungardas.snapdirector.aws.dynamodb.model.Snapshot;
 import com.sungardas.snapdirector.aws.dynamodb.repository.SnapshotRepository;
 import com.sungardas.snapdirector.dto.SnapshotDto;
 import com.sungardas.snapdirector.dto.converter.SnapshotDtoConverter;
@@ -32,7 +33,8 @@ public class SnapshotServiceImpl implements SnapshotService {
 			throw new IllegalArgumentException("Incorrect SnapshotID");
 		}
 		
-		snapshotRepository.deleteBySnapshotId(snapshotId);
+		Snapshot snapToDelete = snapshotRepository.deleteBySnapshotId(snapshotId).get(0);
+		snapshotRepository.delete(snapToDelete.getId());
 
 	}
 
