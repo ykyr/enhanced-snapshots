@@ -79,7 +79,12 @@ class CreateAppConfigurationImpl {
                 LOG.info("Initialization DB");
                 dropDbTables();
                 createDbAndStoreData();
+            } else {
+                if(!isConfigurationStored()) {
+                    storeWorkerConfiguration();
+                }
             }
+
             LOG.info("Initialization Queue");
             if(!initConfigurationDto.getQueue().isCreated()) {
                 createTaskQueue();
@@ -92,6 +97,14 @@ class CreateAppConfigurationImpl {
             System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
         }
+    }
+
+    private boolean isConfigurationStored() {
+        InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();
+        WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
+        DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
+        WorkerConfiguration loadedConf = mapper.load(WorkerConfiguration.class, workerConfiguration.getConfigurationId());
+        return loadedConf!=null;
     }
 
     private void createDbAndStoreData() {
