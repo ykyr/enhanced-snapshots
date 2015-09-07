@@ -63,10 +63,10 @@ class CreateAppConfigurationImpl {
     @Autowired
     private AmazonSQS amazonSQS;
 
-    private boolean init = false;
-
     @Autowired
     private XmlWebApplicationContext applicationContext;
+
+    private boolean init = false;
 
     @PostConstruct
     private void init() {
@@ -219,7 +219,7 @@ class CreateAppConfigurationImpl {
         String[] parameters = {sdfs.getVolumeSize(), amazonAWSAccessKey, bucketName, amazonAWSSecretKey};
         try {
             String pathToExec = applicationContext.getResource("classpath:mount_sdfs.sh").getFile().getAbsolutePath();
-            Process p = Runtime.getRuntime().exec("." + pathToExec, parameters);
+            Process p = Runtime.getRuntime().exec(pathToExec, parameters);
             p.waitFor();
             if (p.exitValue() != 0) {
                 throw new ConfigurationException("Error creating sdfs");
