@@ -4,7 +4,7 @@ app.constant('BASE_URL', './');
 
 // Settings for table paging
 app.constant('ITEMS_BY_PAGE', 25);
-app.constant('DISPLAY_PAGES', 5);
+app.constant('DISPLAY_PAGES', 7);
 
 app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $urlRouterProvider.otherwise("/app/volumes");
@@ -15,7 +15,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     }];
 
     var isConfig = ['$rootScope', function ($rootScope) {
-        if (!$rootScope.isConfigState()) throw "System is not in configuration state!";
+        if (!$rootScope.isConfigState())  throw "System is not in configuration state!";
         return true;
     }];
 
@@ -31,6 +31,13 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             templateUrl: "partials/app.html",
             resolve: {
                 authenticated: authenticated
+            },
+            controller: function ($scope, $state, $rootScope) {
+                $scope.isVolume = $state.current.name === 'app.volume.list';
+                $rootScope.$on('$stateChangeSuccess',
+                    function(event, toState, toParams, fromState, fromParams){
+                        $scope.isVolume = $state.is('app.volume.list') || $state.is('app.users');
+                    });
             }
         })
         .state('app.volume', {
@@ -100,6 +107,8 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         $rootScope.isConfigState = function () {
             return (Storage.get("currentUser") || {}).role === 'configurator';
         };
+
+        $rootScope.isLoading = false;
 
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();

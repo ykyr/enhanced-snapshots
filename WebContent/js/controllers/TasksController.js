@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('TasksController', function ($scope, Tasks, $modal) {
+    .controller('TasksController', function ($scope, $rootScope, Tasks, $modal) {
         $scope.statusColorClass = {
             "waiting": "",
             "queued": "info",
@@ -10,8 +10,8 @@ angular.module('web')
             "error": "danger"
         };
         $scope.typeColorClass = {
-            backup: "success",
-            restore: "warning",
+            backup: "primary",
+            restore: "success",
             delete: "danger"
 
         };
@@ -25,15 +25,25 @@ angular.module('web')
             false: "time"
         };
 
+        $scope.statusPriority = function (task) {
+            var priorities = {
+                running: 4,
+                queued: 3,
+                error: 2,
+                waiting: 1
+            };
+            return priorities[task.status] || 0;
+        };
+
         $scope.tasks = [];
-        $scope.isLoading = false;
+        $rootScope.isLoading = false;
         $scope.refresh = function () {
-            $scope.isLoading = true;
+            $rootScope.isLoading = true;
             Tasks.get().then(function (data) {
                 $scope.tasks = data;
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             }, function () {
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             });
 
         };

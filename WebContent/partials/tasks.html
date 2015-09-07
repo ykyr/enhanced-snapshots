@@ -1,40 +1,49 @@
-<div>
-    <button class="btn btn-link pull-right" ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span></button>
-    <h2><span class="glyphicon glyphicon-tasks"></span>&nbsp; Task Queue </h2>
-</div>
-
-<div class="bs-callout bs-callout-{{ statusColorClass[task.status] }}" ng-class="{ 'active bg-info': isRunning(task) }"
-     ng-repeat="task in tasks | orderBy: 'schedulerTime' | orderBy:statusPriority:true "
-        ng-hide="isLoading">
-    <div class="row vertical-align">
-        <div class="col-xs-2 col-sm-1 text-center">
-            <h1 class="no-margin"><span
-                    class="glyphicon glyphicon-{{ typeIconClass[task.type] }} text-{{ typeColorClass[task.type] }}"></span>
-            </h1>
-        </div>
-        <div class="col-xs-9 col-sm-11">
-            <h5 class="pull-right no-margin">{{task.schedulerTime | date: 'yyyy-MM-dd HH:mm:ss'}}</h5>
-            <h4>{{task.volume}} </h4>
-
-            <p>
-                started by
-                <span class="label label-default">
-                    <span class="glyphicon glyphicon-{{ manualIconClass[task.schedulerManual] }}"></span>&nbsp;
-                    {{task.schedulerName}}</span>
-            </p>
-        </div>
-        <div class="col-xs-1 text-right hidden">
-            <div class="btn-group-vertical btn-group-xs task-control" ng-hide="isRunning(task)">
-                <a class="btn btn-danger" title="Reject" ng-click="reject(task)"><span
-                        class="glyphicon glyphicon-remove"></span></a>
+<div class="header-page">
+    <div class="container">
+        <div class="sub-nav pull-right">
+            <div class="user">
+                <a ui-sref="logout" title="logout">{{getUserName()}}&nbsp;<span class="glyphicon glyphicon-off text-danger"></span></a>
+            </div>
+            <div class="page-btns">
+                <a href ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Refresh</a>
             </div>
         </div>
-    </div>
-    <div class="row progress-row" ng-show="isRunning(task)">
-        <div class="progress-bar progress-bar-striped active" role="progressbar"></div>
+        <div class="page-name">
+            <div class="go-back">&nbsp;</div>
+            <div class="current">Task&nbsp;Queue</div>
+        </div>
     </div>
 </div>
+<div class="table-header-placeholder"></div>
 
-<div ng-show="isLoading" class="text-center text-muted spinner-container">
-    <i class="glyphicon glyphicon-refresh spin"></i>
+
+<div class="container app">
+
+    <div class="card with-hover status-{{task.status}}" title="Status: '{{task.status | uppercase}}'"
+            ng-repeat="task in tasks | orderBy: 'schedulerTime' | orderBy:statusPriority:true ">
+        <div class="flex-container">
+            <div class="flex-1 flex-center">
+                <span class="icon glyphicon glyphicon-{{ typeIconClass[task.type] }} text-{{ typeColorClass[task.type] }}"></span>
+            </div>
+
+            <div class="flex-5 card-content">
+                <p class="muted">{{task.schedulerTime | date: 'yyyy-MM-dd HH:mm:ss'}}</p>
+                <h3>{{task.volume}}</h3>
+                <p>Started by <span class="highlight"><span class="glyphicon glyphicon-{{ manualIconClass[task.schedulerManual] }}">
+                    </span>&nbsp;{{task.schedulerName}}</span>
+                </p>
+            </div>
+
+            <div class="flex-1 flex-center show-on-hover">
+                <a class="lnk-danger" title="Reject" ng-click="reject(task)"><span class="glyphicon glyphicon-remove"></span></a>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="text-center noitems-container" ng-hide="isLoading || tasks.length">
+        <h2>No tasks to display...</h2>
+    </div>
+
+
 </div>

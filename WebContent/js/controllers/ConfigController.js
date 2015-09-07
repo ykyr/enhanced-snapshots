@@ -2,38 +2,38 @@
 
 angular.module('web')
     .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state) {
-        var DELAYTIME = 600*1000;
+        var DELAYTIME = 120*1000;
 
         $scope.STRINGS = {
             s3: {
                 new: 'Will be created new as',
-                existing: ' bucket will be used'
+                existing: 'Will be used existing bucket:'
             },
             db: {
-                true: 'Database exists',
-                false: 'No database found. You will be proposed to create a new user on the next step'
+                isValid: {
+                    true: 'Database exists',
+                    false: 'No database found'
+                },
+                hasAdminUser: {
+                    false: 'You will need to create a new user on the next step'
+                }
             },
             queue: {
                 new: 'Will be created new as ',
-                existing: ' queue will be used'
+                existing: 'Will be used existing queue:'
             },
             sdfs: {
                 name: {
-                    new: 'Will be created new as',
-                    existing: ' name will be used'
+                    new: 'Will be created new volume:',
+                    existing: 'Will be used existing volume:'
                 },
-                size: {
-                    new: 'Will be set as'
-                },
-                point: {
-                    new: 'Will be at'
-                }
+                point:  'At mounting point:'
             }
         };
 
         $scope.iconClass = {
             true: 'ok',
-            false: 'minus'
+            false: 'cog'
         };
 
         $scope.statusColorClass = {
@@ -68,7 +68,7 @@ angular.module('web')
         };
 
         $scope.sendSettings = function () {
-            if (!$scope.settings.db.isValid) {
+            if (!$scope.settings.db.hasAdminUser) {
                 $scope.userToEdit = {
                     isNew: true,
                     admin: true
@@ -95,14 +95,7 @@ angular.module('web')
 
                 });
             } else {
-                $scope.progressState = 'running';
-                Configuration.send('current').then(function () {
-                    $scope.progressState = 'success';
-                }, function () {
-                    $scope.progressState = 'failed';
-                });
-
-                wizardCreationProgress();
+                Configuration.send('current');
             }
         };
 

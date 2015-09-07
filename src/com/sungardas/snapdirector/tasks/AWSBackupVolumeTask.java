@@ -2,6 +2,8 @@ package com.sungardas.snapdirector.tasks;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
@@ -13,8 +15,6 @@ import com.sungardas.snapdirector.service.AWSCommunticationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.RetentionService;
 import com.sungardas.snapdirector.service.StorageService;
-import com.sungardas.snapdirector.tasks.aws.VolumeBackup;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +77,7 @@ public class AWSBackupVolumeTask implements BackupTask {
         Volume tempVolume = null;
         String attachedDeviceName = null;
 
-        tempVolume = VolumeBackup.createAndAttachBackupVolume(ec2client, volumeId, configuration.getConfigurationId());
+        tempVolume = createAndAttachBackupVolume(volumeId, configuration.getConfigurationId());
         try {
             TimeUnit.MINUTES.sleep(1);
         } catch (InterruptedException e1) {
@@ -133,5 +133,34 @@ public class AWSBackupVolumeTask implements BackupTask {
         taskRepository.delete(taskEntry);
         LOG.info("Task completed.");
         retentionService.apply();
+    }
+
+    private Volume createAndAttachBackupVolume(String volumeId, String instanceId) {
+        Instance instance = awsCommunication.getInstance(instanceId);
+        if (instance == null) {
+            LOG.error("\nCan't get access to " + instanceId + " instance");
+
+        }
+        LOG.info("\ninst:" + instance);
+
+        // create snapshot for AMI
+        Volume volumeSrc = awsCommunication.getVolume(volumeId);
+        if (volumeSrc == null) {
+            LOG.error("\nCan't get access to " + volumeId + " volume");
+
+        }
+
+
+        Snapshot snapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(volumeSrc));
+        LOG.info("\nSnapshot created. Check snapshot data:\n" + snapshot.toString());
+
+        // create volume
+        String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
+        Volume volumeDest = awsCommunication.waitForAvailableState(awsCommunication.createVolumeFromSnapshot(snapshot, instanceAvailabilityZone));
+        LOG.info("\nVolume created. Check volume data:\n" + volumeDest.toString());
+
+        // mount AMI volume
+        awsCommunication.attachVolume(instance, volumeDest);
+        return awsCommunication.syncVolume(volumeDest);
     }
 }
