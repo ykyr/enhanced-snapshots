@@ -68,7 +68,7 @@ angular.module('web')
         };
 
         $scope.sendSettings = function () {
-            if (!$scope.settings.db.isValid) {
+            if (!$scope.settings.db.hasAdminUser) {
                 $scope.userToEdit = {
                     isNew: true,
                     admin: true

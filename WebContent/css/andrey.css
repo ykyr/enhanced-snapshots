@@ -129,10 +129,24 @@
 
 
 
-.snap .card.status-running .show-on-hover {
+.snap .card.status-running .show-on-hover a{
     display: none;
 }
 /* end of card statuses */
 
+.snap .btn,
+.snap .btn:focus {
+    outline: none;
+}
 
+.snap .form-horizontal .form-group.error-notification {
+    margin-bottom: 0;
+    position: relative;
+    top: -10px;
+    font-size: smaller;
+}
 
+.snap input.form-control.ng-dirty.ng-invalid {
+    border: 1px solid #cc2130 !important;
+    border-radius: 4px;
+}
