@@ -34,7 +34,9 @@ public class SnapshotServiceImpl implements SnapshotService {
 		}
 		
 		Snapshot snapToDelete = snapshotRepository.deleteBySnapshotId(snapshotId).get(0);
-		snapshotRepository.delete(snapToDelete.getId());
+		if (snapToDelete != null) {
+			snapshotRepository.delete(snapToDelete.getId());
+		}
 
 	}
 
