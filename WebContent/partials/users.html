@@ -40,9 +40,8 @@
                                             ng-show="isAdmin || isCurrentUser(user.email)"><span
                                             class="glyphicon glyphicon-pencil icon"></span>&nbsp; Edit</a>
                                 </div>
-                                <div class="flex-1 flex-center row-menu">
-                                    <a href="" title="Delete user" ng-click="deleteUser(user)"
-                                            ng-show="isAdmin && !isCurrentUser(user.email)"><span
+                                <div class="flex-1 flex-center row-menu" ng-show="isAdmin && !isCurrentUser(user.email)">
+                                    <a href="" title="Delete user" ng-click="deleteUser(user)"><span
                                             class="glyphicon glyphicon-remove icon"
                                             ng-disabled="isCurrentUser(user.email)"></span>&nbsp; Delete</a>
                                 </div>

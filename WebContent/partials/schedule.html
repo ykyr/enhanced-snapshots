@@ -1,6 +1,22 @@
-<div class="clearfix">
-    <a ui-sref="app.volume.list" class="btn btn-link pull-right"><span class="glyphicon glyphicon-chevron-left"> </span>Back to volumes</a>
+<div class="header-page">
+    <div class="container">
+        <div class="sub-nav pull-right">
+            <div class="user">
+                <a ui-sref="logout" title="logout">{{getUserName()}}&nbsp;<span
+                        class="glyphicon glyphicon-off text-danger"></span></a>
+            </div>
+            <div class="page-btns">
+                <a href ng-click="refreshUsers()"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Refresh</a>
+            </div>
+        </div>
+        <div class="page-name">
+            <div class="go-back"><a ui-sref="app.volume.list">&lt;&nbsp;Back to Volumes</a></div>
+            <div class="current">Schedule for {{volumeId}}</div>
+        </div>
+    </div>
 </div>
+<div class="table-header-placeholder"></div>
+
 
 <h2 class="pull-right"><small><span class="glyphicon glyphicon-hdd"></span>&nbsp; {{volumeId}}</small></h2>
 <h2><span class="glyphicon glyphicon-time"></span>&nbsp; Schedule </h2>
