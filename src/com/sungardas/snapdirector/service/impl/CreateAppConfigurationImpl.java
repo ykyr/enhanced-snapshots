@@ -26,8 +26,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import javax.annotation.PostConstruct;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -79,17 +81,32 @@ class CreateAppConfigurationImpl {
                 LOG.info("Initialization DB");
                 dropDbTables();
                 createDbAndStoreData();
+            } else {
+                if(!isConfigurationStored()) {
+                    storeWorkerConfiguration();
+                }
             }
-            LOG.info("Initialization Queue");
-            createTaskQueue();
 
-            if (initConfigurationDto.getSdfs().isCreated()) {
+            LOG.info("Initialization Queue");
+            if(!initConfigurationDto.getQueue().isCreated()) {
+                createTaskQueue();
+            }
+
+            if (!initConfigurationDto.getSdfs().isCreated()) {
                 LOG.info("Initialization SDFS");
                 createSDFS();
             }
             System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
         }
+    }
+
+    private boolean isConfigurationStored() {
+        InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();
+        WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
+        DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
+        WorkerConfiguration loadedConf = mapper.load(WorkerConfiguration.class, workerConfiguration.getConfigurationId());
+        return loadedConf!=null;
     }
 
     private void createDbAndStoreData() {
@@ -216,12 +233,13 @@ class CreateAppConfigurationImpl {
 
     private void createSDFS(String size, String bucketName) {
         try {
-            File file = applicationContext.getResource("classpath:mount_sdfs.sh").getFile();
+            File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
             String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, size, bucketName};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
+            print(p);
             switch (p.exitValue()) {
                 case 0:
                     LOG.info("SDFS mounted");
@@ -230,15 +248,16 @@ class CreateAppConfigurationImpl {
                     LOG.info("SDFS unmounted");
                     p = Runtime.getRuntime().exec(parameters);
                     p.waitFor();
+                    print(p);
                     if (p.exitValue() != 0) {
                         throw new ConfigurationException("Error creating sdfs");
                     }
                     LOG.info("SDFS mounted");
                     break;
                 default:
+                    print(p);
                     throw new ConfigurationException("Error creating sdfs");
             }
-            throw new ConfigurationException("Error creating sdfs");
         } catch (IOException e) {
             LOG.error(e);
         } catch (InterruptedException e) {
@@ -246,6 +265,17 @@ class CreateAppConfigurationImpl {
         }
     }
 
+    private void print(Process p) throws IOException {
+        String line;
+        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        while ((line = input.readLine()) != null) {
+            System.out.println(line);
+        }
+        input = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+        while ((line = input.readLine()) != null) {
+            System.out.println(line);
+        }
+    }
 
     private void storeWorkerConfiguration() {
         InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();
