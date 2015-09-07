@@ -81,9 +81,11 @@ class CreateAppConfigurationImpl {
                 createDbAndStoreData();
             }
             LOG.info("Initialization Queue");
-            createTaskQueue();
+            if(!initConfigurationDto.getQueue().isCreated()) {
+                createTaskQueue();
+            }
 
-            if (initConfigurationDto.getSdfs().isCreated()) {
+            if (!initConfigurationDto.getSdfs().isCreated()) {
                 LOG.info("Initialization SDFS");
                 createSDFS();
             }
