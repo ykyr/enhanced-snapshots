@@ -95,7 +95,14 @@ angular.module('web')
 
                 });
             } else {
-                Configuration.send('current');
+                $scope.progressState = 'running';
+                Configuration.send('current').then(function () {
+                    $scope.progressState = 'success';
+                }, function () {
+                    $scope.progressState = 'failed';
+                });
+
+                wizardCreationProgress();
             }
         };
 
