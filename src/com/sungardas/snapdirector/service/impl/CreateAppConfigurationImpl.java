@@ -233,12 +233,13 @@ class CreateAppConfigurationImpl {
 
     private void createSDFS(String size, String bucketName) {
         try {
-            File file = applicationContext.getResource("classpath:sdfs.sh").getFile();
+            File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
             String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, size, bucketName};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
+            print(p);
             switch (p.exitValue()) {
                 case 0:
                     LOG.info("SDFS mounted");
@@ -247,24 +248,16 @@ class CreateAppConfigurationImpl {
                     LOG.info("SDFS unmounted");
                     p = Runtime.getRuntime().exec(parameters);
                     p.waitFor();
+                    print(p);
                     if (p.exitValue() != 0) {
                         throw new ConfigurationException("Error creating sdfs");
                     }
                     LOG.info("SDFS mounted");
                     break;
                 default:
-                    String line;
-                    BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                    while ((line = input.readLine()) != null) {
-                        System.out.println(line);
-                    }
-                    input = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                    while ((line = input.readLine()) != null) {
-                        System.out.println(line);
-                    }
+                    print(p);
                     throw new ConfigurationException("Error creating sdfs");
             }
-            throw new ConfigurationException("Error creating sdfs");
         } catch (IOException e) {
             LOG.error(e);
         } catch (InterruptedException e) {
@@ -272,6 +265,17 @@ class CreateAppConfigurationImpl {
         }
     }
 
+    private void print(Process p) throws IOException {
+        String line;
+        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        while ((line = input.readLine()) != null) {
+            System.out.println(line);
+        }
+        input = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+        while ((line = input.readLine()) != null) {
+            System.out.println(line);
+        }
+    }
 
     private void storeWorkerConfiguration() {
         InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();
