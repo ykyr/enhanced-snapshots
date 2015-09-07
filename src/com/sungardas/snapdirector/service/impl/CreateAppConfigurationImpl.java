@@ -233,7 +233,7 @@ class CreateAppConfigurationImpl {
 
     private void createSDFS(String size, String bucketName) {
         try {
-            File file = applicationContext.getResource("classpath:mount_sdfs.sh").getFile();
+            File file = applicationContext.getResource("classpath:sdfs.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
             String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, size, bucketName};
