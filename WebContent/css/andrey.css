@@ -40,6 +40,28 @@
     margin-bottom: 15px;
 }
 
+.snap .card.with-hover {
+    transition: .2s linear all;
+    box-shadow: rgba(0,0,0,0.3) 0 0 10px -5px;
+}
+
+.snap .card.with-hover:hover {
+    box-shadow: rgba(0,0,0,0.3) 5px 5px 10px -5px;
+}
+
+
+.snap .card .show-on-hover {
+    transition: .2s linear all;
+    -webkit-transition: .2s linear all;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.snap .card:hover .show-on-hover {
+    opacity: 1;
+    visibility: visible;
+}
+
 .snap .card .icon {
     font-size: xx-large;
 }
@@ -57,6 +79,60 @@
     margin: 0;
 }
 
+.snap .card .card-content p.muted {
+    opacity: 0.5;
+}
+
+.snap .card .card-content p .highlight {
+    color: #263f66;
+    padding: 0 6px;
+}
+
 .snap .card .card-content h3 {
     margin: 0;
 }
+
+/* card statuses */
+
+/*
+            "waiting": "",
+            "queued": "info",
+            "running": "primary",
+            "completed": "success",
+            "error": "danger"
+*/
+
+.snap .card.status-waiting > div,
+.snap .card.status-queued > div,
+.snap .card.status-running > div,
+.snap .card.status-error > div {
+    background-color: rgba(255,255,255,.9);
+    border-radius: 4px;
+}
+
+
+.snap .card.status-waiting {
+    /* background-color: #7d7d7d; */
+}
+
+.snap .card.status-queued {
+    background-color: #febe11;
+}
+
+.snap .card.status-running {
+    background-color: #009f65;
+}
+
+.snap .card.status-error {
+    background-color: #cc2130;
+}
+
+
+
+.snap .card.status-running .show-on-hover {
+    display: none;
+}
+/* end of card statuses */
+
+
+

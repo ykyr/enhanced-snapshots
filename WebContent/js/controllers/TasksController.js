@@ -10,8 +10,8 @@ angular.module('web')
             "error": "danger"
         };
         $scope.typeColorClass = {
-            backup: "success",
-            restore: "warning",
+            backup: "primary",
+            restore: "success",
             delete: "danger"
 
         };

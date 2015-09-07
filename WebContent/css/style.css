@@ -821,6 +821,48 @@ div.thead div.th a {
 /* end of bg */
 
 
+/* links (custom) */
+
+.snap .lnk-danger,
+.snap .lnk-success,
+.snap .lnk-warning,
+.snap .lnk-primary,
+.snap .lnk-default {
+    color: #263f66;
+    cursor: pointer;
+}
+
+.snap .lnk-danger:hover,
+.snap .lnk-danger:focus {
+    color: #cc2130;
+}
+
+.snap .lnk-success:hover,
+.snap .lnk-success:focus {
+    color: #009f65;
+}
+
+.snap .lnk-warning:hover,
+.snap .lnk-warning:focus {
+    color: #ffffff;
+    background-color: #febe11;
+}
+
+.snap .lnk-primary:hover,
+.snap .lnk-primary:focus {
+    color: #ffffff;
+    background-color: #263f66;
+}
+
+.snap .lnk-default:hover,
+.snap .lnk-default:focus {
+    color: #ffffff;
+    background-color: #7d7d7d;
+}
+
+/* end of links (custom) */
+
+
 /* buttons */
 
 /* btn-primary */
@@ -1006,6 +1048,10 @@ div.thead div.th a {
 
 /* btn-group btn-default */
 
+.snap .btn-group .btn:not(:first-child) {
+    border-left: none !important;
+}
+
 .snap .btn-group .btn-default.disabled,
 .snap .btn-group .btn-default[disabled],
 .snap .btn-group .btn-default.disabled:hover,
@@ -1029,6 +1075,7 @@ div.thead div.th a {
 
 .snap .btn-group .btn-default:hover {
     background-color: #ffffff;
+    border: 1px solid #7d7d7d;
 }
 
 .snap .btn-group .btn-default:active,
