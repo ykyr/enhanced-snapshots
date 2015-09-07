@@ -47,6 +47,9 @@ class CreateAppConfigurationImpl {
     @Value("${amazon.s3.bucket}")
     private String s3Bucket;
 
+    @Value("${amazon.sdfs.size}")
+    private String sdfsSize;
+
     @Autowired
     private SharedDataServiceImpl sharedDataService;
 
@@ -67,7 +70,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                createSDFS("", s3Bucket);
+                createSDFS(sdfsSize, s3Bucket);
                 return;
             }
 

@@ -43,6 +43,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private final String accessKeyPropName = "amazon.aws.accesskey";
     private final String secretKeyPropName = "amazon.aws.secretkey";
     private static final String AMAZON_S3_BUCKET = "amazon.s3.bucket";
+    private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
     private static final String AMAZON_AWS_REGION = "amazon.aws.region";
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
@@ -78,6 +79,7 @@ class CredentialsServiceImpl implements CredentialsService {
             properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, getInstanceId());
             properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().getBucketName());
+            properties.setProperty(AMAZON_SDFS_SIZE, initConfigurationDto.getSdfs().getVolumeSize());
 
             properties.store(new FileOutputStream(file), "AWS Credentials");
         } catch (IOException ioException) {
