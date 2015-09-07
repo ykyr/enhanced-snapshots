@@ -26,8 +26,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import javax.annotation.PostConstruct;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -251,6 +253,15 @@ class CreateAppConfigurationImpl {
                     LOG.info("SDFS mounted");
                     break;
                 default:
+                    String line;
+                    BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    while ((line = input.readLine()) != null) {
+                        System.out.println(line);
+                    }
+                    input = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                    while ((line = input.readLine()) != null) {
+                        System.out.println(line);
+                    }
                     throw new ConfigurationException("Error creating sdfs");
             }
             throw new ConfigurationException("Error creating sdfs");
