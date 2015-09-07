@@ -1,5 +1,6 @@
 package com.sungardas.snapdirector.service.impl;
 
+import com.amazonaws.AmazonClientException;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.RetentionEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
@@ -48,7 +49,11 @@ public class RetentionServiceImpl implements RetentionService {
     @PostConstruct
     private void init() {
         schedulerService.addTask(getJob(this), cronExpression);
-        apply();
+        try {
+            apply();
+        } catch (AmazonClientException e){
+            LOG.error(e);
+        }
     }
 
     @Override

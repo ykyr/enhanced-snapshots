@@ -1,5 +1,6 @@
 package com.sungardas.snapdirector.components;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
@@ -127,9 +128,10 @@ public class WorkersDispatcher {
                         }
                     }
                     sleep();
+                } catch (AmazonClientException e){
+                  // Skip amazon exceptions
                 } catch (Exception e) {
                     LOGtw.error(e);
-                    e.printStackTrace();
                     if (executor.isShutdown() || executor.isTerminated()) break;
                 }
             }

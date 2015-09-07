@@ -18,14 +18,15 @@
     <context:property-placeholder location="classpath:/snapdirector.properties,file:${canalina.home}/conf/snapdirector.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
     <mvc:annotation-driven/>
 
-  <beans profile="prod">
+    <task:scheduler id="taskScheduler" pool-size="1"/>
+    <mvc:resources mapping="/resources/**" location="/resources/" />
+
+    <beans profile="prod">
     <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationImpl"/>
   </beans>
-  <beans profile="dev">
+    <beans profile="dev">
     <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationDev"/>
   </beans>
-    <task:scheduler id="taskScheduler" pool-size="1"/>
-    
-    <mvc:resources mapping="/resources/**" location="/resources/" />
+
 
 </beans>
