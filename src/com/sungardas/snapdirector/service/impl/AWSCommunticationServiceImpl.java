@@ -3,18 +3,16 @@ package com.sungardas.snapdirector.service.impl;
 import static java.lang.String.format;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import com.amazonaws.AmazonClientException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.AttachVolumeResult;
@@ -60,10 +58,10 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 	@Value("${sungardas.worker.configuration}")
 	private String configurationId;
 
-	@Value("${sungardas.restore.snapshot.attempts:5}")
+	@Value("${sungardas.restore.snapshot.attempts:30}")
 	private int retryRestoreAttempts;
 
-	@Value("${sungardas.restore.snapshot.timeout:5}")
+	@Value("${sungardas.restore.snapshot.timeout:30}")
 	private int retryRestoreTimeout;
 
 	@Override
@@ -247,29 +245,22 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 						.createVolume(crVolumeRequest);
 				vol = crVolumeResult.getVolume();
 				return vol;
-			} catch (AmazonServiceException exception) {
+			} catch (AmazonClientException exception){
 				// Service error type indicates that request was valid but there
 				// was a problem at server side while processing request
 				// in this case we can attempt to resend request again
-				if (exception.getErrorType().equals(
-						AmazonServiceException.ErrorType.Service)
-						&& attemptNumber != retryRestoreAttempts) {
-					LOG.info(
-							"Failed to create volume from {} snapshot due to amazon service exception: {}",
-							snapshotId, exception.getErrorMessage());
-					LOG.info("New retry will occur in {} seconds",
-							retryRestoreTimeout);
+				if(attemptNumber != retryRestoreAttempts) {
+					LOG.info("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getMessage());
+					LOG.info("New retry will occur in {} seconds", retryRestoreTimeout);
 					try {
 						TimeUnit.SECONDS.sleep(retryRestoreTimeout);
 					} catch (InterruptedException e) {
 					}
 				} else {
-					LOG.warn(
-							"Failed to create volume from {} snapshot due to amazon service exception: {}",
-							snapshotId, exception.getErrorMessage());
+					LOG.warn("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getMessage());
 					throw exception;
 				}
-			}
+				}
 		}
 		return vol;
 	}
@@ -301,7 +292,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 				DeleteVolumeRequest deleteVolumeRequest = new DeleteVolumeRequest(
 						volume.getVolumeId());
 				ec2client.deleteVolume(deleteVolumeRequest);
-			} catch (AmazonServiceException incorrectStateException) {
+			} catch (AmazonClientException incorrectStateException) {
 				LOG.info(incorrectStateException.getMessage()
 						+ "\n Waiting for new try");
 				incorrectState = true;
@@ -317,7 +308,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 
 	@Override
 	public void attachVolume(Instance instance, Volume volume) {
-		String deviceName = getNextAvaiableDeviceName(instance);
+		String deviceName = getNextAvailableDeviceName(instance);
 		boolean incorrectState = true;
 		long timeout = 10L;
 		while (incorrectState) {
@@ -328,7 +319,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 						deviceName);
 				AttachVolumeResult res = ec2client
 						.attachVolume(attachVolumeRequest);
-			} catch (AmazonServiceException incorrectStateException) {
+			} catch (AmazonClientException incorrectStateException) {
 				LOG.info(incorrectStateException.getMessage()
 						+ "\n Waiting for new try");
 				incorrectState = true;
@@ -356,7 +347,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 						volume.getVolumeId());
 				DetachVolumeResult detachVolumeResult = ec2client
 						.detachVolume(detachVolumeRequest);
-			} catch (AmazonServiceException incorrectStateException) {
+			} catch (AmazonClientException incorrectStateException) {
 				LOG.info(incorrectStateException.getMessage()
 						+ "\n Waiting for new try");
 				incorrectState = true;
@@ -388,30 +379,25 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		return instances;
 	}
 
-	private String getNextAvaiableDeviceName(Instance instance) {
-		String devName = "";
+	private String getNextAvailableDeviceName(Instance instance) {
 
 		List<InstanceBlockDeviceMapping> devList = instance
 				.getBlockDeviceMappings();
-		for (InstanceBlockDeviceMapping map : devList) {
-			String tmp = map.getDeviceName();
-			if (tmp.compareToIgnoreCase(devName) > 0) {
-				devName = tmp;
+		List<String> devNames = new ArrayList<>();
+		char lastChar='a';
+		for(InstanceBlockDeviceMapping map : devList) {
+			char ch = map.getDeviceName().charAt(map.getDeviceName().length() - 1);
+			if(ch>lastChar) {
+				lastChar =ch;
 			}
 		}
-
-		if (devName.length() > 0) {
-			char ch = devName.charAt(devName.length() - 1);
-			if (ch < 'f') {
-				ch = 'f' - 1;
-			}
-			if (ch < 'p') {
-				ch += 1;
-				return "/dev/sd" + (char) ch;
-			}
+		if(lastChar<'p' && lastChar>='f') {
+			lastChar++;
+			return "/dev/sd" + (char)lastChar;
 		}
 		return "/dev/sdf";
 	}
+
 
 	@Override
 	public void setResourceName(String resourceId, String value) {
