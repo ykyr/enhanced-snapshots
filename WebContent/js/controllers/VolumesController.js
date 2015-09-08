@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('VolumesController', function ($scope, $state, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
+    .controller('VolumesController', function ($scope, $rootScope, $state, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
         $scope.maxVolumeDisplay = 5;
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
@@ -11,7 +11,7 @@ angular.module('web')
             name: "GLOBAL",
             id: ""
         };
-        $scope.statusColorClass = {
+        $scope.stateColorClass = {
             "in-use": "success",
             "creating": "error",
             "available": "info",
@@ -23,8 +23,8 @@ angular.module('web')
         };
 
         $scope.textClass = {
-            'false': 'select',
-            'true': 'unselect'
+            'false': 'Select',
+            'true': 'Unselect'
         };
 
         $scope.iconClass = {
@@ -166,14 +166,14 @@ angular.module('web')
 
         //-----------Volumes-get/refresh-------------
 
-        $scope.isLoading = true;
+        $rootScope.isLoading = true;
         $scope.volumes = [];
 
         Volumes.get().then(function (data) {
             $scope.volumes = processVolumes(data);
-            $scope.isLoading = false;
+            $rootScope.isLoading = false;
         }, function () {
-            $scope.isLoading = false;
+            $rootScope.isLoading = false;
         });
 
         $scope.changeRegion = function (region) {
@@ -181,13 +181,13 @@ angular.module('web')
         };
 
         $scope.refresh = function () {
-            $scope.isLoading = true;
+            $rootScope.isLoading = true;
             $scope.volumes = undefined;
             Volumes.refresh().then(function (data) {
                 $scope.volumes = processVolumes(data);
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             }, function () {
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             });
         };
         //-----------Volumes-get/refresh-end------------
@@ -206,13 +206,13 @@ angular.module('web')
 
             confirmInstance.result.then(function () {
 
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
                 $scope.processErrors = [];
                 var remaining = $scope.selectedVolumes.length;
 
                 var checkProcessFinished = function () {
-                    $scope.isLoading = remaining > 0;
-                    if (!$scope.isLoading) {
+                    $rootScope.isLoading = remaining > 0;
+                    if (!$rootScope.isLoading) {
                         if ($scope.processErrors.length) {
                             console.log($scope.processErrors);
                         }
@@ -279,7 +279,7 @@ angular.module('web')
             return showRules;
         };
         $scope.retentionRule = function (volume) {
-            $scope.isLoading = true;
+            $rootScope.isLoading = true;
             Retention.get(volume.volumeId).then(function (data) {
 
                 $scope.rule = {
@@ -289,7 +289,7 @@ angular.module('web')
                 };
                 $scope.showRetentionRule = getShowRule($scope.rule);
 
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
 
                 var retentionModalInstance = $modal.open({
                     animation: true,
@@ -298,7 +298,7 @@ angular.module('web')
                 });
 
                 retentionModalInstance.result.then(function () {
-                    $scope.isLoading = true;
+                    $rootScope.isLoading = true;
                     var rule = angular.copy($scope.rule);
                     angular.forEach(rule, function (value, key) {
                         rule[key] = $scope.showRetentionRule[key] ? rule[key] : 0
@@ -306,14 +306,14 @@ angular.module('web')
                     rule.volumeId = data.volumeId;
 
                     Retention.update(rule).then(function () {
-                        $scope.isLoading = false;
+                        $rootScope.isLoading = false;
                     }, function () {
-                        $scope.isLoading = false;
+                        $rootScope.isLoading = false;
                     })
                 });
 
             }, function () {
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             });
 
         }

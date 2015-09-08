@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('ScheduleController', function ($scope, $stateParams, $filter, Tasks, $modal) {
+    .controller('ScheduleController', function ($scope, $rootScope, $stateParams, $filter, Tasks, $modal) {
 
         $scope.volumeId = $stateParams.volumeId;
         $scope.schedules = [];
@@ -52,13 +52,13 @@ angular.module('web')
             });
 
             modalInstance.result.then(function () {
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
                 var newTask = scheduleToTask($scope.scheduleToEdit);
                 Tasks.insert(newTask).then(function () {
                     refreshList();
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 }, function () {
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 });
             });
         };
@@ -73,13 +73,13 @@ angular.module('web')
             });
 
             modalInstance.result.then(function () {
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
                 var newTask = scheduleToTask($scope.scheduleToEdit);
                 Tasks.update(newTask).then(function () {
                     refreshList();
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 }, function () {
-                    $scope.isLoading = false;
+                    $rootScope.isLoading = false;
                 });
             });
         };

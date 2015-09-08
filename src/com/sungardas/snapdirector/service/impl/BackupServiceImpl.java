@@ -2,6 +2,7 @@ package com.sungardas.snapdirector.service.impl;
 
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
+import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.exception.DataException;
 import com.sungardas.snapdirector.service.BackupService;
@@ -30,6 +31,9 @@ public class BackupServiceImpl implements BackupService {
     private ConfigurationService configurationService;
 
     @Autowired
+    private BackupRepository backupRepository;
+
+    @Autowired
     private TaskRepository taskRepository;
 
     private String instanceId;
@@ -49,6 +53,11 @@ public class BackupServiceImpl implements BackupService {
             LOG.error("Task already exist: {}", taskEntry);
             throw new DataException("Task already exist");
         }
+    }
+
+    @Override
+    public List<BackupEntry> getBackupList(String volumeId) {
+        return backupRepository.get(volumeId);
     }
 
     @Override

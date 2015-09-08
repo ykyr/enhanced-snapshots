@@ -11,9 +11,12 @@ angular.module('web')
                 if (Storage.get(storageKey)) {
                     deferred.resolve(Storage.get(storageKey));
                 } else {
-                    $http.get(url).success(function (data) {
+                    $http.get(url).then(function (result) {
+                        var data = result.data;
                         Storage.save(storageKey, data);
                         deferred.resolve(data);
+                    }, function (data, status) {
+                        deferred.reject(data, status)
                     });
                 }
                 return deferred.promise;
@@ -21,10 +24,11 @@ angular.module('web')
             refresh: function() {
                 var deferred = $q.defer();
                 Storage.remove(storageKey);
-                $http.get(url).success(function (data) {
+                $http.get(url).then(function (result) {
+                    var data = result.data;
                     Storage.save(storageKey, data);
                     deferred.resolve(data);
-                }).error(function(msg){
+                }, function(msg){
                     // TODO: handle 401 here
                 });
 

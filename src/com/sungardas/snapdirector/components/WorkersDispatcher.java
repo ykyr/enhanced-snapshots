@@ -1,5 +1,6 @@
 package com.sungardas.snapdirector.components;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
@@ -18,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 
 @Component
+@DependsOn("CreateAppConfiguration")
 public class WorkersDispatcher {
     @Autowired
     private ConfigurationService configurationService;
@@ -125,9 +128,10 @@ public class WorkersDispatcher {
                         }
                     }
                     sleep();
+                } catch (AmazonClientException e){
+                  // Skip amazon exceptions
                 } catch (Exception e) {
                     LOGtw.error(e);
-                    e.printStackTrace();
                     if (executor.isShutdown() || executor.isTerminated()) break;
                 }
             }

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('HistoryController', function ($scope, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
+    .controller('HistoryController', function ($scope, $rootScope, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
         $scope.maxDeleteBackupDisplay = 5;
 
         $scope.itemsByPage = ITEMS_BY_PAGE;
@@ -10,8 +10,8 @@ angular.module('web')
         $scope.volumeId = $stateParams.volumeId;
 
         $scope.textClass = {
-            'false': 'select',
-            'true': 'unselect'
+            'false': 'Select',
+            'true': 'Unselect'
         };
 
         $scope.iconClass = {
@@ -44,15 +44,15 @@ angular.module('web')
             });
 
             confirmInstance.result.then(function () {
-                $scope.isLoading = true;
+                $rootScope.isLoading = true;
                 $scope.deleteErrors = [];
 
                 var fileNames = $scope.selectedBackups.map(function (b) { return b.fileName });
                 var remaining = fileNames.length;
 
                 var checkDeleteFinished = function () {
-                    $scope.isLoading = remaining > 0;
-                    if (!$scope.isLoading){
+                    $rootScope.isLoading = remaining > 0;
+                    if (!$rootScope.isLoading){
                         if ($scope.deleteErrors.length) { console.log($scope.deleteErrors); }
                         var finishedInstance = $modal.open({
                             animation: true,
@@ -81,18 +81,18 @@ angular.module('web')
             })
         };
 
-        $scope.isLoading = false;
+        $rootScope.isLoading = false;
         $scope.backups = [];
         var loadBackups = function () {
-            $scope.isLoading = true;
+            $rootScope.isLoading = true;
             Backups.getForVolume($scope.volumeId).then(function (data) {
                 data.forEach(function (backup) {
                     backup.isSelected = false;
                 });
                 $scope.backups = data;
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             }, function () {
-                $scope.isLoading = false;
+                $rootScope.isLoading = false;
             })
         };
         loadBackups();

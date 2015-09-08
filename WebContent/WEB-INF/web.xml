@@ -8,10 +8,6 @@
         <param-value>./mockjson/</param-value>
     </context-param>
     <context-param>
-        <param-name>aws:worker-configuration</param-name>
-        <param-value>ogorVagrantDev</param-value>
-    </context-param>
-    <context-param>
         <param-name>tmp:sdfsbackup-properties</param-name>
         <param-value>./aws/sdfsbackup.properties</param-value>
     </context-param>
@@ -37,14 +33,18 @@
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
     <filter>
-        <display-name>CorsFilter</display-name>
-        <filter-name>CorsFilter</filter-name>
-        <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+        <filter-name>filterProxy</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
     </filter>
+
     <filter-mapping>
-        <filter-name>CorsFilter</filter-name>
-        <url-pattern>/*</url-pattern>
+        <filter-name>filterProxy</filter-name>
+        <url-pattern>/rest/*</url-pattern>
     </filter-mapping>
 
     <!-- For web context -->
@@ -55,7 +55,7 @@
         </servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
-            <param-value>/WEB-INF/spring-web-config.xml</param-value>
+            <param-value>/WEB-INF/init-spring-web-config.xml</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
