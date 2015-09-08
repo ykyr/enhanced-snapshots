@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.services.cognitoidentity.model.ErrorCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -202,21 +204,21 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 				CreateVolumeResult crVolumeResult = ec2client.createVolume(crVolumeRequest);
 				vol = crVolumeResult.getVolume();
 				return vol;
-			} catch (AmazonServiceException exception) {
+			} catch (AmazonClientException exception){
 				// Service error type indicates that request was valid but there was a problem at server side while processing request
 				// in this case we can attempt to resend request again
-				if (exception.getErrorType().equals(AmazonServiceException.ErrorType.Service) && attemptNumber != retryRestoreAttempts) {
-					LOG.info("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getErrorMessage());
+				if(attemptNumber != retryRestoreAttempts) {
+					LOG.info("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getMessage());
 					LOG.info("New retry will occur in {} seconds", retryRestoreTimeout);
 					try {
 						TimeUnit.SECONDS.sleep(retryRestoreTimeout);
 					} catch (InterruptedException e) {
 					}
 				} else {
-					LOG.warn("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getErrorMessage());
+					LOG.warn("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getMessage());
 					throw exception;
 				}
-			}
+				}
 		}
 		return vol;
 	}
@@ -244,7 +246,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 				incorrectState = false;
 				DeleteVolumeRequest deleteVolumeRequest = new DeleteVolumeRequest(volume.getVolumeId());
 				ec2client.deleteVolume(deleteVolumeRequest);
-			} catch (AmazonServiceException incorrectStateException) {
+			} catch (AmazonClientException incorrectStateException) {
 				LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
 				incorrectState = true;
 				timeout += timeout < 120 ? timeout * 2 : 0;
@@ -268,7 +270,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 				AttachVolumeRequest attachVolumeRequest = new AttachVolumeRequest(volume.getVolumeId(),
 						instance.getInstanceId(), deviceName);
 				AttachVolumeResult res = ec2client.attachVolume(attachVolumeRequest);
-			} catch (AmazonServiceException incorrectStateException) {
+			} catch (AmazonClientException incorrectStateException) {
 				LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
 				incorrectState = true;
 				timeout += timeout < 120 ? timeout * 2 : 0;
@@ -291,7 +293,7 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 				incorrectState = false;
 				DetachVolumeRequest detachVolumeRequest = new DetachVolumeRequest(volume.getVolumeId());
 				DetachVolumeResult detachVolumeResult = ec2client.detachVolume(detachVolumeRequest);
-			} catch (AmazonServiceException incorrectStateException) {
+			} catch (AmazonClientException incorrectStateException) {
 				LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
 				incorrectState = true;
 				timeout += timeout < 120 ? timeout * 2 : 0;
