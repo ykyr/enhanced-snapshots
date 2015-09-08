@@ -116,12 +116,12 @@ class CreateAppConfigurationImpl {
     }
 
     private void createDbStructure() throws ConfigurationException {
-        createTable("BackupList", 1L, 1L, "volumeId", "S", "fileName", "S");
-        createTable("Configurations", 1L, 1L, "configurationId", "S");
-        createTable("Retention", 1L, 1L, "volumeId", "S");
-        createTable("Tasks", 1L, 1L, "id", "S");
-        createTable("Users", 1L, 1L, "email", "S");
-        createTable("Snapshots", 1L, 1L, "id", "S");
+        createTable("BackupList", 50L, 20L, "volumeId", "S", "fileName", "S");
+        createTable("Configurations", 10L, 10L, "configurationId", "S");
+        createTable("Retention", 50L, 20L, "volumeId", "S");
+        createTable("Tasks", 50L, 20L, "id", "S");
+        createTable("Users", 50L, 20L, "email", "S");
+        createTable("Snapshots", 50L, 20L, "id", "S");
         System.out.println(">> after createDbStructure");
     }
 
