@@ -53,10 +53,10 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 	private String configurationId;
 	
 
-	@Value("${sungardas.restore.snapshot.attempts:5}")
+	@Value("${sungardas.restore.snapshot.attempts:30}")
 	private int retryRestoreAttempts;
 
-	@Value("${sungardas.restore.snapshot.timeout:5}")
+	@Value("${sungardas.restore.snapshot.timeout:30}")
 	private int retryRestoreTimeout;
 
 	
