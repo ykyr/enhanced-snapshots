@@ -13,14 +13,20 @@
         http://www.springframework.org/schema/task
         http://www.springframework.org/schema/task/spring-task.xsd">
 
+    <context:component-scan base-package="com.sungardas.snapdirector.*"/>
 
-<context:component-scan base-package="com.sungardas.snapdirector.*"/>
+    <context:property-placeholder location="classpath:/snapdirector.properties,file:${canalina.home}/conf/snapdirector.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
+    <mvc:annotation-driven/>
 
-  <mvc:resources mapping="/resources/**" location="/resources/" />
+    <task:scheduler id="taskScheduler" pool-size="1"/>
+    <mvc:resources mapping="/resources/**" location="/resources/" />
 
-  <context:property-placeholder location="classpath:/snapdirector.properties,file:${canalina.home}/conf/snapdirector.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
+    <beans profile="prod">
+        <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationImpl"/>
+    </beans>
+    <beans profile="dev">
+        <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationDev"/>
+    </beans>
 
-  <mvc:annotation-driven />
 
-  <task:scheduler id="taskScheduler" pool-size="1"/>
 </beans>
