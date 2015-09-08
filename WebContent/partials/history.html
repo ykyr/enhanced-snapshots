@@ -43,7 +43,7 @@
 
                         <div class="flex-1 flex-center row-menu">
                             <a class="btn btn-link" title="Restore"
-                               ng-click="restore(backup)"><span
+                               ng-click="restore(backup); $event.stopPropagation();"><span
                                     class="glyphicon glyphicon-cloud-upload"></span>&nbsp; Restore</a>
                         </div>
                     </div>
