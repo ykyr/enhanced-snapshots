@@ -16,4 +16,3 @@ sudo mvn clean install;
 ################### deploying snapdirector app to the tomcatserver #####################
 sudo rm -rf /opt/tomcat-latest/webapps/*
 sudo cp target/snapdirector*.war /opt/tomcat-latest/webapps/ROOT.war
-sudo chown tomcat:tomcat /opt/tomcat-latest/webapps/ROOT.war
