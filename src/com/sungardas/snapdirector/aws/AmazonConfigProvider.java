@@ -8,6 +8,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 
@@ -56,6 +58,13 @@ public class AmazonConfigProvider {
     	AmazonSQS amazonSQS = new AmazonSQSClient(amazonAWSCredentials());
     	amazonSQS.setRegion(Region.getRegion(Regions.fromName(region)));
         return amazonSQS;
+    }
+
+    @Bean
+    public AmazonS3 amazonS3() {
+        AmazonS3 amazonS3  = new AmazonS3Client(amazonAWSCredentials());
+        amazonS3.setRegion(Region.getRegion(Regions.fromName(region)));
+        return amazonS3;
     }
 
 }
