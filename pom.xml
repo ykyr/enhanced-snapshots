@@ -33,12 +33,6 @@
 
 	<dependencies>
 
-		<dependency>
-			<groupId>org.kamranzafar</groupId>
-			<artifactId>jtar</artifactId>
-			<version>2.2</version>
-		</dependency>
-
 	<dependency>
 			<groupId>org.kamranzafar</groupId>
 			<artifactId>jtar</artifactId>
