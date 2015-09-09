@@ -49,7 +49,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
     private static final long bytesInGB = 1073741824;
-    private static final long defaultChunkSize = 4096;
+    private static final long defaultChunkSize = 131072;
     private AWSCredentials credentials = null;
     private final String DEFAULT_LOGIN = "admin@snapdirector";
     private String instanceId;
