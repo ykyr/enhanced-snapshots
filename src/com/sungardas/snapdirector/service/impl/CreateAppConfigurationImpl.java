@@ -2,6 +2,7 @@ package com.sungardas.snapdirector.service.impl;
 
 
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -43,11 +44,6 @@ import java.util.concurrent.TimeUnit;
 class CreateAppConfigurationImpl {
     private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
 
-    @Value("${amazon.aws.accesskey:}")
-    private String amazonAWSAccessKey;
-    @Value("${amazon.aws.secretkey}")
-    private String amazonAWSSecretKey;
-
     @Value("${amazon.s3.bucket}")
     private String s3Bucket;
 
@@ -70,6 +66,9 @@ class CreateAppConfigurationImpl {
 
     @Autowired
     private XmlWebApplicationContext applicationContext;
+
+    @Autowired
+    private AWSCredentials awsCredentials;
 
     private boolean init = false;
 
@@ -243,7 +242,7 @@ class CreateAppConfigurationImpl {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, size, bucketName};
+            String[] parameters = {pathToExec, awsCredentials.getAWSAccessKeyId(), awsCredentials.getAWSSecretKey(), size, bucketName};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);

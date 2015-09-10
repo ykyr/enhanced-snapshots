@@ -12,26 +12,32 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
-
+import com.sungardas.snapdirector.service.CryptoService;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
+
+import java.security.GeneralSecurityException;
 
 @Configuration
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.snapdirector.aws.dynamodb.repository")
 public class AmazonConfigProvider {
-
-    @Value("${amazon.aws.accesskey:}")
+    @Value("${amazon.aws.accesskey}")
     private String amazonAWSAccessKey;
 
     @Value("${amazon.aws.secretkey}")
     private String amazonAWSSecretKey;
+
+    @Value("${sungardas.worker.configuration}")
+    private String instanceId;
     
     @Value("${amazon.aws.region}")
     private String region;
+
+    @Autowired
+    private CryptoService cryptoService;
 
 
     @Bean
@@ -43,7 +49,9 @@ public class AmazonConfigProvider {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        return new BasicAWSCredentials(amazonAWSAccessKey, amazonAWSSecretKey);
+        String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
+        String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
+        return new BasicAWSCredentials(accessKey, secretKey);
     }
     
     @Bean
