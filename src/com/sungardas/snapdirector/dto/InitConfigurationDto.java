@@ -2,6 +2,9 @@ package com.sungardas.snapdirector.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
+import java.util.List;
+
 public class InitConfigurationDto {
     private S3 s3;
     private SDFS sdfs;
@@ -44,6 +47,16 @@ public class InitConfigurationDto {
         @JsonProperty("isCreated")
         private boolean created;
         private String bucketName;
+
+        public List<String> getNames() {
+            return names;
+        }
+
+        public void setNames(List<String> names) {
+            this.names = names;
+        }
+
+        private List<String> names = Collections.EMPTY_LIST;
 
         public boolean isCreated() {
             return created;

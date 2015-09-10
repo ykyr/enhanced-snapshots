@@ -236,6 +236,7 @@ public class TaskEntry {
         BACKUP("backup"),
         RESTORE("restore"),
         DELETE("delete"),
+        SYSTEM_BACKUP("system_backup"),
         UNKNOWN("unknown");
 
         private String type;

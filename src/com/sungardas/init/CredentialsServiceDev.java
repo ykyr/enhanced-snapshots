@@ -4,15 +4,10 @@ import com.amazonaws.auth.AWSCredentials;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 
 import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 class CredentialsServiceDev implements CredentialsService {
-    private final String catalinaHomeEnvPropName = "catalina.home";
-    private final String confFolderName = "conf";
-    private final String propFileName = "amazon.properties";
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
@@ -41,6 +36,11 @@ class CredentialsServiceDev implements CredentialsService {
         InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
         s3.setBucketName("com.sungardas.snapdirector_i-12f5a345");
         s3.setCreated(true);
+        List<String> names = new ArrayList<>();
+        names.add(s3.getBucketName());
+        names.add("S1");
+        names.add("S2");
+        s3.setNames(names);
 
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setCreated(true);
@@ -65,7 +65,7 @@ class CredentialsServiceDev implements CredentialsService {
 
     @Override
     public boolean isAwsPropertyFileExists() {
-        return getPropertyFile().exists();
+        return false;
     }
 
     @Override
@@ -78,7 +78,4 @@ class CredentialsServiceDev implements CredentialsService {
         return true;
     }
 
-    private File getPropertyFile() {
-        return Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
-    }
 }

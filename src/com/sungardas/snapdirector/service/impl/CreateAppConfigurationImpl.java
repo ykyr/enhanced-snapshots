@@ -2,7 +2,6 @@ package com.sungardas.snapdirector.service.impl;
 
 
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -19,7 +18,6 @@ import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
-import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.SDFSStateService;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -27,17 +25,12 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import javax.annotation.PostConstruct;
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -68,12 +61,6 @@ class CreateAppConfigurationImpl {
     @Autowired
     private AmazonS3 amazonS3;
 
-    @Autowired
-    private XmlWebApplicationContext applicationContext;
-
-    @Autowired
-    private AWSCredentials awsCredentials;
-
     private boolean init = false;
 
     @PostConstruct
@@ -93,19 +80,19 @@ class CreateAppConfigurationImpl {
                 dropDbTables();
                 createDbAndStoreData();
             } else {
-                if(!isConfigurationStored()) {
+                if (!isConfigurationStored()) {
                     storeWorkerConfiguration();
                 }
             }
 
             LOG.info("Initialization Queue");
-            if(!initConfigurationDto.getQueue().isCreated()) {
+            if (!initConfigurationDto.getQueue().isCreated()) {
                 createTaskQueue();
             }
 
-            boolean isBucketContainsSDFSMetadata=false;
+            boolean isBucketContainsSDFSMetadata = false;
             InitConfigurationDto.S3 s3 = initConfigurationDto.getS3();
-            if(!s3.isCreated()) {
+            if (!s3.isCreated()) {
                 LOG.info("Initialization S3 bucket");
                 createS3Bucket();
             } else {
@@ -114,9 +101,9 @@ class CreateAppConfigurationImpl {
 
             if (!initConfigurationDto.getSdfs().isCreated()) {
                 LOG.info("Initialization SDFS");
-                if(isBucketContainsSDFSMetadata) {
+                if (isBucketContainsSDFSMetadata) {
                     sdfsService.restoreState();
-                }else {
+                } else {
                     createSDFS();
                 }
 
@@ -131,7 +118,7 @@ class CreateAppConfigurationImpl {
         WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
         DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
         WorkerConfiguration loadedConf = mapper.load(WorkerConfiguration.class, workerConfiguration.getConfigurationId());
-        return loadedConf!=null;
+        return loadedConf != null;
     }
 
     private void createDbAndStoreData() {
@@ -249,7 +236,6 @@ class CreateAppConfigurationImpl {
 
         sdfsService.createSDFS(sdfs.getVolumeSize(), bucketName);
     }
-
 
 
     private void storeWorkerConfiguration() {

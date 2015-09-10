@@ -7,6 +7,7 @@ import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.service.BackupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public class BackupController {
     @ExceptionHandler(DataException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ResponseBody
-    private DataException dataException(DataException e){
+    private DataException dataException(DataException e) {
         return e;
     }
 
@@ -73,9 +74,30 @@ public class BackupController {
         }
     }
 
+    @RequestMapping(value = "/system", method = RequestMethod.GET)
+    public ResponseEntity<SystemBackupDto> getSystem() {
+        //TODO add impl
+        return new ResponseEntity<>(new SystemBackupDto(DateTime.now().getMillis()), HttpStatus.OK);
+    }
+
     private String getCurrentUserEmail() {
         String session = servletRequest.getSession().getId();
         return ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
     }
 
+    private class SystemBackupDto {
+        private long lastBackup;
+
+        public SystemBackupDto(long lastBackup) {
+            this.lastBackup = lastBackup;
+        }
+
+        public long getLastBackup() {
+            return lastBackup;
+        }
+
+        public void setLastBackup(long lastBackup) {
+            this.lastBackup = lastBackup;
+        }
+    }
 }
