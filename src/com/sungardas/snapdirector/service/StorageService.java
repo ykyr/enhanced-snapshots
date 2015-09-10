@@ -16,4 +16,5 @@ public interface StorageService {
 	String detectFsDevName(Volume volume);
 
 	void javaBinaryCopy(String source, String destination) throws IOException, InterruptedException;
+
 }

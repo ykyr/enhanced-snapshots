@@ -21,6 +21,7 @@ import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
+import com.sungardas.snapdirector.service.SDFSStateService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -57,6 +58,9 @@ class CreateAppConfigurationImpl {
     private SharedDataServiceImpl sharedDataService;
 
     @Autowired
+    private SDFSStateService sdfsService;
+
+    @Autowired
     private AmazonDynamoDB amazonDynamoDB;
     @Autowired
     private AmazonSQS amazonSQS;
@@ -79,7 +83,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                createSDFS(sdfsSize, s3Bucket);
+                sdfsService.createSDFS(sdfsSize, s3Bucket);
                 return;
             }
 
@@ -99,14 +103,23 @@ class CreateAppConfigurationImpl {
                 createTaskQueue();
             }
 
-            if(!initConfigurationDto.getS3().isCreated()) {
+            boolean isBucketContainsSDFSMetadata=false;
+            InitConfigurationDto.S3 s3 = initConfigurationDto.getS3();
+            if(!s3.isCreated()) {
                 LOG.info("Initialization S3 bucket");
                 createS3Bucket();
+            } else {
+                isBucketContainsSDFSMetadata = sdfsService.containsSdfsMetadata(s3.getBucketName());
             }
 
             if (!initConfigurationDto.getSdfs().isCreated()) {
                 LOG.info("Initialization SDFS");
-                createSDFS();
+                if(isBucketContainsSDFSMetadata) {
+                    sdfsService.restoreState();
+                }else {
+                    createSDFS();
+                }
+
             }
             System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
@@ -234,54 +247,10 @@ class CreateAppConfigurationImpl {
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
 
-        createSDFS(sdfs.getVolumeSize(), bucketName);
+        sdfsService.createSDFS(sdfs.getVolumeSize(), bucketName);
     }
 
-    private void createSDFS(String size, String bucketName) {
-        try {
-            File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
-            file.setExecutable(true);
-            String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, awsCredentials.getAWSAccessKeyId(), awsCredentials.getAWSSecretKey(), size, bucketName};
-            Process p = Runtime.getRuntime().exec(parameters);
-            p.waitFor();
-            print(p);
-            switch (p.exitValue()) {
-                case 0:
-                    LOG.info("SDFS mounted");
-                    break;
-                case 1:
-                    LOG.info("SDFS unmounted");
-                    p = Runtime.getRuntime().exec(parameters);
-                    p.waitFor();
-                    print(p);
-                    if (p.exitValue() != 0) {
-                        throw new ConfigurationException("Error creating sdfs");
-                    }
-                    LOG.info("SDFS mounted");
-                    break;
-                default:
-                    print(p);
-                    throw new ConfigurationException("Error creating sdfs");
-            }
-        } catch (IOException e) {
-            LOG.error(e);
-        } catch (InterruptedException e) {
-            LOG.error(e);
-        }
-    }
 
-    private void print(Process p) throws IOException {
-        String line;
-        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        while ((line = input.readLine()) != null) {
-            System.out.println(line);
-        }
-        input = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-        while ((line = input.readLine()) != null) {
-            System.out.println(line);
-        }
-    }
 
     private void storeWorkerConfiguration() {
         InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();

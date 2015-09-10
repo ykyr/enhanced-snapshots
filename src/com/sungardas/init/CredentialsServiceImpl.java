@@ -11,6 +11,7 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sun.management.UnixOperatingSystemMXBean;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
@@ -131,6 +132,19 @@ class CredentialsServiceImpl implements CredentialsService {
         return DEFAULT_LOGIN.equals(login.toLowerCase()) && password.equals(instanceId);
     }
 
+    @Override
+    public List<String> getBucketsWithSdfsMetadata() {
+        AmazonS3Client client = new AmazonS3Client(credentials);
+        List<Bucket> allBuckets = client.listBuckets();
+        ArrayList<String> result = new ArrayList<>();
+        for(Bucket bucket: allBuckets) {
+            if(client.listObjects(bucket.getName(), "volumemetadata.tar.gz").getMaxKeys()>0) {
+                result.add(bucket.getName());
+            }
+        }
+        return result;
+
+    }
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
         initConfigurationDto = new InitConfigurationDto();

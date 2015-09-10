@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import java.util.List;
+
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -134,6 +136,16 @@ class InitController implements ApplicationContextAware {
             refreshContext();
             return new ResponseEntity<>("", HttpStatus.OK);
         } else {
+            throw new ConfigurationException("AWS credentials invalid");
+        }
+    }
+
+    @RequestMapping(value="/configuration/sdfsbuckets", method = RequestMethod.GET)
+    public ResponseEntity<List<String>> getBucketsWithSdfsMetadata() {
+        if(credentialsService.areCredentialsValid()) {
+            List<String> buckets = credentialsService.getBucketsWithSdfsMetadata();
+            return new ResponseEntity<List<String>>(buckets, HttpStatus.OK);
+        }else {
             throw new ConfigurationException("AWS credentials invalid");
         }
     }

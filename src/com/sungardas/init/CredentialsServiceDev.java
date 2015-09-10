@@ -6,6 +6,8 @@ import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 class CredentialsServiceDev implements CredentialsService {
     private final String catalinaHomeEnvPropName = "catalina.home";
@@ -25,6 +27,11 @@ class CredentialsServiceDev implements CredentialsService {
     @Override
     public boolean areCredentialsValid() {
         return true;
+    }
+
+    @Override
+    public List<String> getBucketsWithSdfsMetadata() {
+        return new ArrayList<>();
     }
 
     @Override
