@@ -302,23 +302,6 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		LOG.info(format("\nVolume %s unattached", volume.getVolumeId()));
 	}
 
-	@Override
-	public List<Volume> getVolumeList() {
-		DescribeVolumesResult volumeResult = ec2client.describeVolumes();
-		return volumeResult.getVolumes();
-	}
-
-
-	@Override
-	public List<Instance> getInstanceList() {
-		DescribeInstancesResult descInstancesResult = ec2client.describeInstances();
-		List<Reservation> reservations = descInstancesResult.getReservations();
-		List<Instance> instances = new LinkedList<Instance>();
-		for (Reservation res : reservations) {
-			instances.addAll(res.getInstances());
-		}
-		return instances;
-	}
 
 	private String getNextAvailableDeviceName(Instance instance) {
 
@@ -345,27 +328,27 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 		ec2client.createTags(r);
 	}
 
-	public AmazonEC2 getEc2client() {
+	AmazonEC2 getEc2client() {
 		return ec2client;
 	}
 
-	public void setEc2client(AmazonEC2 ec2client) {
+	void setEc2client(AmazonEC2 ec2client) {
 		this.ec2client = ec2client;
 	}
 
-	public int getRetryRestoreAttempts() {
+	int getRetryRestoreAttempts() {
 		return retryRestoreAttempts;
 	}
 
-	public void setRetryRestoreAttempts(int retryRestoreAttempts) {
+	void setRetryRestoreAttempts(int retryRestoreAttempts) {
 		this.retryRestoreAttempts = retryRestoreAttempts;
 	}
 
-	public int getRetryRestoreTimeout() {
+	int getRetryRestoreTimeout() {
 		return retryRestoreTimeout;
 	}
 
-	public void setRetryRestoreTimeout(int retryRestoreTimeout) {
+	void setRetryRestoreTimeout(int retryRestoreTimeout) {
 		this.retryRestoreTimeout = retryRestoreTimeout;
 	}
 
