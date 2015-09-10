@@ -38,7 +38,7 @@ deploy:
   endpoint: "s3-us-east-1.amazonaws.com"
   skip_cleanup: true
   region: "us-east-1"
-  local_dir: /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1
+  local_dir: build_artifacts
   upload-dir: "travis-builds"
   file: "*.war"
   access_key_id:
