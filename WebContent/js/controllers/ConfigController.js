@@ -42,10 +42,14 @@ angular.module('web')
         };
 
         $scope.isAWS = true;
+        $scope.selectBucket = function (bucket) {
+            $scope.selectedBucket = bucket;
+        }
 
         var getCurrentConfig = function () {
-            Configuration.get('current').then(function (data, status) {
-                $scope.settings = data.data;
+            Configuration.get('current').then(function (result, status) {
+                $scope.settings = result.data;
+                $scope.selectedBucket = (result.data.s3 || [])[0] || {};
                 $scope.isAWS = false;
             })
         };
@@ -85,7 +89,7 @@ angular.module('web')
                     delete newUser.isNew;
 
                     $scope.progressState = 'running';
-                    Configuration.send('current', newUser, DELAYTIME).then(function () {
+                    Configuration.send('current/' + $scope.selectedBucket.bucketName, newUser, DELAYTIME).then(function () {
                         $scope.progressState = 'success';
                     }, function () {
                         $scope.progressState = 'failed';
@@ -97,7 +101,7 @@ angular.module('web')
             } else {
                 $scope.progressState = 'running';
 
-                Configuration.send('current').then(function () {
+                Configuration.send('current/' + $scope.selectedBucket.bucketName).then(function () {
                     $scope.progressState = 'success';
                 }, function () {
                     $scope.progressState = 'failed';
