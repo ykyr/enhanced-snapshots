@@ -90,7 +90,7 @@ public class TaskEntry {
         }
         setStatus(jsonTask.getString("status"));
         setType(jsonTask.getString("type"));
-        setVolume(jsonTask.getString("volume"));
+        setVolume(jsonTask.optString("volume"));
         setSchedulerManual(jsonTask.getBoolean("schedulerManual"));
         setSchedulerName(jsonTask.optString("schedulerName"));
         setSchedulerTime(jsonTask.optString("schedulerTime"));

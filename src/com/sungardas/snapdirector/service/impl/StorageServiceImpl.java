@@ -37,9 +37,6 @@ public class StorageServiceImpl implements StorageService {
 	private String mountPoint;
 
 	@Autowired
-	private SDFSStateService sdfsStateService;
-
-	@Autowired
 	private ConfigurationService configurationService;
 
 	@PostConstruct
@@ -58,7 +55,6 @@ public class StorageServiceImpl implements StorageService {
 			LOG.error("File not found " + file.getAbsolutePath());
 			throw new SDFSException("File not found " + file.getAbsolutePath());
 		}
-		sdfsStateService.backupState();
 	}
 
 	@Override
@@ -83,7 +79,6 @@ public class StorageServiceImpl implements StorageService {
 			}
 
 			LOG.info("Copying from {} to {} finished: {}", source, destination, total);
-			sdfsStateService.backupState();
 		} finally {
 			if (fis != null) {
 				fis.close();

@@ -39,12 +39,12 @@ import com.amazonaws.services.ec2.model.SnapshotState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeState;
-import com.sungardas.snapdirector.service.AWSCommunticationService;
+import com.sungardas.snapdirector.service.AWSCommunicationService;
 
 @Service
-public class AWSCommunticationServiceImpl implements AWSCommunticationService {
+public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
-	private static final Logger LOG = LogManager.getLogger(AWSCommunticationServiceImpl.class);
+	private static final Logger LOG = LogManager.getLogger(AWSCommunicationServiceImpl.class);
 
 	@Autowired
 	private AmazonEC2 ec2client;

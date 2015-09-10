@@ -6,16 +6,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class InitConfigurationDto {
-    private S3 s3;
+    private List<S3> s3 = Collections.EMPTY_LIST;
     private SDFS sdfs;
     private Queue queue;
     private DB db;
 
-    public S3 getS3() {
+    public List<S3> getS3() {
         return s3;
     }
 
-    public void setS3(S3 s3) {
+    public void setS3(List<S3> s3) {
         this.s3 = s3;
     }
 
@@ -48,15 +48,14 @@ public class InitConfigurationDto {
         private boolean created;
         private String bucketName;
 
-        public List<String> getNames() {
-            return names;
+        public S3(String bucketName, boolean created) {
+            this.created = created;
+            this.bucketName = bucketName;
         }
 
-        public void setNames(List<String> names) {
-            this.names = names;
-        }
+        public S3() {
 
-        private List<String> names = Collections.EMPTY_LIST;
+        }
 
         public boolean isCreated() {
             return created;

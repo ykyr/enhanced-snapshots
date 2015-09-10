@@ -21,15 +21,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -117,8 +112,8 @@ class InitController implements ApplicationContextAware {
     }
 
 
-    @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
-    public ResponseEntity<String> setConfiguration(@RequestBody String userInfo) {
+    @RequestMapping(value = "/configuration/current/{bucketName}", method = RequestMethod.POST)
+    public ResponseEntity<String> setConfiguration(@RequestBody String userInfo, @PathVariable String bucketName) {
         if(credentialsService.areCredentialsValid()){
             InitConfigurationDto initConfigurationDto = credentialsService.getInitConfigurationDto();
             if (!initConfigurationDto.getDb().isValid()){
@@ -130,22 +125,13 @@ class InitController implements ApplicationContextAware {
             if(!userInfo.equals("{}")) {
                 sharedDataService.setUserInfo(userInfo);
             }
+            initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(bucketName, false)));
             sharedDataService.setInitConfigurationDto(initConfigurationDto);
             credentialsService.storeCredentials();
 
             refreshContext();
             return new ResponseEntity<>("", HttpStatus.OK);
         } else {
-            throw new ConfigurationException("AWS credentials invalid");
-        }
-    }
-
-    @RequestMapping(value="/configuration/sdfsbuckets", method = RequestMethod.GET)
-    public ResponseEntity<List<String>> getBucketsWithSdfsMetadata() {
-        if(credentialsService.areCredentialsValid()) {
-            List<String> buckets = credentialsService.getBucketsWithSdfsMetadata();
-            return new ResponseEntity<List<String>>(buckets, HttpStatus.OK);
-        }else {
             throw new ConfigurationException("AWS credentials invalid");
         }
     }

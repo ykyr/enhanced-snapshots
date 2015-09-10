@@ -1,7 +1,6 @@
 package com.sungardas.snapdirector.tasks;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Snapshot;
@@ -12,7 +11,7 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
-import com.sungardas.snapdirector.service.AWSCommunticationService;
+import com.sungardas.snapdirector.service.AWSCommunicationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.RetentionService;
 import com.sungardas.snapdirector.service.StorageService;
@@ -38,9 +37,6 @@ public class AWSBackupVolumeTask implements BackupTask {
     private TaskRepository taskRepository;
 
     @Autowired
-    private AWSCredentials amazonAWSCredentials;
-
-    @Autowired
     AmazonEC2 ec2client;
 
     @Autowired
@@ -50,7 +46,7 @@ public class AWSBackupVolumeTask implements BackupTask {
     BackupRepository backupRepository;
 
     @Autowired
-    private AWSCommunticationService awsCommunication;
+    private AWSCommunicationService awsCommunication;
 
     private TaskEntry taskEntry;
 
@@ -88,7 +84,6 @@ public class AWSBackupVolumeTask implements BackupTask {
             attachedDeviceName = storageService.detectFsDevName(tempVolume);
 
             String backupDate = String.valueOf(System.currentTimeMillis());
-            String backupfileName = volumeId + "." + backupDate + ".backup";
 
             Volume volumeToBackup = awsCommunication.getVolume(volumeId);
             String snapshotId = tempVolume.getSnapshotId();
@@ -96,15 +91,17 @@ public class AWSBackupVolumeTask implements BackupTask {
             String iops = (volumeToBackup.getIops() != null) ? volumeToBackup.getIops().toString() : "";
             String sizeGib = tempVolume.getSize().toString();
 
-            BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS,
+            String backupFileName = volumeId + "." + backupDate + "." + volumeType + "." + iops + ".backup";
+
+            BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS,
                     configuration.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
             backupRepository.save(backup);
 
             boolean backupStatus = false;
             try {
                 String source = attachedDeviceName;
-                LOG.info("Starting copying: " + source + " to:" + backupfileName);
-                storageService.javaBinaryCopy(source, configuration.getSdfsMountPoint() + backupfileName);
+                LOG.info("Starting copying: " + source + " to:" + backupFileName);
+                storageService.javaBinaryCopy(source, configuration.getSdfsMountPoint() + backupFileName);
 
                 backupStatus = true;
             } catch (IOException | InterruptedException e) {
@@ -114,9 +111,9 @@ public class AWSBackupVolumeTask implements BackupTask {
             }
 
             if (backupStatus) {
-                long backupSize = storageService.getSize(configuration.getSdfsMountPoint() + backupfileName);
-                long backupCreationtime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint() + backupfileName);
-                LOG.info("Backup creation time: " + backupCreationtime);
+                long backupSize = storageService.getSize(configuration.getSdfsMountPoint() + backupFileName);
+                long backupCreationTime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint() + backupFileName);
+                LOG.info("Backup creation time: " + backupCreationTime);
                 LOG.info("Backup size: " + backupSize);
 
                 LOG.info("Put backup entry to the Backup List: " + backup.toString());
@@ -135,7 +132,7 @@ public class AWSBackupVolumeTask implements BackupTask {
             taskRepository.delete(taskEntry);
             LOG.info("Task completed.");
             retentionService.apply();
-        } catch (AmazonClientException e){
+        } catch (AmazonClientException e) {
             LOG.info(format("Backup process for volume %s failed ", volumeId));
             taskRepository.delete(taskEntry);
         }
@@ -155,7 +152,6 @@ public class AWSBackupVolumeTask implements BackupTask {
             LOG.error("\nCan't get access to " + volumeId + " volume");
 
         }
-
 
         Snapshot snapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(volumeSrc));
         LOG.info("\nSnapshot created. Check snapshot data:\n" + snapshot.toString());

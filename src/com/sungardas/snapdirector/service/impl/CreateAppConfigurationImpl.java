@@ -91,7 +91,7 @@ class CreateAppConfigurationImpl {
             }
 
             boolean isBucketContainsSDFSMetadata = false;
-            InitConfigurationDto.S3 s3 = initConfigurationDto.getS3();
+            InitConfigurationDto.S3 s3 = initConfigurationDto.getS3().get(0);
             if (!s3.isCreated()) {
                 LOG.info("Initialization S3 bucket");
                 createS3Bucket();
@@ -225,14 +225,14 @@ class CreateAppConfigurationImpl {
     }
 
     private void createS3Bucket() {
-        String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
+        String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
         Bucket bucket = amazonS3.createBucket(bucketName, region);
 
     }
 
     private void createSDFS() {
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
-        String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
+        String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
 
         sdfsService.createSDFS(sdfs.getVolumeSize(), bucketName);
     }

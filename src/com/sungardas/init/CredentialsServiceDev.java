@@ -25,22 +25,13 @@ class CredentialsServiceDev implements CredentialsService {
     }
 
     @Override
-    public List<String> getBucketsWithSdfsMetadata() {
-        return new ArrayList<>();
-    }
-
-    @Override
     public InitConfigurationDto getInitConfigurationDto() {
         InitConfigurationDto config = new InitConfigurationDto();
 
-        InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
-        s3.setBucketName("com.sungardas.snapdirector_i-12f5a345");
-        s3.setCreated(true);
-        List<String> names = new ArrayList<>();
-        names.add(s3.getBucketName());
-        names.add("S1");
-        names.add("S2");
-        s3.setNames(names);
+        List<InitConfigurationDto.S3> names = new ArrayList<>();
+        names.add(new InitConfigurationDto.S3("S0", false));
+        names.add(new InitConfigurationDto.S3("S1", true));
+        names.add(new InitConfigurationDto.S3("S2", true));
 
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setCreated(true);
@@ -55,7 +46,7 @@ class CredentialsServiceDev implements CredentialsService {
         InitConfigurationDto.DB db = new InitConfigurationDto.DB();
         db.setValid(false);
 
-        config.setS3(s3);
+        config.setS3(names);
         config.setSdfs(sdfs);
         config.setQueue(queue);
         config.setDb(db);
@@ -66,11 +57,6 @@ class CredentialsServiceDev implements CredentialsService {
     @Override
     public boolean isAwsPropertyFileExists() {
         return false;
-    }
-
-    @Override
-    public AWSCredentials getCredentials() {
-        return null;
     }
 
     @Override

@@ -8,7 +8,9 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.service.ConfigurationService;
+import com.sungardas.snapdirector.service.SDFSStateService;
 import com.sungardas.snapdirector.service.TaskService;
 import com.sungardas.snapdirector.tasks.BackupTask;
 import com.sungardas.snapdirector.tasks.DeleteTask;
@@ -19,8 +21,8 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -30,6 +32,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
+import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 import static java.lang.String.format;
 
 @Component
@@ -52,6 +56,12 @@ public class WorkersDispatcher {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private SDFSStateService sdfsStateService;
+
+    @Autowired
+    private TaskRepository taskRepository;
 
     @Value("${snapdirector.worker.maxNumberOfMessages}")
     private int maxNumberOfMessages;
@@ -83,21 +93,21 @@ public class WorkersDispatcher {
             String queueURL = configuration.getTaskQueueURL();
 
             LOGtw.info(format("Starting listening to tasks queue: %s", queueURL));
-
+            TaskEntry entry = null;
             while (true) {
                 try {
                     ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueURL);
                     receiveMessageRequest.setMaxNumberOfMessages(maxNumberOfMessages);
                     ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
                     List<Message> messages = result.getMessages();
-                    for(int i = 0; i < messages.size(); i++) {
+                    for (int i = 0; i < messages.size(); i++) {
                         Message message = messages.get(i);
                         String body = message.getBody();
                         LOGtw.info(format("Got message : %s", message.getMessageId()));
                         String messageRecieptHandle = message.getReceiptHandle();
                         sqs.deleteMessage(new DeleteMessageRequest(queueURL, messageRecieptHandle));
                         Task task = null;
-                        TaskEntry entry = new TaskEntry(new JSONObject(body));
+                        entry = new TaskEntry(new JSONObject(body));
                         if (!taskService.isCanceled(entry.getId())) {
                             switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
                                 case BACKUP:
@@ -116,6 +126,13 @@ public class WorkersDispatcher {
                                     task = restoreTaskObjectFactory.getObject();
                                     task.setTaskEntry(entry);
                                     break;
+                                case SYSTEM_BACKUP: {
+                                    LOGtw.info("Task was identified as system backup");
+                                    entry.setStatus(RUNNING.getStatus());
+                                    taskRepository.save(entry);
+                                    sdfsStateService.backupState();
+                                    break;
+                                }
                                 case UNKNOWN:
                                     LOGtw.warn("Executor for type {} is not implemented. Task {} is going to be removed.", entry.getType(), entry.getId());
                                     taskService.removeTask(entry.getId());
@@ -128,10 +145,14 @@ public class WorkersDispatcher {
                         }
                     }
                     sleep();
-                } catch (AmazonClientException e){
-                  // Skip amazon exceptions
+                } catch (AmazonClientException e) {
+                    // Skip amazon exceptions
                 } catch (Exception e) {
                     LOGtw.error(e);
+                    if(entry != null) {
+                        entry.setStatus(ERROR.getStatus());
+                        taskRepository.save(entry);
+                    }
                     if (executor.isShutdown() || executor.isTerminated()) break;
                 }
             }

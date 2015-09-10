@@ -35,14 +35,11 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void createTask(TaskDto taskDto) {
-        //TODO: add impl
-        if (taskDto.getType().equals("system_backup")) {
-            return;
-        }
         TaskEntry newTask = TaskDtoConverter.convert(taskDto);
         String configurationId = configuration.getConfiguration().getConfigurationId();
         newTask.setWorker(configurationId);
         newTask.setInstanceId(configurationId);
+        newTask.setStatus(TaskEntry.TaskEntryStatus.WAITING.getStatus());
         taskRepository.save(newTask);
         if (Boolean.valueOf(newTask.getRegular())) {
             try {

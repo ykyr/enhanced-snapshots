@@ -11,7 +11,6 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sun.management.UnixOperatingSystemMXBean;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
@@ -25,20 +24,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 @Service
@@ -87,7 +80,7 @@ class CredentialsServiceImpl implements CredentialsService {
             properties.setProperty(secretKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSSecretKey()));
             properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, getInstanceId());
-            properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().getBucketName());
+            properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().get(0).getBucketName());
             properties.setProperty(AMAZON_SDFS_SIZE, initConfigurationDto.getSdfs().getVolumeSize());
 
             properties.store(new FileOutputStream(file), "AWS Credentials");
@@ -120,23 +113,17 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     @Override
-    public AWSCredentials getCredentials() {
-        return credentials;
-    }
-
-    @Override
     public boolean checkDefaultUser(String login, String password) {
         return DEFAULT_LOGIN.equals(login.toLowerCase()) && password.equals(instanceId);
     }
 
-    @Override
-    public List<String> getBucketsWithSdfsMetadata() {
+    private List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
         AmazonS3Client client = new AmazonS3Client(credentials);
         List<Bucket> allBuckets = client.listBuckets();
-        ArrayList<String> result = new ArrayList<>();
+        ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
         for(Bucket bucket: allBuckets) {
             if(client.listObjects(bucket.getName(), "volumemetadata.tar.gz").getMaxKeys()>0) {
-                result.add(bucket.getName());
+                result.add(new InitConfigurationDto.S3(bucket.getName(), true));
             }
         }
         return result;
@@ -149,10 +136,11 @@ class CredentialsServiceImpl implements CredentialsService {
         initConfigurationDto.getDb().setValid(false);
         initConfigurationDto.getDb().setValid(isDbExists());
 
+        initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         String bucketName =  "com.sungardas.snapdirector." + instanceId;
-        InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
-        s3.setBucketName(bucketName);
-        s3.setCreated(bucketAlreadyExists(bucketName));
+        List<InitConfigurationDto.S3> list = getBucketsWithSdfsMetadata();
+
+
 
         String queueName = getAccountId() + "/snapdirector_" + instanceId;
         InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
@@ -167,7 +155,7 @@ class CredentialsServiceImpl implements CredentialsService {
         sdfs.setVolumeSize(Integer.toString(getSdfsVolumeMaxAvailableSizeInGB()) + "GB");
         sdfs.setCreated(sdfsAlreadyExists(volumeName, mountPoint));
 
-        initConfigurationDto.setS3(s3);
+        initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setQueue(queue);
         initConfigurationDto.setSdfs(sdfs);
         return initConfigurationDto;

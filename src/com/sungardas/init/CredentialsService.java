@@ -13,13 +13,9 @@ interface CredentialsService {
 
     boolean areCredentialsValid();
 
-    List<String> getBucketsWithSdfsMetadata();
-
     InitConfigurationDto getInitConfigurationDto();
 
     boolean isAwsPropertyFileExists();
-
-    AWSCredentials getCredentials();
 
     boolean checkDefaultUser(String login, String password);
 }
