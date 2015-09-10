@@ -12,18 +12,18 @@ import com.sungardas.snapdirector.exception.SDFSException;
 import com.sungardas.snapdirector.service.SDFSStateService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.kamranzafar.jtar.TarEntry;
-import org.kamranzafar.jtar.TarInputStream;
-import org.kamranzafar.jtar.TarOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import java.io.*;
+import java.net.URI;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 @Service
 public class SDFSStateServiceImpl implements SDFSStateService {
@@ -49,23 +49,33 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Autowired
     private XmlWebApplicationContext applicationContext;
 
-    private static final String SDFS_STATE_BACKUP_NAME = "volumemetadata.tar.gz";
+    private static final String SDFS_STATE_BACKUP_PATH = "/var/sdfs/sdfsstate.zip";
+    private static final String KEY_NAME = "sdfsstate.zip";
+    private static final String SDFS_STATE_DESTINATION = "/";
 
     @Override
     public void backupState() throws AmazonClientException{
-        String[] pathes = {volumeMetadataPath,volumeConfigPath};
-        File fileToUpload = TarUtils.packToTar(SDFS_STATE_BACKUP_NAME, Arrays.asList(pathes));
-        uploadToS3(SDFS_STATE_BACKUP_NAME, fileToUpload);
+        String[] paths = {volumeMetadataPath,volumeConfigPath};
+        try {
+            ZipUtils.zip(SDFS_STATE_BACKUP_PATH, paths);
+        } catch (IOException e) {
+            String errMsg = String.format("Cant zip to archive %s", SDFS_STATE_BACKUP_PATH);
+            LOG.error(errMsg);
+           throw new SDFSException(errMsg, e);
+        }
+        uploadToS3(KEY_NAME, new File(SDFS_STATE_BACKUP_PATH));
     }
 
     @Override
     public void restoreState() throws AmazonClientException{
         try {
-            File tmpTarGz = downloadFromS3("tmp.tar.gz",SDFS_STATE_BACKUP_NAME);
-            TarUtils.unpackFromTar(tmpTarGz);
+            downloadFromS3(KEY_NAME,SDFS_STATE_BACKUP_PATH);
+            ZipUtils.unzip(SDFS_STATE_BACKUP_PATH, SDFS_STATE_DESTINATION);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            String errMsg = String.format("Cant restore sdfs state from archive %s", SDFS_STATE_BACKUP_PATH);
+            LOG.error(errMsg);
+            throw new SDFSException(errMsg, e);
         }
     }
 
@@ -147,120 +157,149 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 }
 
 
-class TarUtils {
+class ZipUtils {
 
-    public static final Logger LOG = LogManager.getLogger(TarUtils.class);
+    private static final Logger LOG = LogManager.getLogger(ZipUtils.class);
 
-    public static File packToTar(String archiveName, String pathToPack) {
-        LinkedList<String>pathes = new LinkedList<>();
-        pathes.add(pathToPack);
-        return packToTar(archiveName, pathToPack);
+    private static FileSystem createZipFileSystem(String zipFilename,
+                                                  boolean create)
+            throws IOException {
+        // convert the filename to a URI
+        final Path path = Paths.get(zipFilename);
+        final URI uri = URI.create("jar:file:" + path.toUri().getPath().replaceAll(" ", "%2520"));
+
+        final Map<String, String> env = new HashMap<>();
+        if (create) {
+            env.put("create", "true");
+        }
+        return FileSystems.newFileSystem(uri, env);
     }
 
-    public static File packToTar(String archiveName, Collection<String> pathsToStore) {
-        try {
-            LOG.info("\nCreating archive: {}", archiveName);
-            File result = new File(archiveName);
-            FileOutputStream archiveDestination = new FileOutputStream(result);
-            TarOutputStream tarOut = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(
-                    archiveDestination)));
+    public static void unzip(String zipFilename, String destDirname)
+            throws IOException{
 
-            File f;
-            for (String filepath : pathsToStore) {
-                LOG.info("Storing location: {}", filepath);
-                f = new File(filepath);
-                if (!f.exists())
-                    continue;
-                if (f.isDirectory()) {
-                    pachFolderToTar(tarOut, f);
-                    continue;
+        final Path destDir = Paths.get(destDirname);
+        //if the destination doesn't exist, create it
+        if(Files.notExists(destDir)){
+            LOG.info(destDir + " does not exist. Creating...");
+            Files.createDirectories(destDir);
+        }
+
+        try (FileSystem zipFileSystem = createZipFileSystem(zipFilename, false)){
+            final Path root = zipFileSystem.getPath("/");
+
+            //walk the zip file tree and copy files to the destination
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>(){
+                @Override
+                public FileVisitResult visitFile(Path file,
+                                                 BasicFileAttributes attrs) throws IOException {
+                    final Path destFile = Paths.get(destDir.toString(),
+                            file.toString());
+                    LOG.info("Extracting file %s to %s\n", file, destFile);
+                    Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
                 }
-                putFileToTar(tarOut, f);
-            }
 
-            tarOut.close();
-            return result;
-
-        } catch (FileNotFoundException e) {
-            LOG.error("Cant create archive file: " + archiveName);
-            LOG.error("Error Message:    " + e.getMessage());
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            LOG.error(e);
-            throw new SDFSException(e);
-        }
-    }
-
-
-    private static final void pachFolderToTar(TarOutputStream tarOut, File folder) throws IOException {
-        File[] files = folder.listFiles();
-
-        for (File f : files) {
-            if (f.isDirectory()) {
-                pachFolderToTar(tarOut, f);
-                continue;
-            }
-            putFileToTar(tarOut, f);
-        }
-
-    }
-
-
-    private static void putFileToTar(TarOutputStream tarOut, File fileToPut) throws IOException {
-        tarOut.putNextEntry(new TarEntry(fileToPut, fileToPut.getAbsolutePath()));
-
-        BufferedInputStream origin = new BufferedInputStream(new FileInputStream(fileToPut));
-        int count;
-        byte buffer[] = new byte[2048];
-        while ((count = origin.read(buffer)) != -1) {
-            tarOut.write(buffer, 0, count);
-        }
-        tarOut.flush();
-        origin.close();
-    }
-
-
-    public static void unpackFromTar(File archiveName) {
-        try {
-            LOG.info("\nExtracting archive: {}", archiveName.getName());
-            FileInputStream archiveSource = new FileInputStream(archiveName);
-            TarInputStream tarIn = new TarInputStream(new BufferedInputStream(new GZIPInputStream(archiveSource)));
-
-            TarEntry entry;
-
-            while ((entry = tarIn.getNextEntry()) != null) {
-                int count;
-                byte buffer[] = new byte[2048];
-                String absolutePath = entry.getName();
-                createDirs(absolutePath);
-
-                BufferedOutputStream destination = new BufferedOutputStream(new FileOutputStream(absolutePath));
-                while ((count = tarIn.read(buffer)) != -1) {
-                    destination.write(buffer, 0, count);
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir,
+                                                         BasicFileAttributes attrs) throws IOException {
+                    final Path dirToCreate = Paths.get(destDir.toString(),
+                            dir.toString());
+                    if(Files.notExists(dirToCreate)){
+                        LOG.info("Creating directory %s\n", dirToCreate);
+                        Files.createDirectory(dirToCreate);
+                    }
+                    return FileVisitResult.CONTINUE;
                 }
-                destination.flush();
-                destination.close();
-            }
-
-            archiveSource.close();
-            LOG.info("Archive extracted: " + archiveName);
-        } catch (FileNotFoundException e) {
-            LOG.error("Cant get access to archive file: " + archiveName);
-            LOG.error("Error Message:    " + e.getMessage());
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            e.printStackTrace();
+            });
         }
-
     }
 
+    public static void zip(String zipFilename, String... filenames)
+            throws IOException {
 
-    private static void createDirs(String absolutePath) {
-        int fileNamePos = absolutePath.lastIndexOf('\\') != -1 ? absolutePath.lastIndexOf('\\') : absolutePath
-                .lastIndexOf('/');
-        File pathToCreate = new File(absolutePath.substring(0, fileNamePos));
-        if (pathToCreate.mkdirs()) {
-            LOG.info("Created folder: {}", pathToCreate);
+        try (FileSystem zipFileSystem = createZipFileSystem(zipFilename, true)) {
+            final Path root = zipFileSystem.getPath("/");
+
+            //iterate over the files we need to add
+            for (String filename : filenames) {
+                final Path src = Paths.get(filename);
+
+                //add a file to the zip file system
+                if(!Files.isDirectory(src)){
+                    final Path dest = zipFileSystem.getPath(root.toString(),
+                            src.toString());
+                    final Path parent = dest.getParent();
+                    if(Files.notExists(parent)){
+                        LOG.info("Creating directory %s\n", parent);
+                        Files.createDirectories(parent);
+                    }
+                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+                }
+                else{
+                    //for directories, walk the file tree
+                    Files.walkFileTree(src, new SimpleFileVisitor<Path>(){
+                        @Override
+                        public FileVisitResult visitFile(Path file,
+                                                         BasicFileAttributes attrs) throws IOException {
+                            final Path dest = zipFileSystem.getPath(root.toString(),
+                                    file.toString());
+                            Files.copy(file, dest, StandardCopyOption.REPLACE_EXISTING);
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public FileVisitResult preVisitDirectory(Path dir,
+                                                                 BasicFileAttributes attrs) throws IOException {
+                            final Path dirToCreate = zipFileSystem.getPath(root.toString(),
+                                    dir.toString());
+                            if(Files.notExists(dirToCreate)){
+                                LOG.info("Creating directory %s\n", dirToCreate);
+                                Files.createDirectories(dirToCreate);
+                            }
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    public static void list(String zipFilename) throws IOException{
+
+        LOG.info("Listing Archive:  %s\n", zipFilename);
+
+        //create the file system
+        try (FileSystem zipFileSystem = createZipFileSystem(zipFilename, false)) {
+
+            final Path root = zipFileSystem.getPath("/");
+
+            //walk the file tree and print out the directory and filenames
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>(){
+                @Override
+                public FileVisitResult visitFile(Path file,
+                                                 BasicFileAttributes attrs) throws IOException {
+                    print(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir,
+                                                         BasicFileAttributes attrs) throws IOException {
+                    print(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                private void print(Path file) throws IOException{
+                    final DateFormat df = new SimpleDateFormat("MM/dd/yyyy-HH:mm:ss");
+                    final String modTime= df.format(new Date(
+                            Files.getLastModifiedTime(file).toMillis()));
+                    LOG.info("%d  %s  %s\n",
+                            Files.size(file),
+                            modTime,
+                            file);
+                }
+            });
         }
     }
 }
