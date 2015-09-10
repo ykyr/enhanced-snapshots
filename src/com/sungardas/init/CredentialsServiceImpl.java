@@ -39,10 +39,7 @@ import java.net.URLConnection;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 
 @Service
 class CredentialsServiceImpl implements CredentialsService {
