@@ -1,0 +1,14 @@
+---
+- debug: msg="install nginx"
+
+- name: install nginx
+  yum: name=nginx state=latest
+
+- copy: src=cert_crt dest=/etc/nginx/cert.crt mode="0640"
+
+- copy: src=cert_key dest=/etc/nginx/cert.key mode="0640"
+
+- copy: src=nginx_conf dest=/etc/nginx/nginx.conf mode="0640"
+
+- name: ensure that nginx is running
+  service: name=nginx state=running enabled=yes

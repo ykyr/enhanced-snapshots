@@ -33,7 +33,9 @@ config.vm.box = "chef/centos-6.5"
 config.vm.provider "virtualbox" do |v, override|
     v.customize ["modifyvm", :id, "--memory", 2*1024]
     override.vm.network :private_network, ip: "10.10.10.10"
+    config.vm.network "forwarded_port", guest: 80, host: 8800, protocol: 'tcp'
     config.vm.network "forwarded_port", guest: 8080, host: 8801, protocol: 'tcp'
+    config.vm.network "forwarded_port", guest: 443, host: 4430, protocol: 'tcp'
 end
 
 config.vm.provision "shell", inline: bootstrap_script
