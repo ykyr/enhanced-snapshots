@@ -27,9 +27,10 @@ before_script:
 
 script:
   - mvn clean install
-  - rm -f /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1/*.pom
-  - rm -f /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1/_remote.repositories
-  - mv -f /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1/snapdirector-0.0.1.war /home/travis/.m2/repository/com/sungardas/snapdirector/snapdirector/0.0.1/snapdirector-0.0.1_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
+
+after_script:
+  - mkdir build_artifacts
+  - mv -f target/snapdirector*.war build_artifacts/snapdirector_0.0.1_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
 
 deploy:
   provider: s3
