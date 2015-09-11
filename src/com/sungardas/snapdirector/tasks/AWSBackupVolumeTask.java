@@ -139,14 +139,15 @@ public class AWSBackupVolumeTask implements BackupTask {
             LOG.info("Deleting temporary volume" + tempVolume.getVolumeId());
             awsCommunication.deleteVolume(tempVolume);
 
-            LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
-            LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
-            taskRepository.delete(taskEntry);
-            LOG.info("Task completed.");
+            if(backupStatus) {
+                LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
+                LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
+                taskRepository.delete(taskEntry);
+                LOG.info("Task completed.");
+            }
             retentionService.apply();
         } catch (AmazonClientException e){
-            LOG.info(format("Backup process for volume %s failed ", volumeId));
-            taskRepository.delete(taskEntry);
+            LOG.warn(format("Backup process for volume %s failed ", volumeId));
         }
     }
 
