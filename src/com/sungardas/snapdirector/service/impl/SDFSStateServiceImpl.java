@@ -1,7 +1,7 @@
 package com.sungardas.snapdirector.service.impl;
 
-
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -19,20 +19,18 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class SDFSStateServiceImpl implements SDFSStateService {
     private static final org.apache.log4j.Logger LOG = org.apache.log4j.LogManager.getLogger(SDFSStateServiceImpl.class);
 
-    @Value("${amazon.aws.accesskey:}")
-    private String amazonAWSAccessKey;
-    @Value("${amazon.aws.secretkey}")
-    private String amazonAWSSecretKey;
+    @Autowired
+    private AWSCredentials credentials;
 
     @Autowired
     private AmazonS3 amazonS3;
@@ -46,36 +44,49 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Value("${sdfs.volume.config.path}")
     private String volumeConfigPath;
 
+    @Value("${amazon.sdfs.size}")
+    private String sdfsSize;
+
     @Autowired
     private XmlWebApplicationContext applicationContext;
 
-    private static final String SDFS_STATE_BACKUP_PATH = "/var/sdfs/sdfsstate.zip";
+    public static final String SDFS_STATE_BACKUP_FILE_NAME = "sdfsstate";
+    public static final String SDFS_STATE_BACKUP_FILE_EXT = ".zip";
     private static final String KEY_NAME = "sdfsstate.zip";
     private static final String SDFS_STATE_DESTINATION = "/";
 
     @Override
-    public void backupState() throws AmazonClientException{
-        String[] paths = {volumeMetadataPath,volumeConfigPath};
+    public void backupState() throws AmazonClientException {
+        shutdownSDFS(sdfsSize, s3Bucket);
+        String[] paths = {volumeMetadataPath, volumeConfigPath};
+        File tempFile = null;
         try {
-            ZipUtils.zip(SDFS_STATE_BACKUP_PATH, paths);
-        } catch (IOException e) {
-            String errMsg = String.format("Cant zip to archive %s", SDFS_STATE_BACKUP_PATH);
-            LOG.error(errMsg);
-           throw new SDFSException(errMsg, e);
+            tempFile = ZipUtils.zip(paths);
+        } catch (Throwable e) {
+            startupSDFS(sdfsSize, s3Bucket);
+            if(tempFile != null && tempFile.exists()){
+                tempFile.delete();
+            }
+            throw new SDFSException("Cant create system backup ", e);
         }
-        uploadToS3(KEY_NAME, new File(SDFS_STATE_BACKUP_PATH));
+        uploadToS3(KEY_NAME, tempFile);
+        startupSDFS(sdfsSize, s3Bucket);
+        tempFile.delete();
     }
 
     @Override
-    public void restoreState() throws AmazonClientException{
+    public void restoreState() throws AmazonClientException {
+        File file = null;
         try {
-            downloadFromS3(KEY_NAME,SDFS_STATE_BACKUP_PATH);
-            ZipUtils.unzip(SDFS_STATE_BACKUP_PATH, SDFS_STATE_DESTINATION);
-
+            file = Files.createTempFile(SDFS_STATE_BACKUP_FILE_NAME, SDFS_STATE_BACKUP_FILE_EXT).toFile();
+            downloadFromS3(KEY_NAME, file);
+            ZipUtils.unzip(file, SDFS_STATE_DESTINATION);
+            file.delete();
         } catch (IOException e) {
-            String errMsg = String.format("Cant restore sdfs state from archive %s", SDFS_STATE_BACKUP_PATH);
-            LOG.error(errMsg);
-            throw new SDFSException(errMsg, e);
+            if(file != null && file.exists()){
+                file.delete();
+            }
+            throw new SDFSException("Cant restore sdfs state", e);
         }
     }
 
@@ -85,12 +96,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
-    public void createSDFS(String size, String bucketName) {
+    public void startupSDFS(String size, String bucketName) {
         try {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, size, bucketName};
+            String[] parameters = {pathToExec, credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey(), size, bucketName};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);
@@ -107,6 +118,40 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                         throw new ConfigurationException("Error creating sdfs");
                     }
                     LOG.info("SDFS mounted");
+                    break;
+                default:
+                    print(p);
+                    throw new ConfigurationException("Error creating sdfs");
+            }
+        } catch (IOException e) {
+            LOG.error(e);
+        } catch (InterruptedException e) {
+            LOG.error(e);
+        }
+    }
+
+    private void shutdownSDFS(String size, String bucketName) {
+        try {
+            File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
+            file.setExecutable(true);
+            String pathToExec = file.getAbsolutePath();
+            String[] parameters = {pathToExec, credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey(), size, bucketName};
+            Process p = Runtime.getRuntime().exec(parameters);
+            p.waitFor();
+            print(p);
+            switch (p.exitValue()) {
+                case 0:
+                    LOG.info("SDFS mounted");
+                    p = Runtime.getRuntime().exec(parameters);
+                    p.waitFor();
+                    print(p);
+                    if (p.exitValue() != 1) {
+                        throw new ConfigurationException("Error unable to stop sdfs");
+                    }
+                    LOG.info("SDFS unmounted");
+                    break;
+                case 1:
+                    LOG.info("SDFS unmounted");
                     break;
                 default:
                     print(p);
@@ -137,12 +182,11 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         amazonS3.putObject(putObjectRequest);
     }
 
-    private File downloadFromS3(String keyName, String sdfsBackupFile) throws IOException {
+    private void downloadFromS3(String keyName, File sdfsBackupFile) throws IOException {
         GetObjectRequest getObjectRequest = new GetObjectRequest(s3Bucket, keyName);
         S3Object s3object = amazonS3.getObject(getObjectRequest);
 
-        File result = new File(sdfsBackupFile);
-        BufferedOutputStream bout = new BufferedOutputStream(new FileOutputStream(result));
+        BufferedOutputStream bout = new BufferedOutputStream(new FileOutputStream(sdfsBackupFile));
 
         int count;
         byte[] buffer = new byte[2048];
@@ -152,154 +196,110 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         }
         bout.flush();
         bout.close();
-        return result;
-    }
-}
-
-
-class ZipUtils {
-
-    private static final Logger LOG = LogManager.getLogger(ZipUtils.class);
-
-    private static FileSystem createZipFileSystem(String zipFilename,
-                                                  boolean create)
-            throws IOException {
-        // convert the filename to a URI
-        final Path path = Paths.get(zipFilename);
-        final URI uri = URI.create("jar:file:" + path.toUri().getPath().replaceAll(" ", "%2520"));
-
-        final Map<String, String> env = new HashMap<>();
-        if (create) {
-            env.put("create", "true");
-        }
-        return FileSystems.newFileSystem(uri, env);
     }
 
-    public static void unzip(String zipFilename, String destDirname)
-            throws IOException{
+    static class ZipUtils {
 
-        final Path destDir = Paths.get(destDirname);
-        //if the destination doesn't exist, create it
-        if(Files.notExists(destDir)){
-            LOG.info(destDir + " does not exist. Creating...");
-            Files.createDirectories(destDir);
+        private static final Logger LOG = LogManager.getLogger(ZipUtils.class);
+
+        private static FileSystem createZipFileSystem(File file, boolean create) throws IOException {
+            file.delete();
+            final URI uri = URI.create("jar:file:" + file.toURI().getPath().replaceAll(" ", "%2520"));
+
+            final Map<String, String> env = new HashMap<>();
+            if (create) {
+                env.put("create", "true");
+            }
+            return FileSystems.newFileSystem(uri, env);
         }
 
-        try (FileSystem zipFileSystem = createZipFileSystem(zipFilename, false)){
-            final Path root = zipFileSystem.getPath("/");
+        public static void unzip(File zipFile, String destDirname)
+                throws IOException {
 
-            //walk the zip file tree and copy files to the destination
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>(){
-                @Override
-                public FileVisitResult visitFile(Path file,
-                                                 BasicFileAttributes attrs) throws IOException {
-                    final Path destFile = Paths.get(destDir.toString(),
-                            file.toString());
-                    LOG.info("Extracting file %s to %s\n", file, destFile);
-                    Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
-                    return FileVisitResult.CONTINUE;
-                }
+            final Path destDir = Paths.get(destDirname);
+            //if the destination doesn't exist, create it
+            if (Files.notExists(destDir)) {
+                LOG.info(destDir + " does not exist. Creating...");
+                Files.createDirectories(destDir);
+            }
 
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir,
-                                                         BasicFileAttributes attrs) throws IOException {
-                    final Path dirToCreate = Paths.get(destDir.toString(),
-                            dir.toString());
-                    if(Files.notExists(dirToCreate)){
-                        LOG.info("Creating directory %s\n", dirToCreate);
-                        Files.createDirectory(dirToCreate);
+            try (FileSystem zipFileSystem = createZipFileSystem(zipFile, false)) {
+                final Path root = zipFileSystem.getPath("/");
+
+                //walk the zip file tree and copy files to the destination
+                Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file,
+                                                     BasicFileAttributes attrs) throws IOException {
+                        final Path destFile = Paths.get(destDir.toString(),
+                                file.toString());
+                        LOG.info("Extracting file {} to {}\n", file, destFile);
+                        Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
+                        return FileVisitResult.CONTINUE;
                     }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        }
-    }
 
-    public static void zip(String zipFilename, String... filenames)
-            throws IOException {
-
-        try (FileSystem zipFileSystem = createZipFileSystem(zipFilename, true)) {
-            final Path root = zipFileSystem.getPath("/");
-
-            //iterate over the files we need to add
-            for (String filename : filenames) {
-                final Path src = Paths.get(filename);
-
-                //add a file to the zip file system
-                if(!Files.isDirectory(src)){
-                    final Path dest = zipFileSystem.getPath(root.toString(),
-                            src.toString());
-                    final Path parent = dest.getParent();
-                    if(Files.notExists(parent)){
-                        LOG.info("Creating directory %s\n", parent);
-                        Files.createDirectories(parent);
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir,
+                                                             BasicFileAttributes attrs) throws IOException {
+                        final Path dirToCreate = Paths.get(destDir.toString(),
+                                dir.toString());
+                        if (Files.notExists(dirToCreate)) {
+                            LOG.info("Creating directory {}\n", dirToCreate);
+                            Files.createDirectory(dirToCreate);
+                        }
+                        return FileVisitResult.CONTINUE;
                     }
-                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
-                }
-                else{
-                    //for directories, walk the file tree
-                    Files.walkFileTree(src, new SimpleFileVisitor<Path>(){
-                        @Override
-                        public FileVisitResult visitFile(Path file,
-                                                         BasicFileAttributes attrs) throws IOException {
-                            final Path dest = zipFileSystem.getPath(root.toString(),
-                                    file.toString());
-                            Files.copy(file, dest, StandardCopyOption.REPLACE_EXISTING);
-                            return FileVisitResult.CONTINUE;
-                        }
-
-                        @Override
-                        public FileVisitResult preVisitDirectory(Path dir,
-                                                                 BasicFileAttributes attrs) throws IOException {
-                            final Path dirToCreate = zipFileSystem.getPath(root.toString(),
-                                    dir.toString());
-                            if(Files.notExists(dirToCreate)){
-                                LOG.info("Creating directory %s\n", dirToCreate);
-                                Files.createDirectories(dirToCreate);
-                            }
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
-                }
+                });
             }
         }
-    }
 
-    public static void list(String zipFilename) throws IOException{
+        public static File zip(String... filenames) throws IOException {
+            File tempFile = Files.createTempFile(SDFS_STATE_BACKUP_FILE_NAME, SDFS_STATE_BACKUP_FILE_EXT).toFile();
+            try (FileSystem zipFileSystem = createZipFileSystem(tempFile, true)) {
+                final Path root = zipFileSystem.getPath("/");
 
-        LOG.info("Listing Archive:  %s\n", zipFilename);
+                //iterate over the files we need to add
+                for (String filename : filenames) {
+                    final Path src = Paths.get(filename);
 
-        //create the file system
-        try (FileSystem zipFileSystem = createZipFileSystem(zipFilename, false)) {
+                    //add a file to the zip file system
+                    if (!Files.isDirectory(src)) {
+                        final Path dest = zipFileSystem.getPath(root.toString(),
+                                src.toString());
+                        final Path parent = dest.getParent();
+                        if (Files.notExists(parent)) {
+                            LOG.info("Creating directory {}", parent);
+                            Files.createDirectories(parent);
+                        }
+                        Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        //for directories, walk the file tree
+                        Files.walkFileTree(src, new SimpleFileVisitor<Path>() {
+                            @Override
+                            public FileVisitResult visitFile(Path file,
+                                                             BasicFileAttributes attrs) throws IOException {
+                                final Path dest = zipFileSystem.getPath(root.toString(),
+                                        file.toString());
+                                Files.copy(file, dest, StandardCopyOption.REPLACE_EXISTING);
+                                return FileVisitResult.CONTINUE;
+                            }
 
-            final Path root = zipFileSystem.getPath("/");
-
-            //walk the file tree and print out the directory and filenames
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>(){
-                @Override
-                public FileVisitResult visitFile(Path file,
-                                                 BasicFileAttributes attrs) throws IOException {
-                    print(file);
-                    return FileVisitResult.CONTINUE;
+                            @Override
+                            public FileVisitResult preVisitDirectory(Path dir,
+                                                                     BasicFileAttributes attrs) throws IOException {
+                                final Path dirToCreate = zipFileSystem.getPath(root.toString(),
+                                        dir.toString());
+                                if (Files.notExists(dirToCreate)) {
+                                    LOG.info("Creating directory {}\n", dirToCreate);
+                                    Files.createDirectories(dirToCreate);
+                                }
+                                return FileVisitResult.CONTINUE;
+                            }
+                        });
+                    }
                 }
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir,
-                                                         BasicFileAttributes attrs) throws IOException {
-                    print(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                private void print(Path file) throws IOException{
-                    final DateFormat df = new SimpleDateFormat("MM/dd/yyyy-HH:mm:ss");
-                    final String modTime= df.format(new Date(
-                            Files.getLastModifiedTime(file).toMillis()));
-                    LOG.info("%d  %s  %s\n",
-                            Files.size(file),
-                            modTime,
-                            file);
-                }
-            });
+            }
+            return tempFile;
         }
     }
 }

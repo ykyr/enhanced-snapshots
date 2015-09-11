@@ -8,5 +8,5 @@ public interface SDFSStateService {
 
     boolean containsSdfsMetadata(String sBucket);
 
-    void createSDFS(String size, String bucketName);
+    void startupSDFS(String size, String bucketName);
 }

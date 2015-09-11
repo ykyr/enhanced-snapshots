@@ -112,20 +112,20 @@ class InitController implements ApplicationContextAware {
     }
 
 
-    @RequestMapping(value = "/configuration/current/{bucketName}", method = RequestMethod.POST)
-    public ResponseEntity<String> setConfiguration(@RequestBody String userInfo, @PathVariable String bucketName) {
+    @RequestMapping(value = "/configuration/current/", method = RequestMethod.POST)
+    public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
         if(credentialsService.areCredentialsValid()){
             InitConfigurationDto initConfigurationDto = credentialsService.getInitConfigurationDto();
             if (!initConfigurationDto.getDb().isValid()){
-                if ("{}".equals(userInfo)) {
+                if (config.getUser() == null) {
                     throw new ConfigurationException("Please create default user");
                 }
-                sharedDataService.setUserInfo(userInfo);
+                sharedDataService.setUser(config.getUser());
             }
-            if(!userInfo.equals("{}")) {
-                sharedDataService.setUserInfo(userInfo);
+            if(config.getUser() != null) {
+                sharedDataService.setUser(config.getUser());
             }
-            initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(bucketName, false)));
+            initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(config.getBucketName(), false)));
             sharedDataService.setInitConfigurationDto(initConfigurationDto);
             credentialsService.storeCredentials();
 
@@ -155,5 +155,26 @@ class InitController implements ApplicationContextAware {
 
         LOG.info("Context refreshed successfully.");
         CONTEXT_REFRESH_IN_PROCESS = false;
+    }
+
+    private static class ConfigDto{
+        private User user;
+        private String bucketName;
+
+        public User getUser() {
+            return user;
+        }
+
+        public void setUser(User user) {
+            this.user = user;
+        }
+
+        public String getBucketName() {
+            return bucketName;
+        }
+
+        public void setBucketName(String bucketName) {
+            this.bucketName = bucketName;
+        }
     }
 }

@@ -66,7 +66,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                sdfsService.createSDFS(sdfsSize, s3Bucket);
+                sdfsService.startupSDFS(sdfsSize, s3Bucket);
                 return;
             }
 
@@ -230,7 +230,7 @@ class CreateAppConfigurationImpl {
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
 
-        sdfsService.createSDFS(sdfs.getVolumeSize(), bucketName);
+        sdfsService.startupSDFS(sdfs.getVolumeSize(), bucketName);
     }
 
 
