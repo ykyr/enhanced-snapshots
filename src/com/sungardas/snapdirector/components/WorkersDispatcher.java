@@ -131,6 +131,7 @@ public class WorkersDispatcher {
                                     entry.setStatus(RUNNING.getStatus());
                                     taskRepository.save(entry);
                                     sdfsStateService.backupState();
+                                    taskRepository.delete(entry);
                                     break;
                                 }
                                 case UNKNOWN:

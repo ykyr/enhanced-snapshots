@@ -112,7 +112,7 @@ class InitController implements ApplicationContextAware {
     }
 
 
-    @RequestMapping(value = "/configuration/current/", method = RequestMethod.POST)
+    @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
         if(credentialsService.areCredentialsValid()){
             InitConfigurationDto initConfigurationDto = credentialsService.getInitConfigurationDto();

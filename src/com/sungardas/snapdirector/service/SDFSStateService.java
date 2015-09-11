@@ -9,4 +9,7 @@ public interface SDFSStateService {
     boolean containsSdfsMetadata(String sBucket);
 
     void startupSDFS(String size, String bucketName);
+
+    void shutdownSDFS(String size, String bucketName);
+
 }
