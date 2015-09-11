@@ -12,13 +12,13 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
-import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.SDFSStateService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.LogManager;
@@ -27,12 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 class CreateAppConfigurationImpl {
@@ -70,7 +66,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                sdfsService.createSDFS(sdfsSize, s3Bucket);
+                sdfsService.startupSDFS(sdfsSize, s3Bucket);
                 return;
             }
 
@@ -234,7 +230,7 @@ class CreateAppConfigurationImpl {
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
 
-        sdfsService.createSDFS(sdfs.getVolumeSize(), bucketName);
+        sdfsService.startupSDFS(sdfs.getVolumeSize(), bucketName);
     }
 
 
@@ -247,7 +243,7 @@ class CreateAppConfigurationImpl {
 
     private WorkerConfiguration convertToWorkerConfiguration(InitConfigurationDto dto) {
         WorkerConfiguration workerConfiguration = new WorkerConfiguration();
-        workerConfiguration.setConfigurationId(getInstanceId());
+        workerConfiguration.setConfigurationId(EC2MetadataUtils.getInstanceId());
         workerConfiguration.setEc2Region(Regions.getCurrentRegion().getName());
         workerConfiguration.setFakeBackupSource(null);
         workerConfiguration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
@@ -276,23 +272,5 @@ class CreateAppConfigurationImpl {
                 }
             }
         }
-    }
-
-    private String getInstanceId() {
-        String instanceId = null;
-        try {
-            URL url = new URL("http://169.254.169.254/latest/meta-data/instance-id");
-            URLConnection conn = url.openConnection();
-            Scanner s = new Scanner(conn.getInputStream());
-            if (s.hasNext()) {
-                instanceId = s.next();
-                LOG.info("Getting configuration id from metadata: " + instanceId);
-            }
-            s.close();
-        } catch (IOException e) {
-            LOG.warn("Failed to determine ec2 instance ID");
-            throw new SnapdirectorException("Failed to determine ec2 instance ID", e);
-        }
-        return instanceId;
     }
 }
