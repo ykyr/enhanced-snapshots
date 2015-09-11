@@ -3,10 +3,7 @@ package com.sungardas.snapdirector.service.impl;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.*;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SDFSException;
 import com.sungardas.snapdirector.service.SDFSStateService;
@@ -92,7 +89,10 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Override
     public boolean containsSdfsMetadata(String sBucket) {
-        return false;
+        ListObjectsRequest request = new ListObjectsRequest()
+                .withBucketName(sBucket).withPrefix("sdfsstate");
+        return amazonS3.listObjects(request).getObjectSummaries().size()>0;
+
     }
 
     @Override

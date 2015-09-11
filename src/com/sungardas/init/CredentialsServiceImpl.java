@@ -11,6 +11,7 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sun.management.UnixOperatingSystemMXBean;
@@ -125,7 +126,9 @@ class CredentialsServiceImpl implements CredentialsService {
         String bucketName = "com.sungardas.snapdirector." + instanceId;
         boolean bucketForThisInstanceExist = false;
         for (Bucket bucket : allBuckets) {
-            if (client.listObjects(bucket.getName(), "volumemetadata.tar.gz").getMaxKeys() > 0) {
+            ListObjectsRequest request = new ListObjectsRequest()
+                    .withBucketName(bucket.getName()).withPrefix("sdfsstate");
+            if( client.listObjects(request).getObjectSummaries().size()>0){
                 if (bucketName.equals(bucket.getName())) {
                     result.add(new InitConfigurationDto.S3(bucketName, true));
                     bucketForThisInstanceExist = true;
