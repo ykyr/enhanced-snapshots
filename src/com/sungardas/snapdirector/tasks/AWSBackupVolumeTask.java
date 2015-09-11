@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
 import static com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 import static java.lang.String.format;
 
@@ -144,10 +145,16 @@ public class AWSBackupVolumeTask implements BackupTask {
                 LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
                 taskRepository.delete(taskEntry);
                 LOG.info("Task completed.");
+            }else {
+                LOG.warn(format("Backup process for volume %s failed ", volumeId));
+                taskEntry.setStatus(ERROR.toString());
+                taskRepository.save(taskEntry);
             }
             retentionService.apply();
         } catch (AmazonClientException e){
             LOG.warn(format("Backup process for volume %s failed ", volumeId));
+            taskEntry.setStatus(ERROR.toString());
+            taskRepository.save(taskEntry);
         }
     }
 
