@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -98,7 +99,6 @@ public class AWSBackupVolumeTask implements BackupTask {
 
             BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS,
                     configuration.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
-            backupRepository.save(backup);
 
             boolean backupStatus = false;
             try {
@@ -109,8 +109,17 @@ public class AWSBackupVolumeTask implements BackupTask {
                 backupStatus = true;
             } catch (IOException | InterruptedException e) {
                 LOG.fatal(format("Backup of volume %s failed", volumeId));
-                backup.setState(BackupState.FAILED.getState());
-                backupRepository.save(backup);
+                LOG.fatal(e);
+                File brocken = new File(configuration.getSdfsMountPoint() + backupfileName);
+                if(brocken.exists()) {
+
+                    if(brocken.delete()) {
+                        LOG.info("Broken backup {} was deleted", brocken.getName());
+                    }else {
+                        LOG.info("Can't delete broken file {}", brocken.getName());
+                    }
+                }
+
             }
 
             if (backupStatus) {
