@@ -226,7 +226,7 @@ class CreateAppConfigurationImpl {
 
     private void createS3Bucket() {
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
-        Bucket bucket = amazonS3.createBucket(bucketName, region);
+        Bucket bucket = amazonS3.createBucket(bucketName);
 
     }
 
