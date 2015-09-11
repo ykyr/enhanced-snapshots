@@ -71,7 +71,6 @@ public class AmazonConfigProvider {
     @Bean
     public AmazonS3 amazonS3() {
         AmazonS3 amazonS3  = new AmazonS3Client(amazonAWSCredentials());
-        amazonS3.setRegion(Region.getRegion(Regions.fromName(region)));
         return amazonS3;
     }
 
