@@ -12,13 +12,15 @@ angular.module('web')
         $scope.typeColorClass = {
             backup: "primary",
             restore: "success",
-            delete: "danger"
+            delete: "danger",
+            system_backup: "danger"
 
         };
         $scope.typeIconClass = {
             backup: "cloud-download",
             restore: "cloud-upload",
-            delete: "remove"
+            delete: "remove",
+            system_backup: "cog"
         };
         $scope.manualIconClass = {
             true: "user",

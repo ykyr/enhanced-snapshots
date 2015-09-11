@@ -72,6 +72,10 @@ angular.module('web')
         };
 
         $scope.sendSettings = function () {
+            var settings = {
+                bucketName: $scope.selectedBucket.bucketName
+            };
+
             if (!$scope.settings.db.isValid) {
                 $scope.userToEdit = {
                     isNew: true,
@@ -85,11 +89,11 @@ angular.module('web')
                 });
 
                 awsModalInstance.result.then(function () {
-                    var newUser = $scope.userToEdit;
-                    delete newUser.isNew;
+                    settings.user = $scope.userToEdit;
+                    delete settings.user.isNew;
 
                     $scope.progressState = 'running';
-                    Configuration.send('current/' + $scope.selectedBucket.bucketName, newUser, DELAYTIME).then(function () {
+                    Configuration.send('current', settings, DELAYTIME).then(function () {
                         $scope.progressState = 'success';
                     }, function () {
                         $scope.progressState = 'failed';
@@ -101,7 +105,7 @@ angular.module('web')
             } else {
                 $scope.progressState = 'running';
 
-                Configuration.send('current/' + $scope.selectedBucket.bucketName).then(function () {
+                Configuration.send('current', settings).then(function () {
                     $scope.progressState = 'success';
                 }, function () {
                     $scope.progressState = 'failed';

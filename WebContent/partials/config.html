@@ -120,7 +120,7 @@
                                 <h3>DynamoDB</h3>
 
                                 <p>{{ settings.db.isValid ? STRINGS.db.isValid.true : STRINGS.db.isValid.false}}</p>
-                                <strong><p ng-show="!settings.db.hasAdminUser">  <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}</p></strong>
+                                <strong><p ng-show="!settings.db.isValid">  <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}</p></strong>
 
                             </div>
 
