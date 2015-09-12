@@ -155,6 +155,16 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
+    public long getBackupTime() {
+        ListObjectsRequest request = new ListObjectsRequest()
+                .withBucketName(s3Bucket).withPrefix("KEY_NAME");
+        if(amazonS3.listObjects(request).getObjectSummaries().size()>0) {
+            return amazonS3.listObjects(request).getObjectSummaries().get(0).getLastModified().getTime();
+        }
+        else return 0;
+    }
+
+    @Override
     public void startupSDFS(String size, String bucketName) {
         try {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
