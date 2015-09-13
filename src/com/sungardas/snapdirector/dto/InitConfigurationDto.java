@@ -69,6 +69,16 @@ public class InitConfigurationDto {
         private String volumeSize;
         private String mountPoint;
 
+        public boolean isMemError() {
+            return memError;
+        }
+
+        public void setMemError(boolean memError) {
+            this.memError = memError;
+        }
+
+        private boolean memError;
+
         public boolean isCreated() {
             return created;
         }

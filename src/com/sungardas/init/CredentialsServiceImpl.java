@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.RuntimeMXBean;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
@@ -54,8 +55,9 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
     private static final String AMAZON_AWS_REGION = "amazon.aws.region";
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
+    private static final long PERM_GEN_SIZE = 137_438_953_472L;
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
-    private static final long bytesInGB = 1073741824;
+    private static final long BUTES_IN_GB = 1_073_741_824;
     private static final long defaultChunkSize = 131072;
     private AWSCredentials credentials = null;
     private final String DEFAULT_LOGIN = "admin@snapdirector";
@@ -153,13 +155,31 @@ class CredentialsServiceImpl implements CredentialsService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        sdfs.setVolumeSize(Integer.toString(getSdfsVolumeMaxAvailableSizeInGB()) + "GB");
+        try {
+            sdfs.setVolumeSize(volumeSize());
+        }catch(OutOfMemoryError e) {
+            sdfs.setVolumeSize("Not enough memory to use SDFS volume");
+            sdfs.setMemError(true);
+        }
         sdfs.setCreated(sdfsAlreadyExists(volumeName, mountPoint));
 
         initConfigurationDto.setS3(s3);
         initConfigurationDto.setQueue(queue);
         initConfigurationDto.setSdfs(sdfs);
         return initConfigurationDto;
+    }
+
+    private String volumeSize() {
+        freeMemCheck();
+        return "7.8 Tb";
+    }
+
+    private void freeMemCheck() {
+        UnixOperatingSystemMXBean osBean= (UnixOperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
+        long freePhysicalMemorySize = osBean.getFreePhysicalMemorySize();
+        long appFreeMemorySize = Runtime.getRuntime().freeMemory();
+        long sdfsFreeMemorySize = (long)((freePhysicalMemorySize - appFreeMemorySize - PERM_GEN_SIZE)*1.1);
+        if (sdfsFreeMemorySize < 2* BUTES_IN_GB) throw new OutOfMemoryError("Not enough memory to create SDFS volume");
     }
 
     private boolean isDbExists() {
@@ -236,17 +256,6 @@ class CredentialsServiceImpl implements CredentialsService {
         File configf = new File(volumeConfigPath);
         File mountPointf = new File(mountPoint);
         return configf.exists() && mountPointf.exists();
-    }
-
-    private int getSdfsVolumeMaxAvailableSizeInGB() {
-        UnixOperatingSystemMXBean osBean= (UnixOperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
-
-        long freeMem = osBean.getFreePhysicalMemorySize();
-        LOG.info("Memory available: {}", freeMem);
-        LOG.info("Default chunk size: {}", defaultChunkSize);
-        long maxVolumeSize = (freeMem*defaultChunkSize)/33;
-        LOG.info("Maximum volume size can be set: {}", maxVolumeSize);
-        return (int)(maxVolumeSize/bytesInGB);
     }
 
     private void validateCredentials(String accessKey, String secretKey) {
