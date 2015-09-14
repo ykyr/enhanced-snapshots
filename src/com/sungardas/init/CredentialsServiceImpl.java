@@ -189,16 +189,6 @@ class CredentialsServiceImpl implements CredentialsService {
         }
     }
 
-    private boolean containsAllOrAny(String[] toCheck, List<String> where) {
-        if(where.size()==0) return true;
-        int expectedCount = toCheck.length;
-        int actualCount = 0;
-        for(String value: toCheck) {
-            if(where.contains(value)) actualCount++;
-        }
-        return expectedCount==actualCount;
-    }
-
     private boolean bucketAlreadyExists(String bucketName) {
         AmazonS3Client amazonS3Client = new AmazonS3Client(credentials);
         amazonS3Client.setRegion(Regions.getCurrentRegion());
