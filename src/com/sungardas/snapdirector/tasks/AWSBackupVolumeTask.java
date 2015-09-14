@@ -35,77 +35,85 @@ import static java.lang.String.format;
 @Scope("prototype")
 @Profile("prod")
 public class AWSBackupVolumeTask implements BackupTask {
-    private static final Logger LOG = LogManager.getLogger(AWSBackupVolumeTask.class);
-    @Autowired
-    private TaskRepository taskRepository;
+	private static final Logger LOG = LogManager
+			.getLogger(AWSBackupVolumeTask.class);
+	@Autowired
+	private TaskRepository taskRepository;
 
-    @Autowired
-    private AWSCredentials amazonAWSCredentials;
+	@Autowired
+	private AWSCredentials amazonAWSCredentials;
 
-    @Autowired
-    AmazonEC2 ec2client;
+	@Autowired
+	AmazonEC2 ec2client;
 
-    @Autowired
-    StorageService storageService;
+	@Autowired
+	StorageService storageService;
 
-    @Autowired
-    BackupRepository backupRepository;
+	@Autowired
+	BackupRepository backupRepository;
 
-    @Autowired
-    private AWSCommunticationService awsCommunication;
+	@Autowired
+	private AWSCommunticationService awsCommunication;
 
-    private TaskEntry taskEntry;
+	private TaskEntry taskEntry;
 
-    @Autowired
-    private ConfigurationService configurationService;
+	@Autowired
+	private ConfigurationService configurationService;
 
-    @Autowired
-    private RetentionService retentionService;
+	@Autowired
+	private RetentionService retentionService;
 
-    private WorkerConfiguration configuration;
+	private WorkerConfiguration configuration;
 
-    public void setTaskEntry(TaskEntry taskEntry) {
-        this.taskEntry = taskEntry;
-    }
+	public void setTaskEntry(TaskEntry taskEntry) {
+		this.taskEntry = taskEntry;
+	}
 
-    public void execute() {
-        String volumeId = taskEntry.getVolume();
-        try {
-            configuration = configurationService.getConfiguration();
+	public void execute() {
+		String volumeId = taskEntry.getVolume();
+		try {
+			configuration = configurationService.getConfiguration();
 
-            LOG.info(format("AWSBackupVolumeTask: Starting backup process for volume %s", volumeId));
-            LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
-            taskEntry.setStatus(RUNNING.getStatus());
-            taskRepository.save(taskEntry);
+			LOG.info(format(
+					"AWSBackupVolumeTask: Starting backup process for volume %s",
+					volumeId));
+			LOG.info("Task " + taskEntry.getId()
+					+ ": Change task state to 'inprogress'");
+			taskEntry.setStatus(RUNNING.getStatus());
+			taskRepository.save(taskEntry);
 
-            Volume tempVolume = null;
-            String attachedDeviceName = null;
+			Volume tempVolume = null;
+			String attachedDeviceName = null;
 
-            tempVolume = createAndAttachBackupVolume(volumeId, configuration.getConfigurationId());
-            try {
-                TimeUnit.MINUTES.sleep(1);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
-            attachedDeviceName = storageService.detectFsDevName(tempVolume);
+			tempVolume = createAndAttachBackupVolume(volumeId,
+					configuration.getConfigurationId());
+			try {
+				TimeUnit.MINUTES.sleep(1);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			attachedDeviceName = storageService.detectFsDevName(tempVolume);
 
-            String backupDate = String.valueOf(System.currentTimeMillis());
-            String backupfileName = volumeId + "." + backupDate + ".backup";
+			String backupDate = String.valueOf(System.currentTimeMillis());
+			String backupfileName = volumeId + "." + backupDate + ".backup";
 
-            Volume volumeToBackup = awsCommunication.getVolume(volumeId);
-            String snapshotId = tempVolume.getSnapshotId();
-            String volumeType = volumeToBackup.getVolumeType();
-            String iops = (volumeToBackup.getIops() != null) ? volumeToBackup.getIops().toString() : "";
-            String sizeGib = tempVolume.getSize().toString();
+			Volume volumeToBackup = awsCommunication.getVolume(volumeId);
+			String snapshotId = tempVolume.getSnapshotId();
+			String volumeType = volumeToBackup.getVolumeType();
+			String iops = (volumeToBackup.getIops() != null) ? volumeToBackup
+					.getIops().toString() : "";
+			String sizeGib = tempVolume.getSize().toString();
 
             BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS,
                     configuration.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
 
-            boolean backupStatus = false;
-            try {
-                String source = attachedDeviceName;
-                LOG.info("Starting copying: " + source + " to:" + backupfileName);
-                storageService.javaBinaryCopy(source, configuration.getSdfsMountPoint() + backupfileName);
+			boolean backupStatus = false;
+			try {
+				String source = attachedDeviceName;
+				LOG.info("Starting copying: " + source + " to:"
+						+ backupfileName);
+				storageService.javaBinaryCopy(source,
+						configuration.getSdfsMountPoint() + backupfileName);
 
                 backupStatus = true;
             } catch (IOException | InterruptedException e) {
@@ -123,26 +131,32 @@ public class AWSBackupVolumeTask implements BackupTask {
 
             }
 
-            if (backupStatus) {
-                long backupSize = storageService.getSize(configuration.getSdfsMountPoint() + backupfileName);
-                long backupCreationtime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint() + backupfileName);
-                LOG.info("Backup creation time: " + backupCreationtime);
-                LOG.info("Backup size: " + backupSize);
+			if (backupStatus) {
+				long backupSize = storageService.getSize(configuration
+						.getSdfsMountPoint() + backupfileName);
+				long backupCreationtime = storageService
+						.getBackupCreationTime(configuration
+								.getSdfsMountPoint() + backupfileName);
+				LOG.info("Backup creation time: " + backupCreationtime);
+				LOG.info("Backup size: " + backupSize);
 
-                LOG.info("Put backup entry to the Backup List: " + backup.toString());
-                backup.setState(BackupState.COMPLETED.getState());
-                backup.setSize(String.valueOf(backupSize));
-                backupRepository.save(backup);
-            }
+				LOG.info("Put backup entry to the Backup List: "
+						+ backup.toString());
+				backup.setState(BackupState.COMPLETED.getState());
+				backup.setSize(String.valueOf(backupSize));
+				backupRepository.save(backup);
+			}
 
-            LOG.info("Detaching volume" + tempVolume.getVolumeId());
-            awsCommunication.detachVolume(tempVolume);
-            LOG.info("Deleting temporary volume" + tempVolume.getVolumeId());
-            awsCommunication.deleteVolume(tempVolume);
+			LOG.info("Detaching volume" + tempVolume.getVolumeId());
+			awsCommunication.detachVolume(tempVolume);
+			LOG.info("Deleting temporary volume" + tempVolume.getVolumeId());
+			awsCommunication.deleteVolume(tempVolume);
 
             if(backupStatus) {
                 LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
                 LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
+                LOG.info("Cleaning up previously created snapshots");
+                awsCommunication.cleanupSnapshots(volumeId, snapshotId);
                 taskRepository.delete(taskEntry);
                 LOG.info("Task completed.");
             }else {
@@ -151,39 +165,47 @@ public class AWSBackupVolumeTask implements BackupTask {
                 taskRepository.save(taskEntry);
             }
             retentionService.apply();
-        } catch (AmazonClientException e){
+        } catch (AmazonClientException e) {
             LOG.warn(format("Backup process for volume %s failed ", volumeId));
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
         }
     }
 
-    private Volume createAndAttachBackupVolume(String volumeId, String instanceId) {
-        Instance instance = awsCommunication.getInstance(instanceId);
-        if (instance == null) {
-            LOG.error("\nCan't get access to " + instanceId + " instance");
+	private Volume createAndAttachBackupVolume(String volumeId,
+			String instanceId) {
+		Instance instance = awsCommunication.getInstance(instanceId);
+		if (instance == null) {
+			LOG.error("\nCan't get access to " + instanceId + " instance");
 
-        }
-        LOG.info("\ninst:" + instance);
+		}
+		LOG.info("\ninst:" + instance);
 
-        // create snapshot for AMI
-        Volume volumeSrc = awsCommunication.getVolume(volumeId);
-        if (volumeSrc == null) {
-            LOG.error("\nCan't get access to " + volumeId + " volume");
+		// create snapshot for AMI
+		Volume volumeSrc = awsCommunication.getVolume(volumeId);
+		if (volumeSrc == null) {
+			LOG.error("\nCan't get access to " + volumeId + " volume");
 
-        }
+		}
 
+		Snapshot snapshot = awsCommunication
+				.waitForCompleteState(awsCommunication
+						.createSnapshot(volumeSrc));
+		LOG.info("\nSnapshot created. Check snapshot data:\n"
+				+ snapshot.toString());
 
-        Snapshot snapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(volumeSrc));
-        LOG.info("\nSnapshot created. Check snapshot data:\n" + snapshot.toString());
+		// create volume
+		String instanceAvailabilityZone = instance.getPlacement()
+				.getAvailabilityZone();
+		Volume volumeDest = awsCommunication
+				.waitForAvailableState(awsCommunication
+						.createVolumeFromSnapshot(snapshot,
+								instanceAvailabilityZone));
+		LOG.info("\nVolume created. Check volume data:\n"
+				+ volumeDest.toString());
 
-        // create volume
-        String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
-        Volume volumeDest = awsCommunication.waitForAvailableState(awsCommunication.createVolumeFromSnapshot(snapshot, instanceAvailabilityZone));
-        LOG.info("\nVolume created. Check volume data:\n" + volumeDest.toString());
-
-        // mount AMI volume
-        awsCommunication.attachVolume(instance, volumeDest);
-        return awsCommunication.syncVolume(volumeDest);
-    }
+		// mount AMI volume
+		awsCommunication.attachVolume(instance, volumeDest);
+		return awsCommunication.syncVolume(volumeDest);
+	}
 }
