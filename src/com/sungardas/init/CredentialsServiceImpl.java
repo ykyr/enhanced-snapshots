@@ -32,9 +32,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.file.Paths;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -202,31 +199,6 @@ class CredentialsServiceImpl implements CredentialsService {
         } catch (AmazonServiceException e) {
             LOG.warn("Can't get a list of existed tables", e);
             throw new DataAccessException(e);
-        }
-    }
-
-    private boolean containsAllOrAny(String[] toCheck, List<String> where) {
-        if (where.size() == 0) return true;
-        int expectedCount = toCheck.length;
-        int actualCount = 0;
-        for (String value : toCheck) {
-            if (where.contains(value)) actualCount++;
-        }
-        return expectedCount == actualCount;
-    }
-
-    private boolean bucketAlreadyExists(String bucketName) {
-        AmazonS3Client amazonS3Client = new AmazonS3Client(credentials);
-        amazonS3Client.setRegion(Regions.getCurrentRegion());
-        try {
-            for (Bucket b : amazonS3Client.listBuckets()) {
-                if (b.getName().contains(bucketName)) return true;
-            }
-
-            return amazonS3Client.listBuckets().contains(bucketName);
-        } catch (AmazonServiceException accessError) {
-            LOG.info("Can't get a list of S3 buckets. Check AWS credentials!", accessError);
-            throw new DataAccessException(accessError);
         }
     }
 
