@@ -177,9 +177,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private void freeMemCheck() {
         UnixOperatingSystemMXBean osBean= (UnixOperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
         long freePhysicalMemorySize = osBean.getFreePhysicalMemorySize();
-        long appFreeMemorySize = Runtime.getRuntime().freeMemory();
-        long sdfsFreeMemorySize = (long)((freePhysicalMemorySize - appFreeMemorySize - PERM_GEN_SIZE)*1.1);
-        if (sdfsFreeMemorySize < 2* BUTES_IN_GB) throw new OutOfMemoryError("Not enough memory to create SDFS volume");
+        if (osBean.getTotalPhysicalMemorySize() < 3.5* BUTES_IN_GB) throw new OutOfMemoryError("Not enough memory to create SDFS volume");
     }
 
     private boolean isDbExists() {
