@@ -1,140 +1,37 @@
-<div class="modal-header" ng-class="{'bg-success': isNew, 'bg-primary': !isNew}">
-    <h3 class="modal-title"><span class="glyphicon glyphicon-time" aria-hidden="true"> </span> {{isNew? "New Schedule" :
-        "Edit Schedule" }}</h3>
+<div class="modal-header" ng-class="{'bg-success': scheduleToEdit.isNew, 'bg-primary': !scheduleToEdit.isNew}">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-time" aria-hidden="true"> </span> {{scheduleToEdit.isNew? "New Schedule" : "Edit Schedule" }}</h3>
 </div>
 <div class="modal-body">
 
     <div class="form-group">
         <label for="name" class="control-label">Name:</label>
-        <input type="text" id="name" class="form-control" ng-model="schedule.name">
-    </div>
-
-    <div class="form-group repeatPeriod">
-        <label class="control-label">Repeat Every:</label>
-
-        <div class="row">
-            <div class="col-sm-6">
-                <p>
-                    <select class="form-control" ng-model="schedule.interval.amount">
-                        <option ng-repeat="item in periodicityNum">{{item}}</option>
-                    </select>
-                </p>
-            </div>
-
-            <div class="col-sm-6">
-                <select class="form-control" ng-model="schedule.interval.unit">
-                    <option ng-repeat="item in periodicityWord">{{item}}</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <!--date picker-start------- -->
-
-
-    <div class="row">
-        <div class="col-sm-6">
-            <div class="form-group">
-
-                <label for="start" class="control-label">Start:</label>
-
-                <p class="input-group">
-                    <input type="text" class="form-control" id="start" datepicker-popup="yyyy-MM-dd"
-                           name="start" ng-model="schedule.start" is-open="opened.start" min-date="null"
-                           max-date="null" show-weeks="false" show-button-bar="false"
-                           ng-required="true" close-text="Close"/>
-                                    <span class="input-group-btn">
-                                        <button type="button" class="btn btn-default"
-                                                ng-click="calendarOpen($event, 'start')"><i
-                                                class="glyphicon glyphicon-calendar"></i>
-                                        </button>
-                                    </span>
-                </p>
-                <div>
-                    <div class="timepicker">
-                        <timepicker ng-model="schedule.start" hour-step="1" minute-step="1"
-                                    show-meridian="false"></timepicker>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6">
-            <div class="form-group">
-
-
-                <div class="pull-right">
-                    <label class="checkbox-inline">
-                    <input type="checkbox" ng-model="isEndless" ng-click="doEndless()">
-                    <strong>Never</strong>
-                    </label>
-                </div>
-
-
-                <label for="end" class="control-label">End:</label>
-
-                <div ng-hide="isEndless">
-                    <p class="input-group">
-                        <input type="text" class="form-control" id="end" datepicker-popup="yyyy-MM-dd"
-                               name="end" ng-model="schedule.end" is-open="opened.end" min-date="null"
-                               max-date="null" show-weeks="false" show-button-bar="false"
-                               ng-required="true" close-text="Close"/>
-                                    <span class="input-group-btn">
-                                        <button type="button" class="btn btn-default"
-                                                ng-click="calendarOpen($event, 'end')">
-                                            <i class="glyphicon glyphicon-calendar"></i>
-                                        </button>
-                                    </span>
-                    </p>
-
-
-                    <div>
-                        <div class="timepicker">
-                            <fieldset>
-                                <timepicker ng-model="schedule.end" hour-step="1" minute-step="1"
-                                            show-meridian="false"></timepicker>
-                            </fieldset>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <input type="text" id="name" class="form-control" ng-model="scheduleToEdit.name">
     </div>
 
 
-    <!--date picker end----->
-
-
-    <!-- week   days-->
+    <!-- cron-->
     <div class="form-group">
-        <div class="backupPeriod">Launch backups on:</div>
-        <div class="weekdayscontainer">
-            <div class="btn-group btn-group-sm btn-group-justified">
-                <label ng-repeat="(day, value) in weekdays" class="btn btn-default"
-                       ng-model="weekdays[day]"
-                       btn-checkbox>
-                    <span class="hidden-xs">{{day}}</span> <span
-                        class="visible-xs-inline">{{shortdays[day]}}</span>
-                </label>
-            </div>
+        <label>Schedule:</label>
+        <jq-cron class="form-control" ng-model="scheduleToEdit.cron"></jq-cron>
+        Cron: <code>"{{scheduleToEdit.cron}}"</code>
+    </div>
+    <!-- cron end-->
+
+    <!-- enabled-->
+    <div class="form-group">
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" ng-model="scheduleToEdit.enabled"/> Enabled
+            </label>
         </div>
     </div>
-    <!-- week days end-->
-
-
-    <!-- description-->
-    <div class="form-group">
-        <label for="comment">Comment:</label>
-        <textarea class="form-control" rows="5" id="comment" ng-model="schedule.comment">kf</textarea>
-    </div>
-    <!-- description end-->
+    <!-- enabled end-->
 
 
     <div class="modal-footer">
-        <button class="btn" ng-class="{'btn-success': isNew, 'btn-primary': !isNew}" ng-click="ok()">{{isNew? "Add Schedule" :
-            "Save Schedule"
-            }}
+        <button class="btn" ng-click="$close()" ng-class="{'btn-success': scheduleToEdit.isNew, 'btn-primary': !scheduleToEdit.isNew}">
+            {{scheduleToEdit.isNew ? "Add Schedule" : "Save Schedule" }}
         </button>
-        <button class="btn btn-default" ng-click="cancel()">Cancel</button>
+        <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
     </div>
 </div>

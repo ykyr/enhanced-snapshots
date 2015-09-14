@@ -1,88 +1,99 @@
 'use strict';
 
 angular.module('web')
-    .controller('ScheduleController', function ($scope, $stateParams, $filter, Schedules, $modal) {
+    .controller('ScheduleController', function ($scope, $rootScope, $stateParams, $filter, Tasks, $modal) {
 
-        $scope.volumeID = $stateParams.volumeID;
+        $scope.volumeId = $stateParams.volumeId;
         $scope.schedules = [];
 
+        var refreshList = function () {
+            Tasks.getRegular($scope.volumeId).then(function (data) {
+                $scope.schedules = data;
+            });
+        };
+        refreshList();
 
-        var showModal = function (schedule) {
+        var scheduleToTask = function (schedule) {
+            return {
+                cron: schedule.cron,
+                enabled: schedule.enabled,
+                id: schedule.id,
+                regular: "true",
+                schedulerManual: "false",
+                schedulerName: schedule.name,
+                status: "waiting",
+                type: "backup",
+                volume: $scope.volumeId
+            }
+        };
+
+        var taskToSchedule = function (task) {
+            return {
+                isNew: false,
+                id: task.id,
+                name: task.schedulerName,
+                enabled: task.enabled == 'true',
+                cron: task.cron
+            };
+        };
+
+        $scope.add = function () {
+            $scope.scheduleToEdit = {
+                isNew: true,
+                id: null,
+                name: '',
+                enabled: true
+            };
 
             var modalInstance = $modal.open({
                 animation: true,
                 templateUrl: './partials/modal.schedule-edit.html',
-                controller: 'modalScheduleCtrl',
-                scope: $scope,
-                resolve: {
-                    schedule: function () {
-                        return schedule;
-                    }
-                }
+                scope: $scope
             });
 
             modalInstance.result.then(function () {
-                refreshList();
+                $rootScope.isLoading = true;
+                var newTask = scheduleToTask($scope.scheduleToEdit);
+                Tasks.insert(newTask).then(function () {
+                    refreshList();
+                    $rootScope.isLoading = false;
+                }, function () {
+                    $rootScope.isLoading = false;
+                });
             });
         };
 
-        $scope.displayEnd = function (end) {
-            if (typeof end != 'undefined' && end) {
-                return $filter('date')(end, "yyyy-MM-dd HH:mm:ss");
-            }
-            else {
-                return "Never";
-            }
-        };
+        $scope.edit = function (task) {
+            $scope.scheduleToEdit = taskToSchedule(task);
 
-        var refreshList = function () {
-            Schedules.getForVolume($scope.volumeID).then(function (data) {
-                $scope.schedules = data;
+            var modalInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.schedule-edit.html',
+                scope: $scope
+            });
+
+            modalInstance.result.then(function () {
+                $rootScope.isLoading = true;
+                var newTask = scheduleToTask($scope.scheduleToEdit);
+                Tasks.update(newTask).then(function () {
+                    refreshList();
+                    $rootScope.isLoading = false;
+                }, function () {
+                    $rootScope.isLoading = false;
+                });
             });
         };
 
-        refreshList();
-
-        $scope.add = function () {
-            var newSchedule =
-            {
-                id: 0,
-                volumeID: $scope.volumeID,
-                name: "",
-                start: new Date(),
-                interval: {
-                    amount: "1",
-                    unit: "day"
-                },
-                week: []
-            };
-            showModal(newSchedule);
-        };
-
-        $scope.edit = function (schedule) {
-            schedule.recurrent = schedule.recurrent != "false";
-            schedule.start = new Date(schedule.start);
-            schedule.end = (function () {
-                if (schedule.end != 'undefined' && schedule.end) {
-                    return new Date(schedule.end);
-                }
-                else return "";
-            })();
-
-            showModal(schedule);
-        };
-
-        $scope.remove = function (schedule) {
-            $scope.schedule = schedule;
+        $scope.remove = function (task) {
+            $scope.scheduleToDelete = task;
             var confirmInstance = $modal.open({
                 animation: true,
                 templateUrl: './partials/modal.schedule-del.html',
                 scope: $scope
             });
 
-
             confirmInstance.result.then(function () {
-                Schedules.delete(schedule.id).then(function (data) {
+                Tasks.delete(task.id).then(function (data) {
                     refreshList();
                 });
             });

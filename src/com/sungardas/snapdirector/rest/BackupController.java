@@ -1,13 +1,8 @@
 package com.sungardas.snapdirector.rest;
 
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.sungardas.snapdirector.aws.EnvironmentBasedCredentialsProvider;
-import com.sungardas.snapdirector.aws.dynamodb.DynamoUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.exception.DataAccessException;
+import com.sungardas.snapdirector.exception.DataException;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.service.BackupService;
 import org.apache.logging.log4j.LogManager;
@@ -17,13 +12,9 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -43,9 +34,16 @@ public class BackupController {
     private BackupService backupService;
 
 
+    @ExceptionHandler(DataException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseBody
+    private DataException dataException(DataException e){
+        return e;
+    }
+
     @RequestMapping(value = "/{volumeId}", method = RequestMethod.GET)
     public ResponseEntity<String> get(@PathVariable(value = "volumeId") String volumeId) {
-        List<BackupEntry> items = DynamoUtils.getBackupInfo(volumeId, getMapper(servletRequest));
+        List<BackupEntry> items = backupService.getBackupList(volumeId);
         LOG.debug("Available backups for volume {}: [{}] .", volumeId, jsonArrayRepresentation(items).toString());
         return new ResponseEntity<>(jsonArrayRepresentation(items).toString(), HttpStatus.OK);
     }
@@ -67,10 +65,10 @@ public class BackupController {
     @RequestMapping(value = "/{backupName}", method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteBackup(@PathVariable String backupName) {
         LOG.debug("Removing backup [{}]", backupName);
-        try{
+        try {
             backupService.deleteBackup(backupName, getCurrentUserEmail());
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (DataAccessException e){
+        } catch (DataAccessException e) {
             return new ResponseEntity<>("Failed to remove backup.", HttpStatus.NOT_ACCEPTABLE);
         }
     }
@@ -78,13 +76,6 @@ public class BackupController {
     private String getCurrentUserEmail() {
         String session = servletRequest.getSession().getId();
         return ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
-    }
-
-    private DynamoDBMapper getMapper(ServletRequest request) {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(new EnvironmentBasedCredentialsProvider());
-        String region = request.getServletContext().getInitParameter(Constants.JSON_DYNAMODB_REGION);
-        client.setRegion(Region.getRegion(Regions.fromName(region)));
-        return new DynamoDBMapper(client);
     }
 
 }

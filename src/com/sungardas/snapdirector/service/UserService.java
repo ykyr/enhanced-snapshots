@@ -13,4 +13,6 @@ public interface UserService {
 	void updateUser(UserDto newUser, String newPassword, String currentUserEmail);
 
 	void removeUser(String userEmail, String currentUserEmail);
+
+	UserDto getUser(String user, String password);
 }

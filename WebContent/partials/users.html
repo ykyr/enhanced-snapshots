@@ -1,53 +1,76 @@
-<div>
-    <button class="btn btn-link pull-right" ng-click="refreshUsers()"><span class="glyphicon glyphicon-refresh"></span></button>
-    <h2><span class="glyphicon glyphicon-user"></span>&nbsp; Users</h2>
-</div>
-
-<div class="row">
-    <table st-table="displayedUsers"  st-safe-src="users"
-           class="table table-condensed bg-white">
-        <thead>
-        <tr>
-            <th> &nbsp; </th>
-            <th st-sort="firstName">First Name</th>
-            <th st-sort="lastName">Last Name</th>
-            <th st-sort="email">Email</th>
-            <th st-sort="admin">Role</th>
-        </tr>
-
-        </thead>
-
-        <tbody>
-        <tr ng-repeat="user in displayedUsers">
-            <td class="text-center commands">
-                <button class="btn btn-link" title="Edit user" ng-click="editUser(user)" ng-show="isAdmin || isCurrentUser(user.email)"><span
-                        class="glyphicon glyphicon-pencil"></span></button>
-                <button class="btn btn-link" title="Delete user" ng-click="deleteUser(user)" ng-show="isAdmin && !isCurrentUser(user.email)"><span
-                        class="glyphicon glyphicon-remove text-danger" ng-disabled="isCurrentUser(user.email)"></span></button>
-            </td>
-
-            <td>{{::user.firstName}}</td>
-            <td>{{::user.lastName}}</td>
-            <td>{{::user.email | lowercase}}</td>
-            <td>{{::user.admin? 'Admin' : 'User'}}</td>
-        </tr>
-        </tbody>
-        <tfoot>
-        <tr ng-show="isLoading">
-            <td colspan="5" class="text-center spinner-container">
-                <i class="glyphicon glyphicon-refresh text-muted spin"></i>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="5" class="text-center">
-                <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
-            </td>
-        </tr>
-        </tfoot>
-    </table>
-    <div class="col-xs-12" ng-show="isAdmin">
-        <button type="button" class="btn btn-success pull-right" ng-click="addUser()">
-            <span class="glyphicon glyphicon-plus-sign" title="Add new user"></span> Add User
-        </button>
+<div class="header-page">
+    <div class="container">
+        <div class="sub-nav pull-right">
+            <div class="user">
+                <a ui-sref="logout" title="logout">{{getUserName()}}&nbsp;<span
+                        class="glyphicon glyphicon-off text-danger"></span></a>
+            </div>
+            <div class="page-btns">
+            </div>
+        </div>
+        <div class="page-name">
+            <div class="go-back">&nbsp;</div>
+            <div class="current">Users</div>
+        </div>
     </div>
 </div>
+<div class="table-header-placeholder"></div>
+
+<div class="container app">
+    <div class="row">
+        <div st-table="displayedUsers" st-safe-src="users">
+            <div class="page-table">
+                <div class="thead container">
+                    <div class="flex-container row">
+                        <div class="flex-3 flex-center th"><span st-sort="email">Email</span></div>
+                        <div class="flex-2 flex-center th"><span st-sort="firstName">First Name</span></div>
+                        <div class="flex-2 flex-center th"><span st-sort="lastName">Last Name</span></div>
+                        <div class="flex-1 flex-center th"><span st-sort="admin">Role</span></div>
+                    </div>
+                </div>
+
+
+                <div class="tr" ng-repeat="user in displayedUsers">
+                        <div class="row-hover">
+                            <div class="flex-container data-container">
+                                <div class="flex-1 flex-center row-menu">
+                                    <a href="" title="Edit user" ng-click="editUser(user)"
+                                            ng-show="isAdmin || isCurrentUser(user.email)"><span
+                                            class="glyphicon glyphicon-pencil icon"></span>&nbsp; Edit</a>
+                                </div>
+                                <div class="flex-1 flex-center row-menu" ng-show="isAdmin && !isCurrentUser(user.email)">
+                                    <a href="" title="Delete user" ng-click="deleteUser(user)"><span
+                                            class="glyphicon glyphicon-remove icon"
+                                            ng-disabled="isCurrentUser(user.email)"></span>&nbsp; Delete</a>
+                                </div>
+                            </div>
+                        </div>
+
+                    <div class="flex-container data-container">
+                        <div class="flex-3 flex-center">{{::user.email | lowercase}}</div>
+                        <div class="flex-2 flex-center">{{::user.firstName}}</div>
+                        <div class="flex-2 flex-center">{{::user.lastName}}</div>
+                        <div class="flex-1 flex-center">{{::user.admin? 'Admin' : 'User'}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div st-pagination st-items-by-page="itemsByPage" st-displayed-pages="displayedPages"></div>
+            </div>
+        </div>
+
+        <div class="text-center noitems-container" ng-hide="isLoading || displayedUsers.length">
+            <h2>No users to display...</h2>
+        </div>
+
+        <div class="pull-right" ng-show="isAdmin">
+            <button type="button" class="btn btn-success" ng-click="addUser()">
+                <span class="glyphicon glyphicon-plus-sign" title="Add new user"></span> Add User
+            </button>
+        </div>
+
+    </div>
+</div>
+
+

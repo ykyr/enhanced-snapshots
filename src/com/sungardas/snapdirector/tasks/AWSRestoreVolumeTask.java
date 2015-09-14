@@ -40,9 +40,6 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	private BackupRepository backupRepository;
 
 	@Autowired
-	private AWSCredentials amazonAWSCredentials;
-
-	@Autowired
 	private AWSCommunticationService awsCommunication;
 
 	@Autowired
@@ -135,6 +132,11 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		}
 
 		awsCommunication.attachVolume(instance, volumeToRestore);
+		try {
+			TimeUnit.MINUTES.sleep(1);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		LOG.info("Trying to attach volume to innstance " + instance.getInstanceId());
 		//wait for attached state
 		

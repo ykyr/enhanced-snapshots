@@ -26,7 +26,7 @@ export JAVA_OPTS="-Dfile.encoding=UTF-8 \
   -Xms512m -Xmx512m"
 export PATH=$JAVA_HOME/bin:$PATH
 TOMCAT_HOME=/opt/tomcat-latest
-TOMCAT_USER=tomcat
+TOMCAT_USER=root
 SHUTDOWN_WAIT=20
 
 tomcat_pid() {
