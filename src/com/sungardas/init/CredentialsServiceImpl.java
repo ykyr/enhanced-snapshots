@@ -21,24 +21,18 @@ import com.sungardas.snapdirector.service.CryptoService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.lang.management.RuntimeMXBean;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -55,13 +49,17 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
     private static final String AMAZON_AWS_REGION = "amazon.aws.region";
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
-    private static final long PERM_GEN_SIZE = 137_438_953_472L;
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
-    private static final long BUTES_IN_GB = 1_073_741_824;
-    private static final long defaultChunkSize = 131072;
+    private static final long BYTES_IN_GB = 1_073_741_824;
     private AWSCredentials credentials = null;
     private final String DEFAULT_LOGIN = "admin@snapdirector";
     private String instanceId;
+
+    @Value("${snapdirector.sdfs.default.size}")
+    private String defaultVolumeSize;
+
+    @Value("${snapdirector.db.tables}")
+    private String[] tables;
 
     private InitConfigurationDto initConfigurationDto=null;
 
@@ -166,19 +164,17 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private String volumeSize() {
         freeMemCheck();
-        return "7.8 Tb";
+        return defaultVolumeSize;
     }
 
     private void freeMemCheck() {
         UnixOperatingSystemMXBean osBean= (UnixOperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
-        long freePhysicalMemorySize = osBean.getFreePhysicalMemorySize();
-        if (osBean.getTotalPhysicalMemorySize() < 3.5* BUTES_IN_GB) {
+        if (osBean.getTotalPhysicalMemorySize() < 3.5* BYTES_IN_GB) {
             throw new SnapdirectorException("Not enough memory to create SDFS volume");
         }
     }
 
     private boolean isDbExists() {
-        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
         AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
         amazonDynamoDB.setRegion(Regions.getCurrentRegion());
         try {
@@ -187,20 +183,6 @@ class CredentialsServiceImpl implements CredentialsService {
             LOG.info("List db structure: {}", tableNames.toArray());
             LOG.info("Check db structure is present: {}", tableNames.containsAll(Arrays.asList(tables)));
             return tableNames.containsAll(Arrays.asList(tables));
-        }catch (AmazonServiceException accessError) {
-            LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
-            throw new DataAccessException(accessError);
-        }
-    }
-
-    private boolean isDbValidOrAbsent() {
-        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
-        AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
-        amazonDynamoDB.setRegion(Regions.getCurrentRegion());
-        try {
-            ListTablesResult listResult = amazonDynamoDB.listTables();
-            List<String> tableNames = listResult.getTableNames();
-            return containsAllOrAny(tables, tableNames);
         }catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);

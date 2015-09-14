@@ -131,7 +131,7 @@ class CreateAppConfigurationImpl {
         createTable("Retention", 50L, 20L, "volumeId", "S");
         createTable("Tasks", 50L, 20L, "id", "S");
         createTable("Users", 50L, 20L, "email", "S");
-        createTable("Snapshots", 50L, 20L, "id", "S");
+        createTable("Snapshots", 50L, 20L, "snapshotId", "S");
         System.out.println(">> after createDbStructure");
     }
 
