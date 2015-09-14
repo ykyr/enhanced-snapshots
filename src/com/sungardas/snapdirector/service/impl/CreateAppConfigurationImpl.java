@@ -1,8 +1,6 @@
 package com.sungardas.snapdirector.service.impl;
 
-
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -13,30 +11,23 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
-import com.sungardas.snapdirector.exception.SnapdirectorException;
+import com.sungardas.snapdirector.service.SDFSStateService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import javax.annotation.PostConstruct;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 class CreateAppConfigurationImpl {
@@ -55,18 +46,15 @@ class CreateAppConfigurationImpl {
     private SharedDataServiceImpl sharedDataService;
 
     @Autowired
+    private SDFSStateService sdfsService;
+
+    @Autowired
     private AmazonDynamoDB amazonDynamoDB;
     @Autowired
     private AmazonSQS amazonSQS;
 
     @Autowired
     private AmazonS3 amazonS3;
-
-    @Autowired
-    private XmlWebApplicationContext applicationContext;
-
-    @Autowired
-    private AWSCredentials awsCredentials;
 
     private boolean init = false;
 
@@ -77,7 +65,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                createSDFS(sdfsSize, s3Bucket);
+                sdfsService.startupSDFS(sdfsSize, s3Bucket);
                 return;
             }
 
@@ -87,27 +75,42 @@ class CreateAppConfigurationImpl {
                 dropDbTables();
                 createDbAndStoreData();
             } else {
-                if(!isConfigurationStored()) {
+                if (!isConfigurationStored()) {
                     storeWorkerConfiguration();
                 }
             }
 
             LOG.info("Initialization Queue");
-            if(!initConfigurationDto.getQueue().isCreated()) {
+            if (!initConfigurationDto.getQueue().isCreated()) {
                 createTaskQueue();
             }
 
-            if(!initConfigurationDto.getS3().isCreated()) {
+            boolean isBucketContainsSDFSMetadata = false;
+            InitConfigurationDto.S3 s3 = initConfigurationDto.getS3().get(0);
+            if (!isBucketExits(s3Bucket)) {
                 LOG.info("Initialization S3 bucket");
                 createS3Bucket();
+            } else {
+                isBucketContainsSDFSMetadata = sdfsService.containsSdfsMetadata(s3.getBucketName());
+            }
+            LOG.info("Initialization SDFS");
+            if (isBucketContainsSDFSMetadata) {
+                sdfsService.restoreState();
+            } else {
+                sdfsService.startupSDFS(sdfsSize, s3Bucket);
             }
 
-            if (!initConfigurationDto.getSdfs().isCreated()) {
-                LOG.info("Initialization SDFS");
-                createSDFS();
-            }
             System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
+        }
+    }
+
+    private boolean isBucketExits(String s3Bucket) {
+        try {
+            String location = amazonS3.getBucketLocation(s3Bucket);
+            return location != null;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -116,7 +119,7 @@ class CreateAppConfigurationImpl {
         WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
         DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
         WorkerConfiguration loadedConf = mapper.load(WorkerConfiguration.class, workerConfiguration.getConfigurationId());
-        return loadedConf!=null;
+        return loadedConf != null;
     }
 
     private void createDbAndStoreData() {
@@ -223,62 +226,8 @@ class CreateAppConfigurationImpl {
     }
 
     private void createS3Bucket() {
-        String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
-        Bucket bucket = amazonS3.createBucket(bucketName);
-
-    }
-
-    private void createSDFS() {
-        InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
-        String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
-
-        createSDFS(sdfs.getVolumeSize(), bucketName);
-    }
-
-    private void createSDFS(String size, String bucketName) {
-        try {
-            File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
-            file.setExecutable(true);
-            String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, awsCredentials.getAWSAccessKeyId(), awsCredentials.getAWSSecretKey(), size, bucketName};
-            Process p = Runtime.getRuntime().exec(parameters);
-            p.waitFor();
-            print(p);
-            switch (p.exitValue()) {
-                case 0:
-                    LOG.info("SDFS mounted");
-                    break;
-                case 1:
-                    LOG.info("SDFS unmounted");
-                    p = Runtime.getRuntime().exec(parameters);
-                    p.waitFor();
-                    print(p);
-                    if (p.exitValue() != 0) {
-                        throw new ConfigurationException("Error creating sdfs");
-                    }
-                    LOG.info("SDFS mounted");
-                    break;
-                default:
-                    print(p);
-                    throw new ConfigurationException("Error creating sdfs");
-            }
-        } catch (IOException e) {
-            LOG.error(e);
-        } catch (InterruptedException e) {
-            LOG.error(e);
-        }
-    }
-
-    private void print(Process p) throws IOException {
-        String line;
-        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        while ((line = input.readLine()) != null) {
-            System.out.println(line);
-        }
-        input = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-        while ((line = input.readLine()) != null) {
-            System.out.println(line);
-        }
+        String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
+        amazonS3.createBucket(bucketName);
     }
 
     private void storeWorkerConfiguration() {
@@ -290,7 +239,7 @@ class CreateAppConfigurationImpl {
 
     private WorkerConfiguration convertToWorkerConfiguration(InitConfigurationDto dto) {
         WorkerConfiguration workerConfiguration = new WorkerConfiguration();
-        workerConfiguration.setConfigurationId(getInstanceId());
+        workerConfiguration.setConfigurationId(EC2MetadataUtils.getInstanceId());
         workerConfiguration.setEc2Region(Regions.getCurrentRegion().getName());
         workerConfiguration.setFakeBackupSource(null);
         workerConfiguration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
@@ -319,23 +268,5 @@ class CreateAppConfigurationImpl {
                 }
             }
         }
-    }
-
-    private String getInstanceId() {
-        String instanceId = null;
-        try {
-            URL url = new URL("http://169.254.169.254/latest/meta-data/instance-id");
-            URLConnection conn = url.openConnection();
-            Scanner s = new Scanner(conn.getInputStream());
-            if (s.hasNext()) {
-                instanceId = s.next();
-                LOG.info("Getting configuration id from metadata: " + instanceId);
-            }
-            s.close();
-        } catch (IOException e) {
-            LOG.warn("Failed to determine ec2 instance ID");
-            throw new SnapdirectorException("Failed to determine ec2 instance ID", e);
-        }
-        return instanceId;
     }
 }

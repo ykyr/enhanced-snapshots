@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
@@ -20,7 +19,7 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
-import com.sungardas.snapdirector.service.AWSCommunticationService;
+import com.sungardas.snapdirector.service.AWSCommunicationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.StorageService;
 
@@ -40,7 +39,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	private BackupRepository backupRepository;
 
 	@Autowired
-	private AWSCommunticationService awsCommunication;
+	private AWSCommunicationService awsCommunication;
 
 	@Autowired
 	private StorageService storageService;

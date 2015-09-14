@@ -99,13 +99,29 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 
     $httpProvider.interceptors.push('Interceptor');
 })
-    .run(function ($rootScope, $state, Storage) {
+    .run(function ($rootScope, $state, $modal, Storage, System) {
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;
         };
 
         $rootScope.isConfigState = function () {
             return (Storage.get("currentUser") || {}).role === 'configurator';
+        };
+
+        $rootScope.systemBackup = function () {
+            System.get().then(function (data) {
+                var modalScope = $rootScope.$new(true);
+                modalScope.lastBackupTime = data.lastBackup || null;
+                $modal.open({
+                    animation: true,
+                    templateUrl: './partials/modal.system-backup.html',
+                    scope: modalScope,
+                    controller: 'modalSystemBackupCtrl'
+                });
+            }, function (e) {
+                console.log(e);
+                // something gone wrong
+            });
         };
 
         $rootScope.isLoading = false;

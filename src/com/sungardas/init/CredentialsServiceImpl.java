@@ -11,7 +11,9 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.amazonaws.util.EC2MetadataUtils;
 import com.sun.management.UnixOperatingSystemMXBean;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
@@ -33,10 +35,11 @@ import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.Scanner;
 
 @Service
 class CredentialsServiceImpl implements CredentialsService {
@@ -61,14 +64,15 @@ class CredentialsServiceImpl implements CredentialsService {
     @Value("${snapdirector.db.tables}")
     private String[] tables;
 
-    private InitConfigurationDto initConfigurationDto=null;
+    private InitConfigurationDto initConfigurationDto = null;
+
 
     @Autowired
     private CryptoService cryptoService;
 
     @PostConstruct
-    private void init(){
-        instanceId = getInstanceId();
+    private void init() {
+        instanceId = EC2MetadataUtils.getInstanceId();
     }
 
 
@@ -88,8 +92,8 @@ class CredentialsServiceImpl implements CredentialsService {
             properties.setProperty(accessKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSAccessKeyId()));
             properties.setProperty(secretKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSSecretKey()));
             properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
-            properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, getInstanceId());
-            properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().getBucketName());
+            properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, instanceId);
+            properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().get(0).getBucketName());
             properties.setProperty(AMAZON_SDFS_SIZE, initConfigurationDto.getSdfs().getVolumeSize());
 
             properties.store(new FileOutputStream(file), "AWS Credentials");
@@ -109,10 +113,6 @@ class CredentialsServiceImpl implements CredentialsService {
         } catch (AmazonClientException e) {
             LOG.warn("Provided AWS credentials are invalid.");
             return false;
-        } catch (ConfigurationException credentialsNotProvided) {
-            LOG.error(credentialsNotProvided.getMessage(), credentialsNotProvided);
-            LOG.error("Set AWS Credentials before use areStoredCredentialsValid method");
-            throw credentialsNotProvided;
         }
     }
 
@@ -122,26 +122,42 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     @Override
-    public AWSCredentials getCredentials() {
-        return credentials;
-    }
-
-    @Override
     public boolean checkDefaultUser(String login, String password) {
         return DEFAULT_LOGIN.equals(login.toLowerCase()) && password.equals(instanceId);
+    }
+
+    private List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
+        AmazonS3Client client = new AmazonS3Client(credentials);
+        List<Bucket> allBuckets = client.listBuckets();
+        ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
+        String bucketName = "com.sungardas.snapdirector." + instanceId;
+        boolean bucketForThisInstanceExist = false;
+        for (Bucket bucket : allBuckets) {
+            ListObjectsRequest request = new ListObjectsRequest()
+                    .withBucketName(bucket.getName()).withPrefix("sdfsstate");
+            if( client.listObjects(request).getObjectSummaries().size()>0){
+                if (bucketName.equals(bucket.getName())) {
+                    result.add(new InitConfigurationDto.S3(bucketName, true));
+                    bucketForThisInstanceExist = true;
+                } else {
+                    result.add(new InitConfigurationDto.S3(bucket.getName(), true));
+                }
+            }
+        }
+        if (!bucketForThisInstanceExist) {
+            result.add(new InitConfigurationDto.S3(bucketName, false));
+        }
+        return result;
+
     }
 
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
         initConfigurationDto = new InitConfigurationDto();
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
-        initConfigurationDto.getDb().setValid(false);
-        initConfigurationDto.getDb().setValid(isDbExists());
+        initConfigurationDto.getDb().setValid(requiredTablesExist());
 
-        String bucketName =  "com.sungardas.snapdirector." + instanceId;
-        InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
-        s3.setBucketName(bucketName);
-        s3.setCreated(bucketAlreadyExists(bucketName));
+        initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
 
         String queueName = getAccountId() + "/snapdirector_" + instanceId;
         InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
@@ -156,7 +172,7 @@ class CredentialsServiceImpl implements CredentialsService {
         sdfs.setVolumeSize(volumeSize());
         sdfs.setCreated(sdfsAlreadyExists(volumeName, mountPoint));
 
-        initConfigurationDto.setS3(s3);
+        initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setQueue(queue);
         initConfigurationDto.setSdfs(sdfs);
         return initConfigurationDto;
@@ -174,7 +190,7 @@ class CredentialsServiceImpl implements CredentialsService {
         }
     }
 
-    private boolean isDbExists() {
+    private boolean requiredTablesExist() {
         AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
         amazonDynamoDB.setRegion(Regions.getCurrentRegion());
         try {
@@ -183,22 +199,32 @@ class CredentialsServiceImpl implements CredentialsService {
             LOG.info("List db structure: {}", tableNames.toArray());
             LOG.info("Check db structure is present: {}", tableNames.containsAll(Arrays.asList(tables)));
             return tableNames.containsAll(Arrays.asList(tables));
-        }catch (AmazonServiceException accessError) {
-            LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
-            throw new DataAccessException(accessError);
+        } catch (AmazonServiceException e) {
+            LOG.warn("Can't get a list of existed tables", e);
+            throw new DataAccessException(e);
         }
+    }
+
+    private boolean containsAllOrAny(String[] toCheck, List<String> where) {
+        if (where.size() == 0) return true;
+        int expectedCount = toCheck.length;
+        int actualCount = 0;
+        for (String value : toCheck) {
+            if (where.contains(value)) actualCount++;
+        }
+        return expectedCount == actualCount;
     }
 
     private boolean bucketAlreadyExists(String bucketName) {
         AmazonS3Client amazonS3Client = new AmazonS3Client(credentials);
         amazonS3Client.setRegion(Regions.getCurrentRegion());
         try {
-            for(Bucket b: amazonS3Client.listBuckets()) {
+            for (Bucket b : amazonS3Client.listBuckets()) {
                 if (b.getName().contains(bucketName)) return true;
             }
 
-        return amazonS3Client.listBuckets().contains(bucketName);
-        }catch (AmazonServiceException accessError) {
+            return amazonS3Client.listBuckets().contains(bucketName);
+        } catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of S3 buckets. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);
         }
@@ -208,11 +234,11 @@ class CredentialsServiceImpl implements CredentialsService {
         AmazonSQSClient amazonSQSClient = new AmazonSQSClient(credentials);
         amazonSQSClient.setRegion(Regions.getCurrentRegion());
         try {
-            for(String s: amazonSQSClient.listQueues().getQueueUrls()) {
+            for (String s : amazonSQSClient.listQueues().getQueueUrls()) {
                 if (s.contains(queueName)) return true;
             }
             return false;
-        }catch (AmazonServiceException accessError) {
+        } catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of queues. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);
         }
@@ -226,10 +252,10 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private void validateCredentials(String accessKey, String secretKey) {
-        if(accessKey==null || accessKey.isEmpty()) {
+        if (accessKey == null || accessKey.isEmpty()) {
             throw new ConfigurationException("Null or empty AWS AccessKey");
         }
-        if(secretKey==null || secretKey.isEmpty()) {
+        if (secretKey == null || secretKey.isEmpty()) {
             throw new ConfigurationException("Null or empty AWS SecretKey");
         }
     }
@@ -242,27 +268,9 @@ class CredentialsServiceImpl implements CredentialsService {
         AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentials);
         try {
             return iamClient.getUser().getUser().getArn().replaceAll("[^\\d]", "");
-        }catch (AmazonServiceException accessError) {
+        } catch (AmazonServiceException accessError) {
             LOG.info("Can't get userId. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);
         }
-    }
-
-    private String getInstanceId() {
-        String instanceId = null;
-        try {
-            URL url = new URL("http://169.254.169.254/latest/meta-data/instance-id");
-            URLConnection conn = url.openConnection();
-            Scanner s = new Scanner(conn.getInputStream());
-            if (s.hasNext()) {
-                instanceId = s.next();
-                LOG.info("Getting configuration id from metadata: " + instanceId);
-            }
-            s.close();
-        } catch (IOException e) {
-            LOG.warn("Failed to determine ec2 instance ID");
-            throw new SnapdirectorException("Failed to determine ec2 instance ID", e);
-        }
-        return instanceId;
     }
 }

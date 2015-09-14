@@ -13,7 +13,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
-import com.sungardas.snapdirector.service.AWSCommunticationService;
+import com.sungardas.snapdirector.service.AWSCommunicationService;
 
 @Component
 @Scope("prototype")
@@ -30,7 +30,7 @@ public class RestoreFakeTask implements RestoreTask {
 	private AWSCredentials amazonAWSCredentials;
 
 	@Autowired
-	private AWSCommunticationService awsCommunication;
+	private AWSCommunicationService awsCommunication;
 
 	private TaskEntry taskEntry;
 

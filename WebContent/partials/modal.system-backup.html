@@ -1,0 +1,27 @@
+<div class="modal-header bg-danger">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-cog"></span>&nbsp; System Backup</h3>
+</div>
+
+<div class="modal-body">
+
+    <div ng-show="state === 'ask'">
+        <p>Your system was stored <strong>{{ lastBackupTime ? "last time at " + (lastBackupTime | date: 'yyyy-MM-dd HH:mm:ss') : "never before"}}</strong></p>
+        <p>Would you like to backup a system now?</p>
+    </div>
+
+    <div ng-show="state === 'done'">
+        <p>Your System Backup task created successfully!</p>
+    </div>
+
+    <div ng-show="state === 'failed'">
+        <p>Sorry, system is not responding. Please, try again later.</p>
+    </div>
+
+    <div class="text-right">
+        <button class="btn btn-success" ng-show="state === 'ask'" ng-click="sendTask()">Add Task</button>
+        <button class="btn btn-default" ng-hide="state === 'ask'" ng-click="$close()"><span
+                class="glyphicon glyphicon-ok"></span>&nbsp; Done
+        </button>
+        <button class="btn btn-default" ng-show="state === 'ask'" ng-click="$dismiss()">Close</button>
+    </div>
+</div>

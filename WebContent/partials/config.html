@@ -39,14 +39,30 @@
 
                         <div class="flex-container card">
                             <div class="flex-2 flex-center">
-                                <span class="icon glyphicon glyphicon-{{iconClass[settings.s3.isCreated]}} text-{{statusColorClass[settings.s3.isCreated]}}"></span>
+                                <span class="icon glyphicon glyphicon-{{iconClass[selectedBucket.isCreated]}} text-{{statusColorClass[selectedBucket.isCreated]}}"></span>
                             </div>
 
                             <div class="flex-5 card-content">
                                 <h3>S3 Bucket</h3>
 
-                                <p>{{ settings.s3.isCreated ? STRINGS.s3.existing : STRINGS.s3.new}}</p>
+                                <p>{{ selectedBucket.isCreated ? STRINGS.s3.existing : STRINGS.s3.new}}</p>
                                 <p><span class="label label-success">{{settings.s3.bucketName}}</span></p>
+                                <div class="btn-group" dropdown keyboard-nav>
+                                    <button id="simple-btn-keyboard-nav" type="button"
+                                            class="btn btn-default dropdown-toggle" dropdown-toggle>
+                                        <div>
+                                            {{selectedBucket.bucketName}} &nbsp;<span class="caret"></span>
+                                        </div>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu"
+                                        aria-labelledby="simple-btn-keyboard-nav">
+                                        <li role="menuitem" ng-repeat="bucket in settings.s3">
+                                            <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}
+                                                <span class="pull-right label label-success" ng-hide="bucket.isCreated">new</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
 
                             <div class="flex-1 flex-center">
@@ -104,7 +120,7 @@
                                 <h3>DynamoDB</h3>
 
                                 <p>{{ settings.db.isValid ? STRINGS.db.isValid.true : STRINGS.db.isValid.false}}</p>
-                                <strong><p ng-show="!settings.db.hasAdminUser">  <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}</p></strong>
+                                <strong><p ng-show="!settings.db.isValid">  <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}</p></strong>
 
                             </div>
 

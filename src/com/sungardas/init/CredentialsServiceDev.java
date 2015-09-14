@@ -4,13 +4,10 @@ import com.amazonaws.auth.AWSCredentials;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 
 import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 class CredentialsServiceDev implements CredentialsService {
-    private final String catalinaHomeEnvPropName = "catalina.home";
-    private final String confFolderName = "conf";
-    private final String propFileName = "amazon.properties";
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
@@ -31,9 +28,10 @@ class CredentialsServiceDev implements CredentialsService {
     public InitConfigurationDto getInitConfigurationDto() {
         InitConfigurationDto config = new InitConfigurationDto();
 
-        InitConfigurationDto.S3 s3 = new InitConfigurationDto.S3();
-        s3.setBucketName("com.sungardas.snapdirector_i-12f5a345");
-        s3.setCreated(true);
+        List<InitConfigurationDto.S3> names = new ArrayList<>();
+        names.add(new InitConfigurationDto.S3("S0", false));
+        names.add(new InitConfigurationDto.S3("S1", true));
+        names.add(new InitConfigurationDto.S3("S2", true));
 
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setCreated(true);
@@ -48,7 +46,7 @@ class CredentialsServiceDev implements CredentialsService {
         InitConfigurationDto.DB db = new InitConfigurationDto.DB();
         db.setValid(false);
 
-        config.setS3(s3);
+        config.setS3(names);
         config.setSdfs(sdfs);
         config.setQueue(queue);
         config.setDb(db);
@@ -58,12 +56,7 @@ class CredentialsServiceDev implements CredentialsService {
 
     @Override
     public boolean isAwsPropertyFileExists() {
-        return getPropertyFile().exists();
-    }
-
-    @Override
-    public AWSCredentials getCredentials() {
-        return null;
+        return false;
     }
 
     @Override
@@ -71,7 +64,4 @@ class CredentialsServiceDev implements CredentialsService {
         return true;
     }
 
-    private File getPropertyFile() {
-        return Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
-    }
 }

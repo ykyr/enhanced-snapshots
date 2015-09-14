@@ -39,12 +39,18 @@ fi
 touch /var/log/sdfs_mount.log
 
 ### mounting SDFS file system to /mnt/awspool
-if mount | grep /mnt/awspool > /dev/null; then
-    umount /mnt/awspool
-    echo ' ********** SDFS sucessfully unmounted ********** '
+sdfs_pid=`ps aux | grep "[f]use.SDFS.MountSDFS" | awk '{ print $2}'`
+if [ "$sdfs_pid" != "" ]; then
+    umount /mnt/awspool > /dev/null
+    trap "kill $sdfs_pid 2> /dev/null" EXIT
+    while kill -0 $sdfs_pid 2> /dev/null; do
+     sleep 1
+    done
+    trap - EXIT
+    echo '  SDFS sucessfully unmounted  '
     exit 1
 else
     mount.sdfs awspool /mnt/awspool &> /var/log/sdfs_mount.log &
-    echo ' ********** SDFS sucessfully mounted ********** '
+    echo '  SDFS sucessfully mounted  '
     exit 0
 fi

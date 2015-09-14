@@ -1,7 +1,6 @@
 package com.sungardas.snapdirector.tasks;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Snapshot;
@@ -12,7 +11,7 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
-import com.sungardas.snapdirector.service.AWSCommunticationService;
+import com.sungardas.snapdirector.service.AWSCommunicationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.RetentionService;
 import com.sungardas.snapdirector.service.StorageService;
@@ -40,11 +39,8 @@ public class AWSBackupVolumeTask implements BackupTask {
 	@Autowired
 	private TaskRepository taskRepository;
 
-	@Autowired
-	private AWSCredentials amazonAWSCredentials;
-
-	@Autowired
-	AmazonEC2 ec2client;
+    @Autowired
+    AmazonEC2 ec2client;
 
 	@Autowired
 	StorageService storageService;
@@ -52,8 +48,8 @@ public class AWSBackupVolumeTask implements BackupTask {
 	@Autowired
 	BackupRepository backupRepository;
 
-	@Autowired
-	private AWSCommunticationService awsCommunication;
+    @Autowired
+    private AWSCommunicationService awsCommunication;
 
 	private TaskEntry taskEntry;
 
@@ -95,7 +91,6 @@ public class AWSBackupVolumeTask implements BackupTask {
 			attachedDeviceName = storageService.detectFsDevName(tempVolume);
 
 			String backupDate = String.valueOf(System.currentTimeMillis());
-			String backupfileName = volumeId + "." + backupDate + ".backup";
 
 			Volume volumeToBackup = awsCommunication.getVolume(volumeId);
 			String snapshotId = tempVolume.getSnapshotId();
@@ -104,39 +99,43 @@ public class AWSBackupVolumeTask implements BackupTask {
 					.getIops().toString() : "";
 			String sizeGib = tempVolume.getSize().toString();
 
-            BackupEntry backup = new BackupEntry(volumeId, backupfileName, backupDate, "", BackupState.INPROGRESS,
-                    configuration.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
+			String backupFileName = volumeId + "." + backupDate + "." + volumeType + "." + iops + ".backup";
+
+			BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS,
+					configuration.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
 
 			boolean backupStatus = false;
 			try {
 				String source = attachedDeviceName;
-				LOG.info("Starting copying: " + source + " to:"
-						+ backupfileName);
-				storageService.javaBinaryCopy(source,
-						configuration.getSdfsMountPoint() + backupfileName);
+				LOG.info("Starting copying: " + source + " to:" + backupFileName);
+				storageService.javaBinaryCopy(source, configuration.getSdfsMountPoint() + backupFileName);
+				backupStatus = true;
+			} catch (IOException | InterruptedException e) {
+				LOG.fatal(format("Backup of volume %s failed", volumeId));
+				LOG.fatal(e);
+				File brocken = new File(configuration.getSdfsMountPoint() + backupFileName);
+				if (brocken.exists()) {
 
-                backupStatus = true;
-            } catch (IOException | InterruptedException e) {
-                LOG.fatal(format("Backup of volume %s failed", volumeId));
-                LOG.fatal(e);
-                File brocken = new File(configuration.getSdfsMountPoint() + backupfileName);
-                if(brocken.exists()) {
-
-                    if(brocken.delete()) {
-                        LOG.info("Broken backup {} was deleted", brocken.getName());
-                    }else {
-                        LOG.info("Can't delete broken file {}", brocken.getName());
-                    }
-                }
-
-            }
+					if (brocken.delete()) {
+						LOG.info("Broken backup {} was deleted", brocken.getName());
+					} else {
+						LOG.info("Can't delete broken file {}", brocken.getName());
+					}
+				}
+			}
+			if (backupStatus) {
+				long backupSize = storageService.getSize(configuration.getSdfsMountPoint() + backupFileName);
+				long backupCreationTime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint() + backupFileName);
+				LOG.info("Backup creation time: " + backupCreationTime);
+				LOG.info("Backup size: " + backupSize);
+			}
 
 			if (backupStatus) {
 				long backupSize = storageService.getSize(configuration
-						.getSdfsMountPoint() + backupfileName);
+						.getSdfsMountPoint() + backupFileName);
 				long backupCreationtime = storageService
 						.getBackupCreationTime(configuration
-								.getSdfsMountPoint() + backupfileName);
+								.getSdfsMountPoint() + backupFileName);
 				LOG.info("Backup creation time: " + backupCreationtime);
 				LOG.info("Backup size: " + backupSize);
 
@@ -152,26 +151,26 @@ public class AWSBackupVolumeTask implements BackupTask {
 			LOG.info("Deleting temporary volume" + tempVolume.getVolumeId());
 			awsCommunication.deleteVolume(tempVolume);
 
-            if(backupStatus) {
-                LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
-                LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
-                LOG.info("Cleaning up previously created snapshots");
-                awsCommunication.cleanupSnapshots(volumeId, snapshotId);
-                taskRepository.delete(taskEntry);
-                LOG.info("Task completed.");
-            }else {
-                LOG.warn(format("Backup process for volume %s failed ", volumeId));
-                taskEntry.setStatus(ERROR.toString());
-                taskRepository.save(taskEntry);
-            }
-            retentionService.apply();
-        } catch (AmazonClientException e) {
-            LOG.error(format("Backup process for volume %s failed ", volumeId));
+			if (backupStatus) {
+				LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
+				LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
+				LOG.info("Cleaning up previously created snapshots");
+				awsCommunication.cleanupSnapshots(volumeId, snapshotId);
+				taskRepository.delete(taskEntry);
+				LOG.info("Task completed.");
+			} else {
+				LOG.warn(format("Backup process for volume %s failed ", volumeId));
+				taskEntry.setStatus(ERROR.toString());
+				taskRepository.save(taskEntry);
+			}
+			retentionService.apply();
+		} catch (AmazonClientException e) {
+			LOG.error(format("Backup process for volume %s failed ", volumeId));
 			LOG.error(e);
-            taskEntry.setStatus(ERROR.toString());
-            taskRepository.save(taskEntry);
-        }
-    }
+			taskEntry.setStatus(ERROR.toString());
+			taskRepository.save(taskEntry);
+		}
+	}
 
 	private Volume createAndAttachBackupVolume(String volumeId,
 			String instanceId) {

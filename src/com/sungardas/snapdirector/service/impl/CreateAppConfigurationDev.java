@@ -51,3 +51,4 @@ public class CreateAppConfigurationDev {
         return workerConfiguration;
     }
 }
+

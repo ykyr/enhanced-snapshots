@@ -42,10 +42,14 @@ angular.module('web')
         };
 
         $scope.isAWS = true;
+        $scope.selectBucket = function (bucket) {
+            $scope.selectedBucket = bucket;
+        }
 
         var getCurrentConfig = function () {
-            Configuration.get('current').then(function (data, status) {
-                $scope.settings = data.data;
+            Configuration.get('current').then(function (result, status) {
+                $scope.settings = result.data;
+                $scope.selectedBucket = (result.data.s3 || [])[0] || {};
                 $scope.isAWS = false;
             })
         };
@@ -68,6 +72,10 @@ angular.module('web')
         };
 
         $scope.sendSettings = function () {
+            var settings = {
+                bucketName: $scope.selectedBucket.bucketName
+            };
+
             if (!$scope.settings.db.isValid) {
                 $scope.userToEdit = {
                     isNew: true,
@@ -81,11 +89,11 @@ angular.module('web')
                 });
 
                 awsModalInstance.result.then(function () {
-                    var newUser = $scope.userToEdit;
-                    delete newUser.isNew;
+                    settings.user = $scope.userToEdit;
+                    delete settings.user.isNew;
 
                     $scope.progressState = 'running';
-                    Configuration.send('current', newUser, DELAYTIME).then(function () {
+                    Configuration.send('current', settings, DELAYTIME).then(function () {
                         $scope.progressState = 'success';
                     }, function () {
                         $scope.progressState = 'failed';
@@ -97,7 +105,7 @@ angular.module('web')
             } else {
                 $scope.progressState = 'running';
 
-                Configuration.send('current').then(function () {
+                Configuration.send('current', settings).then(function () {
                     $scope.progressState = 'success';
                 }, function () {
                     $scope.progressState = 'failed';
