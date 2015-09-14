@@ -68,7 +68,7 @@ angular.module('web')
         };
 
         $scope.sendSettings = function () {
-            if (!$scope.settings.db.hasAdminUser) {
+            if (!$scope.settings.db.isValid) {
                 $scope.userToEdit = {
                     isNew: true,
                     admin: true
@@ -95,7 +95,15 @@ angular.module('web')
 
                 });
             } else {
-                Configuration.send('current');
+                $scope.progressState = 'running';
+
+                Configuration.send('current').then(function () {
+                    $scope.progressState = 'success';
+                }, function () {
+                    $scope.progressState = 'failed';
+                });
+
+                wizardCreationProgress();
             }
         };
 

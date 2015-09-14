@@ -10,10 +10,10 @@ aws_key_id="$1"
 aws_sec_key="$2"
 sdfs_volume_size="$3"
 bucket_name="$4"
-io_chunk_size="${5:-4}"
+io_chunk_size="${5:-128}"
 
 ### creating SDFS file system
-/sbin/mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --cloud-access-key=$aws_key_id --cloud-bucket-name=$bucket_name --cloud-secret-key=$aws_sec_key --chunk-store-encrypt=true --io-chunk-size=$io_chunk_size
+/sbin/mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --cloud-access-key=$aws_key_id --cloud-bucket-name=$bucket_name --cloud-secret-key=$aws_sec_key --chunk-store-encrypt=true --io-chunk-size=$io_chunk_size --chunk-store-compress=false
 
 sleep 5
 

@@ -11,6 +11,8 @@
 
     <context:annotation-config/>
 
+    <bean class="com.sungardas.snapdirector.service.impl.CryptoServiceImpl"/>
+
     <beans profile="dev">
         <bean class="com.sungardas.init.CredentialsServiceDev"/>
     </beans>

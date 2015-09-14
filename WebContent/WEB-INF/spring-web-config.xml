@@ -22,11 +22,11 @@
     <mvc:resources mapping="/resources/**" location="/resources/" />
 
     <beans profile="prod">
-    <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationImpl"/>
-  </beans>
+        <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationImpl"/>
+    </beans>
     <beans profile="dev">
-    <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationDev"/>
-  </beans>
+        <bean id = "CreateAppConfiguration" class="com.sungardas.snapdirector.service.impl.CreateAppConfigurationDev"/>
+    </beans>
 
 
 </beans>

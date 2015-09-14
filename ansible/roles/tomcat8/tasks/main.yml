@@ -1,11 +1,11 @@
 ---
 - debug: msg="install tomcat"
 
-- name: add group "tomcat"
-  group: name=tomcat
+#- name: add group "tomcat"
+#  group: name=tomcat
 
-- name: add user "tomcat"
-  user: name=tomcat group=tomcat home=/opt/tomcat-latest createhome=no
+#- name: add user "tomcat"
+#  user: name=tomcat group=tomcat home=/opt/tomcat-latest createhome=no
 
 - name: download tomcat
   get_url: >
@@ -20,11 +20,13 @@
 - file: >
     src=/opt/apache-tomcat-8.0.24
     dest=/opt/tomcat-latest state=link
-    owner=tomcat group=tomcat
+#    owner=tomcat group=tomcat
 
-- shell: "chown -hR tomcat: /opt/tomcat-latest /opt/apache-tomcat-8.0.24"
-  register: tomcat_home_perm_change
-  changed_when: tomcat_home_perm_change.stdout
+#- shell: "chown -hR tomcat: /opt/tomcat-latest /opt/apache-tomcat-8.0.24"
+#  register: tomcat_home_perm_change
+#  changed_when: tomcat_home_perm_change.stdout
+
+- copy: src=server_conf dest=/opt/tomcat-latest/conf/server.xml mode="0640"
 
 - copy: src=tomcat8 dest=/etc/init.d/tomcat8 mode="0700"
 

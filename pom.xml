@@ -32,6 +32,7 @@
 
 
 	<dependencies>
+
 	<dependency>
 			<groupId>org.kamranzafar</groupId>
 			<artifactId>jtar</artifactId>
@@ -332,6 +333,13 @@
 			<artifactId>spring-beans</artifactId>
 			<version>${org.springframework.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${org.springframework.version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.atteo</groupId>
 			<artifactId>evo-inflector</artifactId>
@@ -343,8 +351,11 @@
 			<version>1.9.5</version>
 		</dependency>
 
-
-
+		<dependency>
+			<groupId>org.jasypt</groupId>
+			<artifactId>jasypt</artifactId>
+			<version>1.9.2</version>
+		</dependency>
 
 
 	</dependencies>

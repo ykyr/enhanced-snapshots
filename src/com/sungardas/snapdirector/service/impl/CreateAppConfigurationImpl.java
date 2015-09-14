@@ -2,12 +2,15 @@ package com.sungardas.snapdirector.service.impl;
 
 
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
@@ -16,7 +19,6 @@ import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
-import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.LogManager;
@@ -33,7 +35,6 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -41,16 +42,14 @@ import java.util.concurrent.TimeUnit;
 class CreateAppConfigurationImpl {
     private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
 
-    @Value("${amazon.aws.accesskey:}")
-    private String amazonAWSAccessKey;
-    @Value("${amazon.aws.secretkey}")
-    private String amazonAWSSecretKey;
-
     @Value("${amazon.s3.bucket}")
     private String s3Bucket;
 
     @Value("${amazon.sdfs.size}")
     private String sdfsSize;
+
+    @Value("${amazon.aws.region}")
+    private String region;
 
     @Autowired
     private SharedDataServiceImpl sharedDataService;
@@ -61,7 +60,13 @@ class CreateAppConfigurationImpl {
     private AmazonSQS amazonSQS;
 
     @Autowired
+    private AmazonS3 amazonS3;
+
+    @Autowired
     private XmlWebApplicationContext applicationContext;
+
+    @Autowired
+    private AWSCredentials awsCredentials;
 
     private boolean init = false;
 
@@ -90,6 +95,11 @@ class CreateAppConfigurationImpl {
             LOG.info("Initialization Queue");
             if(!initConfigurationDto.getQueue().isCreated()) {
                 createTaskQueue();
+            }
+
+            if(!initConfigurationDto.getS3().isCreated()) {
+                LOG.info("Initialization S3 bucket");
+                createS3Bucket();
             }
 
             if (!initConfigurationDto.getSdfs().isCreated()) {
@@ -125,18 +135,6 @@ class CreateAppConfigurationImpl {
         System.out.println(">> after createDbStructure");
     }
 
-    private boolean isDbExists() {
-        String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
-        try {
-            ListTablesResult listResult = amazonDynamoDB.listTables();
-            List<String> tableNames = listResult.getTableNames();
-            return tableNames.containsAll(Arrays.asList(tables));
-        } catch (AmazonServiceException accessError) {
-            LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
-            throw new DataAccessException(accessError);
-        }
-    }
-
     private void createTable(
             String tableName, long readCapacityUnits, long writeCapacityUnits,
             String hashKeyName, String hashKeyType) {
@@ -159,7 +157,7 @@ class CreateAppConfigurationImpl {
                     .withAttributeName(hashKeyName)
                     .withKeyType(KeyType.HASH));
 
-            ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<AttributeDefinition>();
+            ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
             attributeDefinitions.add(new AttributeDefinition()
                     .withAttributeName(hashKeyName)
                     .withAttributeType(hashKeyType));
@@ -224,6 +222,12 @@ class CreateAppConfigurationImpl {
         amazonSQS.createQueue(createQueueRequest);
     }
 
+    private void createS3Bucket() {
+        String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
+        Bucket bucket = amazonS3.createBucket(bucketName);
+
+    }
+
     private void createSDFS() {
         InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().getBucketName();
@@ -236,7 +240,7 @@ class CreateAppConfigurationImpl {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, amazonAWSAccessKey, amazonAWSSecretKey, size, bucketName};
+            String[] parameters = {pathToExec, awsCredentials.getAWSAccessKeyId(), awsCredentials.getAWSSecretKey(), size, bucketName};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);

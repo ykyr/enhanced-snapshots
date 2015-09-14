@@ -30,11 +30,7 @@ public interface AWSCommunticationService {
 
     void attachVolume(Instance instance, Volume volume);
 
-    List<Instance> getInstanceList();
-
-    List<Volume> getVolumeList();
-
-    Volume getVolume(String volumeId);
+	Volume getVolume(String volumeId);
 
     Volume createVolume(int size, int iiops, String type);
 

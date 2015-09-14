@@ -79,6 +79,14 @@ class InitController implements ApplicationContextAware {
         return new SnapdirectorException("Invalid credentials", exception);
     }
 
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    @ResponseStatus(INTERNAL_SERVER_ERROR)
+    private Exception amazonException(Exception exception) {
+        LOG.error(exception);
+        return new SnapdirectorException("Internal server error", exception);
+    }
+
     @RequestMapping(method = RequestMethod.POST, value = "/session")
     public ResponseEntity<String> init(@RequestBody User user) {
         if (CONTEXT_REFRESH_IN_PROCESS) {

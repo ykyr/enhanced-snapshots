@@ -17,11 +17,16 @@ import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
+import com.sungardas.snapdirector.service.CryptoService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,6 +36,8 @@ import java.lang.management.OperatingSystemMXBean;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -49,12 +56,15 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
     private static final long bytesInGB = 1073741824;
-    private static final long defaultChunkSize = 4096;
+    private static final long defaultChunkSize = 131072;
     private AWSCredentials credentials = null;
     private final String DEFAULT_LOGIN = "admin@snapdirector";
     private String instanceId;
 
     private InitConfigurationDto initConfigurationDto=null;
+
+    @Autowired
+    private CryptoService cryptoService;
 
     @PostConstruct
     private void init(){
@@ -75,8 +85,8 @@ class CredentialsServiceImpl implements CredentialsService {
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
 
-            properties.setProperty(accessKeyPropName, credentials.getAWSAccessKeyId());
-            properties.setProperty(secretKeyPropName, credentials.getAWSSecretKey());
+            properties.setProperty(accessKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSAccessKeyId()));
+            properties.setProperty(secretKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSSecretKey()));
             properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, getInstanceId());
             properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().getBucketName());
