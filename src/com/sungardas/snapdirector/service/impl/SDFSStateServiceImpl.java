@@ -193,10 +193,9 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                     print(p);
                     throw new ConfigurationException("Error creating sdfs");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error(e);
-        } catch (InterruptedException e) {
-            LOG.error(e);
+            throw new ConfigurationException("Error creating sdfs");
         }
     }
 
@@ -228,10 +227,9 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                     print(p);
                     throw new ConfigurationException("Error creating sdfs");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error(e);
-        } catch (InterruptedException e) {
-            LOG.error(e);
+            throw new ConfigurationException("Error creating sdfs");
         }
     }
 

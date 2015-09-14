@@ -102,10 +102,6 @@ class CredentialsServiceImpl implements CredentialsService {
         } catch (AmazonClientException e) {
             LOG.warn("Provided AWS credentials are invalid.");
             return false;
-        } catch (ConfigurationException credentialsNotProvided) {
-            LOG.error(credentialsNotProvided.getMessage(), credentialsNotProvided);
-            LOG.error("Set AWS Credentials before use areStoredCredentialsValid method");
-            throw credentialsNotProvided;
         }
     }
 
@@ -148,8 +144,7 @@ class CredentialsServiceImpl implements CredentialsService {
     public InitConfigurationDto getInitConfigurationDto() {
         initConfigurationDto = new InitConfigurationDto();
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
-        initConfigurationDto.getDb().setValid(false);
-        initConfigurationDto.getDb().setValid(isDbExists());
+        initConfigurationDto.getDb().setValid(requiredTablesExist());
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
 
@@ -172,7 +167,7 @@ class CredentialsServiceImpl implements CredentialsService {
         return initConfigurationDto;
     }
 
-    private boolean isDbExists() {
+    private boolean requiredTablesExist() {
         String[] tables = {"BackupList", "Configurations", "Tasks", "Users", "Retention", "Snapshots"};
         AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
         amazonDynamoDB.setRegion(Regions.getCurrentRegion());
@@ -182,9 +177,9 @@ class CredentialsServiceImpl implements CredentialsService {
             LOG.info("List db structure: {}", tableNames.toArray());
             LOG.info("Check db structure is present: {}", tableNames.containsAll(Arrays.asList(tables)));
             return tableNames.containsAll(Arrays.asList(tables));
-        } catch (AmazonServiceException accessError) {
-            LOG.info("Can't get a list of existed tables. Check AWS credentials!", accessError);
-            throw new DataAccessException(accessError);
+        } catch (AmazonServiceException e) {
+            LOG.warn("Can't get a list of existed tables", e);
+            throw new DataAccessException(e);
         }
     }
 
