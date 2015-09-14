@@ -58,7 +58,7 @@ public class RetentionServiceImpl implements RetentionService {
 
     @Override
     public void putRetention(RetentionDto retentionDto) {
-        if (volumeService.isExists(retentionDto.getVolumeId())) {
+        if (volumeService.volumeExists(retentionDto.getVolumeId())) {
             RetentionEntry entry = toEntry(retentionDto);
 
             retentionRepository.save(entry);
@@ -76,7 +76,7 @@ public class RetentionServiceImpl implements RetentionService {
         if (entry != null) {
             return toDto(entry);
         } else {
-            if (volumeService.isExists(volumeId)) {
+            if (volumeService.volumeExists(volumeId)) {
                 return new RetentionDto(volumeId);
             } else {
                 LOG.error("Volume with id: {} not found", volumeId);

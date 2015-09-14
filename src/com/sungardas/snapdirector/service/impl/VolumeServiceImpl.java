@@ -23,7 +23,7 @@ import java.util.*;
 public class VolumeServiceImpl implements VolumeService {
 
     private static final Logger LOG = LogManager.getLogger(VolumeServiceImpl.class);
-    public static final String REMOVED_VOLUME_STATE = "removed";
+    private static final String REMOVED_VOLUME_STATE = "removed";
     private static final String EMPTY = "";
 
     @Autowired
@@ -61,11 +61,10 @@ public class VolumeServiceImpl implements VolumeService {
         amazonEC2.setRegion(region);
         Set<VolumeDto> volumes = getVolumes(amazonEC2);
         return volumes;
-
     }
 
     @Override
-    public boolean isExists(String volumeId) {
+    public boolean volumeExists(String volumeId) {
         for(VolumeDto dto: getVolumes()){
             if(dto.getVolumeId().equals(volumeId)){
                 return true;
