@@ -1,5 +1,5 @@
 # .travis.yml file for Travis CI Automated Build configuration
-# Version 0.57 9/14/2015 13:05 PM
+# Version 0.58 9/14/2015 17:32 PM
 
 language: java
 
@@ -11,6 +11,10 @@ branches:
   - java
 
 sudo: required
+
+env:
+  global:
+    - STAGE_STR=DEV
 
 before_install:
   - sudo apt-get update
