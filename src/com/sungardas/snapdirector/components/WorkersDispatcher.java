@@ -21,7 +21,7 @@ import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 
-@Component
+@Service
 @DependsOn("CreateAppConfiguration")
 public class WorkersDispatcher {
     @Autowired
