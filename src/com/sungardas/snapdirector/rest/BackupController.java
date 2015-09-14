@@ -89,17 +89,17 @@ public class BackupController {
     }
 
     private class SystemBackupDto {
-        private long lastBackup;
+        private Long lastBackup;
 
-        public SystemBackupDto(long lastBackup) {
+        public SystemBackupDto(Long lastBackup) {
             this.lastBackup = lastBackup;
         }
 
-        public long getLastBackup() {
+        public Long getLastBackup() {
             return lastBackup;
         }
 
-        public void setLastBackup(long lastBackup) {
+        public void setLastBackup(Long lastBackup) {
             this.lastBackup = lastBackup;
         }
     }
