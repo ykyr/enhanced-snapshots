@@ -166,7 +166,8 @@ public class AWSBackupVolumeTask implements BackupTask {
             }
             retentionService.apply();
         } catch (AmazonClientException e) {
-            LOG.warn(format("Backup process for volume %s failed ", volumeId));
+            LOG.error(format("Backup process for volume %s failed ", volumeId));
+			LOG.error(e);
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
         }
