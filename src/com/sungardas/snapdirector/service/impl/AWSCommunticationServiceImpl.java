@@ -306,7 +306,6 @@ public class AWSCommunticationServiceImpl implements AWSCommunticationService {
 	private String getNextAvailableDeviceName(Instance instance) {
 
 		List<InstanceBlockDeviceMapping> devList = instance.getBlockDeviceMappings();
-		List<String> devNames = new ArrayList<>();
 		char lastChar='a';
 		for(InstanceBlockDeviceMapping map : devList) {
 			char ch = map.getDeviceName().charAt(map.getDeviceName().length() - 1);
