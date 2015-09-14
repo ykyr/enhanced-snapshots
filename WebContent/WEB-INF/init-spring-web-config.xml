@@ -11,6 +11,8 @@
 
     <context:annotation-config/>
 
+    <context:property-placeholder location="classpath:/snapdirector.properties,file:${canalina.home}/conf/snapdirector.properties" ignore-resource-not-found="true"/>
+
     <bean class="com.sungardas.snapdirector.service.impl.CryptoServiceImpl"/>
 
     <beans profile="dev">
