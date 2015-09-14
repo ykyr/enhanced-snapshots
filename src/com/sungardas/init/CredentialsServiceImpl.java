@@ -155,12 +155,7 @@ class CredentialsServiceImpl implements CredentialsService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        try {
-            sdfs.setVolumeSize(volumeSize());
-        }catch(OutOfMemoryError e) {
-            sdfs.setVolumeSize("Not enough memory to use SDFS volume");
-            sdfs.setMemError(true);
-        }
+        sdfs.setVolumeSize(volumeSize());
         sdfs.setCreated(sdfsAlreadyExists(volumeName, mountPoint));
 
         initConfigurationDto.setS3(s3);
