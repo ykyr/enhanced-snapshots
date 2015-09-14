@@ -166,7 +166,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private String volumeSize() {
         freeMemCheck();
-        return "7.8 Tb";
+        return "7800 GB";
     }
 
     private void freeMemCheck() {
