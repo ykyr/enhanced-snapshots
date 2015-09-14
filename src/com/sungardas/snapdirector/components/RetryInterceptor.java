@@ -23,10 +23,11 @@ public class RetryInterceptor implements MethodInterceptor {
         Throwable throwable = null;
         for (int i = 0; i < count; i++) {
             try {
-                LOG.info(methodInvocation);
+                LOG.debug(methodInvocation);
                 return methodInvocation.proceed();
             } catch (AmazonServiceException e){
                 throwable = e;
+                Thread.sleep(sleep);
             }
         }
         throw new SnapdirectorException(throwable);
