@@ -155,13 +155,14 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
-    public long getBackupTime() {
+    public Long getBackupTime() {
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3Bucket).withPrefix("KEY_NAME");
         if(amazonS3.listObjects(request).getObjectSummaries().size()>0) {
             return amazonS3.listObjects(request).getObjectSummaries().get(0).getLastModified().getTime();
+        } else {
+            return null;
         }
-        else return 0;
     }
 
     @Override
