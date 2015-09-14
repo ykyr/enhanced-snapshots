@@ -23,7 +23,8 @@ import java.util.List;
 public class BackupRepositoryImpl implements BackupRepository {
 
     @Autowired
-    AmazonDynamoDB amazonDynamoDB;
+    private AmazonDynamoDB amazonDynamoDB;
+
     private DynamoDBMapper mapper;
 
     @Override
