@@ -34,6 +34,7 @@ script:
 
 before_deploy:
   - mkdir build_artifacts
+  - cp target/snapdirector*.war build_artifacts/snapdirector_latest.war
   - mv -f target/snapdirector*.war build_artifacts/snapdirector_0.0.1_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
 
 deploy:

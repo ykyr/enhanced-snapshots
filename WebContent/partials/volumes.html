@@ -148,7 +148,6 @@
                         <div class="flex-3 flex-center th"><span st-sort="size">Size</span></div>
                         <div class="flex-3 flex-center th"><span st-sort="instanceID">Instance</span></div>
                         <div class="flex-3 flex-center th"><span st-sort="createTime">Created</span></div>
-                        <div class="flex-3 flex-center th"><span st-sort="availabilityZone">Zone</span></div>
                     </div>
                 </div>
 
@@ -185,7 +184,6 @@
                         <div class="flex-3 flex-center">{{volume.size}} GiB</div>
                         <div class="flex-3 flex-center">{{volume.instanceID}}</div>
                         <div class="flex-3 flex-center">{{volume.createTime | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
-                        <div class="flex-3 flex-center">{{volume.availabilityZone}}</div>
                     </div>
                     <div class="row-tags" ng-show="volume.tags && volume.tags.length">
                         <div class="tags">

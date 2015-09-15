@@ -45,7 +45,7 @@ angular.module('web')
         $scope.isValidInstance = true;
         $scope.selectBucket = function (bucket) {
             $scope.selectedBucket = bucket;
-        }
+        };
 
         var getCurrentConfig = function () {
             Configuration.get('current').then(function (result, status) {

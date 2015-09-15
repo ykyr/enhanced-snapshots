@@ -8,12 +8,15 @@ angular.module('web')
             scope: {
                 ngModel: '='
             },
-            link:function(scope, ele){
+            link:function(scope, ele, attr, ctrl){
                 var options = {
                     initial: scope.ngModel || "* * * * *",
                     onChange: function () {
                         var value = $(this).cron("value");
-                        scope.ngModel =value;
+                        scope.ngModel = value;
+                        if(ctrl.$viewValue != value){
+                            ctrl.$setViewValue(value);
+                        }
                     }
                 };
                 $(ele).cron(options);
