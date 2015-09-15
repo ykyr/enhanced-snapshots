@@ -55,7 +55,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 	private SnapshotService snapshotService;
 
 	@Autowired
-	private AWSCommunticationService awsCommunication;
+	private AWSCommunicationService awsCommunication;
     private TaskEntry taskEntry;
 
     @Autowired

@@ -9,7 +9,7 @@ import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.exception.DataAccessException;
-import com.sungardas.snapdirector.service.AWSCommunticationService;
+import com.sungardas.snapdirector.service.AWSCommunicationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.SnapshotService;
 import com.sungardas.snapdirector.service.StorageService;
@@ -44,7 +44,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	private SnapshotService snapshotService;
 
 	@Autowired
-	private AWSCommunticationService awsCommunication;
+	private AWSCommunicationService awsCommunication;
 
     @Autowired
     private StorageService storageService;
@@ -100,7 +100,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	private void restoreFromSnapshot() {
 		String volumeId = taskEntry.getVolume();
 		String snapshotId = snapshotService.getSnapshotId(volumeId, configurationId);
-		BackupEntry backupEntry = backupRepository.getLast(volumeId);
+		BackupEntry backupEntry = backupRepository.getLast(volumeId, configurationId);
 		if (snapshotId == null) {
 			LOG.error("Failed to find snapshot for volume {} ", volumeId);
 			throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
