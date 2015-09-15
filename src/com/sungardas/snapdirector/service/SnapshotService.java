@@ -6,4 +6,6 @@ public interface SnapshotService {
 
     void saveSnapshot(String volumeId, String instanceId, String snapshotId);
 
+    void deleteAllSnapshots();
+
 }

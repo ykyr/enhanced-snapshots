@@ -173,7 +173,13 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private boolean isAdmin(String userEmail) {
+    @Override
+    public void deleteAllUsers() {
+        List<User> userList = userRepository.findByInstanceId(instanceId);
+        userRepository.delete(userList);
+    }
+
+    public boolean isAdmin(String userEmail) {
         User user = userRepository.findByEmailAndInstanceId(userEmail.toLowerCase(), instanceId).get(0);
         return user.getRole() != null && user.getRole().equals(Roles.ADMIN.getName());
     }

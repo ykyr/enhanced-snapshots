@@ -1,34 +1,39 @@
 package com.sungardas.snapdirector.service.impl;
 
-
 import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.*;
 import com.sungardas.snapdirector.aws.dynamodb.repository.*;
-import com.sungardas.snapdirector.service.RemoveAppConfiguration;
+import com.sungardas.snapdirector.exception.OperationNotAllowedException;
+import com.sungardas.snapdirector.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.List;
 
+@Service
 public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     @Autowired
     private AmazonSQS sqs;
 
     @Autowired
-    SnapshotRepository snapshotRepository;
+    private SnapshotService snapshotService;
 
     @Autowired
-    BackupRepository backupRepository;
+    private BackupService backupService;
 
     @Autowired
-    RetentionRepository retentionRepository;
+    private RetentionService retentionService;
 
     @Autowired
-    TaskRepository taskRepository;
+    private TaskService taskService;
 
     @Autowired
-    UserRepository userRepository;
+    private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired WorkerConfigurationRepository configurationRepository;
 
@@ -47,10 +52,28 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     }
 
     @Override
-    public void dropConfiguration() {
+    public void dropConfiguration(String currentUserEmail, String instanceId) {
+        if (!userService.isAdmin(currentUserEmail)) {
+            throw new OperationNotAllowedException("Only admin can delete service");
+        }
+        if (!instanceId.equals(EC2MetadataUtils.getInstanceId())) {
+            throw new OperationNotAllowedException("Provided instance ID is incorrect");
+        }
+
+//        dropS3Bucket();
+//        dropQueue();
+//        dropDbData();
     }
 
     private void dropS3Bucket() {
+
+    }
+
+    private void stopSDFS(){
+
+    }
+
+    private void terminateInstance(){
 
     }
 
@@ -61,21 +84,13 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     }
 
     private void dropDbData() {
-        List<User> userList = userRepository.findByInstanceId(configurationId);
-        userRepository.delete(userList);
+        userService.deleteAllUsers();
+        taskService.deleteAllTasks();
+        retentionService.deleteAllRetentions();
+        backupService.deleteAllBackups();
+        snapshotService.deleteAllSnapshots();
 
-        List<TaskEntry> taskList = taskRepository.findByInstanceId(configurationId);
-        taskRepository.delete(taskList);
+        //TODO: remove tables in case they are empty
 
-        List<RetentionEntry> retentionList = retentionRepository.findByInstanceId(configurationId);
-        retentionRepository.delete(retentionList);
-
-        List<BackupEntry> backupList = backupRepository.findAll(configurationId);
-        for (BackupEntry entry : backupList) {
-            backupRepository.delete(entry);
-        }
-
-        List<SnapshotEntry> snapshotList = snapshotRepository.findByInstanceId(configurationId);
-        snapshotRepository.delete(snapshotList);
     }
 }

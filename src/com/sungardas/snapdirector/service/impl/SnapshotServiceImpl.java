@@ -3,11 +3,13 @@ package com.sungardas.snapdirector.service.impl;
 import com.amazonaws.AmazonClientException;
 import com.sungardas.snapdirector.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.SnapshotRepository;
+import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.SnapshotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 
 @Service
@@ -15,6 +17,16 @@ public class SnapshotServiceImpl implements SnapshotService {
 
     @Autowired
     private SnapshotRepository snapshotRepository;
+
+    private String instanceId;
+
+    @Autowired
+    private ConfigurationService configurationService;
+
+    @PostConstruct
+    private void init() {
+        instanceId = configurationService.getConfiguration().getConfigurationId();
+    }
 
     @Override
     public String getSnapshotId(String volumeId, String instancreId) {
@@ -33,8 +45,9 @@ public class SnapshotServiceImpl implements SnapshotService {
             snapshotRepository.save(new SnapshotEntry(volumeId, instanceId, snapshotId));
     }
 
-
-
-
-
+    @Override
+    public void deleteAllSnapshots() {
+        List<SnapshotEntry> snapshotList = snapshotRepository.findByInstanceId(instanceId);
+        snapshotRepository.delete(snapshotList);
+    }
 }

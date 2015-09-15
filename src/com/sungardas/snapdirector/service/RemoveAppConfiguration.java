@@ -3,5 +3,5 @@ package com.sungardas.snapdirector.service;
 public interface RemoveAppConfiguration {
     String getConfigurationId();
 
-    void dropConfiguration();
+    void dropConfiguration(String currentUserEmail, String instanceId);
 }

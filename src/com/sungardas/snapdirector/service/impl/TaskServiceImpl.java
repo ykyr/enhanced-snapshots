@@ -102,5 +102,11 @@ public class TaskServiceImpl implements TaskService {
         createTask(taskInfo);
     }
 
+    @Override
+    public void deleteAllTasks() {
+        List<TaskEntry> taskList = taskRepository.findByInstanceId(configuration.getConfiguration().getConfigurationId());
+        taskRepository.delete(taskList);
+    }
+
 
 }
