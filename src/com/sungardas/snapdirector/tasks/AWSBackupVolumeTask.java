@@ -11,13 +11,11 @@ import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
-import com.sungardas.snapdirector.service.AWSCommunicationService;
-import com.sungardas.snapdirector.service.ConfigurationService;
-import com.sungardas.snapdirector.service.RetentionService;
-import com.sungardas.snapdirector.service.StorageService;
+import com.sungardas.snapdirector.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -34,23 +32,30 @@ import static java.lang.String.format;
 @Scope("prototype")
 @Profile("prod")
 public class AWSBackupVolumeTask implements BackupTask {
-    private static final Logger LOG = LogManager
-            .getLogger(AWSBackupVolumeTask.class);
-    @Autowired
-    private TaskRepository taskRepository;
+	private static final Logger LOG = LogManager
+			.getLogger(AWSBackupVolumeTask.class);
+
+	@Value("${sungardas.worker.configuration}")
+	private String configurationId;
+
+	@Autowired
+	private TaskRepository taskRepository;
 
     @Autowired
-    AmazonEC2 ec2client;
+	private AmazonEC2 ec2client;
 
     @Autowired
-    StorageService storageService;
+	private StorageService storageService;
 
     @Autowired
-    BackupRepository backupRepository;
+	private BackupRepository backupRepository;
 
-    @Autowired
-    private AWSCommunicationService awsCommunication;
 
+	@Autowired
+	private SnapshotService snapshotService;
+
+	@Autowired
+	private AWSCommunticationService awsCommunication;
     private TaskEntry taskEntry;
 
     @Autowired
@@ -155,7 +160,12 @@ public class AWSBackupVolumeTask implements BackupTask {
                 LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
                 LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
                 LOG.info("Cleaning up previously created snapshots");
-                awsCommunication.cleanupSnapshots(volumeId, snapshotId);
+
+				String previousSnapshot = snapshotService.getSnapshotId(volumeId,configurationId);
+				LOG.info("Storeing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationId);
+				snapshotService.saveSnapshot(volumeId, snapshotId, configurationId);
+				LOG.info("Deleting previous snapshot {}", previousSnapshot);
+				awsCommunication.deleteSnapshot(previousSnapshot);
                 taskRepository.delete(taskEntry);
                 LOG.info("Task completed.");
             } else {
@@ -166,7 +176,7 @@ public class AWSBackupVolumeTask implements BackupTask {
             retentionService.apply();
         } catch (AmazonClientException e) {
             LOG.error(format("Backup process for volume %s failed ", volumeId));
-            LOG.error(e);
+			LOG.error(e);
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
         }
@@ -188,11 +198,11 @@ public class AWSBackupVolumeTask implements BackupTask {
 
         }
 
-        Snapshot snapshot = awsCommunication
-                .waitForCompleteState(awsCommunication
-                        .createSnapshot(volumeSrc));
-        LOG.info("\nSnapshot created. Check snapshot data:\n"
-                + snapshot.toString());
+		Snapshot snapshot = awsCommunication
+				.waitForCompleteState(awsCommunication
+						.createSnapshot(volumeSrc));
+		LOG.info("\nSnapshotEntry created. Check snapshot data:\n"
+				+ snapshot.toString());
 
         // create volume
         String instanceAvailabilityZone = instance.getPlacement()

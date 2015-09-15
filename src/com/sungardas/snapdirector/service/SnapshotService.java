@@ -2,7 +2,8 @@ package com.sungardas.snapdirector.service;
 
 public interface SnapshotService {
 
-    void addSnapshot(String snapshotId, String volumeId);
+    String getSnapshotId(String volumeId, String instancreId);
 
-    void removeSnapshot(String snapshotId);
+    void saveSnapshot(String volumeId, String instanceId, String snapshotId);
+
 }

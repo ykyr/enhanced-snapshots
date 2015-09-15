@@ -85,7 +85,6 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         CreateSnapshotResult crSnapshotResult = ec2client
                 .createSnapshot(snapshotRequest);
         Snapshot snapshot = crSnapshotResult.getSnapshot();
-        snapshotService.addSnapshot(snapshot.getSnapshotId(), volumeId);
         return snapshot;
     }
 
@@ -98,8 +97,6 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
             ec2client.deleteSnapshot(deleteSnapshotRequest);
         } catch (Throwable e) {
             LOG.info("Snapshot with id {} does not exist ", snapshotId);
-        } finally {
-            snapshotService.removeSnapshot(snapshotId);
         }
     }
 
