@@ -11,10 +11,12 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.service.AWSCommunicationService;
 import com.sungardas.snapdirector.service.ConfigurationService;
+import com.sungardas.snapdirector.service.SnapshotService;
 import com.sungardas.snapdirector.service.StorageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -35,8 +37,14 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     @Autowired
     private BackupRepository backupRepository;
 
-    @Autowired
-    private AWSCommunicationService awsCommunication;
+	@Value("${sungardas.worker.configuration}")
+	private String configurationId;
+	
+	@Autowired
+	private SnapshotService snapshotService;
+
+	@Autowired
+	private AWSCommunicationService awsCommunication;
 
     @Autowired
     private StorageService storageService;
@@ -89,17 +97,17 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         LOG.info("{} task {} was completed and removed", taskEntry.getType(), taskEntry.getId());
     }
 
-    private void restoreFromSnapshot() {
-        String volumeId = taskEntry.getVolume();
-        BackupEntry backupEntry = backupRepository.getLast(volumeId, taskEntry.getInstanceId());
-        if (backupEntry == null) {
-            LOG.error("Failed to find backup entry for volume {} ", volumeId);
-            throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
-        }
-        Volume volume = awsCommunication.createVolumeFromSnapshot(backupEntry.getSnapshotId(), awsCommunication.getVolume(volumeId).getAvailabilityZone());
-
-        awsCommunication.setResourceName(volume.getVolumeId(), "Restore of " + backupEntry.getVolumeId());
-    }
+	private void restoreFromSnapshot() {
+		String volumeId = taskEntry.getVolume();
+		String snapshotId = snapshotService.getSnapshotId(volumeId, configurationId);
+		BackupEntry backupEntry = backupRepository.getLast(volumeId, configurationId);
+		if (snapshotId == null) {
+			LOG.error("Failed to find snapshot for volume {} ", volumeId);
+			throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
+		}
+		Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, awsCommunication.getVolume(volumeId).getAvailabilityZone());
+		awsCommunication.setResourceName(volume.getVolumeId(), "Restore of "+backupEntry.getVolumeId());
+	}
 
     private void restoreFromBackupFile() {
         String sourceFile = taskEntry.getOptions();

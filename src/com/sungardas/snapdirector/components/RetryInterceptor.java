@@ -27,13 +27,13 @@ public class RetryInterceptor implements MethodInterceptor {
                 return methodInvocation.proceed();
             } catch (AmazonServiceException e) {
                 if (e.getErrorType() == AmazonServiceException.ErrorType.Client) {
-                    throw new SnapdirectorException(e);
+                    throw e;
                 }
                 LOG.debug("Amazon service exception, try: " + i, e);
                 throwable = e;
                 Thread.sleep(sleep);
             }
         }
-        throw new SnapdirectorException(throwable);
+        throw throwable;
     }
 }
