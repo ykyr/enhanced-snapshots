@@ -42,6 +42,7 @@ angular.module('web')
         };
 
         $scope.isAWS = true;
+        $scope.isValidInstance = true;
         $scope.selectBucket = function (bucket) {
             $scope.selectedBucket = bucket;
         }
@@ -51,6 +52,8 @@ angular.module('web')
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
                 $scope.isAWS = false;
+            }, function () {
+                $scope.isValidInstance = false;
             })
         };
 

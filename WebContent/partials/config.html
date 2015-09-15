@@ -7,7 +7,7 @@
                 </div>
                 <div class="panel-body">
 
-                    <form ng-show="isAWS" class="form-horizontal">
+                    <form ng-show="isAWS && isValidInstance" class="form-horizontal">
                         <div class="form-group">
                             <label class="col-sm-4 control-label">AWS Public Key:</label>
                             <div class="col-sm-6">
@@ -35,7 +35,6 @@
                     </form>
 
                     <div class="form-horizontal" ng-hide="isAWS">
-
 
                         <div class="flex-container card">
                             <div class="flex-2 flex-center">
@@ -137,6 +136,10 @@
 
                     </div>
 
+                    <div ng-hide="isValidInstance" class="text-center bg-danger">
+                        <p class="text-xxlarge"><span class="glyphicon glyphicon-exclamation-sign"></span></p>
+                        <p class="h1">Current instance doesn't  provide enough memory to start SDFS. At least 3.75Mb  of total memory expected.</p>
+                    </div>
                 </div>
             </div>
         </div>
