@@ -71,8 +71,11 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
         retentionRepository.delete(retentionList);
 
         List<BackupEntry> backupList = backupRepository.findAll(configurationId);
+        for (BackupEntry entry : backupList) {
+            backupRepository.delete(entry);
+        }
 
-
+        List<SnapshotEntry> snapshotList = snapshotRepository.findByInstanceId(configurationId);
+        snapshotRepository.delete(snapshotList);
     }
-
 }
