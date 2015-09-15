@@ -8,7 +8,11 @@ import java.util.List;
 
 @EnableScan
 public interface UserRepository extends CrudRepository<User, String> {
-    List<User> findByRole(String lastName);
+    List<User> findByRoleAndInstanceId(String lastName, String instanceId);
 
-    List<User> findByEmailAndPassword(String email, String password);
+    List<User> findByEmailAndPasswordAndInstanceId(String email, String password, String instanceId);
+
+    List<User> findByEmailAndInstanceId(String email, String instanceId);
+
+    List<User> findByInstanceId(String instanceId);
 }

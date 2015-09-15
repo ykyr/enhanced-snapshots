@@ -9,7 +9,6 @@ import com.sungardas.snapdirector.dto.VolumeDto;
 import com.sungardas.snapdirector.dto.converter.VolumeDtoConverter;
 import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.service.VolumeService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,20 +27,23 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Autowired
     private AmazonEC2 amazonEC2;
-    
+
     @Autowired
     private BackupRepository backupRepository;
-    
+
     @Value("${amazon.aws.region}")
     private String region;
 
+    @Value("${sungardas.worker.configuration}")
+    private String instanceId;
+
     @Override
     public Set<VolumeDto> getVolumes() {
-    	LOG.debug("Getting volume list ...");
+        LOG.debug("Getting volume list ...");
         amazonEC2.setRegion(Region.getRegion(Regions.fromName(region)));
         return getVolumes(amazonEC2);
     }
-    
+
     private Set<VolumeDto> getVolumes(AmazonEC2 amazonEC2) {
         try {
             Set<VolumeDto> result = new TreeSet<>(volumeDtoComparator);
@@ -57,7 +59,7 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public Set<VolumeDto> getVolumesByRegion(Region region) {
-    	LOG.debug("Getting volume list for region [{}]", region);
+        LOG.debug("Getting volume list for region [{}]", region);
         amazonEC2.setRegion(region);
         Set<VolumeDto> volumes = getVolumes(amazonEC2);
         return volumes;
@@ -65,16 +67,16 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public boolean volumeExists(String volumeId) {
-        for(VolumeDto dto: getVolumes()){
-            if(dto.getVolumeId().equals(volumeId)){
+        for (VolumeDto dto : getVolumes()) {
+            if (dto.getVolumeId().equals(volumeId)) {
                 return true;
             }
         }
         return false;
     }
-    
+
     private Set<VolumeDto> getHistoryVolumes() {
-        return convert(backupRepository.findAll());
+        return convert(backupRepository.findAll(instanceId));
     }
 
     private Set<VolumeDto> convert(Iterable<BackupEntry> entries) {

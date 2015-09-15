@@ -19,14 +19,26 @@ public class RetentionEntry {
     @DynamoDBAttribute
     private int days;
 
+    @DynamoDBAttribute
+    private String instanceId;
+
     public RetentionEntry() {
     }
 
+    @Deprecated
     public RetentionEntry(String volumeId, int size, int count, int days) {
         this.volumeId = volumeId;
         this.size = size;
         this.count = count;
         this.days = days;
+    }
+
+    public RetentionEntry(String volumeId, int size, int count, int days, String instanceId) {
+        this.volumeId = volumeId;
+        this.size = size;
+        this.count = count;
+        this.days = days;
+        this.instanceId = instanceId;
     }
 
     public String getVolumeId() {
@@ -59,5 +71,13 @@ public class RetentionEntry {
 
     public void setDays(int days) {
         this.days = days;
+    }
+
+    public String getInstanceId() {
+        return instanceId;
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
     }
 }

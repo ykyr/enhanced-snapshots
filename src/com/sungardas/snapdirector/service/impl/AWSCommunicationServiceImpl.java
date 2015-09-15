@@ -213,36 +213,11 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     @Override
     public Volume createVolumeFromSnapshot(String snapshotId,
                                            String availabilityZoneName) {
-        Volume vol = null;
-        for (int attemptNumber = 1; attemptNumber <= retryRestoreAttempts; attemptNumber++) {
-            LOG.info(
-                    "Starting volume creation from {} snapshot. Attempt number - {}",
-                    snapshotId, attemptNumber);
-            try {
-                CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
-                        snapshotId, availabilityZoneName);
-                CreateVolumeResult crVolumeResult = ec2client
-                        .createVolume(crVolumeRequest);
-                vol = crVolumeResult.getVolume();
-                return vol;
-            } catch (AmazonClientException exception) {
-                // Service error type indicates that request was valid but there
-                // was a problem at server side while processing request
-                // in this case we can attempt to resend request again
-                if (attemptNumber != retryRestoreAttempts) {
-                    LOG.info("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getMessage());
-                    LOG.info("New retry will occur in {} seconds", retryRestoreTimeout);
-                    try {
-                        TimeUnit.SECONDS.sleep(retryRestoreTimeout);
-                    } catch (InterruptedException e) {
-                    }
-                } else {
-                    LOG.warn("Failed to create volume from {} snapshot due to amazon service exception: {}", snapshotId, exception.getMessage());
-                    throw exception;
-                }
-            }
-        }
-        return vol;
+        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
+                snapshotId, availabilityZoneName);
+        CreateVolumeResult crVolumeResult = ec2client
+                .createVolume(crVolumeRequest);
+        return crVolumeResult.getVolume();
     }
 
     @Override

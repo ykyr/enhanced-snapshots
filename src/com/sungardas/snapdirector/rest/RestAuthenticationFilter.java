@@ -6,4 +6,6 @@ import javax.servlet.Filter;
 
 public interface RestAuthenticationFilter extends Filter {
     void setUserRepository(UserRepository userRepository);
+
+    void setInstanceId(String instanceId);
 }

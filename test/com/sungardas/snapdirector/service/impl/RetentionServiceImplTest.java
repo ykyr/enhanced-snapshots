@@ -56,7 +56,7 @@ public class RetentionServiceImplTest {
         BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
+        when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 1, 1);
         when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
@@ -84,7 +84,7 @@ public class RetentionServiceImplTest {
         BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
+        when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 1, 0);
         when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
@@ -111,7 +111,7 @@ public class RetentionServiceImplTest {
         BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
+        when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 1, 0, 0);
         when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
@@ -138,7 +138,7 @@ public class RetentionServiceImplTest {
         BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
+        when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 0, 0);
         when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
@@ -164,7 +164,7 @@ public class RetentionServiceImplTest {
         BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusHours(23).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
+        when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 0, 1);
         when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
@@ -190,7 +190,7 @@ public class RetentionServiceImplTest {
         BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().minusDays(23).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
+        when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 0, 1);
         when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
@@ -217,7 +217,7 @@ public class RetentionServiceImplTest {
         BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().minusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry2 = new BackupEntry("volumeId 2", "fileName2", new DateTime().minusDays(23).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
         BackupEntry entry3 = new BackupEntry("volumeId 3", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        when(backupRepository.findAll()).thenReturn(Arrays.asList(entry1, entry2, entry3));
+        when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 0, 0);
         RetentionEntry retentionEntry2 = new RetentionEntry("volumeId 2", 0, 0, 0);

@@ -1,8 +1,5 @@
 package com.sungardas.init;
 
-import javax.annotation.PostConstruct;
-import javax.servlet.Filter;
-
 import com.amazonaws.AmazonClientException;
 import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
@@ -11,7 +8,6 @@ import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.rest.RestAuthenticationFilter;
 import com.sungardas.snapdirector.rest.filters.FilterProxy;
-
 import com.sungardas.snapdirector.service.SharedDataService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,8 +20,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import javax.annotation.PostConstruct;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
@@ -114,15 +110,15 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
-        if(credentialsService.areCredentialsValid()){
+        if (credentialsService.areCredentialsValid()) {
             InitConfigurationDto initConfigurationDto = credentialsService.getInitConfigurationDto();
-            if (!initConfigurationDto.getDb().isValid()){
+            if (!initConfigurationDto.getDb().isValid()) {
                 if (config.getUser() == null) {
                     throw new ConfigurationException("Please create default user");
                 }
                 sharedDataService.setUser(config.getUser());
             }
-            if(config.getUser() != null) {
+            if (config.getUser() != null) {
                 sharedDataService.setUser(config.getUser());
             }
             initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(config.getBucketName(), false)));
@@ -151,13 +147,14 @@ class InitController implements ApplicationContextAware {
         // enabling auth filter
         RestAuthenticationFilter filter = applicationContext.getBean(RestAuthenticationFilter.class);
         filter.setUserRepository(applicationContext.getBean(UserRepository.class));
+        filter.setInstanceId(credentialsService.getInstanceId());
         filterProxy.setFilter(filter);
 
         LOG.info("Context refreshed successfully.");
         CONTEXT_REFRESH_IN_PROCESS = false;
     }
 
-    private static class ConfigDto{
+    private static class ConfigDto {
         private User user;
         private String bucketName;
 

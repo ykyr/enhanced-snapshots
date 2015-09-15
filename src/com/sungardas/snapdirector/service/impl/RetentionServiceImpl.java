@@ -43,15 +43,21 @@ public class RetentionServiceImpl implements RetentionService {
     @Autowired
     private SchedulerService schedulerService;
 
+    @Autowired
+    private ConfigurationService configurationService;
+
+    private String instanceId;
+
     @Value("${snapdirector.retention.cron}")
     private String cronExpression;
 
     @PostConstruct
     private void init() {
+        instanceId = configurationService.getConfiguration().getConfigurationId();
         schedulerService.addTask(getJob(this), cronExpression);
         try {
             apply();
-        } catch (AmazonClientException e){
+        } catch (AmazonClientException e) {
             LOG.error(e);
         }
     }
@@ -60,6 +66,8 @@ public class RetentionServiceImpl implements RetentionService {
     public void putRetention(RetentionDto retentionDto) {
         if (volumeService.volumeExists(retentionDto.getVolumeId())) {
             RetentionEntry entry = toEntry(retentionDto);
+
+            entry.setInstanceId(instanceId);
 
             retentionRepository.save(entry);
             apply();
@@ -71,10 +79,10 @@ public class RetentionServiceImpl implements RetentionService {
 
     @Override
     public RetentionDto getRetentionDto(String volumeId) {
-        RetentionEntry entry = retentionRepository.findOne(volumeId);
+        List<RetentionEntry> entry = retentionRepository.findByVolumeIdAndInstanceId(volumeId, instanceId);
 
-        if (entry != null) {
-            return toDto(entry);
+        if (!entry.isEmpty()) {
+            return toDto(entry.get(0));
         } else {
             if (volumeService.volumeExists(volumeId)) {
                 return new RetentionDto(volumeId);
@@ -91,13 +99,12 @@ public class RetentionServiceImpl implements RetentionService {
         Map<String, Set<BackupEntry>> backups = getBackups();
         Map<String, RetentionEntry> retentions = getRetentions();
         Set<BackupEntry> backupsToRemove = new LinkedHashSet<>();
-        Set<RetentionEntry> retentionsToRemove = new HashSet<>();
 
         for (Map.Entry<String, Set<BackupEntry>> entry : backups.entrySet()) {
             RetentionEntry retentionEntry = retentions.get(entry.getKey());
             if (retentionEntry != null) {
                 if (isEmpty(retentionEntry)) {
-                    retentionsToRemove.add(retentionEntry);
+                    retentionRepository.deleteByVolumeIdAndInstanceId(retentionEntry.getVolumeId(), retentionEntry.getInstanceId());
                 } else {
                     BackupEntry[] values = entry.getValue().toArray(new BackupEntry[entry.getValue().size()]);
                     applySizeRetention(backupsToRemove, values, retentionEntry);
@@ -109,16 +116,9 @@ public class RetentionServiceImpl implements RetentionService {
 
         for (Map.Entry<String, RetentionEntry> entry : retentions.entrySet()) {
             if (!backups.containsKey(entry.getKey())) {
-                retentionsToRemove.add(entry.getValue());
+                retentionRepository.deleteByVolumeIdAndInstanceId(entry.getValue().getVolumeId(), entry.getValue().getInstanceId());
             }
         }
-
-        if (!retentionsToRemove.isEmpty()) {
-            LOG.debug("Found empty retentions: {}", retentionsToRemove);
-            retentionRepository.delete(retentionsToRemove);
-            LOG.debug("Empty retentions successfully removed");
-        }
-
         if (!backupsToRemove.isEmpty()) {
             LOG.debug("Found backup to remove: {}", backupsToRemove);
             backupService.deleteBackup(backupsToRemove, RETENTION_USER);
@@ -168,7 +168,7 @@ public class RetentionServiceImpl implements RetentionService {
     private Map<String, Set<BackupEntry>> getBackups() {
         Map<String, Set<BackupEntry>> backupsSortedByCreationTime = new HashMap<>();
 
-        for (BackupEntry backupEntry : backupRepository.findAll()) {
+        for (BackupEntry backupEntry : backupRepository.findAll(instanceId)) {
             Set<BackupEntry> backups = backupsSortedByCreationTime.get(backupEntry.getVolumeId());
             if (backups == null) {
                 backups = new TreeSet<>(backupComparatorByCreationTime);
@@ -183,7 +183,7 @@ public class RetentionServiceImpl implements RetentionService {
     private Map<String, RetentionEntry> getRetentions() {
         Map<String, RetentionEntry> retentionEntryMap = new HashMap<>();
 
-        for (RetentionEntry entry : retentionRepository.findAll()) {
+        for (RetentionEntry entry : retentionRepository.findByInstanceId(instanceId)) {
             retentionEntryMap.put(entry.getVolumeId(), entry);
         }
 

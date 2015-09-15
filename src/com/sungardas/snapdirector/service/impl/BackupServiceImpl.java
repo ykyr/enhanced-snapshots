@@ -39,14 +39,14 @@ public class BackupServiceImpl implements BackupService {
     private String instanceId;
 
     @PostConstruct
-    private void init(){
+    private void init() {
         instanceId = configurationService.getConfiguration().getConfigurationId();
     }
 
     @Override
     public void deleteBackup(String backupName, String user) {
         TaskEntry taskEntry = getDeleteTask(backupName + BACKUP_FILE_EXT, user, true);
-        if(taskRepository.findByVolumeAndTypeAndInstanceIdAndOptions(taskEntry.getVolume(),
+        if (taskRepository.findByVolumeAndTypeAndInstanceIdAndOptions(taskEntry.getVolume(),
                 taskEntry.getType(), instanceId, taskEntry.getOptions()).isEmpty()) {
             taskRepository.save(taskEntry);
         } else {
@@ -57,7 +57,7 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public List<BackupEntry> getBackupList(String volumeId) {
-        return backupRepository.get(volumeId);
+        return backupRepository.get(volumeId, instanceId);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class BackupServiceImpl implements BackupService {
 
         for (BackupEntry entry : backupEntries) {
             TaskEntry taskEntry = getDeleteTask(entry.getFileName(), user, false);
-            if(taskRepository.findByVolumeAndTypeAndInstanceIdAndOptions(taskEntry.getVolume(),
+            if (taskRepository.findByVolumeAndTypeAndInstanceIdAndOptions(taskEntry.getVolume(),
                     taskEntry.getType(), instanceId, taskEntry.getOptions()).isEmpty()) {
 
                 tasks.add(getDeleteTask(entry.getFileName(), user, false));
@@ -79,11 +79,11 @@ public class BackupServiceImpl implements BackupService {
         taskRepository.save(tasks);
     }
 
-    private String getVolumeId(String backupName){
+    private String getVolumeId(String backupName) {
         return backupName.substring(0, 12);
     }
 
-    private TaskEntry getDeleteTask(String backupFile, String user, boolean schedulerManual){
+    private TaskEntry getDeleteTask(String backupFile, String user, boolean schedulerManual) {
         String volumeId = getVolumeId(backupFile);
 
         TaskEntry taskEntry = new TaskEntry();

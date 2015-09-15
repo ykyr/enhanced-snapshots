@@ -58,7 +58,7 @@ public class AuthenticationController {
     }
 
     @RequestMapping(method = RequestMethod.DELETE)
-    public ResponseEntity<String> logout() {
+    public ResponseEntity<Void> logout() {
         String sessionId = servletRequest.getSession().getId();
         Map<String, String> allowedSessions = getAllowedSessions();
         allowedSessions.remove(sessionId);

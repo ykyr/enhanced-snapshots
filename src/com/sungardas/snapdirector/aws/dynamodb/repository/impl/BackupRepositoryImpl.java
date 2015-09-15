@@ -6,7 +6,6 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
@@ -18,6 +17,8 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
 @Repository
 public class BackupRepositoryImpl implements BackupRepository {
@@ -41,45 +42,47 @@ public class BackupRepositoryImpl implements BackupRepository {
             throw new DataAccessException("Can`t delete: " + backupEntry.getVolumeId() + " " + backupEntry.getFileName());
         }
     }
-    
+
     @Override
-    public List<BackupEntry> get(String volumeId) {
-    	BackupEntry backupEntry = new BackupEntry();
-		backupEntry.setVolumeId(volumeId);
-		DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
-				.withHashKeyValues(backupEntry);
+    public List<BackupEntry> get(String volumeId, String instanceId) {
+        BackupEntry backupEntry = new BackupEntry();
+        backupEntry.setVolumeId(volumeId);
+        DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
+                .withHashKeyValues(backupEntry).withQueryFilterEntry("instanceId", new Condition()
+                        .withComparisonOperator(EQ).withAttributeValueList(new AttributeValue().withS(instanceId)));
 
-		List<BackupEntry> backupEntries = mapper.query(BackupEntry.class,
-				expression);
+        List<BackupEntry> backupEntries = mapper.query(BackupEntry.class,
+                expression);
 
-		return backupEntries;
+        return backupEntries;
     }
-    
-    @Override
-    public BackupEntry getLast(String volumeId) {
-    	BackupEntry backupEntry = new BackupEntry();
-		backupEntry.setVolumeId(volumeId);
-		DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
-				.withHashKeyValues(backupEntry).withScanIndexForward(false);
 
-		List<BackupEntry> backupEntries = mapper.query(BackupEntry.class, expression);
+    @Override
+    public BackupEntry getLast(String volumeId, String instanceId) {
+        BackupEntry backupEntry = new BackupEntry();
+        backupEntry.setVolumeId(volumeId);
+        DynamoDBQueryExpression<BackupEntry> expression = new DynamoDBQueryExpression<BackupEntry>()
+                .withHashKeyValues(backupEntry).withScanIndexForward(false).withQueryFilterEntry("instanceId", new Condition()
+                        .withComparisonOperator(EQ).withAttributeValueList(new AttributeValue().withS(instanceId)));
+
+        List<BackupEntry> backupEntries = mapper.query(BackupEntry.class, expression);
 
         return getFirst(backupEntries);
     }
-    
+
     @Override
     public BackupEntry getByBackupFileName(String backupName) {
-    	Condition condition = new Condition().
-    			withComparisonOperator(ComparisonOperator.EQ.toString()).withAttributeValueList(new AttributeValue(backupName));
-    	DynamoDBScanExpression expression = new DynamoDBScanExpression().withFilterConditionEntry("fileName", condition);
-    	List<BackupEntry> backupEntries = mapper.scan(BackupEntry.class, expression);
+        Condition condition = new Condition().
+                withComparisonOperator(EQ.toString()).withAttributeValueList(new AttributeValue(backupName));
+        DynamoDBScanExpression expression = new DynamoDBScanExpression().withFilterConditionEntry("fileName", condition);
+        List<BackupEntry> backupEntries = mapper.scan(BackupEntry.class, expression);
         return getFirst(backupEntries);
     }
 
-    private BackupEntry getFirst(List<BackupEntry> backupEntries){
-        if(backupEntries.isEmpty()){
+    private BackupEntry getFirst(List<BackupEntry> backupEntries) {
+        if (backupEntries.isEmpty()) {
             return null;
-        } else{
+        } else {
             return backupEntries.get(0);
         }
     }
@@ -90,8 +93,9 @@ public class BackupRepositoryImpl implements BackupRepository {
     }
 
     @Override
-    public List<BackupEntry> findAll() {
-        return mapper.scan(BackupEntry.class, new DynamoDBScanExpression());
+    public List<BackupEntry> findAll(String instanceId) {
+        return mapper.scan(BackupEntry.class, new DynamoDBScanExpression().withFilterConditionEntry("instanceId", new Condition()
+                .withComparisonOperator(EQ).withAttributeValueList(new AttributeValue().withS(instanceId))));
     }
 
 }

@@ -12,9 +12,9 @@ public interface TaskRepository extends CrudRepository<TaskEntry, String> {
 
     List<TaskEntry> findByInstanceIdAndRegular(String instanceId, String regular);
 
-    List<TaskEntry> findByRegularAndVolume(String regular, String volumeId);
+    List<TaskEntry> findByRegularAndVolumeAndInstanceId(String regular, String volumeId, String instanceId);
 
-    List<TaskEntry> findByRegular(String regular);
+    List<TaskEntry> findByRegularAndInstanceId(String regular, String instanceId);
 
     List<TaskEntry> findByVolumeAndTypeAndInstanceIdAndOptions(String volumeId, String type, String instanceId, String options);
 }

@@ -21,7 +21,7 @@ public class UserDtoConverterTest {
     @Test
     public void convertUserToUserDto() {
         // with user role
-        User user = new User(FIRST_NAME, LAST_NAME, EMAIL, PSW, USER_ROLE);
+        User user = new User(EMAIL, PSW, USER_ROLE, FIRST_NAME, LAST_NAME, "");
         UserDto userDto = UserDtoConverter.convert(user);
         Assert.assertTrue(userDto.getEmail().equals(EMAIL));
         Assert.assertTrue(userDto.getFirstName().equals(FIRST_NAME));
@@ -50,8 +50,8 @@ public class UserDtoConverterTest {
 
     @Test
     public void convertUsersToUserDtos() {
-        User user_first = new User(FIRST_NAME, LAST_NAME, EMAIL, PSW, USER_ROLE);
-        User user_second = new User(FIRST_NAME + "_2", LAST_NAME + "_2", EMAIL + "_2", PSW + "_2", ADMIN_ROLE);
+        User user_first = new User(EMAIL, PSW, USER_ROLE, FIRST_NAME, LAST_NAME, "");
+        User user_second = new User(EMAIL + "_2", PSW + "_2", ADMIN_ROLE, FIRST_NAME + "_2", LAST_NAME + "_2", "");
         List<User> users = new ArrayList<>();
         users.add(user_first);
         users.add(user_second);

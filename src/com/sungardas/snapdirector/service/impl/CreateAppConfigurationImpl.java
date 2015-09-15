@@ -8,7 +8,6 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.util.EC2MetadataUtils;
@@ -133,7 +132,7 @@ class CreateAppConfigurationImpl {
         createTable("Configurations", 10L, 10L, "configurationId", "S");
         createTable("Retention", 50L, 20L, "volumeId", "S");
         createTable("Tasks", 50L, 20L, "id", "S");
-        createTable("Users", 50L, 20L, "email", "S");
+        createTable("Users", 50L, 20L, "id", "S");
         createTable("Snapshots", 50L, 20L, "snapshotId", "S");
         System.out.println(">> after createDbStructure");
     }

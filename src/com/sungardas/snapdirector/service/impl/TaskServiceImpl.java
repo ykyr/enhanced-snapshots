@@ -55,7 +55,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDto> getAllTasks() {
         try {
-            return TaskDtoConverter.convert(taskRepository.findByRegular(Boolean.FALSE.toString()));
+            return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
+                    configuration.getConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
@@ -65,7 +66,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDto> getAllRegularTasks(String volumeId) {
         try {
-            return TaskDtoConverter.convert(taskRepository.findByRegularAndVolume(Boolean.TRUE.toString(), volumeId));
+            return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.TRUE.toString(),
+                    volumeId, configuration.getConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);

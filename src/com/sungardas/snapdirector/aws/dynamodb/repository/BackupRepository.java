@@ -10,11 +10,11 @@ public interface BackupRepository {
 
     void delete(BackupEntry backupEntry);
 
-    List<BackupEntry> get(String volumeId);
+    List<BackupEntry> get(String volumeId, String instanceId);
 
-    BackupEntry getLast(String volumeId);
+    BackupEntry getLast(String volumeId, String instanceId);
 
     BackupEntry getByBackupFileName(String backupName);
 
-    List<BackupEntry> findAll();
+    List<BackupEntry> findAll(String instanceId);
 }

@@ -1,6 +1,5 @@
 package com.sungardas.init;
 
-import com.amazonaws.auth.AWSCredentials;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 
 import javax.validation.constraints.NotNull;
@@ -64,4 +63,8 @@ class CredentialsServiceDev implements CredentialsService {
         return true;
     }
 
+    @Override
+    public String getInstanceId() {
+        return "DEV";
+    }
 }

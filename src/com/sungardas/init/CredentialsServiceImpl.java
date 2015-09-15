@@ -132,7 +132,7 @@ class CredentialsServiceImpl implements CredentialsService {
         for (Bucket bucket : allBuckets) {
             ListObjectsRequest request = new ListObjectsRequest()
                     .withBucketName(bucket.getName()).withPrefix("sdfsstate");
-            if( client.listObjects(request).getObjectSummaries().size()>0){
+            if (client.listObjects(request).getObjectSummaries().size() > 0) {
                 if (bucketName.equals(bucket.getName())) {
                     result.add(new InitConfigurationDto.S3(bucketName, true));
                     bucketForThisInstanceExist = true;
@@ -181,8 +181,8 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private void freeMemCheck() {
-        UnixOperatingSystemMXBean osBean= (UnixOperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
-        if (osBean.getTotalPhysicalMemorySize() < 3.5* BYTES_IN_GB) {
+        UnixOperatingSystemMXBean osBean = (UnixOperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        if (osBean.getTotalPhysicalMemorySize() < 3.5 * BYTES_IN_GB) {
             throw new SnapdirectorException("Not enough memory to create SDFS volume");
         }
     }
@@ -244,5 +244,10 @@ class CredentialsServiceImpl implements CredentialsService {
             LOG.info("Can't get userId. Check AWS credentials!", accessError);
             throw new DataAccessException(accessError);
         }
+    }
+
+    @Override
+    public String getInstanceId() {
+        return instanceId;
     }
 }

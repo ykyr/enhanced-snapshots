@@ -8,6 +8,7 @@ import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.OperationNotAllowedException;
 import com.sungardas.snapdirector.exception.UniqueConstraintViolationException;
+import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.UserService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
@@ -15,20 +16,31 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
 
+    private static final Logger LOG = LogManager.getLogger(UserServiceImpl.class);
+
+    private String instanceId;
+
     @Autowired
     private UserRepository userRepository;
 
-    private static final Logger LOG = LogManager.getLogger(UserServiceImpl.class);
+    @Autowired
+    private ConfigurationService configurationService;
+
+    @PostConstruct
+    private void init() {
+        instanceId = configurationService.getConfiguration().getConfigurationId();
+    }
 
     @Override
     public List<UserDto> getAllUsers() {
         try {
-            return UserDtoConverter.convert(userRepository.findAll());
+            return UserDtoConverter.convert(userRepository.findByInstanceId(instanceId));
         } catch (RuntimeException e) {
             LOG.error(e);
             throw new DataAccessException(e);
@@ -38,7 +50,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void createUser(UserDto userInfo, String password, String currentUserEmail) throws DataAccessException, UniqueConstraintViolationException {
         // check whether user with the same email already exists
-        if (userRepository.exists(userInfo.getEmail().toLowerCase())) {
+        if (!userRepository.findByEmailAndInstanceId(userInfo.getEmail().toLowerCase(), instanceId).isEmpty()) {
             UniqueConstraintViolationException e = new UniqueConstraintViolationException("User with such email already exists: " + userInfo.getEmail());
             LOG.info("Failed to register user.", e);
             throw e;
@@ -54,6 +66,7 @@ public class UserServiceImpl implements UserService {
                 if (newUser.getRole().isEmpty()) {
                     newUser.setRole(Roles.USER.getName());
                 }
+                newUser.setInstanceId(instanceId);
                 userRepository.save(newUser);
             } else {
                 OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can create new user.");
@@ -69,19 +82,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateUser(UserDto userInfo, String newPassword, String currentUserEmail) {
         // check user exists
-        if (!userRepository.exists(userInfo.getEmail().toLowerCase())) {
+        List<User> users = userRepository.findByEmailAndInstanceId(userInfo.getEmail().toLowerCase(), instanceId);
+        if (users.isEmpty()) {
             DataAccessException e = new DataAccessException("User with such email does not exist: " + userInfo.getEmail());
             LOG.info("Failed to update user.", e);
             throw e;
         }
         try {
             // currentUser - user who performs update
-            User currentUser = userRepository.findOne(currentUserEmail);
+            User currentUser = userRepository.findByEmailAndInstanceId(currentUserEmail.toLowerCase(), instanceId).get(0);
 
             // check whether current user has permission to modify existing user
-            if (isAdmin(currentUserEmail) || userInfo.getEmail().toLowerCase().equals(currentUserEmail)) {
-                User userToBeUpdated = userRepository.findOne(userInfo.getEmail().toLowerCase());
+            if (isAdmin(currentUser) || userInfo.getEmail().toLowerCase().equals(currentUserEmail)) {
+                User userToBeUpdated = users.get(0);
                 User updatedUser = UserDtoConverter.convert(userInfo);
+                updatedUser.setId(userToBeUpdated.getId());
                 // new password setting
                 if (newPassword != null && !newPassword.isEmpty()) {
                     updatedUser.setPassword(DigestUtils.sha512Hex(newPassword));
@@ -118,7 +133,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void removeUser(String userEmail, String currentUserEmail) {
         // check user exists
-        if (!userRepository.exists(userEmail.toLowerCase())) {
+        if (userRepository.findByEmailAndInstanceId(userEmail.toLowerCase(), instanceId).isEmpty()) {
             DataAccessException e = new DataAccessException("User with such email does not exist: " + userEmail);
             LOG.info("Failed to remove user.", e);
             throw e;
@@ -148,7 +163,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(String user, String password) {
-        List<UserDto> list = UserDtoConverter.convert(userRepository.findByEmailAndPassword(user, DigestUtils.sha512Hex(password)));
+        List<UserDto> list = UserDtoConverter.convert(userRepository.findByEmailAndPasswordAndInstanceId(user, DigestUtils.sha512Hex(password), instanceId));
         if (list.isEmpty()) {
             return null;
         } else {
@@ -157,8 +172,8 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean isAdmin(String userEmail) {
-        return userRepository.findOne(userEmail.toLowerCase()).getRole() != null &&
-                userRepository.findOne(userEmail.toLowerCase()).getRole().equals(Roles.ADMIN.getName());
+        User user = userRepository.findByEmailAndInstanceId(userEmail.toLowerCase(), instanceId).get(0);
+        return user.getRole() != null && user.getRole().equals(Roles.ADMIN.getName());
     }
 
     private boolean isAdmin(User user) {
@@ -167,6 +182,6 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean isLastAdmin() {
-        return userRepository.findByRole(Roles.ADMIN.getName()).size() == 1;
+        return userRepository.findByRoleAndInstanceId(Roles.ADMIN.getName(), instanceId).size() == 1;
     }
 }
