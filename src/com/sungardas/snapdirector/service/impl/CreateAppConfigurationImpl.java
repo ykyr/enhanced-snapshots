@@ -203,6 +203,7 @@ class CreateAppConfigurationImpl {
             User userToCreate = UserDtoConverter.convert(userDto);
             userToCreate.setPassword(DigestUtils.sha512Hex(password));
             userToCreate.setInstanceId(EC2MetadataUtils.getInstanceId());
+            userToCreate.setRole("admin");
             DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
             mapper.save(userToCreate);
         }

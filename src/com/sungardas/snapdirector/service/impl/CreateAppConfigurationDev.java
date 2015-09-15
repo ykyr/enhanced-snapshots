@@ -27,6 +27,7 @@ public class CreateAppConfigurationDev {
         mapper.save(workerConfiguration);
 
         User user = new User("admin@admin", DigestUtils.sha512Hex("admin"), "admin", "dev", "dev", "DEV");
+        user.setId("DEV");
         mapper.save(user);
 
         try {
