@@ -88,24 +88,30 @@ class CreateAppConfigurationImpl {
 
             boolean isBucketContainsSDFSMetadata = false;
             InitConfigurationDto.S3 s3 = initConfigurationDto.getS3().get(0);
-            if (!s3.isCreated()) {
+            if (!isBucketExits(s3Bucket)) {
                 LOG.info("Initialization S3 bucket");
                 createS3Bucket();
             } else {
                 isBucketContainsSDFSMetadata = sdfsService.containsSdfsMetadata(s3.getBucketName());
             }
-
-            if (!initConfigurationDto.getSdfs().isCreated()) {
-                LOG.info("Initialization SDFS");
-                if (isBucketContainsSDFSMetadata) {
-                    sdfsService.restoreState();
-                } else {
-                    createSDFS();
-                }
-
+            LOG.info("Initialization SDFS");
+            if (isBucketContainsSDFSMetadata) {
+                sdfsService.restoreState();
+            } else {
+                sdfsService.startupSDFS(sdfsSize, s3Bucket);
             }
+
             System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
+        }
+    }
+
+    private boolean isBucketExits(String s3Bucket) {
+        try {
+            String location = amazonS3.getBucketLocation(s3Bucket);
+            return location != null;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -222,17 +228,8 @@ class CreateAppConfigurationImpl {
 
     private void createS3Bucket() {
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
-        Bucket bucket = amazonS3.createBucket(bucketName, region);
-
+        Bucket bucket = amazonS3.createBucket(bucketName);
     }
-
-    private void createSDFS() {
-        InitConfigurationDto.SDFS sdfs = sharedDataService.getInitConfigurationDto().getSdfs();
-        String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
-
-        sdfsService.startupSDFS(sdfs.getVolumeSize(), bucketName);
-    }
-
 
     private void storeWorkerConfiguration() {
         InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();

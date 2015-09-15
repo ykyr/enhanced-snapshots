@@ -8,5 +8,10 @@ public interface SDFSStateService {
 
     boolean containsSdfsMetadata(String sBucket);
 
+    Long getBackupTime();
+
     void startupSDFS(String size, String bucketName);
+
+    void shutdownSDFS(String size, String bucketName);
+
 }

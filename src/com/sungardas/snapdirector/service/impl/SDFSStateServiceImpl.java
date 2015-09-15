@@ -2,8 +2,13 @@ package com.sungardas.snapdirector.service.impl;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
+import com.sungardas.snapdirector.aws.dynamodb.model.BackupState;
+import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.SDFSException;
 import com.sungardas.snapdirector.service.SDFSStateService;
@@ -19,7 +24,9 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -31,6 +38,9 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Autowired
     private AmazonS3 amazonS3;
+
+    @Autowired
+    private BackupRepository backupRepository;
 
     @Value("${amazon.s3.bucket}")
     private String s3Bucket;
@@ -44,6 +54,11 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Value("${amazon.sdfs.size}")
     private String sdfsSize;
 
+    @Value("${sungardas.worker.configuration}")
+    private String instanceId;
+
+    private static final String SDFS_MOUNT_POINT = "/mnt/awspool/";
+
     @Autowired
     private XmlWebApplicationContext applicationContext;
 
@@ -51,6 +66,13 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     public static final String SDFS_STATE_BACKUP_FILE_EXT = ".zip";
     private static final String KEY_NAME = "sdfsstate.zip";
     private static final String SDFS_STATE_DESTINATION = "/";
+
+    private static final int VOLUME_ID_INDEX = 0;
+    private static final int TIME_INDEX = 1;
+    private static final int TYPE_INDEX = 2;
+    private static final int IOPS_INDEX = 3;
+
+    private static final long BYTES_IN_GIB = 1073741824l;
 
     @Override
     public void backupState() throws AmazonClientException {
@@ -61,7 +83,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             tempFile = ZipUtils.zip(paths);
         } catch (Throwable e) {
             startupSDFS(sdfsSize, s3Bucket);
-            if(tempFile != null && tempFile.exists()){
+            if (tempFile != null && tempFile.exists()) {
                 tempFile.delete();
             }
             throw new SDFSException("Cant create system backup ", e);
@@ -73,17 +95,54 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Override
     public void restoreState() throws AmazonClientException {
+        shutdownSDFS(sdfsSize, s3Bucket);
         File file = null;
         try {
             file = Files.createTempFile(SDFS_STATE_BACKUP_FILE_NAME, SDFS_STATE_BACKUP_FILE_EXT).toFile();
             downloadFromS3(KEY_NAME, file);
             ZipUtils.unzip(file, SDFS_STATE_DESTINATION);
             file.delete();
-        } catch (IOException e) {
-            if(file != null && file.exists()){
+            startupSDFS(sdfsSize, s3Bucket);
+            //SDFS mount time
+            Thread.sleep(5000);
+            restoreBackups();
+        } catch (Exception e) {
+            if (file != null && file.exists()) {
                 file.delete();
             }
             throw new SDFSException("Cant restore sdfs state", e);
+        }
+    }
+
+    private void restoreBackups() {
+        File[] files = new File(SDFS_MOUNT_POINT).listFiles();
+        for (File file : files) {
+            BackupEntry entry = getBackupFromFile(file);
+            if (entry != null) {
+                backupRepository.save(entry);
+            }
+        }
+    }
+
+    private BackupEntry getBackupFromFile(File file) {
+        String fileName = file.getName();
+        String[] props = fileName.split("\\.");
+        if (props.length != 5) {
+            return null;
+        } else {
+            BackupEntry backupEntry = new BackupEntry();
+
+            backupEntry.setFileName(fileName);
+            backupEntry.setInstanceId(instanceId);
+            backupEntry.setIops(props[IOPS_INDEX]);
+            backupEntry.setSizeGiB(String.valueOf((int) (file.length() / BYTES_IN_GIB)));
+            backupEntry.setTimeCreated(props[TIME_INDEX]);
+            backupEntry.setVolumeType(props[TYPE_INDEX]);
+            backupEntry.setState(BackupState.COMPLETED.getState());
+            backupEntry.setVolumeId(props[VOLUME_ID_INDEX]);
+            backupEntry.setSize(String.valueOf(file.length()));
+
+            return backupEntry;
         }
     }
 
@@ -91,8 +150,19 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     public boolean containsSdfsMetadata(String sBucket) {
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(sBucket).withPrefix("sdfsstate");
-        return amazonS3.listObjects(request).getObjectSummaries().size()>0;
+        return amazonS3.listObjects(request).getObjectSummaries().size() > 0;
 
+    }
+
+    @Override
+    public Long getBackupTime() {
+        ListObjectsRequest request = new ListObjectsRequest()
+                .withBucketName(s3Bucket).withPrefix("KEY_NAME");
+        if(amazonS3.listObjects(request).getObjectSummaries().size()>0) {
+            return amazonS3.listObjects(request).getObjectSummaries().get(0).getLastModified().getTime();
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -123,14 +193,14 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                     print(p);
                     throw new ConfigurationException("Error creating sdfs");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error(e);
-        } catch (InterruptedException e) {
-            LOG.error(e);
+            throw new ConfigurationException("Error creating sdfs");
         }
     }
 
-    private void shutdownSDFS(String size, String bucketName) {
+    @Override
+    public void shutdownSDFS(String size, String bucketName) {
         try {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
@@ -157,10 +227,9 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                     print(p);
                     throw new ConfigurationException("Error creating sdfs");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error(e);
-        } catch (InterruptedException e) {
-            LOG.error(e);
+            throw new ConfigurationException("Error creating sdfs");
         }
     }
 
@@ -203,7 +272,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         private static final Logger LOG = LogManager.getLogger(ZipUtils.class);
 
         private static FileSystem createZipFileSystem(File file, boolean create) throws IOException {
-            file.delete();
             final URI uri = URI.create("jar:file:" + file.toURI().getPath().replaceAll(" ", "%2520"));
 
             final Map<String, String> env = new HashMap<>();
@@ -255,6 +323,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
         public static File zip(String... filenames) throws IOException {
             File tempFile = Files.createTempFile(SDFS_STATE_BACKUP_FILE_NAME, SDFS_STATE_BACKUP_FILE_EXT).toFile();
+            tempFile.delete();
             try (FileSystem zipFileSystem = createZipFileSystem(tempFile, true)) {
                 final Path root = zipFileSystem.getPath("/");
 
