@@ -101,8 +101,7 @@ public class BackupRepositoryImpl implements BackupRepository {
 
     @Override
     public int count() {
-        return mapper.count(BackupEntry.class, new DynamoDBScanExpression()
-                .withFilterConditionEntry("instanceId", new Condition().withComparisonOperator(NOT_NULL)));
+        return mapper.count(BackupEntry.class, new DynamoDBScanExpression());
 
     }
 

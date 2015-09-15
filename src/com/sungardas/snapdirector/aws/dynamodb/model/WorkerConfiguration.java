@@ -83,13 +83,26 @@ public class WorkerConfiguration {
 		this.fakeBackupSource = fakeBackupSource;
 	}
 
+	@DynamoDBAttribute(attributeName = "s3Bucket")
+	public String getS3Bucket() {
+		return s3Bucket;
+	}
+
+	public void setS3Bucket(String taskS3Bucket) {
+		this.s3Bucket = taskS3Bucket;
+	}
+
 	private String sdfsVolumeName;
 	private String sdfsMountPoint;
 	
 	private String region;
 	private String configurationId;
 	private String taskQueueURL;
-	
+
+
+
+	private String s3Bucket;
+
 	private boolean useFakeBackup;
 	private boolean useFakeEC2;
 	private String fakeBackupSource;

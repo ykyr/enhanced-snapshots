@@ -248,6 +248,7 @@ class CreateAppConfigurationImpl {
         workerConfiguration.setTaskQueueURL(dto.getQueue().getQueueName());
         workerConfiguration.setUseFakeBackup(false);
         workerConfiguration.setUseFakeEC2(false);
+        workerConfiguration.setS3Bucket(sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName());
         return workerConfiguration;
     }
 

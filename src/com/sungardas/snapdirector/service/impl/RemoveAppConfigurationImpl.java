@@ -51,9 +51,6 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private UserRepository userRepository;
-
     @Autowired WorkerConfigurationRepository configurationRepository;
 
     @Value("${sungardas.worker.configuration}")
@@ -67,11 +64,6 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     private void init() {
         configuration = configurationRepository.findOne(configurationId);
         dynamoDB = new DynamoDB(db);
-    }
-
-    @Override
-    public String getConfigurationId() {
-        return configurationId;
     }
 
     @Override
@@ -89,7 +81,7 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     }
 
     private void dropS3Bucket() {
-        //s3.deleteBucket("");
+        s3.deleteBucket(configuration.getS3Bucket());
 
     }
 
