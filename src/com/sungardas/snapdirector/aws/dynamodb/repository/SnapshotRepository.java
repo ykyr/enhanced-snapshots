@@ -14,14 +14,8 @@ import java.util.List;
 @Repository
 public interface SnapshotRepository extends CrudRepository<SnapshotEntry, String>{
 
-//    void save(SnapshotEntry snapshotEntry);
-//
-//    SnapshotEntry getByVolumeIdAndSnapshotId(SnapshotEntry snapshotEntry);
+    List<SnapshotEntry> findByVolumeInstanceId(String volumeInstanceId);
 
-    List<SnapshotEntry> findByVolumeIdAndInstanceId(@Param("volumeId")String volumeId, @Param("instanceId")String instanceId);
-
-    List<SnapshotEntry> findByInstanceId(@Param("instanceId")String instanceId);
-
-
+    List<SnapshotEntry> findByInstanceId(String instanceId);
 
 }
