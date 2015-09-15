@@ -140,6 +140,17 @@ public class InitConfigurationDto {
         @JsonProperty("isValid")
         private boolean valid;
 
+        @JsonProperty("hasAdmin")
+        private boolean adminExist;
+
+        public boolean isAdminExist() {
+            return adminExist;
+        }
+
+        public void setAdminExist(boolean adminExist) {
+            this.adminExist = adminExist;
+        }
+
         public boolean isValid() {
             return valid;
         }

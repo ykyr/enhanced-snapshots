@@ -43,7 +43,9 @@ class CredentialsServiceDev implements CredentialsService {
         queue.setCreated(true);
 
         InitConfigurationDto.DB db = new InitConfigurationDto.DB();
-        db.setValid(false);
+        db.setValid(true);
+        db.setAdminExist(false);
+
 
         config.setS3(names);
         config.setSdfs(sdfs);

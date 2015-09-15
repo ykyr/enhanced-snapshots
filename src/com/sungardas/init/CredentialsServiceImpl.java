@@ -6,6 +6,10 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
@@ -15,6 +19,7 @@ import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sun.management.UnixOperatingSystemMXBean;
+import com.sungardas.snapdirector.aws.dynamodb.model.User;
 import com.sungardas.snapdirector.dto.InitConfigurationDto;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.exception.DataAccessException;
@@ -37,6 +42,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+
+import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
 @Service
 class CredentialsServiceImpl implements CredentialsService {
@@ -153,6 +160,7 @@ class CredentialsServiceImpl implements CredentialsService {
         initConfigurationDto = new InitConfigurationDto();
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
         initConfigurationDto.getDb().setValid(requiredTablesExist());
+        initConfigurationDto.getDb().setAdminExist(adminExist());
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
 
@@ -201,6 +209,21 @@ class CredentialsServiceImpl implements CredentialsService {
             throw new DataAccessException(e);
         }
     }
+
+    private boolean adminExist() {
+        AmazonDynamoDBClient client = new AmazonDynamoDBClient(credentials);
+        client.setRegion(Regions.getCurrentRegion());
+        DynamoDBMapper mapper = new DynamoDBMapper(client);
+        DynamoDBScanExpression expression = new DynamoDBScanExpression()
+                .withFilterConditionEntry("role",
+                        new Condition().withComparisonOperator(EQ.toString()).withAttributeValueList(new AttributeValue("admin")))
+                .withFilterConditionEntry("instanceId",
+                        new Condition().withComparisonOperator(EQ.toString()).withAttributeValueList(new AttributeValue(instanceId)));
+        List<User> users = mapper.scan(User.class, expression);
+
+        return !users.isEmpty();
+    }
+
 
     private boolean queueAlreadyExists(String queueName) {
         AmazonSQSClient amazonSQSClient = new AmazonSQSClient(credentials);

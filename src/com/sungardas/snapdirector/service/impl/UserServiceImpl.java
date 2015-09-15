@@ -120,6 +120,7 @@ public class UserServiceImpl implements UserService {
                 }
                 // convert user email to lowercase
                 updatedUser.setEmail(updatedUser.getEmail().toLowerCase());
+                updatedUser.setInstanceId(instanceId);
                 userRepository.save(updatedUser);
             } else {
                 OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can update users.");
