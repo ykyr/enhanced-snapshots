@@ -31,9 +31,7 @@ public class SnapshotServiceImpl implements SnapshotService {
     @Override
     public String getSnapshotId(String volumeId, String instancreId) {
         List<SnapshotEntry> entries;
-        entries = snapshotRepository.findByVolumeIdAndInstanceId(volumeId, instancreId);
-//        SnapshotEntry entry =  snapshotRepository.getByVolumeIdAndSnapshotId(
-//               new SnapshotEntry(volumeId, instancreId));
+        entries = snapshotRepository.findByVolumeInstanceId(volumeId+":"+instancreId);
         if(entries!=null && entries.size()>0) {
             return entries.get(0).getSnapshotId();
         } else return null;

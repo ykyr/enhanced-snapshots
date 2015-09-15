@@ -9,26 +9,28 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 public class SnapshotEntry {
 
     @DynamoDBAttribute
+    private String instanceId;
+
+    @DynamoDBAttribute
     private String snapshotId;
 
     @DynamoDBHashKey
-    private String volumeId;
+    private String volumeInstanceId;
 
-    @DynamoDBAttribute
-    private String instanceId;
-
-    public SnapshotEntry() {
-        this(null, null,null);
+    public String getInstanceId() {
+        return instanceId;
     }
 
-    public SnapshotEntry(String snapshotId, String volumeId) {
-        this(snapshotId, volumeId, null);
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
     }
+
+    public SnapshotEntry() {}
 
     public SnapshotEntry(String snapshotId, String volumeId, String instanceId) {
-        this.snapshotId = snapshotId;
-        this.volumeId = volumeId;
-        this.instanceId = instanceId;
+        setSnapshotId(snapshotId);
+        setVolumeInstanceId(volumeId, instanceId);
+
     }
 
     public String getSnapshotId() {
@@ -40,19 +42,11 @@ public class SnapshotEntry {
     }
 
 
-    public String getVolumeId() {
-        return volumeId;
+    public String getVolumeInstanceId() {
+        return volumeInstanceId;
     }
 
-    public void setVolumeId(String volumeId) {
-        this.volumeId = volumeId;
-    }
-
-    public String getInstanceId() {
-        return instanceId;
-    }
-
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
+    public void setVolumeInstanceId(String volumeId, String instanceId) {
+        this.volumeInstanceId = volumeId + ":" +instanceId;
     }
 }

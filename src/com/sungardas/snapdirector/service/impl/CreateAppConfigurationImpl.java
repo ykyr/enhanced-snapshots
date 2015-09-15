@@ -132,7 +132,7 @@ class CreateAppConfigurationImpl {
         createTable("Configurations", 10L, 10L, "configurationId", "S");
         createTable("Retention", 50L, 20L, "volumeId", "S");
         createTable("Tasks", 50L, 20L, "id", "S");
-        createTable("Snapshots", 50L, 20L, "volumeId", "S", "instanceId", "S");
+        createTable("Snapshots", 50L, 20L, "volumeInstanceId", "S");
         createTable("Users", 50L, 20L, "id", "S");
         System.out.println(">> after createDbStructure");
     }
@@ -203,6 +203,7 @@ class CreateAppConfigurationImpl {
             User userToCreate = UserDtoConverter.convert(userDto);
             userToCreate.setPassword(DigestUtils.sha512Hex(password));
             userToCreate.setInstanceId(EC2MetadataUtils.getInstanceId());
+            userToCreate.setRole("admin");
             DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
             mapper.save(userToCreate);
         }
