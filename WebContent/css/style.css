@@ -1075,8 +1075,12 @@ div.tr.state-removed {
 }
 
 .snap .panel-default .panel-heading {
-    background-color: #cc2130;
+    background: url("../img/logo-sungard.svg") no-repeat;
+    background-position: 15px center;
+    background-color: #666666;
+    background-size: 24px 24px;
     color: white;
+    padding-left: 45px;
 }
 
 .snap .panel-title {
