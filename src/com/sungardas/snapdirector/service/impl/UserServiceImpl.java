@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
                     LOG.debug("Admin user can not be removed in case it's last admin in system.", e);
                     throw e;
                 } else {
-                    userRepository.delete(userEmail);
+                    userRepository.delete(userRepository.findByEmailAndInstanceId(userEmail, instanceId));
                 }
             } else {
                 OperationNotAllowedException e = new OperationNotAllowedException("Only users with admin role can remove users.");
