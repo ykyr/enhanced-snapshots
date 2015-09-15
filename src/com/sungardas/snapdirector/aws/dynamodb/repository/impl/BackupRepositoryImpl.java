@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
-import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.NOT_NULL;
 
 @Repository
 public class BackupRepositoryImpl implements BackupRepository {
