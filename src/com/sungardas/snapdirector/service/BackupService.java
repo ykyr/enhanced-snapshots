@@ -16,4 +16,6 @@ public interface BackupService {
     void deleteBackup(Collection<BackupEntry> backupEntries, String user);
 
     void deleteAllBackups();
+
+    boolean isTableEmpty();
 }

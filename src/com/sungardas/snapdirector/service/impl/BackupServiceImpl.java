@@ -87,6 +87,11 @@ public class BackupServiceImpl implements BackupService {
         }
     }
 
+    @Override
+    public boolean isTableEmpty() {
+        return backupRepository.count()==0;
+    }
+
     private String getVolumeId(String backupName) {
         return backupName.substring(0, 12);
     }

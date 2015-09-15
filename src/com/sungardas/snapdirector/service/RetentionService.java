@@ -10,4 +10,6 @@ public interface RetentionService {
     void apply();
 
     void deleteAllRetentions();
+
+    boolean isTableEmpty();
 }

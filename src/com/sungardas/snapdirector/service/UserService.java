@@ -18,5 +18,7 @@ public interface UserService {
 
     void deleteAllUsers();
 
+    boolean isTableEmpty();
+
     boolean isAdmin(String userEmail);
 }

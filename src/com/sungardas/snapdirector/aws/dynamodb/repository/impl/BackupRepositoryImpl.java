@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
+import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.NOT_NULL;
 
 @Repository
 public class BackupRepositoryImpl implements BackupRepository {
@@ -96,6 +97,13 @@ public class BackupRepositoryImpl implements BackupRepository {
     public List<BackupEntry> findAll(String instanceId) {
         return mapper.scan(BackupEntry.class, new DynamoDBScanExpression().withFilterConditionEntry("instanceId", new Condition()
                 .withComparisonOperator(EQ).withAttributeValueList(new AttributeValue().withS(instanceId))));
+    }
+
+    @Override
+    public int count() {
+        return mapper.count(BackupEntry.class, new DynamoDBScanExpression()
+                .withFilterConditionEntry("instanceId", new Condition().withComparisonOperator(NOT_NULL)));
+
     }
 
 }

@@ -108,5 +108,10 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.delete(taskList);
     }
 
+    @Override
+    public boolean isTableEmpty() {
+        return taskRepository.count()==0;
+    }
+
 
 }

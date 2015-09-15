@@ -18,4 +18,6 @@ public interface TaskService {
     void updateTask(TaskDto taskInfo);
 
     void deleteAllTasks();
+
+    boolean isTableEmpty();
 }

@@ -8,4 +8,5 @@ public interface SnapshotService {
 
     void deleteAllSnapshots();
 
+    boolean isTableEmpty();
 }

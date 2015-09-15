@@ -1,5 +1,11 @@
 package com.sungardas.snapdirector.service.impl;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.*;
@@ -14,8 +20,21 @@ import javax.annotation.PostConstruct;
 
 @Service
 public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
+    @Value("${snapdirector.db.tables}")
+    private String[] tables;
+
     @Autowired
     private AmazonSQS sqs;
+
+    @Autowired
+    private AmazonDynamoDB db;
+    private DynamoDB dynamoDB;
+
+    @Autowired
+    private AmazonS3 s3;
+
+    @Autowired
+    private AmazonEC2 ec2;
 
     @Autowired
     private SnapshotService snapshotService;
@@ -40,10 +59,14 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
 
+    @Autowired
+    private AmazonDynamoDB amazonDynamoDB;
+
     WorkerConfiguration configuration;
     @PostConstruct
     private void init() {
         configuration = configurationRepository.findOne(configurationId);
+        dynamoDB = new DynamoDB(db);
     }
 
     @Override
@@ -66,15 +89,12 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     }
 
     private void dropS3Bucket() {
-
-    }
-
-    private void stopSDFS(){
+        //s3.deleteBucket("");
 
     }
 
     private void terminateInstance(){
-
+        ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(configurationId));
     }
 
     private void dropQueue() {
@@ -90,7 +110,24 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
         backupService.deleteAllBackups();
         snapshotService.deleteAllSnapshots();
 
-        //TODO: remove tables in case they are empty
+        boolean dropTables = userService.isTableEmpty()&&taskService.isTableEmpty()&&retentionService.isTableEmpty()&&
+                backupService.isTableEmpty()&&snapshotService.isTableEmpty();
 
+        if(dropTables) {
+            for(String tableToDrop: tables) {
+                dropTable(tableToDrop);
+            }
+        }
+
+    }
+
+    private void dropTable(String tableName) {
+       Table tableToDelete =  dynamoDB.getTable(tableName);
+        tableToDelete.delete();
+        try {
+            tableToDelete.waitForDelete();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

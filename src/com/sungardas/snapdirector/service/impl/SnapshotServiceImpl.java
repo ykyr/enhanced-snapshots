@@ -48,4 +48,8 @@ public class SnapshotServiceImpl implements SnapshotService {
         List<SnapshotEntry> snapshotList = snapshotRepository.findByInstanceId(instanceId);
         snapshotRepository.delete(snapshotList);
     }
+    @Override
+    public boolean isTableEmpty() {
+        return snapshotRepository.count()==0;
+    }
 }
