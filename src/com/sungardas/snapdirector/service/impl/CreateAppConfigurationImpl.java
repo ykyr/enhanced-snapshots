@@ -202,6 +202,7 @@ class CreateAppConfigurationImpl {
         if (userDto != null && password != null) {
             User userToCreate = UserDtoConverter.convert(userDto);
             userToCreate.setPassword(DigestUtils.sha512Hex(password));
+            userToCreate.setInstanceId(EC2MetadataUtils.getInstanceId());
             DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
             mapper.save(userToCreate);
         }
@@ -260,6 +261,8 @@ class CreateAppConfigurationImpl {
                     Table table = dynamoDB.getTable(tableToDelete);
                     table.delete();
                     table.waitForDelete();
+                } catch (ResourceNotFoundException e) {
+                    // Skip exception if resource not found
                 } catch (AmazonServiceException tableNotFoundOrCredError) {
                     throw new ConfigurationException("Can't delete tables. check AWS credentials");
                 } catch (InterruptedException e) {

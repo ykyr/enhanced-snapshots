@@ -8,10 +8,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 @DynamoDBTable(tableName = "Snapshots")
 public class SnapshotEntry {
 
+    @DynamoDBAttribute
     private String snapshotId;
 
+    @DynamoDBHashKey
     private String volumeId;
 
+    @DynamoDBAttribute
     private String instanceId;
 
     public SnapshotEntry() {
@@ -28,7 +31,6 @@ public class SnapshotEntry {
         this.instanceId = instanceId;
     }
 
-    @DynamoDBAttribute(attributeName = "snapshotId")
     public String getSnapshotId() {
         return snapshotId;
     }
@@ -37,7 +39,7 @@ public class SnapshotEntry {
         this.snapshotId = snapshotId;
     }
 
-    @DynamoDBHashKey(attributeName = "volumeId")
+
     public String getVolumeId() {
         return volumeId;
     }
@@ -46,7 +48,6 @@ public class SnapshotEntry {
         this.volumeId = volumeId;
     }
 
-    @DynamoDBRangeKey(attributeName = "instanceId")
     public String getInstanceId() {
         return instanceId;
     }
