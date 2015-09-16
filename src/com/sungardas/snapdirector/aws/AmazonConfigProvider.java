@@ -2,6 +2,7 @@ package com.sungardas.snapdirector.aws;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -49,6 +50,7 @@ public class AmazonConfigProvider {
     public AWSCredentials amazonAWSCredentials() {
         String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
         String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
+        new ProfileCredentialsProvider();
         return new BasicAWSCredentials(accessKey, secretKey);
     }
 
@@ -113,7 +115,7 @@ public class AmazonConfigProvider {
 
     private AmazonS3 amazonS3() {
         AmazonS3 amazonS3 = new AmazonS3Client(amazonAWSCredentials());
-        if(!Regions.fromName(region).equals(Regions.US_EAST_1)) {
+        if(!(Regions.fromName(region).equals(Regions.US_EAST_1) || Regions.fromName(region).equals(Regions.AP_SOUTHEAST_2))) {
             amazonS3.setRegion(Region.getRegion(Regions.fromName(region)));
         }
         return amazonS3;
