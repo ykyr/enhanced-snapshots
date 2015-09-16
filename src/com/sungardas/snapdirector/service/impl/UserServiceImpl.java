@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
 
     @PostConstruct
     private void init() {
-        instanceId = configurationService.getConfiguration().getConfigurationId();
+        instanceId = configurationService.getWorkerConfiguration().getConfigurationId();
     }
 
     @Override

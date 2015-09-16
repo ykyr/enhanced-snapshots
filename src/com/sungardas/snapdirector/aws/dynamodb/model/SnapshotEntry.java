@@ -2,7 +2,6 @@ package com.sungardas.snapdirector.aws.dynamodb.model;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
 @DynamoDBTable(tableName = "Snapshots")
@@ -14,8 +13,18 @@ public class SnapshotEntry {
     @DynamoDBAttribute
     private String snapshotId;
 
-    @DynamoDBHashKey
-    private String volumeInstanceId;
+    @DynamoDBAttribute
+    private String volumeId;
+
+
+    public SnapshotEntry() {
+    }
+
+    public SnapshotEntry(String instanceId, String snapshotId, String volumeId) {
+        this.instanceId = instanceId;
+        this.snapshotId = snapshotId;
+        this.volumeId = volumeId;
+    }
 
     public String getInstanceId() {
         return instanceId;
@@ -23,14 +32,6 @@ public class SnapshotEntry {
 
     public void setInstanceId(String instanceId) {
         this.instanceId = instanceId;
-    }
-
-    public SnapshotEntry() {}
-
-    public SnapshotEntry(String snapshotId, String volumeId, String instanceId) {
-        setSnapshotId(snapshotId);
-        setVolumeInstanceId(volumeId, instanceId);
-
     }
 
     public String getSnapshotId() {
@@ -41,12 +42,20 @@ public class SnapshotEntry {
         this.snapshotId = snapshotId;
     }
 
-
-    public String getVolumeInstanceId() {
-        return volumeInstanceId;
+    public String getVolumeId() {
+        return volumeId;
     }
 
-    public void setVolumeInstanceId(String volumeId, String instanceId) {
-        this.volumeInstanceId = volumeId + ":" +instanceId;
+    public void setVolumeId(String volumeId) {
+        this.volumeId = volumeId;
+    }
+
+    @DynamoDBHashKey
+    public String getVolumeInstanceId() {
+        return volumeId + ":" + instanceId;
+    }
+
+    public void setVolumeInstanceId(String instanceId) {
+        //skip
     }
 }

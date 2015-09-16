@@ -1,12 +1,10 @@
 package com.sungardas.snapdirector.service.impl;
 
-import com.amazonaws.AmazonClientException;
 import com.sungardas.snapdirector.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.SnapshotRepository;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.SnapshotService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -25,14 +23,14 @@ public class SnapshotServiceImpl implements SnapshotService {
 
     @PostConstruct
     private void init() {
-        instanceId = configurationService.getConfiguration().getConfigurationId();
+        instanceId = configurationService.getWorkerConfiguration().getConfigurationId();
     }
 
     @Override
     public String getSnapshotId(String volumeId, String instancreId) {
         List<SnapshotEntry> entries;
-        entries = snapshotRepository.findByVolumeInstanceId(volumeId+":"+instancreId);
-        if(entries!=null && entries.size()>0) {
+        entries = snapshotRepository.findByVolumeInstanceId(volumeId + ":" + instancreId);
+        if (entries != null && entries.size() > 0) {
             return entries.get(0).getSnapshotId();
         } else return null;
 
@@ -40,7 +38,7 @@ public class SnapshotServiceImpl implements SnapshotService {
 
     @Override
     public void saveSnapshot(String volumeId, String instanceId, String snapshotId) {
-            snapshotRepository.save(new SnapshotEntry(volumeId, instanceId, snapshotId));
+        snapshotRepository.save(new SnapshotEntry(instanceId, snapshotId, volumeId));
     }
 
     @Override
@@ -48,8 +46,9 @@ public class SnapshotServiceImpl implements SnapshotService {
         List<SnapshotEntry> snapshotList = snapshotRepository.findByInstanceId(instanceId);
         snapshotRepository.delete(snapshotList);
     }
+
     @Override
     public boolean isTableEmpty() {
-        return snapshotRepository.count()==0;
+        return snapshotRepository.count() == 0;
     }
 }

@@ -56,23 +56,16 @@ class InitController implements ApplicationContextAware {
         }
     }
 
-    @ExceptionHandler(SnapdirectorException.class)
+    @ExceptionHandler(value = {SnapdirectorException.class, ConfigurationException.class})
     @ResponseBody
     @ResponseStatus(INTERNAL_SERVER_ERROR)
-    private Exception internalServerError(SnapdirectorException exception) {
+    private Exception internalServerError(Exception exception) {
         LOG.error(exception);
         return exception;
     }
 
-    @ExceptionHandler(AmazonClientException.class)
-    @ResponseBody
-    @ResponseStatus(INTERNAL_SERVER_ERROR)
-    private Exception amazonException(AmazonClientException exception) {
-        LOG.error(exception);
-        return new SnapdirectorException("Invalid credentials", exception);
-    }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(value = {Exception.class, AmazonClientException.class})
     @ResponseBody
     @ResponseStatus(INTERNAL_SERVER_ERROR)
     private Exception amazonException(Exception exception) {

@@ -53,7 +53,7 @@ public class RetentionServiceImpl implements RetentionService {
 
     @PostConstruct
     private void init() {
-        instanceId = configurationService.getConfiguration().getConfigurationId();
+        instanceId = configurationService.getWorkerConfiguration().getConfigurationId();
         schedulerService.addTask(getJob(this), cronExpression);
         try {
             apply();
