@@ -14,7 +14,7 @@ cd '..';
 sudo mvn clean install;
 
 ################### deploying snapdirector app to the tomcatserver #####################
-sudo /etc/init.d/tomcat8 stop
+sudo service tomcat8 stop
 sudo rm -rf /opt/tomcat-latest/webapps/*
 sudo cp target/snapdirector-*.war /opt/tomcat-latest/webapps/ROOT.war
-sudo /etc/init.d/tomcat8 start
+sudo service tomcat8 start

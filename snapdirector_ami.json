@@ -4,7 +4,7 @@
       "aws_secret_key": ""
     },
 
-    "builders": [{
+    "builders": [ {
       "name": "snapdirAmazonLinux",
       "type": "amazon-ebs",
       "access_key": "{{user `aws_access_key`}}",
@@ -14,7 +14,11 @@
       "instance_type": "t2.micro",
       "ssh_username": "ec2-user",
       "ssh_pty": true,
-      "ami_name": "Snapdirector_AmazonLinuxAMI_{{timestamp}}"
+      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Snapdirector-{{timestamp}}",
+      "tags": {
+        "Name": "Snapdirector",
+        "Description": "Backup, recovery, disaster recovery, snapshot, schedule"
+      }
     }
 	],
 
@@ -49,12 +53,19 @@
       "type": "shell",
       "inline": [
         "echo 'Starting deploynment process...'",
-        "echo ' ***Clonning repo...*** '",
-        "git clone https://github.com/SungardAS/snapdirector.git",
-        "cd snapdirector/",
-        "sudo chmod +x autobuild.sh",
-        "echo ' ***Building and deploying snapdirector app...*** '",
-        "./autobuild.sh"
+        "sudo wget http://com.sungardas.releases.s3.amazonaws.com/travis-builds/snapdirector_latest.war -O snapdirector.war",
+        "sudo service tomcat8 stop",
+        "sudo rm -rf /opt/tomcat-latest/webapps/*",
+        "sudo cp snapdirector.war /opt/tomcat-latest/webapps/ROOT.war",
+        "sudo service tomcat8 start",
+        "sudo pip uninstall -y ansible",
+        "sudo yum-config-manager --disable epel",
+        "sudo yum -y remove epel-release",
+        "sudo yum -y remove python-boto",
+        "rm -rf snapdirector.war",
+        "sudo rm -rf /tmp/packer-provisioner-ansible-local",
+        "sudo find / -name authorized_keys | sudo xargs rm -rf",
+        "history -c"
             	]
         	}
 	]
