@@ -159,8 +159,11 @@ class CredentialsServiceImpl implements CredentialsService {
     public InitConfigurationDto getInitConfigurationDto() {
         initConfigurationDto = new InitConfigurationDto();
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
-        initConfigurationDto.getDb().setValid(requiredTablesExist());
-        initConfigurationDto.getDb().setAdminExist(adminExist());
+        boolean isDbValid = requiredTablesExist();
+        initConfigurationDto.getDb().setValid(isDbValid);
+        if(isDbValid) {
+            initConfigurationDto.getDb().setAdminExist(adminExist());
+        }
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
 
