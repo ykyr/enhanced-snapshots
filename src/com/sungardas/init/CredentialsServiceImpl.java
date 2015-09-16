@@ -109,6 +109,14 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     @Override
+    public void removeCredentials() {
+        File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
+        if (file.exists()) {
+            file.delete();
+        }
+    }
+
+    @Override
     public boolean areCredentialsValid() {
         AmazonEC2Client ec2Client = new AmazonEC2Client(credentials);
         try {
@@ -157,7 +165,7 @@ class CredentialsServiceImpl implements CredentialsService {
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
         boolean isDbValid = requiredTablesExist();
         initConfigurationDto.getDb().setValid(isDbValid);
-        if(isDbValid) {
+        if (isDbValid) {
             initConfigurationDto.getDb().setAdminExist(adminExist());
         }
 
@@ -258,7 +266,7 @@ class CredentialsServiceImpl implements CredentialsService {
         try {
             AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(accessKey, secretKey));
             ec2Client.describeRegions();
-        } catch (AmazonClientException e){
+        } catch (AmazonClientException e) {
             throw new ConfigurationException("Invalid AWS credentials", e);
         }
     }

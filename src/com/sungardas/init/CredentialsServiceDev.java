@@ -19,6 +19,11 @@ class CredentialsServiceDev implements CredentialsService {
     }
 
     @Override
+    public void removeCredentials() {
+
+    }
+
+    @Override
     public boolean areCredentialsValid() {
         return true;
     }

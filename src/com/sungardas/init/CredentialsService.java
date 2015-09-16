@@ -9,6 +9,8 @@ interface CredentialsService {
 
     void storeCredentials();
 
+    void removeCredentials();
+
     boolean areCredentialsValid();
 
     InitConfigurationDto getInitConfigurationDto();

@@ -118,7 +118,12 @@ class InitController implements ApplicationContextAware {
             sharedDataService.setInitConfigurationDto(initConfigurationDto);
             credentialsService.storeCredentials();
 
-            refreshContext();
+            try {
+                refreshContext();
+            } catch (Exception e) {
+                credentialsService.removeCredentials();
+                throw e;
+            }
             return new ResponseEntity<>("", HttpStatus.OK);
         } else {
             throw new ConfigurationException("AWS credentials invalid");
