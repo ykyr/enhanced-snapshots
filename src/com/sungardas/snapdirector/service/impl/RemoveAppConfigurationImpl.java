@@ -75,9 +75,9 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
             throw new OperationNotAllowedException("Provided instance ID is incorrect");
         }
 
-//        dropS3Bucket();
-//        dropQueue();
-//        dropDbData();
+        dropS3Bucket();
+        dropQueue();
+        dropDbData();
     }
 
     private void dropS3Bucket() {
