@@ -115,9 +115,6 @@ public class AmazonConfigProvider {
 
     private AmazonS3 amazonS3() {
         AmazonS3 amazonS3 = new AmazonS3Client(amazonAWSCredentials());
-        if(!(Regions.fromName(region).equals(Regions.US_EAST_1) || Regions.fromName(region).equals(Regions.AP_SOUTHEAST_2))) {
-            amazonS3.setRegion(Region.getRegion(Regions.fromName(region)));
-        }
         return amazonS3;
     }
 }
