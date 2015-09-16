@@ -38,11 +38,11 @@ public class SystemController {
 
 
     @RequestMapping(method = RequestMethod.DELETE)
-    public ResponseEntity<String> deleteService(@RequestBody String instanceID) {
+    public ResponseEntity<String> deleteService(@RequestBody InstanceID instanceID) {
         String session = servletRequest.getSession().getId();
         String currentUser = ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
         try {
-            removeAppConfiguration.dropConfiguration(currentUser, instanceID);
+            removeAppConfiguration.dropConfiguration(currentUser, instanceID.instanceID);
             return new ResponseEntity<>("", HttpStatus.OK);
         } catch (OperationNotAllowedException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -72,6 +72,19 @@ public class SystemController {
 
         public void setLastBackup(Long lastBackup) {
             this.lastBackup = lastBackup;
+        }
+    }
+
+    private static class InstanceID {
+
+        private String instanceID;
+
+        public String getInstanceID() {
+            return instanceID;
+        }
+
+        public void setInstanceID(String instanceID) {
+            this.instanceID = instanceID;
         }
     }
 }
