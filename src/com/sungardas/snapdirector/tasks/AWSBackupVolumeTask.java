@@ -120,7 +120,6 @@ public class AWSBackupVolumeTask implements BackupTask {
                 LOG.fatal(e);
                 File brocken = new File(configuration.getSdfsMountPoint() + backupFileName);
                 if (brocken.exists()) {
-
                     if (brocken.delete()) {
                         LOG.info("Broken backup {} was deleted", brocken.getName());
                     } else {
@@ -128,54 +127,41 @@ public class AWSBackupVolumeTask implements BackupTask {
                     }
                 }
             }
-            if (backupStatus) {
-                long backupSize = storageService.getSize(configuration.getSdfsMountPoint() + backupFileName);
-                long backupCreationTime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint() + backupFileName);
-                LOG.info("Backup creation time: " + backupCreationTime);
-                LOG.info("Backup size: " + backupSize);
-            }
-
-            if (backupStatus) {
-                long backupSize = storageService.getSize(configuration
-                        .getSdfsMountPoint() + backupFileName);
-                long backupCreationtime = storageService
-                        .getBackupCreationTime(configuration
-                                .getSdfsMountPoint() + backupFileName);
-                LOG.info("Backup creation time: " + backupCreationtime);
-                LOG.info("Backup size: " + backupSize);
-
-                LOG.info("Put backup entry to the Backup List: "
-                        + backup.toString());
-                backup.setState(BackupState.COMPLETED.getState());
-                backup.setSize(String.valueOf(backupSize));
-                backupRepository.save(backup);
-            }
-
-            LOG.info("Detaching volume" + tempVolume.getVolumeId());
+            LOG.info("Detaching volume: {}", tempVolume.getVolumeId());
             awsCommunication.detachVolume(tempVolume);
-            LOG.info("Deleting temporary volume" + tempVolume.getVolumeId());
+            LOG.info("Deleting temporary volume: {}", tempVolume.getVolumeId());
             awsCommunication.deleteVolume(tempVolume);
 
             if (backupStatus) {
+                long backupSize = storageService.getSize(configuration.getSdfsMountPoint() + backupFileName);
+                long backupCreationtime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint() + backupFileName);
+                LOG.info("Backup creation time: {}", backupCreationtime);
+                LOG.info("Backup size: {}",  backupSize);
+
+                LOG.info("Put backup entry to the Backup List: {}", backup.toString());
+                backup.setState(BackupState.COMPLETED.getState());
+                backup.setSize(String.valueOf(backupSize));
+                backupRepository.save(backup);
+
                 LOG.info(format("Backup process for volume %s finished successfully ", volumeId));
                 LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
                 LOG.info("Cleaning up previously created snapshots");
+                LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationId);
+                snapshotService.saveSnapshot(volumeId, snapshotId, configurationId);
 
                 String previousSnapshot = snapshotService.getSnapshotId(volumeId, configurationId);
                 if (previousSnapshot != null) {
-                    LOG.info("Storeing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationId);
-                    snapshotService.saveSnapshot(volumeId, snapshotId, configurationId);
                     LOG.info("Deleting previous snapshot {}", previousSnapshot);
                     awsCommunication.deleteSnapshot(previousSnapshot);
                 }
                 taskRepository.delete(taskEntry);
                 LOG.info("Task completed.");
+                retentionService.apply();
             } else {
                 LOG.warn(format("Backup process for volume %s failed ", volumeId));
                 taskEntry.setStatus(ERROR.toString());
                 taskRepository.save(taskEntry);
             }
-            retentionService.apply();
         } catch (AmazonClientException e) {
             LOG.error(format("Backup process for volume %s failed ", volumeId));
             LOG.error(e);
