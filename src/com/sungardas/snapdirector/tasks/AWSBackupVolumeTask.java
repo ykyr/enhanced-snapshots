@@ -147,7 +147,7 @@ public class AWSBackupVolumeTask implements BackupTask {
                 LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
                 LOG.info("Cleaning up previously created snapshots");
                 LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationId);
-                snapshotService.saveSnapshot(volumeId, snapshotId, configurationId);
+                snapshotService.saveSnapshot(volumeId, configurationId, snapshotId);
 
                 String previousSnapshot = snapshotService.getSnapshotId(volumeId, configurationId);
                 if (previousSnapshot != null) {
