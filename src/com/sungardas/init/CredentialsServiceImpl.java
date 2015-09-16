@@ -191,7 +191,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private void freeMemCheck() {
         UnixOperatingSystemMXBean osBean = (UnixOperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         long total = osBean.getTotalPhysicalMemorySize();
-        long required = (long)(3.5 * BYTES_IN_GB);
+        long required = (long) (3.5 * BYTES_IN_GB);
         if (total < required) {
             LOG.error("Total memory {}. Required memory {}", total, required);
             throw new SnapdirectorException("Not enough memory to create SDFS volume");
@@ -255,6 +255,12 @@ class CredentialsServiceImpl implements CredentialsService {
         }
         if (secretKey == null || secretKey.isEmpty()) {
             throw new ConfigurationException("Null or empty AWS SecretKey");
+        }
+        try {
+            AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(accessKey, secretKey));
+            ec2Client.describeRegions();
+        } catch (AmazonClientException e){
+            throw new ConfigurationException("Invalid AWS credentials", e);
         }
     }
 
