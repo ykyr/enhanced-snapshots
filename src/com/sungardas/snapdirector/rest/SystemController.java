@@ -50,19 +50,27 @@ public class SystemController {
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<SystemBackupDto> getSystem() {
-        return new ResponseEntity<>(new SystemBackupDto(sdfsStateService.getBackupTime()), HttpStatus.OK);
+    public ResponseEntity<SystemConfiguration> getSystem() {
+        return new ResponseEntity<>(configurationService.getSystemConfiguration(), HttpStatus.OK);
     }
 
 
     @RequestMapping(value = "/backup", method = RequestMethod.GET)
-    public ResponseEntity<SystemConfiguration> getConfiguration() {
-        return new ResponseEntity<>(configurationService.getSystemConfiguration(), HttpStatus.OK);
+    public ResponseEntity<SystemBackupDto> getConfiguration() {
+        return new ResponseEntity<>(new SystemBackupDto(sdfsStateService.getBackupTime()), HttpStatus.OK);
     }
 
     private static class SystemBackupDto {
         private Long lastBackup;
+
         public SystemBackupDto(Long lastBackup) {
+            this.lastBackup = lastBackup;
+        }
+        public Long getLastBackup() {
+            return lastBackup;
+        }
+
+        public void setLastBackup(Long lastBackup) {
             this.lastBackup = lastBackup;
         }
     }
