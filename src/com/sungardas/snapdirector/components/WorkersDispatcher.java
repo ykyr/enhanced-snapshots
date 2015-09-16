@@ -75,7 +75,7 @@ public class WorkersDispatcher {
 
     @PostConstruct
     private void init() {
-        configuration = configurationService.getConfiguration();
+        configuration = configurationService.getWorkerConfiguration();
         executor = Executors.newSingleThreadExecutor();
         executor.execute(new TaskWorker());
     }

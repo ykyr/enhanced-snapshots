@@ -36,7 +36,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void createTask(TaskDto taskDto) {
         TaskEntry newTask = TaskDtoConverter.convert(taskDto);
-        String configurationId = configuration.getConfiguration().getConfigurationId();
+        String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
         newTask.setWorker(configurationId);
         newTask.setInstanceId(configurationId);
         newTask.setStatus(TaskEntry.TaskEntryStatus.WAITING.getStatus());
@@ -56,7 +56,7 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getAllTasks() {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
-                    configuration.getConfiguration().getConfigurationId()));
+                    configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
@@ -67,7 +67,7 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getAllRegularTasks(String volumeId) {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.TRUE.toString(),
-                    volumeId, configuration.getConfiguration().getConfigurationId()));
+                    volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
@@ -104,7 +104,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void deleteAllTasks() {
-        List<TaskEntry> taskList = taskRepository.findByInstanceId(configuration.getConfiguration().getConfigurationId());
+        List<TaskEntry> taskList = taskRepository.findByInstanceId(configuration.getWorkerConfiguration().getConfigurationId());
         taskRepository.delete(taskList);
     }
 

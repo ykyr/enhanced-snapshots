@@ -5,10 +5,8 @@ import com.sungardas.snapdirector.exception.DataAccessException;
 import com.sungardas.snapdirector.exception.DataException;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.service.BackupService;
-import com.sungardas.snapdirector.service.impl.SDFSStateServiceImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +33,7 @@ public class BackupController {
     @Autowired
     private BackupService backupService;
 
-    @Autowired
-    private SDFSStateServiceImpl sdfsStateService;
+
 
 
     @ExceptionHandler(DataException.class)
@@ -78,29 +75,10 @@ public class BackupController {
         }
     }
 
-    @RequestMapping(value = "/system", method = RequestMethod.GET)
-    public ResponseEntity<SystemBackupDto> getSystem() {
-        return new ResponseEntity<>(new SystemBackupDto(sdfsStateService.getBackupTime()), HttpStatus.OK);
-    }
-
     private String getCurrentUserEmail() {
         String session = servletRequest.getSession().getId();
         return ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
     }
 
-    private class SystemBackupDto {
-        private Long lastBackup;
 
-        public SystemBackupDto(Long lastBackup) {
-            this.lastBackup = lastBackup;
-        }
-
-        public Long getLastBackup() {
-            return lastBackup;
-        }
-
-        public void setLastBackup(Long lastBackup) {
-            this.lastBackup = lastBackup;
-        }
-    }
 }
