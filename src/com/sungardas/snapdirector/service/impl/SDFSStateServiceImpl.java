@@ -2,8 +2,6 @@ package com.sungardas.snapdirector.service.impl;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
@@ -24,7 +22,6 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -157,9 +154,10 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public Long getBackupTime() {
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(s3Bucket).withPrefix("KEY_NAME");
-        if(amazonS3.listObjects(request).getObjectSummaries().size()>0) {
-            return amazonS3.listObjects(request).getObjectSummaries().get(0).getLastModified().getTime();
+                .withBucketName(s3Bucket).withPrefix(KEY_NAME);
+        List<S3ObjectSummary> list = amazonS3.listObjects(request).getObjectSummaries();
+        if (list.size() > 0) {
+            return list.get(0).getLastModified().getTime();
         } else {
             return null;
         }
