@@ -135,21 +135,17 @@ class CredentialsServiceImpl implements CredentialsService {
         List<Bucket> allBuckets = client.listBuckets();
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
         String bucketName = "com.sungardas.snapdirector." + instanceId;
-        boolean bucketForThisInstanceExist = false;
+        result.add(new InitConfigurationDto.S3(bucketName, false));
         for (Bucket bucket : allBuckets) {
             ListObjectsRequest request = new ListObjectsRequest()
                     .withBucketName(bucket.getName()).withPrefix("sdfsstate");
             if (client.listObjects(request).getObjectSummaries().size() > 0) {
                 if (bucketName.equals(bucket.getName())) {
-                    result.add(new InitConfigurationDto.S3(bucketName, true));
-                    bucketForThisInstanceExist = true;
+                    result.get(0).setCreated(true);
                 } else {
                     result.add(new InitConfigurationDto.S3(bucket.getName(), true));
                 }
             }
-        }
-        if (!bucketForThisInstanceExist) {
-            result.add(new InitConfigurationDto.S3(bucketName, false));
         }
         return result;
 
