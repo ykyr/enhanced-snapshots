@@ -11,10 +11,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
+@EnableScan
 public interface SnapshotRepository extends CrudRepository<SnapshotEntry, String>{
-
-    List<SnapshotEntry> findByVolumeInstanceId(String volumeInstanceId);
 
     List<SnapshotEntry> findByInstanceId(String instanceId);
 

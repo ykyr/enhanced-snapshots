@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.*;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.util.Iterator;
 
 @Service
 public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
@@ -81,8 +83,28 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     }
 
     private void dropS3Bucket() {
-        s3.deleteBucket(configuration.getS3Bucket());
+        String bucketName = configuration.getS3Bucket();
+        ObjectListing objectListing = s3.listObjects(bucketName);
 
+        while (true) {
+            for ( Iterator<?> iterator = objectListing.getObjectSummaries().iterator(); iterator.hasNext(); ) {
+                S3ObjectSummary objectSummary = (S3ObjectSummary) iterator.next();
+                s3.deleteObject(bucketName, objectSummary.getKey());
+            }
+
+            if (objectListing.isTruncated()) {
+                objectListing = s3.listNextBatchOfObjects(objectListing);
+            } else {
+                break;
+            }
+        };
+        VersionListing list = s3.listVersions(new ListVersionsRequest().withBucketName(bucketName));
+        for ( Iterator<?> iterator = list.getVersionSummaries().iterator(); iterator.hasNext(); ) {
+            S3VersionSummary s = (S3VersionSummary)iterator.next();
+            s3.deleteVersion(bucketName, s.getKey(), s.getVersionId());
+        }
+
+        s3.deleteBucket(configuration.getS3Bucket());
     }
 
     private void terminateInstance(){
