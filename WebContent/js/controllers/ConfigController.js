@@ -70,7 +70,6 @@ angular.module('web')
                 getCurrentConfig();
 
             }, function (data, status) {
-                $scope.error = data;
             });
         };
 
