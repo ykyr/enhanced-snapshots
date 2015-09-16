@@ -32,30 +32,30 @@ import static java.lang.String.format;
 @Scope("prototype")
 @Profile("prod")
 public class AWSBackupVolumeTask implements BackupTask {
-	private static final Logger LOG = LogManager
-			.getLogger(AWSBackupVolumeTask.class);
+    private static final Logger LOG = LogManager
+            .getLogger(AWSBackupVolumeTask.class);
 
-	@Value("${sungardas.worker.configuration}")
-	private String configurationId;
-
-	@Autowired
-	private TaskRepository taskRepository;
+    @Value("${sungardas.worker.configuration}")
+    private String configurationId;
 
     @Autowired
-	private AmazonEC2 ec2client;
+    private TaskRepository taskRepository;
 
     @Autowired
-	private StorageService storageService;
+    private AmazonEC2 ec2client;
 
     @Autowired
-	private BackupRepository backupRepository;
+    private StorageService storageService;
+
+    @Autowired
+    private BackupRepository backupRepository;
 
 
-	@Autowired
-	private SnapshotService snapshotService;
+    @Autowired
+    private SnapshotService snapshotService;
 
-	@Autowired
-	private AWSCommunicationService awsCommunication;
+    @Autowired
+    private AWSCommunicationService awsCommunication;
     private TaskEntry taskEntry;
 
     @Autowired
@@ -161,11 +161,13 @@ public class AWSBackupVolumeTask implements BackupTask {
                 LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
                 LOG.info("Cleaning up previously created snapshots");
 
-				String previousSnapshot = snapshotService.getSnapshotId(volumeId,configurationId);
-				LOG.info("Storeing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationId);
-				snapshotService.saveSnapshot(volumeId, snapshotId, configurationId);
-				LOG.info("Deleting previous snapshot {}", previousSnapshot);
-				awsCommunication.deleteSnapshot(previousSnapshot);
+                String previousSnapshot = snapshotService.getSnapshotId(volumeId, configurationId);
+                if (previousSnapshot != null) {
+                    LOG.info("Storeing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationId);
+                    snapshotService.saveSnapshot(volumeId, snapshotId, configurationId);
+                    LOG.info("Deleting previous snapshot {}", previousSnapshot);
+                    awsCommunication.deleteSnapshot(previousSnapshot);
+                }
                 taskRepository.delete(taskEntry);
                 LOG.info("Task completed.");
             } else {
@@ -176,7 +178,7 @@ public class AWSBackupVolumeTask implements BackupTask {
             retentionService.apply();
         } catch (AmazonClientException e) {
             LOG.error(format("Backup process for volume %s failed ", volumeId));
-			LOG.error(e);
+            LOG.error(e);
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
         }
@@ -198,11 +200,11 @@ public class AWSBackupVolumeTask implements BackupTask {
 
         }
 
-		Snapshot snapshot = awsCommunication
-				.waitForCompleteState(awsCommunication
-						.createSnapshot(volumeSrc));
-		LOG.info("\nSnapshotEntry created. Check snapshot data:\n"
-				+ snapshot.toString());
+        Snapshot snapshot = awsCommunication
+                .waitForCompleteState(awsCommunication
+                        .createSnapshot(volumeSrc));
+        LOG.info("\nSnapshotEntry created. Check snapshot data:\n"
+                + snapshot.toString());
 
         // create volume
         String instanceAvailabilityZone = instance.getPlacement()
