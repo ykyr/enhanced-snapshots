@@ -159,8 +159,11 @@ class CredentialsServiceImpl implements CredentialsService {
     public InitConfigurationDto getInitConfigurationDto() {
         initConfigurationDto = new InitConfigurationDto();
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
-        initConfigurationDto.getDb().setValid(requiredTablesExist());
-        initConfigurationDto.getDb().setAdminExist(adminExist());
+        boolean isDbValid = requiredTablesExist();
+        initConfigurationDto.getDb().setValid(isDbValid);
+        if(isDbValid) {
+            initConfigurationDto.getDb().setAdminExist(adminExist());
+        }
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
 
@@ -251,10 +254,10 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private void validateCredentials(String accessKey, String secretKey) {
         if (accessKey == null || accessKey.isEmpty()) {
-            throw new ConfigurationException("Null or empty AWS AccessKey");
+            throw new ConfigurationException("Empty AWS AccessKey");
         }
         if (secretKey == null || secretKey.isEmpty()) {
-            throw new ConfigurationException("Null or empty AWS SecretKey");
+            throw new ConfigurationException("Empty AWS SecretKey");
         }
         try {
             AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(accessKey, secretKey));

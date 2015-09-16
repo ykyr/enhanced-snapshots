@@ -4,14 +4,11 @@ package com.sungardas.snapdirector.dto;
 public class SystemConfiguration {
 
     private S3 s3;
+    private SDFS sdfs;
+    private Queue queue;
+    private Long lastBackup;
 
-    public Queue getQueue() {
-        return queue;
-    }
 
-    public void setQueue(Queue queue) {
-        this.queue = queue;
-    }
 
     public SDFS getSdfs() {
         return sdfs;
@@ -29,9 +26,6 @@ public class SystemConfiguration {
         this.s3 = s3;
     }
 
-    private SDFS sdfs;
-    private Queue queue;
-
 
     public Long getLastBackup() {
         return lastBackup;
@@ -41,21 +35,22 @@ public class SystemConfiguration {
         this.lastBackup = lastBackup;
     }
 
-    private Long lastBackup;
+    public Queue getQueue() {
+        return queue;
+    }
 
-
-
+    public void setQueue(Queue queue) {
+        this.queue = queue;
+    }
 
 
     public static class S3 {
+        public String getBucketName() {
+            return bucketName;
+        }
+
         private String bucketName;
 
-
-//
-//        public String getBucketName() {
-//            return bucketName;
-//        }
-//
         public void setBucketName(String bucketName) {
             this.bucketName = bucketName;
         }
