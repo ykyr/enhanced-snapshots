@@ -41,7 +41,7 @@ public class StorageServiceImpl implements StorageService {
 
 	@PostConstruct
 	public void init() {
-		WorkerConfiguration configuration = configurationService.getConfiguration();
+		WorkerConfiguration configuration = configurationService.getWorkerConfiguration();
 		this.mountPoint = configuration.getSdfsMountPoint();
 	}
 

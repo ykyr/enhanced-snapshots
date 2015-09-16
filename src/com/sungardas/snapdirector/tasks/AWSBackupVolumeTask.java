@@ -73,7 +73,7 @@ public class AWSBackupVolumeTask implements BackupTask {
     public void execute() {
         String volumeId = taskEntry.getVolume();
         try {
-            configuration = configurationService.getConfiguration();
+            configuration = configurationService.getWorkerConfiguration();
 
             LOG.info(format(
                     "AWSBackupVolumeTask: Starting backup process for volume %s",

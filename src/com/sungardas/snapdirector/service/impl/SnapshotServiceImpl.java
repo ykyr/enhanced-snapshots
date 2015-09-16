@@ -25,7 +25,7 @@ public class SnapshotServiceImpl implements SnapshotService {
 
     @PostConstruct
     private void init() {
-        instanceId = configurationService.getConfiguration().getConfigurationId();
+        instanceId = configurationService.getWorkerConfiguration().getConfigurationId();
     }
 
     @Override

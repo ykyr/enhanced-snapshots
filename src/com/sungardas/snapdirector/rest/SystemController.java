@@ -1,8 +1,11 @@
 package com.sungardas.snapdirector.rest;
 
+import com.sungardas.snapdirector.dto.SystemConfiguration;
 import com.sungardas.snapdirector.exception.OperationNotAllowedException;
 import com.sungardas.snapdirector.rest.utils.Constants;
+import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.RemoveAppConfiguration;
+import com.sungardas.snapdirector.service.impl.SDFSStateServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +20,8 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/delete")
-public class DeleteServiceController {
+@RequestMapping("/system")
+public class SystemController {
 
     @Autowired
     private RemoveAppConfiguration removeAppConfiguration;
@@ -26,6 +29,13 @@ public class DeleteServiceController {
     private HttpServletRequest servletRequest;
     @Autowired
     private ServletContext context;
+
+    @Autowired
+    private SDFSStateServiceImpl sdfsStateService;
+
+    @Autowired
+    ConfigurationService configurationService;
+
 
     @RequestMapping(method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteService(@RequestBody String instanceID) {
@@ -39,7 +49,21 @@ public class DeleteServiceController {
         }
     }
 
+    @RequestMapping(method = RequestMethod.GET)
+    public ResponseEntity<SystemBackupDto> getSystem() {
+        return new ResponseEntity<>(new SystemBackupDto(sdfsStateService.getBackupTime()), HttpStatus.OK);
+    }
 
+
+    @RequestMapping(value = "/backup", method = RequestMethod.GET)
+    public ResponseEntity<SystemConfiguration> getConfiguration() {
+        return new ResponseEntity<>(configurationService.getSystemConfiguration(), HttpStatus.OK);
+    }
+
+    private static class SystemBackupDto {
+        private Long lastBackup;
+        public SystemBackupDto(Long lastBackup) {
+            this.lastBackup = lastBackup;
+        }
+    }
 }
-
-

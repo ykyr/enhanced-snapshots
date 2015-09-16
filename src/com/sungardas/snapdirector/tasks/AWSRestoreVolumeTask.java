@@ -66,7 +66,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     public void execute() {
         LOG.info("Executing restore task:\n" + taskEntry.toString());
         String sourceFile = taskEntry.getOptions();
-        configuration = configurationService.getConfiguration();
+        configuration = configurationService.getWorkerConfiguration();
         changeTaskStatusToRunning();
         try {
             if (sourceFile == null || sourceFile.isEmpty()) {

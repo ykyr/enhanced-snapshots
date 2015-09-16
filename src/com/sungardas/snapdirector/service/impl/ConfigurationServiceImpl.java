@@ -1,10 +1,9 @@
 package com.sungardas.snapdirector.service.impl;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.Scanner;
 
+import com.amazonaws.util.EC2MetadataUtils;
+import com.sungardas.snapdirector.dto.SystemConfiguration;
+import com.sungardas.snapdirector.service.SDFSStateService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,20 +20,47 @@ public class ConfigurationServiceImpl implements ConfigurationService{
 
 	@Value("${sungardas.worker.configuration}")
 	private String fakeConfigurationId;
+
+	@Value("${amazon.s3.bucket}")
+	private String s3BucketName;
+
+	@Value("${snapdirector.sdfs.default.size}")
+	private String defaultVolumeSize;
 	
 	@Autowired
 	WorkerConfigurationRepository configurationRepository;
 	
 	WorkerConfiguration currectConfiguration;
+
+	@Autowired
+	SDFSStateService sdfsStateService;
 	
 	@Override
-	public WorkerConfiguration getConfiguration() {
+	public WorkerConfiguration getWorkerConfiguration() {
 		if(currectConfiguration == null){
 			currectConfiguration = configurationRepository.findOne(getConfigurationId());
 		}
 		return currectConfiguration;
 	}
-	
+
+	@Override
+	public SystemConfiguration getSystemConfiguration() {
+		SystemConfiguration configuration = new SystemConfiguration();
+		configuration.setQueue(new SystemConfiguration.Queue());
+		configuration.getQueue().setQueueName(currectConfiguration.getTaskQueueURL());
+
+		configuration.setS3(new SystemConfiguration.S3());
+		configuration.getS3().setBucketName(s3BucketName);
+
+		configuration.setSdfs(new SystemConfiguration.SDFS());
+		configuration.getSdfs().setMountPoint(currectConfiguration.getSdfsMountPoint());
+		configuration.getSdfs().setVolumeName(currectConfiguration.getSdfsVolumeName());
+		configuration.getSdfs().setVolumeSize(defaultVolumeSize);
+
+		configuration.setLastBackup(sdfsStateService.getBackupTime());
+		return configuration;
+	}
+
 	@Override
 	public void reload() {
 		currectConfiguration = null;
@@ -43,21 +69,10 @@ public class ConfigurationServiceImpl implements ConfigurationService{
 	
 
 	private String getConfigurationId() {
-		String instanceId = null;
 		try {
-			URL url = new URL("http://169.254.169.254/latest/meta-data/instance-id");
-			URLConnection conn = url.openConnection();
-			Scanner s = new Scanner(conn.getInputStream());
-			if (s.hasNext()) {
-				instanceId = s.next();
-				LOG.info("Getting Worker InstanceId from metadata: " + instanceId);
-			}
-			s.close();
-		} catch (IOException e) {
-			instanceId = fakeConfigurationId;
+			return EC2MetadataUtils.getInstanceId();
+		} catch (Exception e) {
+			return fakeConfigurationId;
 		}
-		return instanceId;
-	
-	
 	}
 }
