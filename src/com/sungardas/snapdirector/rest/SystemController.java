@@ -1,11 +1,9 @@
 package com.sungardas.snapdirector.rest;
 
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.snapdirector.dto.SystemConfiguration;
-import com.sungardas.snapdirector.exception.OperationNotAllowedException;
+import com.sungardas.snapdirector.rest.filters.FilterProxy;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.service.ConfigurationService;
-import com.sungardas.snapdirector.service.RemoveAppConfiguration;
 import com.sungardas.snapdirector.service.UserService;
 import com.sungardas.snapdirector.service.impl.SDFSStateServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -24,11 +23,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/system")
 public class SystemController {
+    @Autowired
+    private FilterProxy filterProxy;
 
     @Autowired
-    private RemoveAppConfiguration removeAppConfiguration;
-    @Autowired
     private HttpServletRequest servletRequest;
+
     @Autowired
     private ServletContext context;
 
@@ -36,10 +36,13 @@ public class SystemController {
     private SDFSStateServiceImpl sdfsStateService;
 
     @Autowired
-    ConfigurationService configurationService;
+    private ConfigurationService configurationService;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private XmlWebApplicationContext applicationContext;
 
 
     @RequestMapping(method = RequestMethod.DELETE)
@@ -49,10 +52,10 @@ public class SystemController {
         if (!userService.isAdmin(currentUser)) {
             return new ResponseEntity<>("Only admin can delete service", HttpStatus.FORBIDDEN);
         }
-        if (!instanceID.instanceID.equals(EC2MetadataUtils.getInstanceId())) {
+        if (!instanceID.instanceID.equals(configurationService.getWorkerConfiguration().getConfigurationId())) {
             return new ResponseEntity<>("Provided instance ID is incorrect", HttpStatus.FORBIDDEN);
         }
-        removeAppConfiguration.dropConfiguration();
+        refreshContext();
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 
@@ -73,6 +76,7 @@ public class SystemController {
         public SystemBackupDto(Long lastBackup) {
             this.lastBackup = lastBackup;
         }
+
         public Long getLastBackup() {
             return lastBackup;
         }
@@ -93,5 +97,16 @@ public class SystemController {
         public void setInstanceID(String instanceID) {
             this.instanceID = instanceID;
         }
+    }
+
+    private void refreshContext() {
+        filterProxy.setFilter(null);
+        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
+        new Thread() {
+            @Override
+            public void run() {
+                applicationContext.refresh();
+            }
+        }.start();
     }
 }

@@ -19,8 +19,8 @@ import javax.annotation.PostConstruct;
 import java.util.Iterator;
 import java.util.List;
 
-@Service
-public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
+public class RemoveAppConfiguration {
+
     @Value("${snapdirector.db.tables}")
     private String[] tables;
 
@@ -29,7 +29,6 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
 
     @Autowired
     private AmazonDynamoDB db;
-    private DynamoDB dynamoDB;
 
     @Autowired
     private AmazonS3 s3;
@@ -55,24 +54,26 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     @Autowired
     private SnapshotRepository snapshotRepository;
 
-    @Autowired 
+    @Autowired
     private WorkerConfigurationRepository configurationRepository;
 
-    WorkerConfiguration configuration;
+    private DynamoDB dynamoDB;
+
+    private WorkerConfiguration configuration;
 
     @PostConstruct
     private void init() {
         configuration = configurationRepository.findOne(configurationId);
         dynamoDB = new DynamoDB(db);
+        dropConfiguration();
     }
 
-    @Override
-    public void dropConfiguration() {
+    private void dropConfiguration() {
         dropS3Bucket();
         dropQueue();
         dropDbData();
 
-        //terminateInstance();
+        terminateInstance();
     }
 
     private void dropS3Bucket() {
