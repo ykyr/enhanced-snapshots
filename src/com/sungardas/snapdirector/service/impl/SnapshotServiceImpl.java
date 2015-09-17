@@ -4,6 +4,8 @@ import com.sungardas.snapdirector.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.SnapshotRepository;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.SnapshotService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 @Service
 public class SnapshotServiceImpl implements SnapshotService {
+    private static final Logger LOG = LogManager.getLogger(SnapshotServiceImpl.class);
 
     @Autowired
     private SnapshotRepository snapshotRepository;
@@ -28,6 +31,7 @@ public class SnapshotServiceImpl implements SnapshotService {
 
     @Override
     public String getSnapshotId(String volumeId, String instancreId) {
+        LOG.info("Get snapshot id for volume {} and configuration {}", volumeId, instancreId);
         try {
             return snapshotRepository.findOne(volumeId + ":" + instancreId).getSnapshotId();
         } catch (Exception e){

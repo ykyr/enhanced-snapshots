@@ -53,6 +53,9 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ConfigurationService configurationService;
+
     @Autowired WorkerConfigurationRepository configurationRepository;
 
     @Value("${sungardas.worker.configuration}")
@@ -123,9 +126,11 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
         retentionService.deleteAllRetentions();
         backupService.deleteAllBackups();
         snapshotService.deleteAllSnapshots();
+        configurationService.deleteConfiguration();
+
 
         boolean dropTables = userService.isTableEmpty()&&taskService.isTableEmpty()&&retentionService.isTableEmpty()&&
-                backupService.isTableEmpty()&&snapshotService.isTableEmpty();
+                backupService.isTableEmpty()&&snapshotService.isTableEmpty() && configurationService.isTableEmpty();
 
         if(dropTables) {
             for(String tableToDrop: tables) {
