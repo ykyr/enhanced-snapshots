@@ -54,7 +54,7 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     private UserService userService;
 
     @Autowired
-    WorkerConfigurationRepository configurationRepository;
+    ConfigurationService configurationService;
 
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
