@@ -16,8 +16,4 @@ public interface TaskService {
     boolean isCanceled(String id);
 
     void updateTask(TaskDto taskInfo);
-
-    void deleteAllTasks();
-
-    boolean isTableEmpty();
 }

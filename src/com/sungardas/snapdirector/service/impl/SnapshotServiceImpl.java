@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.List;
 
 @Service
 public class SnapshotServiceImpl implements SnapshotService {
@@ -42,16 +41,5 @@ public class SnapshotServiceImpl implements SnapshotService {
     @Override
     public void saveSnapshot(String volumeId, String instanceId, String snapshotId) {
         snapshotRepository.save(new SnapshotEntry(instanceId, snapshotId, volumeId));
-    }
-
-    @Override
-    public void deleteAllSnapshots() {
-        List<SnapshotEntry> snapshotList = snapshotRepository.findByInstanceId(instanceId);
-        snapshotRepository.delete(snapshotList);
-    }
-
-    @Override
-    public boolean isTableEmpty() {
-        return snapshotRepository.count() == 0;
     }
 }

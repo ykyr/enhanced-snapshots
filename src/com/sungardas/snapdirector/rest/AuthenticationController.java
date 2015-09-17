@@ -29,6 +29,7 @@ public class AuthenticationController {
 
     @Autowired
     private ServletContext context;
+
     @Autowired
     private HttpServletRequest servletRequest;
 

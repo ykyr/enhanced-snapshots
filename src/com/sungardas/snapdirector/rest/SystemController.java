@@ -1,10 +1,10 @@
 package com.sungardas.snapdirector.rest;
 
 import com.sungardas.snapdirector.dto.SystemConfiguration;
-import com.sungardas.snapdirector.exception.OperationNotAllowedException;
+import com.sungardas.snapdirector.rest.filters.FilterProxy;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.service.ConfigurationService;
-import com.sungardas.snapdirector.service.RemoveAppConfiguration;
+import com.sungardas.snapdirector.service.UserService;
 import com.sungardas.snapdirector.service.SDFSStateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -22,11 +23,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/system")
 public class SystemController {
+    @Autowired
+    private FilterProxy filterProxy;
 
     @Autowired
-    private RemoveAppConfiguration removeAppConfiguration;
-    @Autowired
     private HttpServletRequest servletRequest;
+
     @Autowired
     private ServletContext context;
 
@@ -34,19 +36,27 @@ public class SystemController {
     private SDFSStateService sdfsStateService;
 
     @Autowired
-    ConfigurationService configurationService;
+    private ConfigurationService configurationService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private XmlWebApplicationContext applicationContext;
 
 
     @RequestMapping(method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteService(@RequestBody InstanceId instanceId) {
         String session = servletRequest.getSession().getId();
         String currentUser = ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
-        try {
-            removeAppConfiguration.dropConfiguration(currentUser, instanceId.instanceId);
-            return new ResponseEntity<>("", HttpStatus.OK);
-        } catch (OperationNotAllowedException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+        if (!userService.isAdmin(currentUser)) {
+            return new ResponseEntity<>("Only admin can delete service", HttpStatus.FORBIDDEN);
         }
+        if (!instanceId.equals(configurationService.getWorkerConfiguration().getConfigurationId())) {
+            return new ResponseEntity<>("Provided instance ID is incorrect", HttpStatus.FORBIDDEN);
+        }
+        refreshContext();
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -66,6 +76,7 @@ public class SystemController {
         public SystemBackupDto(Long lastBackup) {
             this.lastBackup = lastBackup;
         }
+
         public Long getLastBackup() {
             return lastBackup;
         }
@@ -86,5 +97,16 @@ public class SystemController {
         public void setInstanceId(String instanceId) {
             this.instanceId = instanceId;
         }
+    }
+
+    private void refreshContext() {
+        filterProxy.setFilter(null);
+        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
+        new Thread() {
+            @Override
+            public void run() {
+                applicationContext.refresh();
+            }
+        }.start();
     }
 }
