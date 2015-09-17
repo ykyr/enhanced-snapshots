@@ -58,9 +58,6 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     @Autowired 
     private WorkerConfigurationRepository configurationRepository;
 
-    @Autowired
-    private AmazonDynamoDB amazonDynamoDB;
-
     WorkerConfiguration configuration;
 
     @PostConstruct
@@ -74,6 +71,8 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
         dropS3Bucket();
         dropQueue();
         dropDbData();
+
+        //terminateInstance();
     }
 
     private void dropS3Bucket() {
