@@ -74,6 +74,7 @@ class CreateAppConfigurationImpl {
                 dropDbTables();
                 createDbAndStoreData();
             } else {
+                storeAdminUserIfProvided();
                 if (!isConfigurationStored()) {
                     storeWorkerConfiguration();
                 }

@@ -52,6 +52,9 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.getSdfs().setVolumeName(currectConfiguration.getSdfsVolumeName());
         configuration.getSdfs().setVolumeSize(defaultVolumeSize);
 
+        configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
+        configuration.getEc2Instance().setInstanceID(instanceId);
+
         configuration.setLastBackup(sdfsStateService.getBackupTime());
         return configuration;
     }
