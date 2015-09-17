@@ -52,8 +52,7 @@
                                     <ul class="dropdown-menu" role="menu"
                                         aria-labelledby="simple-btn-keyboard-nav">
                                         <li role="menuitem" ng-repeat="bucket in settings.s3">
-                                            <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}
-                                                <span class="pull-right label label-success" ng-hide="bucket.isCreated">new</span>
+                                            <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}&nbsp; &nbsp; <span class="label label-success" ng-hide="bucket.isCreated">new</span>
                                             </a>
                                         </li>
                                     </ul>
