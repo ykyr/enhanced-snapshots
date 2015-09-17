@@ -136,7 +136,7 @@ public class AWSBackupVolumeTask implements BackupTask {
                 long backupSize = storageService.getSize(configuration.getSdfsMountPoint() + backupFileName);
                 long backupCreationtime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint() + backupFileName);
                 LOG.info("Backup creation time: {}", backupCreationtime);
-                LOG.info("Backup size: {}",  backupSize);
+                LOG.info("Backup size: {}", backupSize);
 
                 LOG.info("Put backup entry to the Backup List: {}", backup.toString());
                 backup.setState(BackupState.COMPLETED.getState());

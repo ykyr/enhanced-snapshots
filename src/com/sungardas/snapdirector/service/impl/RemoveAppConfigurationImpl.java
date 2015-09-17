@@ -9,8 +9,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.util.EC2MetadataUtils;
-import com.sungardas.snapdirector.aws.dynamodb.model.*;
-import com.sungardas.snapdirector.aws.dynamodb.repository.*;
+import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
 import com.sungardas.snapdirector.exception.OperationNotAllowedException;
 import com.sungardas.snapdirector.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,17 +54,19 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     private UserService userService;
 
     @Autowired
-    private ConfigurationService configurationService;
-
-    @Autowired WorkerConfigurationRepository configurationRepository;
+    WorkerConfigurationRepository configurationRepository;
 
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
+
+    @Autowired 
+    private WorkerConfigurationRepository configurationRepository;
 
     @Autowired
     private AmazonDynamoDB amazonDynamoDB;
 
     WorkerConfiguration configuration;
+
     @PostConstruct
     private void init() {
         configuration = configurationRepository.findOne(configurationId);
@@ -90,7 +92,7 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
         ObjectListing objectListing = s3.listObjects(bucketName);
 
         while (true) {
-            for ( Iterator<?> iterator = objectListing.getObjectSummaries().iterator(); iterator.hasNext(); ) {
+            for (Iterator<?> iterator = objectListing.getObjectSummaries().iterator(); iterator.hasNext(); ) {
                 S3ObjectSummary objectSummary = (S3ObjectSummary) iterator.next();
                 s3.deleteObject(bucketName, objectSummary.getKey());
             }
@@ -100,22 +102,23 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
             } else {
                 break;
             }
-        };
+        }
+        ;
         VersionListing list = s3.listVersions(new ListVersionsRequest().withBucketName(bucketName));
-        for ( Iterator<?> iterator = list.getVersionSummaries().iterator(); iterator.hasNext(); ) {
-            S3VersionSummary s = (S3VersionSummary)iterator.next();
+        for (Iterator<?> iterator = list.getVersionSummaries().iterator(); iterator.hasNext(); ) {
+            S3VersionSummary s = (S3VersionSummary) iterator.next();
             s3.deleteVersion(bucketName, s.getKey(), s.getVersionId());
         }
 
         s3.deleteBucket(configuration.getS3Bucket());
     }
 
-    private void terminateInstance(){
+    private void terminateInstance() {
         ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(configurationId));
     }
 
     private void dropQueue() {
-        String queueURL= configuration.getTaskQueueURL();
+        String queueURL = configuration.getTaskQueueURL();
         sqs.deleteQueue(queueURL);
         sqs.shutdown();
     }
@@ -132,8 +135,8 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
         boolean dropTables = userService.isTableEmpty()&&taskService.isTableEmpty()&&retentionService.isTableEmpty()&&
                 backupService.isTableEmpty()&&snapshotService.isTableEmpty() && configurationService.isTableEmpty();
 
-        if(dropTables) {
-            for(String tableToDrop: tables) {
+        if (dropTables) {
+            for (String tableToDrop : tables) {
                 dropTable(tableToDrop);
             }
         }
@@ -141,7 +144,7 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     }
 
     private void dropTable(String tableName) {
-       Table tableToDelete =  dynamoDB.getTable(tableName);
+        Table tableToDelete = dynamoDB.getTable(tableName);
         tableToDelete.delete();
         try {
             tableToDelete.waitForDelete();
