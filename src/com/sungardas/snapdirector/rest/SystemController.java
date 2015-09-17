@@ -52,7 +52,7 @@ public class SystemController {
         if (!instanceID.instanceID.equals(EC2MetadataUtils.getInstanceId())) {
             return new ResponseEntity<>("Provided instance ID is incorrect", HttpStatus.FORBIDDEN);
         }
-        removeAppConfiguration.dropConfiguration(currentUser, instanceID.instanceID);
+        removeAppConfiguration.dropConfiguration();
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 
