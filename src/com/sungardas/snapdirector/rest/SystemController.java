@@ -5,7 +5,7 @@ import com.sungardas.snapdirector.exception.OperationNotAllowedException;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.RemoveAppConfiguration;
-import com.sungardas.snapdirector.service.impl.SDFSStateServiceImpl;
+import com.sungardas.snapdirector.service.SDFSStateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,18 +31,18 @@ public class SystemController {
     private ServletContext context;
 
     @Autowired
-    private SDFSStateServiceImpl sdfsStateService;
+    private SDFSStateService sdfsStateService;
 
     @Autowired
     ConfigurationService configurationService;
 
 
     @RequestMapping(method = RequestMethod.DELETE)
-    public ResponseEntity<String> deleteService(@RequestBody InstanceID instanceID) {
+    public ResponseEntity<String> deleteService(@RequestBody InstanceId instanceId) {
         String session = servletRequest.getSession().getId();
         String currentUser = ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
         try {
-            removeAppConfiguration.dropConfiguration(currentUser, instanceID.instanceID);
+            removeAppConfiguration.dropConfiguration(currentUser, instanceId.instanceId);
             return new ResponseEntity<>("", HttpStatus.OK);
         } catch (OperationNotAllowedException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -75,16 +75,16 @@ public class SystemController {
         }
     }
 
-    private static class InstanceID {
+    private static class InstanceId {
 
-        private String instanceID;
+        private String instanceId;
 
-        public String getInstanceID() {
-            return instanceID;
+        public String getInstanceId() {
+            return instanceId;
         }
 
-        public void setInstanceID(String instanceID) {
-            this.instanceID = instanceID;
+        public void setInstanceId(String instanceId) {
+            this.instanceId = instanceId;
         }
     }
 }
