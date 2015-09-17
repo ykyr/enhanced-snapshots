@@ -13,19 +13,10 @@ import java.util.List;
 
 public class TaskDtoConverter {
 
-	private static final Logger LOG = LogManager.getLogger(TaskDtoConverter.class);
-	private static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-
 	public static TaskDto convert(TaskEntry task) {
 		TaskDto taskDto = new TaskDto();
 		BeanUtils.copyProperties(task, taskDto);
-        //TODO remove parse logic after clean DB
-		try {
-			taskDto.setSchedulerTime(Long.valueOf(format.parse(task.getSchedulerTime()).getTime()).toString());
-		} catch (Exception e) {
-			LOG.error("Failed to parse scheduler time. This field will be empty in task dto object");
-            taskDto.setSchedulerTime(task.getSchedulerTime());
-		}
+		taskDto.setSchedulerTime(task.getSchedulerTime());
 		return taskDto;
 	}
 
