@@ -58,7 +58,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
 	@Override
 	public void deleteConfiguration() {
-		configurationRepository.delete(getConfigurationId());
+		configurationRepository.delete(instanceId);
 	}
 
 	@Override
