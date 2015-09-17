@@ -13,6 +13,12 @@ angular.module('web')
 
         $scope.backup = function () {
             var modalScope = $scope.$new(true);
+            $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.system-backup.html',
+                scope: modalScope,
+                controller: 'modalSystemBackupCtrl'
+            });
         };
 
         $scope.uninstall = function () {
