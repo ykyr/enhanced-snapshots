@@ -5,13 +5,10 @@ import com.sungardas.snapdirector.dto.SystemConfiguration;
 
 public interface ConfigurationService {
 
-	boolean isTableEmpty();
-
 	void reload();
 
 	WorkerConfiguration getWorkerConfiguration();
 
 	SystemConfiguration getSystemConfiguration();
 
-	void deleteConfiguration();
 }

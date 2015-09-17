@@ -14,8 +14,4 @@ public interface BackupService {
     List<BackupEntry> getBackupList(String volumeId);
 
     void deleteBackup(Collection<BackupEntry> backupEntries, String user);
-
-    void deleteAllBackups();
-
-    boolean isTableEmpty();
 }

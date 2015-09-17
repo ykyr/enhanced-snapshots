@@ -8,8 +8,4 @@ public interface RetentionService {
     RetentionDto getRetentionDto(String volumeId);
 
     void apply();
-
-    void deleteAllRetentions();
-
-    boolean isTableEmpty();
 }

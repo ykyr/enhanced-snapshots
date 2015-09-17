@@ -57,16 +57,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     }
 
 	@Override
-	public void deleteConfiguration() {
-		configurationRepository.delete(instanceId);
-	}
-
-	@Override
-	public boolean isTableEmpty() {
-		return configurationRepository.count() == 0;
-	}
-
-	@Override
 	public void reload() {
 		currectConfiguration = null;
 	}
