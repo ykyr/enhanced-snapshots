@@ -5,7 +5,7 @@ import com.sungardas.snapdirector.rest.filters.FilterProxy;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.UserService;
-import com.sungardas.snapdirector.service.impl.SDFSStateServiceImpl;
+import com.sungardas.snapdirector.service.SDFSStateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +33,7 @@ public class SystemController {
     private ServletContext context;
 
     @Autowired
-    private SDFSStateServiceImpl sdfsStateService;
+    private SDFSStateService sdfsStateService;
 
     @Autowired
     private ConfigurationService configurationService;
@@ -46,13 +46,13 @@ public class SystemController {
 
 
     @RequestMapping(method = RequestMethod.DELETE)
-    public ResponseEntity<String> deleteService(@RequestBody InstanceID instanceID) {
+    public ResponseEntity<String> deleteService(@RequestBody InstanceId instanceId) {
         String session = servletRequest.getSession().getId();
         String currentUser = ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
         if (!userService.isAdmin(currentUser)) {
             return new ResponseEntity<>("Only admin can delete service", HttpStatus.FORBIDDEN);
         }
-        if (!instanceID.instanceID.equals(configurationService.getWorkerConfiguration().getConfigurationId())) {
+        if (!instanceId.equals(configurationService.getWorkerConfiguration().getConfigurationId())) {
             return new ResponseEntity<>("Provided instance ID is incorrect", HttpStatus.FORBIDDEN);
         }
         refreshContext();
@@ -86,16 +86,16 @@ public class SystemController {
         }
     }
 
-    private static class InstanceID {
+    private static class InstanceId {
 
-        private String instanceID;
+        private String instanceId;
 
-        public String getInstanceID() {
-            return instanceID;
+        public String getInstanceId() {
+            return instanceId;
         }
 
-        public void setInstanceID(String instanceID) {
-            this.instanceID = instanceID;
+        public void setInstanceId(String instanceId) {
+            this.instanceId = instanceId;
         }
     }
 

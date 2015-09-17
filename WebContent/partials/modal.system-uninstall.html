@@ -1,15 +1,17 @@
 <div class="modal-header bg-danger">
-    <h3 class="modal-title"><span class="glyphicon glyphicon-cog"></span>&nbsp; System Backup</h3>
+    <h3 class="modal-title"><span class="glyphicon glyphicon-cog"></span>&nbsp; System Uninstall</h3>
 </div>
 
 <div class="modal-body">
 
     <div ng-show="state === 'ask'">
-        <h3>Would you like to backup a system now?</h3>
+        <h3>Would you like to terminate this instance and release all the resources?</h3>
+        <h3>Please enter your instance ID.</h3>
+        <input type="text" ng-model="instanceId"/>
     </div>
 
     <div ng-show="state === 'done'">
-        <h3>Your System Backup task created successfully!</h3>
+        <h3>Your System uninstalled successfully!</h3>
     </div>
 
     <div ng-show="state === 'failed'">
@@ -17,7 +19,7 @@
     </div>
 
     <div class="text-right">
-        <button class="btn btn-success" ng-show="state === 'ask'" ng-click="sendTask()">Add Task</button>
+        <button class="btn btn-success" ng-show="state === 'ask'" ng-click="delete()">Uninstall</button>
         <button class="btn btn-default" ng-hide="state === 'ask'" ng-click="$close()"><span
                 class="glyphicon glyphicon-ok"></span>&nbsp; Done
         </button>

@@ -78,7 +78,7 @@ angular.module('web')
                 bucketName: $scope.selectedBucket.bucketName
             };
 
-            if (!$scope.settings.db.isValid) {
+            if (!$scope.settings.db.hasAdmin) {
                 $scope.userToEdit = {
                     isNew: true,
                     admin: true

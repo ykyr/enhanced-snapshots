@@ -66,6 +66,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             templateUrl: "partials/tasks.html",
             controller: "TasksController"
         })
+        .state('app.settings', {
+            url: "/settings",
+            templateUrl: "partials/settings.html",
+            controller: "SettingsController"
+        })
         .state('app.users', {
             url: "/users",
             templateUrl: "partials/users.html",
@@ -106,22 +111,6 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 
         $rootScope.isConfigState = function () {
             return (Storage.get("currentUser") || {}).role === 'configurator';
-        };
-
-        $rootScope.systemBackup = function () {
-            System.get().then(function (data) {
-                var modalScope = $rootScope.$new(true);
-                modalScope.lastBackupTime = data.lastBackup || null;
-                $modal.open({
-                    animation: true,
-                    templateUrl: './partials/modal.system-backup.html',
-                    scope: modalScope,
-                    controller: 'modalSystemBackupCtrl'
-                });
-            }, function (e) {
-                console.log(e);
-                // something gone wrong
-            });
         };
 
         $rootScope.isLoading = false;

@@ -7,8 +7,16 @@ public class SystemConfiguration {
     private SDFS sdfs;
     private Queue queue;
     private Long lastBackup;
+    private EC2Instance ec2Instance;
 
 
+    public EC2Instance getEc2Instance() {
+        return ec2Instance;
+    }
+
+    public void setEc2Instance(EC2Instance ec2Instance) {
+        this.ec2Instance = ec2Instance;
+    }
 
     public SDFS getSdfs() {
         return sdfs;
@@ -97,4 +105,17 @@ public class SystemConfiguration {
             this.queueName = queueName;
         }
     }
+
+    public static class EC2Instance {
+        public String getInstanceID() {
+            return instanceID;
+        }
+
+        public void setInstanceID(String instanceID) {
+            this.instanceID = instanceID;
+        }
+
+        private String instanceID;
+    }
+
 }
