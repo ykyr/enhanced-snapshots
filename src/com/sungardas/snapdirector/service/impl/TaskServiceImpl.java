@@ -101,17 +101,4 @@ public class TaskServiceImpl implements TaskService {
         removeTask(taskInfo.getId());
         createTask(taskInfo);
     }
-
-    @Override
-    public void deleteAllTasks() {
-        List<TaskEntry> taskList = taskRepository.findByInstanceId(configuration.getWorkerConfiguration().getConfigurationId());
-        taskRepository.delete(taskList);
-    }
-
-    @Override
-    public boolean isTableEmpty() {
-        return taskRepository.count()==0;
-    }
-
-
 }

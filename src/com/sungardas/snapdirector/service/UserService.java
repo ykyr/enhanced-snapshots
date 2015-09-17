@@ -16,9 +16,5 @@ public interface UserService {
 
     UserDto getUser(String user, String password);
 
-    void deleteAllUsers();
-
-    boolean isTableEmpty();
-
     boolean isAdmin(String userEmail);
 }

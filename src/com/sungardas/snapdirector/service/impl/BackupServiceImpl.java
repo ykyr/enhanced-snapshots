@@ -79,19 +79,6 @@ public class BackupServiceImpl implements BackupService {
         taskRepository.save(tasks);
     }
 
-    @Override
-    public void deleteAllBackups() {
-        List<BackupEntry> backupList = backupRepository.findAll(instanceId);
-        for (BackupEntry entry : backupList) {
-            backupRepository.delete(entry);
-        }
-    }
-
-    @Override
-    public boolean isTableEmpty() {
-        return backupRepository.count()==0;
-    }
-
     private String getVolumeId(String backupName) {
         return backupName.substring(0, 12);
     }

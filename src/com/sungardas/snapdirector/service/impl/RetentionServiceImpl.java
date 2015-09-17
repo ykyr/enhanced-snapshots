@@ -127,17 +127,6 @@ public class RetentionServiceImpl implements RetentionService {
         LOG.debug("Finished");
     }
 
-    @Override
-    public void deleteAllRetentions() {
-        List<RetentionEntry> retentionList = retentionRepository.findByInstanceId(instanceId);
-        retentionRepository.delete(retentionList);
-    }
-
-    @Override
-    public boolean isTableEmpty() {
-        return retentionRepository.count()==0;
-    }
-
     private boolean isEmpty(RetentionEntry retentionEntry) {
         return retentionEntry.getCount() < 1 && retentionEntry.getDays() < 1 && retentionEntry.getSize() < 1;
     }
