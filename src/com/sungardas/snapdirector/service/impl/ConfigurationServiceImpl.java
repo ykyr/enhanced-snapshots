@@ -1,78 +1,63 @@
 package com.sungardas.snapdirector.service.impl;
 
 
-import com.amazonaws.util.EC2MetadataUtils;
+import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
 import com.sungardas.snapdirector.dto.SystemConfiguration;
+import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.SDFSStateService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
-import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
-import com.sungardas.snapdirector.service.ConfigurationService;
-
 @Service
-public class ConfigurationServiceImpl implements ConfigurationService{
-	private  final Logger LOG = LogManager.getLogger(ConfigurationServiceImpl.class);
+public class ConfigurationServiceImpl implements ConfigurationService {
 
-	@Value("${sungardas.worker.configuration}")
-	private String fakeConfigurationId;
+    @Value("${sungardas.worker.configuration}")
+    private String instanceId;
 
-	@Value("${amazon.s3.bucket}")
-	private String s3BucketName;
+    @Value("${amazon.s3.bucket}")
+    private String s3BucketName;
 
-	@Value("${snapdirector.sdfs.default.size}")
-	private String defaultVolumeSize;
-	
-	@Autowired
-	WorkerConfigurationRepository configurationRepository;
-	
-	WorkerConfiguration currectConfiguration;
+    @Value("${snapdirector.sdfs.default.size}")
+    private String defaultVolumeSize;
 
-	@Autowired
-	SDFSStateService sdfsStateService;
-	
-	@Override
-	public WorkerConfiguration getWorkerConfiguration() {
-		if(currectConfiguration == null){
-			currectConfiguration = configurationRepository.findOne(getConfigurationId());
-		}
-		return currectConfiguration;
-	}
+    @Autowired
+    WorkerConfigurationRepository configurationRepository;
 
-	@Override
-	public SystemConfiguration getSystemConfiguration() {
-		SystemConfiguration configuration = new SystemConfiguration();
-		configuration.setQueue(new SystemConfiguration.Queue());
-		configuration.getQueue().setQueueName(currectConfiguration.getTaskQueueURL());
+    WorkerConfiguration currectConfiguration;
 
-		configuration.setS3(new SystemConfiguration.S3());
-		configuration.getS3().setBucketName(s3BucketName);
+    @Autowired
+    SDFSStateService sdfsStateService;
 
-		configuration.setSdfs(new SystemConfiguration.SDFS());
-		configuration.getSdfs().setMountPoint(currectConfiguration.getSdfsMountPoint());
-		configuration.getSdfs().setVolumeName(currectConfiguration.getSdfsVolumeName());
-		configuration.getSdfs().setVolumeSize(defaultVolumeSize);
+    @Override
+    public WorkerConfiguration getWorkerConfiguration() {
+        if (currectConfiguration == null) {
+            currectConfiguration = configurationRepository.findOne(instanceId);
+        }
+        return currectConfiguration;
+    }
 
-		configuration.setLastBackup(sdfsStateService.getBackupTime());
-		return configuration;
-	}
+    @Override
+    public SystemConfiguration getSystemConfiguration() {
+        SystemConfiguration configuration = new SystemConfiguration();
+        configuration.setQueue(new SystemConfiguration.Queue());
+        configuration.getQueue().setQueueName(currectConfiguration.getTaskQueueURL());
 
-	@Override
-	public void reload() {
-		currectConfiguration = null;
-	}
-		
-	
+        configuration.setS3(new SystemConfiguration.S3());
+        configuration.getS3().setBucketName(s3BucketName);
 
-	private String getConfigurationId() {
-		try {
-			return EC2MetadataUtils.getInstanceId();
-		} catch (Exception e) {
-			return fakeConfigurationId;
-		}
-	}
+        configuration.setSdfs(new SystemConfiguration.SDFS());
+        configuration.getSdfs().setMountPoint(currectConfiguration.getSdfsMountPoint());
+        configuration.getSdfs().setVolumeName(currectConfiguration.getSdfsVolumeName());
+        configuration.getSdfs().setVolumeSize(defaultVolumeSize);
+
+        configuration.setLastBackup(sdfsStateService.getBackupTime());
+        return configuration;
+    }
+
+    @Override
+    public void reload() {
+        currectConfiguration = null;
+    }
 }

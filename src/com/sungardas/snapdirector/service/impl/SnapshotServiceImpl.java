@@ -29,8 +29,8 @@ public class SnapshotServiceImpl implements SnapshotService {
     @Override
     public String getSnapshotId(String volumeId, String instancreId) {
         try {
-            return snapshotRepository.findOne(volumeId + ":" + instancreId).getSnapshotId();
-        } catch (Exception e){
+            return snapshotRepository.findOne(SnapshotEntry.getId(volumeId, instancreId)).getSnapshotId();
+        } catch (Exception e) {
             return null;
         }
     }

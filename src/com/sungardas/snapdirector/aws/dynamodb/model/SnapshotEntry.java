@@ -7,6 +7,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 @DynamoDBTable(tableName = "Snapshots")
 public class SnapshotEntry {
 
+    private static final String DELIMITER = ":";
     @DynamoDBAttribute
     private String instanceId;
 
@@ -52,10 +53,16 @@ public class SnapshotEntry {
 
     @DynamoDBHashKey
     public String getVolumeInstanceId() {
-        return volumeId + ":" + instanceId;
+        return volumeId + DELIMITER + instanceId;
     }
 
-    public void setVolumeInstanceId(String instanceId) {
-        //skip
+    public void setVolumeInstanceId(String id) {
+        String[] ids = id.split(DELIMITER);
+        volumeId = ids[0];
+        instanceId = ids[1];
+    }
+
+    public static final String getId(String volumeId, String instanceId) {
+        return volumeId + DELIMITER + instanceId;
     }
 }
