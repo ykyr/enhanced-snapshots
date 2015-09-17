@@ -8,10 +8,8 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
-import com.sungardas.snapdirector.exception.OperationNotAllowedException;
 import com.sungardas.snapdirector.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,13 +72,8 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     }
 
     @Override
-    public void dropConfiguration(String currentUserEmail, String instanceId) {
-        if (!userService.isAdmin(currentUserEmail)) {
-            throw new OperationNotAllowedException("Only admin can delete service");
-        }
-        if (!instanceId.equals(EC2MetadataUtils.getInstanceId())) {
-            throw new OperationNotAllowedException("Provided instance ID is incorrect");
-        }
+    public void dropConfiguration() {
+
 
         dropS3Bucket();
         dropQueue();

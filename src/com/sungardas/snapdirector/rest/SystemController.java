@@ -1,10 +1,12 @@
 package com.sungardas.snapdirector.rest;
 
+import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.snapdirector.dto.SystemConfiguration;
 import com.sungardas.snapdirector.exception.OperationNotAllowedException;
 import com.sungardas.snapdirector.rest.utils.Constants;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.RemoveAppConfiguration;
+import com.sungardas.snapdirector.service.UserService;
 import com.sungardas.snapdirector.service.impl.SDFSStateServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,17 +38,22 @@ public class SystemController {
     @Autowired
     ConfigurationService configurationService;
 
+    @Autowired
+    private UserService userService;
+
 
     @RequestMapping(method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteService(@RequestBody InstanceID instanceID) {
         String session = servletRequest.getSession().getId();
         String currentUser = ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
-        try {
-            removeAppConfiguration.dropConfiguration(currentUser, instanceID.instanceID);
-            return new ResponseEntity<>("", HttpStatus.OK);
-        } catch (OperationNotAllowedException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+        if (!userService.isAdmin(currentUser)) {
+            return new ResponseEntity<>("Only admin can delete service", HttpStatus.FORBIDDEN);
         }
+        if (!instanceID.instanceID.equals(EC2MetadataUtils.getInstanceId())) {
+            return new ResponseEntity<>("Provided instance ID is incorrect", HttpStatus.FORBIDDEN);
+        }
+        removeAppConfiguration.dropConfiguration(currentUser, instanceID.instanceID);
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     @RequestMapping(method = RequestMethod.GET)
