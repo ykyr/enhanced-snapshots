@@ -16,7 +16,7 @@ angular.module('web')
 
         var _delete = function (instanceId) {
             var deferred = $q.defer();
-            $http.delete(url, {instanceId: instanceId}).then(function (result) {
+            $http.post(url + '/delete', {instanceId: instanceId}).then(function (result) {
                 deferred.resolve(result.data);
             }, function (e) {
                 deferred.reject(e);
