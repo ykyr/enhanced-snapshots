@@ -1,4 +1,4 @@
-package com.sungardas.snapdirector.service.impl;
+package com.sungardas.destroy;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
@@ -8,8 +8,8 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.sungardas.snapdirector.aws.dynamodb.model.WorkerConfiguration;
-import com.sungardas.snapdirector.aws.dynamodb.repository.WorkerConfigurationRepository;
+import com.sungardas.snapdirector.aws.dynamodb.model.*;
+import com.sungardas.snapdirector.aws.dynamodb.repository.*;
 import com.sungardas.snapdirector.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Iterator;
+import java.util.List;
 
 @Service
 public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
@@ -36,26 +37,23 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     @Autowired
     private AmazonEC2 ec2;
 
-    @Autowired
-    private SnapshotService snapshotService;
-
-    @Autowired
-    private BackupService backupService;
-
-    @Autowired
-    private RetentionService retentionService;
-
-    @Autowired
-    private TaskService taskService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    ConfigurationService configurationService;
-
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private RetentionRepository retentionRepository;
+
+    @Autowired
+    private BackupRepository backupRepository;
+
+    @Autowired
+    private SnapshotRepository snapshotRepository;
 
     @Autowired 
     private WorkerConfigurationRepository configurationRepository;
@@ -73,8 +71,6 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
 
     @Override
     public void dropConfiguration() {
-
-
         dropS3Bucket();
         dropQueue();
         dropDbData();
@@ -117,23 +113,60 @@ public class RemoveAppConfigurationImpl implements RemoveAppConfiguration {
     }
 
     private void dropDbData() {
-        userService.deleteAllUsers();
-        taskService.deleteAllTasks();
-        retentionService.deleteAllRetentions();
-        backupService.deleteAllBackups();
-        snapshotService.deleteAllSnapshots();
-        configurationService.deleteConfiguration();
+        deleteAllUsers();
+        deleteAllTasks();
+        deleteAllRetentions();
+        deleteAllBackups();
+        deleteAllSnapshots();
+        deleteConfiguration();
 
-
-        boolean dropTables = userService.isTableEmpty()&&taskService.isTableEmpty()&&retentionService.isTableEmpty()&&
-                backupService.isTableEmpty()&&snapshotService.isTableEmpty() && configurationService.isTableEmpty();
-
-        if (dropTables) {
+        if (isTablesEmpty()) {
             for (String tableToDrop : tables) {
                 dropTable(tableToDrop);
             }
         }
 
+    }
+
+    private boolean isTablesEmpty() {
+        long count = userRepository.count()
+                + taskRepository.count()
+                + retentionRepository.count()
+                + backupRepository.count()
+                + snapshotRepository.count()
+                + configurationRepository.count();
+        return count==0;
+    }
+
+    private void deleteConfiguration() {
+        configurationRepository.delete(configurationId);
+    }
+
+    private void deleteAllSnapshots() {
+        List<SnapshotEntry> snapshotList = snapshotRepository.findByInstanceId(configurationId);
+        snapshotRepository.delete(snapshotList);
+    }
+
+    private void deleteAllBackups() {
+        List<BackupEntry> backupList = backupRepository.findAll(configurationId);
+        for (BackupEntry entry : backupList) {
+            backupRepository.delete(entry);
+        }
+    }
+
+    private void deleteAllRetentions() {
+        List<RetentionEntry> retentionList = retentionRepository.findByInstanceId(configurationId);
+        retentionRepository.delete(retentionList);
+    }
+
+    private void deleteAllTasks() {
+        List<TaskEntry> taskList = taskRepository.findByInstanceId(configurationId);
+        taskRepository.delete(taskList);
+    }
+
+    private void deleteAllUsers() {
+        List<User> userList = userRepository.findByInstanceId(configurationId);
+        userRepository.delete(userList);
     }
 
     private void dropTable(String tableName) {
