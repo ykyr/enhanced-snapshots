@@ -45,14 +45,14 @@ public class SystemController {
     private XmlWebApplicationContext applicationContext;
 
 
-    @RequestMapping(method = RequestMethod.DELETE)
+    @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody InstanceId instanceId) {
         String session = servletRequest.getSession().getId();
         String currentUser = ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
         if (!userService.isAdmin(currentUser)) {
             return new ResponseEntity<>("Only admin can delete service", HttpStatus.FORBIDDEN);
         }
-        if (!instanceId.equals(configurationService.getWorkerConfiguration().getConfigurationId())) {
+        if (!configurationService.getWorkerConfiguration().getConfigurationId().equals(instanceId.getInstanceId())) {
             return new ResponseEntity<>("Provided instance ID is incorrect", HttpStatus.FORBIDDEN);
         }
         refreshContext();

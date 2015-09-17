@@ -194,7 +194,7 @@ public class RetentionServiceImpl implements RetentionService {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            LOG.error(e);
+            LOG.debug(e);
             return 0;
         }
     }
