@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Profile("prod")
 public class SDFSStateServiceImpl implements SDFSStateService {
     private static final org.apache.log4j.Logger LOG = org.apache.log4j.LogManager.getLogger(SDFSStateServiceImpl.class);
 
