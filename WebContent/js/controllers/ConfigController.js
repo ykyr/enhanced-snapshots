@@ -2,7 +2,7 @@
 
 angular.module('web')
     .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state) {
-        var DELAYTIME = 120*1000;
+        var DELAYTIME = 600*1000;
 
         $scope.STRINGS = {
             s3: {
