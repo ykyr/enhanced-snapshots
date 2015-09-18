@@ -26,6 +26,8 @@ public class RetentionServiceImpl implements RetentionService {
 
     public static final String RETENTION_USER = "RETENTION POLICY";
 
+    private static final long BYTES_IN_GB = 1073741824;
+
     private static final Logger LOG = LogManager.getLogger(RetentionServiceImpl.class);
 
     @Autowired
@@ -133,10 +135,11 @@ public class RetentionServiceImpl implements RetentionService {
 
     private void applySizeRetention(Set<BackupEntry> backupsToRemove, BackupEntry[] backups, RetentionEntry retention) {
         if (retention.getSize() > 0) {
-            int size = 0;
+            long retentionSize = retention.getSize() * BYTES_IN_GB;
+            long size = 0;
             int i;
-            for (i = 0; i < backups.length && size < retention.getSize(); i++) {
-                size += parseInt(backups[i].getSize());
+            for (i = 0; i < backups.length && size < retentionSize; i++) {
+                size += parseLong(backups[i].getSize());
             }
             for (; i < backups.length; i++) {
                 backupsToRemove.add(backups[i]);
@@ -156,7 +159,7 @@ public class RetentionServiceImpl implements RetentionService {
         if (retention.getDays() > 0) {
             DateTime currentDateTime = new DateTime();
             for (int i = 0; i < backups.length; i++) {
-                DateTime creationDate = new DateTime(Long.parseLong(backups[i].getTimeCreated()));
+                DateTime creationDate = new DateTime(parseLong(backups[i].getTimeCreated()));
                 DateTime expireTime = creationDate.plusDays(retention.getDays());
                 if (currentDateTime.isAfter(expireTime)) {
                     backupsToRemove.add(backups[i]);
@@ -190,9 +193,9 @@ public class RetentionServiceImpl implements RetentionService {
         return retentionEntryMap;
     }
 
-    private int parseInt(String value) {
+    private long parseLong(String value) {
         try {
-            return Integer.parseInt(value);
+            return Long.parseLong(value);
         } catch (NumberFormatException e) {
             LOG.debug(e);
             return 0;

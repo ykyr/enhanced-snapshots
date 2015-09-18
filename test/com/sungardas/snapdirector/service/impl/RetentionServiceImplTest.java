@@ -59,7 +59,7 @@ public class RetentionServiceImplTest {
         when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 1, 1);
-        when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
+        when(retentionRepository.findByInstanceId(null)).thenReturn(Arrays.asList(retentionEntry));
 
         retentionService.apply();
 
@@ -73,8 +73,8 @@ public class RetentionServiceImplTest {
 
         Iterator<BackupEntry> iterator = backupCollectionArgumentCaptor.getValue().iterator();
 
-        assertEquals(entry1, iterator.next());
         assertEquals(entry2, iterator.next());
+        assertEquals(entry1, iterator.next());
         assertEquals(RetentionServiceImpl.RETENTION_USER, userArgumentCaptor.getValue());
     }
 
@@ -87,7 +87,7 @@ public class RetentionServiceImplTest {
         when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 1, 0);
-        when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
+        when(retentionRepository.findByInstanceId(null)).thenReturn(Arrays.asList(retentionEntry));
 
         retentionService.apply();
 
@@ -108,13 +108,13 @@ public class RetentionServiceImplTest {
 
     @Test
     public void applySizeRetentionPolicyTest1() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1073741824", COMPLETED, "", "", "", "", "");
         when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 1, 0, 0);
-        when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
+        when(retentionRepository.findByInstanceId(null)).thenReturn(Arrays.asList(retentionEntry));
 
         retentionService.apply();
 
@@ -135,13 +135,13 @@ public class RetentionServiceImplTest {
 
     @Test
     public void applySizeRetentionPolicyTest2() {
-        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
-        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1", COMPLETED, "", "", "", "", "");
+        BackupEntry entry1 = new BackupEntry("volumeId 1", "fileName1", new DateTime().plusHours(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "", "");
+        BackupEntry entry2 = new BackupEntry("volumeId 1", "fileName2", new DateTime().plusDays(1).getMillis() + "", "1073741824", COMPLETED, "", "", "", "", "");
+        BackupEntry entry3 = new BackupEntry("volumeId 1", "fileName3", new DateTime().plusDays(2).getMillis() + "", "1073741824", COMPLETED, "", "", "", "", "");
         when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 0, 0);
-        when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
+        when(retentionRepository.findByInstanceId(null)).thenReturn(Arrays.asList(retentionEntry));
 
         retentionService.apply();
 
@@ -167,7 +167,7 @@ public class RetentionServiceImplTest {
         when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 0, 1);
-        when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
+        when(retentionRepository.findByInstanceId(null)).thenReturn(Arrays.asList(retentionEntry));
 
         retentionService.apply();
 
@@ -193,7 +193,7 @@ public class RetentionServiceImplTest {
         when(backupRepository.findAll(null)).thenReturn(Arrays.asList(entry1, entry2, entry3));
 
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 0, 0, 1);
-        when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry));
+        when(retentionRepository.findByInstanceId(null)).thenReturn(Arrays.asList(retentionEntry));
 
         retentionService.apply();
 
@@ -222,20 +222,11 @@ public class RetentionServiceImplTest {
         RetentionEntry retentionEntry = new RetentionEntry("volumeId 1", 2, 0, 0);
         RetentionEntry retentionEntry2 = new RetentionEntry("volumeId 2", 0, 0, 0);
         RetentionEntry retentionEntry4 = new RetentionEntry("volumeId 4", 0, 0, 0);
-        when(retentionRepository.findAll()).thenReturn(Arrays.asList(retentionEntry, retentionEntry2, retentionEntry4));
+        when(retentionRepository.findByInstanceId(null)).thenReturn(Arrays.asList(retentionEntry, retentionEntry2, retentionEntry4));
 
         retentionService.apply();
 
-        verify(retentionRepository).delete(retentionCollectionArgumentCaptor.capture());
-
-        Iterable<RetentionEntry> retentionEntries = retentionCollectionArgumentCaptor.getValue();
-
-        assertNotNull(retentionEntries);
-
-        Iterator<RetentionEntry> iterator = retentionCollectionArgumentCaptor.getValue().iterator();
-
-        assertEquals(retentionEntry4, iterator.next());
-        assertEquals(retentionEntry2, iterator.next());
-        assertFalse(iterator.hasNext());
+        verify(retentionRepository).deleteByVolumeIdAndInstanceId("volumeId 2", null);
+        verify(retentionRepository).deleteByVolumeIdAndInstanceId("volumeId 4", null);
     }
 }
