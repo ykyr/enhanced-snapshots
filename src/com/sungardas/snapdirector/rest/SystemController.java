@@ -50,10 +50,10 @@ public class SystemController {
         String session = servletRequest.getSession().getId();
         String currentUser = ((Map<String, String>) context.getAttribute(Constants.CONTEXT_ALLOWED_SESSIONS_ATR_NAME)).get(session);
         if (!userService.isAdmin(currentUser)) {
-            return new ResponseEntity<>("Only admin can delete service", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("{\"msg\":\"Only admin can delete service\"}", HttpStatus.FORBIDDEN);
         }
         if (!configurationService.getWorkerConfiguration().getConfigurationId().equals(instanceId.getInstanceId())) {
-            return new ResponseEntity<>("Provided instance ID is incorrect", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("{\"msg\":\"Provided instance ID is incorrect\"}", HttpStatus.FORBIDDEN);
         }
         refreshContext();
         return new ResponseEntity<>("", HttpStatus.OK);
