@@ -1,12 +1,24 @@
 package com.sungardas.snapdirector.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
@@ -18,17 +30,14 @@ import com.sungardas.snapdirector.dto.UserDto;
 import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
 import com.sungardas.snapdirector.exception.ConfigurationException;
 import com.sungardas.snapdirector.service.SDFSStateService;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 class CreateAppConfigurationImpl {
     private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
@@ -134,7 +143,7 @@ class CreateAppConfigurationImpl {
     private void createDbStructure() throws ConfigurationException {
         createTable("BackupList", 50L, 20L, "volumeId", "S", "fileName", "S");
         createTable("Configurations", 10L, 10L, "configurationId", "S");
-        createTable("Retention", 50L, 20L, "volumeId", "S");
+        createTable("Retention", 50L, 20L, "volumeInstanceId", "S");
         createTable("Tasks", 50L, 20L, "id", "S");
         createTable("Snapshots", 50L, 20L, "volumeInstanceId", "S");
         createTable("Users", 50L, 20L, "id", "S");

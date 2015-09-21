@@ -7,7 +7,9 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 @DynamoDBTable(tableName = "Retention")
 public class RetentionEntry {
 
-    @DynamoDBHashKey
+    private static final String DELIMITER = ":";
+
+    @DynamoDBAttribute
     private String volumeId;
 
     @DynamoDBAttribute
@@ -79,5 +81,20 @@ public class RetentionEntry {
 
     public void setInstanceId(String instanceId) {
         this.instanceId = instanceId;
+    }
+
+    @DynamoDBHashKey
+    public String getVolumeInstanceId() {
+        return volumeId + DELIMITER + instanceId;
+    }
+
+    public void setVolumeInstanceId(String id) {
+        String[] ids = id.split(DELIMITER);
+        volumeId = ids[0];
+        instanceId = ids[1];
+    }
+
+    public static final String getId(String volumeId, String instanceId) {
+        return volumeId + DELIMITER + instanceId;
     }
 }

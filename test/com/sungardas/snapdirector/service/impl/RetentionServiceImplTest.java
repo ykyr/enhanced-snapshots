@@ -1,11 +1,16 @@
 package com.sungardas.snapdirector.service.impl;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.RetentionEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.RetentionRepository;
 import com.sungardas.snapdirector.service.BackupService;
 import com.sungardas.snapdirector.service.VolumeService;
+
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,12 +20,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-
 import static com.sungardas.snapdirector.aws.dynamodb.model.BackupState.COMPLETED;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -71,10 +75,11 @@ public class RetentionServiceImplTest {
 
         assertEquals(2, backupEntries.size());
 
-        Iterator<BackupEntry> iterator = backupCollectionArgumentCaptor.getValue().iterator();
+        Collection<BackupEntry> collection = backupCollectionArgumentCaptor.getValue();
 
-        assertEquals(entry2, iterator.next());
-        assertEquals(entry1, iterator.next());
+        assertTrue(collection.contains(entry1));
+        assertTrue(collection.contains(entry2));
+        assertFalse(collection.contains(entry3));
         assertEquals(RetentionServiceImpl.RETENTION_USER, userArgumentCaptor.getValue());
     }
 
@@ -153,9 +158,9 @@ public class RetentionServiceImplTest {
 
         assertEquals(1, backupEntries.size());
 
-        Iterator<BackupEntry> iterator = backupCollectionArgumentCaptor.getValue().iterator();
+        Collection<BackupEntry> collection = backupCollectionArgumentCaptor.getValue();
 
-        assertEquals(entry1, iterator.next());
+        assertTrue(collection.contains(entry1));
         assertEquals(RetentionServiceImpl.RETENTION_USER, userArgumentCaptor.getValue());
     }
 
@@ -205,10 +210,10 @@ public class RetentionServiceImplTest {
 
         assertEquals(2, backupEntries.size());
 
-        Iterator<BackupEntry> iterator = backupCollectionArgumentCaptor.getValue().iterator();
+        Collection<BackupEntry> collection = backupCollectionArgumentCaptor.getValue();
 
-        assertEquals(entry1, iterator.next());
-        assertEquals(entry2, iterator.next());
+        assertTrue(collection.contains(entry1));
+        assertTrue(collection.contains(entry2));
         assertEquals(RetentionServiceImpl.RETENTION_USER, userArgumentCaptor.getValue());
     }
 
@@ -226,7 +231,7 @@ public class RetentionServiceImplTest {
 
         retentionService.apply();
 
-        verify(retentionRepository).deleteByVolumeIdAndInstanceId("volumeId 2", null);
-        verify(retentionRepository).deleteByVolumeIdAndInstanceId("volumeId 4", null);
+        verify(retentionRepository).delete(RetentionEntry.getId("volumeId 2", null));
+        verify(retentionRepository).delete(RetentionEntry.getId("volumeId 4", null));
     }
 }
