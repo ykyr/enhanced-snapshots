@@ -125,7 +125,7 @@ angular.module('web')
             });
 
             modalInstance.result.then(function () {
-                $state.go('logout')
+                $state.go('login')
             })
         };
 
