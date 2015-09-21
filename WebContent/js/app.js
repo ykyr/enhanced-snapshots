@@ -94,13 +94,13 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             templateUrl: "partials/registration.html",
             controller: "RegistrationController"
         })
-        .state('logout', {
+        /*.state('logout', {
             url: "/logout",
             controller: function ($state, Auth) {
                 Auth.logOut();
                 $state.go('login');
             }
-        });
+        })*/;
 
     $httpProvider.interceptors.push('Interceptor');
 })
@@ -117,7 +117,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
-            $state.go('logout');
+            $state.go('login');
         });
     });
 
