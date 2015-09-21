@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +98,8 @@ class CreateAppConfigurationImpl {
             if (isBucketContainsSDFSMetadata) {
                 sdfsService.restoreState();
             } else {
+                File sdfsConfig = new File("/etc/sdfs/awspool-volume-cfg.xml");
+                if(sdfsConfig.exists()) sdfsConfig.delete();
                 sdfsService.startupSDFS(sdfsSize, s3Bucket);
             }
 
