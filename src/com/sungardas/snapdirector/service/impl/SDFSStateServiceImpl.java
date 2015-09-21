@@ -2,6 +2,7 @@ package com.sungardas.snapdirector.service.impl;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.services.elasticache.model.SourceType;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
@@ -103,7 +104,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             file.delete();
             startupSDFS(sdfsSize, s3Bucket);
             //SDFS mount time
-            Thread.sleep(5000);
+            Thread.sleep(15000);
             restoreBackups();
         } catch (Exception e) {
             if (file != null && file.exists()) {
@@ -115,6 +116,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     private void restoreBackups() {
         File[] files = new File(SDFS_MOUNT_POINT).listFiles();
+        System.out.println("Found "+files.length+" files in system backup");
         for (File file : files) {
             BackupEntry entry = getBackupFromFile(file);
             if (entry != null) {

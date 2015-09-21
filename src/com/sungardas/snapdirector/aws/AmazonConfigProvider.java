@@ -115,6 +115,10 @@ public class AmazonConfigProvider {
 
     private AmazonS3 amazonS3() {
         AmazonS3 amazonS3 = new AmazonS3Client(amazonAWSCredentials());
+        Region current = Region.getRegion(Regions.fromName(region));
+        if(!current.equals(Region.getRegion(Regions.DEFAULT_REGION))) {
+            amazonS3.setRegion(current);
+        }
         return amazonS3;
     }
 }

@@ -15,6 +15,7 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.GetBucketLocationRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.util.EC2MetadataUtils;
@@ -151,6 +152,7 @@ class CredentialsServiceImpl implements CredentialsService {
                 if (bucketName.equals(bucket.getName())) {
                     result.get(0).setCreated(true);
                 } else {
+                    if(!client.getBucketLocation(bucket.getName()).equalsIgnoreCase(Regions.getCurrentRegion().toString())) continue;
                     result.add(new InitConfigurationDto.S3(bucket.getName(), true));
                 }
             }
