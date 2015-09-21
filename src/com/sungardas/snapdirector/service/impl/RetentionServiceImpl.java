@@ -1,5 +1,14 @@
 package com.sungardas.snapdirector.service.impl;
 
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.AmazonClientException;
 import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
 import com.sungardas.snapdirector.aws.dynamodb.model.RetentionEntry;
@@ -7,16 +16,19 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.aws.dynamodb.repository.RetentionRepository;
 import com.sungardas.snapdirector.dto.RetentionDto;
 import com.sungardas.snapdirector.exception.DataAccessException;
-import com.sungardas.snapdirector.service.*;
+import com.sungardas.snapdirector.service.BackupService;
+import com.sungardas.snapdirector.service.ConfigurationService;
+import com.sungardas.snapdirector.service.RetentionService;
+import com.sungardas.snapdirector.service.SchedulerService;
+import com.sungardas.snapdirector.service.Task;
+import com.sungardas.snapdirector.service.VolumeService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.*;
 
 import static com.sungardas.snapdirector.dto.converter.RetentionConverter.toDto;
 import static com.sungardas.snapdirector.dto.converter.RetentionConverter.toEntry;
@@ -81,11 +93,9 @@ public class RetentionServiceImpl implements RetentionService {
 
     @Override
     public RetentionDto getRetentionDto(String volumeId) {
-        List<RetentionEntry> entry = retentionRepository.findByVolumeIdAndInstanceId(volumeId, instanceId);
-
-        if (!entry.isEmpty()) {
-            return toDto(entry.get(0));
-        } else {
+        try {
+            return toDto(retentionRepository.findOne(RetentionEntry.getId(volumeId, instanceId)));
+        } catch (Exception e) {
             if (volumeService.volumeExists(volumeId)) {
                 return new RetentionDto(volumeId);
             } else {
@@ -106,7 +116,7 @@ public class RetentionServiceImpl implements RetentionService {
             RetentionEntry retentionEntry = retentions.get(entry.getKey());
             if (retentionEntry != null) {
                 if (isEmpty(retentionEntry)) {
-                    retentionRepository.deleteByVolumeIdAndInstanceId(retentionEntry.getVolumeId(), retentionEntry.getInstanceId());
+                    retentionRepository.delete(RetentionEntry.getId(retentionEntry.getVolumeId(), retentionEntry.getInstanceId()));
                 } else {
                     BackupEntry[] values = entry.getValue().toArray(new BackupEntry[entry.getValue().size()]);
                     applySizeRetention(backupsToRemove, values, retentionEntry);
@@ -118,7 +128,7 @@ public class RetentionServiceImpl implements RetentionService {
 
         for (Map.Entry<String, RetentionEntry> entry : retentions.entrySet()) {
             if (!backups.containsKey(entry.getKey())) {
-                retentionRepository.deleteByVolumeIdAndInstanceId(entry.getValue().getVolumeId(), entry.getValue().getInstanceId());
+                retentionRepository.delete(RetentionEntry.getId(entry.getValue().getVolumeId(), entry.getValue().getInstanceId()));
             }
         }
         if (!backupsToRemove.isEmpty()) {
@@ -134,15 +144,18 @@ public class RetentionServiceImpl implements RetentionService {
     }
 
     private void applySizeRetention(Set<BackupEntry> backupsToRemove, BackupEntry[] backups, RetentionEntry retention) {
-        if (retention.getSize() > 0) {
+        if (retention.getSize() > 0 && backups.length > 0) {
             long retentionSize = retention.getSize() * BYTES_IN_GB;
             long size = 0;
             int i;
-            for (i = 0; i < backups.length && size < retentionSize; i++) {
+            for (i = 0; i < backups.length && size <= retentionSize; i++) {
                 size += parseLong(backups[i].getSize());
             }
-            for (; i < backups.length; i++) {
-                backupsToRemove.add(backups[i]);
+            if (size > retentionSize) {
+                i--;
+                for (; i < backups.length; i++) {
+                    backupsToRemove.add(backups[i]);
+                }
             }
         }
     }

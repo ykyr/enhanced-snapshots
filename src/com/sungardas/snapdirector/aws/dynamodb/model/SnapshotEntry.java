@@ -8,6 +8,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 public class SnapshotEntry {
 
     private static final String DELIMITER = ":";
+
     @DynamoDBAttribute
     private String instanceId;
 
