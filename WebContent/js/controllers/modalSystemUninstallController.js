@@ -7,7 +7,8 @@ angular.module('web')
         $scope.delete = function () {
             System.delete($scope.instanceId).then(function () {
                 $scope.state = "done";
-            },function(e){
+            }, function(e){
+                $scope.delError = e;
                 $scope.state = "failed";
             });
 

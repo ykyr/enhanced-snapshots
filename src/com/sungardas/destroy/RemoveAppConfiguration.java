@@ -92,7 +92,6 @@ public class RemoveAppConfiguration {
                 break;
             }
         }
-        ;
         VersionListing list = s3.listVersions(new ListVersionsRequest().withBucketName(bucketName));
         for (Iterator<?> iterator = list.getVersionSummaries().iterator(); iterator.hasNext(); ) {
             S3VersionSummary s = (S3VersionSummary) iterator.next();
