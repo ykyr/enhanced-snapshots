@@ -11,26 +11,25 @@
 * [Removing the Enhanced Snapshots system](#removing-the-enhanced-snapshots-system)
 
 # Product Description
-The Sungard AS Enhanced Snapshot tool is intended for managing backups for the infrastructure that is located in the Amazon Web Services cloud. The product will be useful for customers who want to reduce:
-* The cost of storing backups
-* Time spent by IT engineers on routine backup management tasks.
+The Sungard AS Enhanced Snapshots tool is intended for managing backups for infrastructure that is located in the Amazon Web Services cloud. The product will be useful for customers who want to reduce:
+* the cost of storing backups
+* time spent by IT engineers on routine backup management tasks.
 
-Using to an intuitive interface, you can automate routine tasks such as creation of backups and deletion of old (unused) backups easily. Since these tasks are automated, you will minimize the risks that are associated with the human factor.
+Using to an intuitive interface, you can automate routine tasks such as creation of backups and deletion of old (unused) backups easily. Since these tasks are automated, you will minimize the risks that are associated with human error.
 
-Technical support is not available for the first version of the product. However, you can send your comments and suggestions to AWSEnhancedSnapshots@sungardas.com. Customer support service will be added in a future release.
+Technical support is not available for the first version of the product. Comments and suggestions can be sent to AWSEnhancedSnapshots@sungardas.com. Customer support service may be added in a future release.
 
-Open source is another important feature of this solution. We plan to create a community that will support it. For the end user, ASM will be free.
-
+Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, ASM will be free.
 
 # Key Features
 ## Backup & Recovery 
 * Performing backups of EBS volumes.
-* The ability to perform the recovery from historical backups.
+* The ability to perform recovery from historical backups.
 * The ability to store backups of deleted volumes.
-* Ability to quickly initiate recovery of backups
+* Ability to quickly initiate recovery of backups.
 
 ## Schedule Policy
-* Allows user to create schedule tasks by minutes, hour, day, week and month.
+* Allows user to create scheduled tasks by minute, hour, day, week and month.
 * Full support of CRON expressions.
 
 ## Retention Policy
@@ -77,7 +76,8 @@ After the configurations process will be successfully completed, the following n
 
 *Step 6*
 
-The system automatically redirects the user to the login page. Now the user will use their credentials that were created during wizard to log in.
+The system automatically redirects the user to the login page. Now the user will use their credentials that were created during
+wizard to log in.
 ![Login](https://cloud.githubusercontent.com/assets/1557544/9996396/c7270c32-6054-11e5-95ff-47632ba834b8.png)
 
 After logging in, the list of EBS volumes for the local region is displayed.
