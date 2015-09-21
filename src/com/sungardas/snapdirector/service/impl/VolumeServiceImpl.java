@@ -1,5 +1,11 @@
 package com.sungardas.snapdirector.service.impl;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -8,14 +14,14 @@ import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.snapdirector.dto.VolumeDto;
 import com.sungardas.snapdirector.dto.converter.VolumeDtoConverter;
 import com.sungardas.snapdirector.exception.DataAccessException;
+import com.sungardas.snapdirector.service.SchedulerService;
 import com.sungardas.snapdirector.service.VolumeService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 
 @Service
@@ -30,6 +36,9 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Autowired
     private BackupRepository backupRepository;
+
+    @Autowired
+    private SchedulerService schedulerService;
 
     @Value("${amazon.aws.region}")
     private String region;
@@ -49,6 +58,7 @@ public class VolumeServiceImpl implements VolumeService {
             Set<VolumeDto> result = new TreeSet<>(volumeDtoComparator);
             result.addAll(VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes()));
             result.addAll(getHistoryVolumes());
+            result = setSchedules(result);
             LOG.debug("Volume list: [{}]", result);
             return result;
         } catch (RuntimeException e) {
@@ -73,6 +83,16 @@ public class VolumeServiceImpl implements VolumeService {
             }
         }
         return false;
+    }
+
+    private Set<VolumeDto> setSchedules(Set<VolumeDto> result) {
+        Set<String> volumeWithSchedule = schedulerService.getVolumeIdsWithSchedule();
+        for (VolumeDto volumeDto : result) {
+            if (volumeWithSchedule.contains(volumeDto.getVolumeId())) {
+                volumeDto.setScheduled(true);
+            }
+        }
+        return result;
     }
 
     private Set<VolumeDto> getHistoryVolumes() {

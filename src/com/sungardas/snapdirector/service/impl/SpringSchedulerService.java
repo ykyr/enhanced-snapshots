@@ -1,5 +1,14 @@
 package com.sungardas.snapdirector.service.impl;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.AmazonClientException;
 import com.sungardas.snapdirector.aws.dynamodb.model.TaskEntry;
 import com.sungardas.snapdirector.aws.dynamodb.repository.TaskRepository;
@@ -7,6 +16,7 @@ import com.sungardas.snapdirector.exception.SnapdirectorException;
 import com.sungardas.snapdirector.service.ConfigurationService;
 import com.sungardas.snapdirector.service.SchedulerService;
 import com.sungardas.snapdirector.service.Task;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -15,12 +25,6 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
 
 @Service
 @DependsOn("CreateAppConfiguration")
@@ -39,10 +43,13 @@ public class SpringSchedulerService implements SchedulerService {
 
     private Map<String, ScheduledFuture> jobs = new HashMap<>();
 
+    private String instanceId;
+
     @PostConstruct
     private void init() {
         try {
-            List<TaskEntry> tasks = taskRepository.findByInstanceIdAndRegular(configurationService.getWorkerConfiguration().getConfigurationId(), Boolean.TRUE.toString());
+            instanceId = configurationService.getWorkerConfiguration().getConfigurationId();
+            List<TaskEntry> tasks = taskRepository.findByRegularAndInstanceId(Boolean.TRUE.toString(), instanceId);
             for (TaskEntry taskEntry : tasks) {
                 try {
                     addTask(taskEntry);
@@ -50,7 +57,7 @@ public class SpringSchedulerService implements SchedulerService {
                     LOG.error(e);
                 }
             }
-        }catch (AmazonClientException e){
+        } catch (AmazonClientException e) {
             LOG.error(e);
         }
     }
@@ -80,6 +87,15 @@ public class SpringSchedulerService implements SchedulerService {
         } else {
             LOG.debug("Task with id: {} not found", id);
         }
+    }
+
+    @Override
+    public Set<String> getVolumeIdsWithSchedule() {
+        Set<String> result = new HashSet<>();
+        for (TaskEntry taskEntry : taskRepository.findByRegularAndInstanceIdAndEnabled(Boolean.TRUE.toString(), instanceId, Boolean.TRUE.toString())) {
+            result.add(taskEntry.getVolume());
+        }
+        return result;
     }
 
     private class TaskImpl implements Task {

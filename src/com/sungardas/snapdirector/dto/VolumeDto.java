@@ -1,9 +1,9 @@
 package com.sungardas.snapdirector.dto;
 
-import com.amazonaws.services.ec2.model.Tag;
-
 import java.util.Date;
 import java.util.List;
+
+import com.amazonaws.services.ec2.model.Tag;
 
 public class VolumeDto {
 
@@ -14,6 +14,7 @@ public class VolumeDto {
     private Date createTime;
     private String availabilityZone;
     private String state;
+    private boolean scheduled;
     private List<Tag> tags;
 
     public String getInstanceID() {
@@ -90,22 +91,52 @@ public class VolumeDto {
         this.tags = tags;
     }
 
+    public boolean isScheduled() {
+        return scheduled;
+    }
+
+    public void setScheduled(final boolean scheduled) {
+        this.scheduled = scheduled;
+    }
+
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        VolumeDto volumeDto = (VolumeDto) o;
-
-        if (size != volumeDto.size) return false;
-        if (volumeName != null ? !volumeName.equals(volumeDto.volumeName) : volumeDto.volumeName != null) return false;
-        if (volumeId != null ? !volumeId.equals(volumeDto.volumeId) : volumeDto.volumeId != null) return false;
-        if (snapshotId != null ? !snapshotId.equals(volumeDto.snapshotId) : volumeDto.snapshotId != null) return false;
-        if (createTime != null ? !createTime.equals(volumeDto.createTime) : volumeDto.createTime != null) return false;
-        if (availabilityZone != null ? !availabilityZone.equals(volumeDto.availabilityZone) : volumeDto.availabilityZone != null)
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
-        if (state != null ? !state.equals(volumeDto.state) : volumeDto.state != null) return false;
-        if (tags != null ? !tags.equals(volumeDto.tags) : volumeDto.tags != null) return false;
+        }
+
+        final VolumeDto volumeDto = (VolumeDto) o;
+
+        if (size != volumeDto.size) {
+            return false;
+        }
+        if (scheduled != volumeDto.scheduled) {
+            return false;
+        }
+        if (volumeName != null ? !volumeName.equals(volumeDto.volumeName) : volumeDto.volumeName != null) {
+            return false;
+        }
+        if (volumeId != null ? !volumeId.equals(volumeDto.volumeId) : volumeDto.volumeId != null) {
+            return false;
+        }
+        if (snapshotId != null ? !snapshotId.equals(volumeDto.snapshotId) : volumeDto.snapshotId != null) {
+            return false;
+        }
+        if (createTime != null ? !createTime.equals(volumeDto.createTime) : volumeDto.createTime != null) {
+            return false;
+        }
+        if (availabilityZone != null ? !availabilityZone.equals(volumeDto.availabilityZone) : volumeDto.availabilityZone != null) {
+            return false;
+        }
+        if (state != null ? !state.equals(volumeDto.state) : volumeDto.state != null) {
+            return false;
+        }
+        if (tags != null ? !tags.equals(volumeDto.tags) : volumeDto.tags != null) {
+            return false;
+        }
         return !(instanceID != null ? !instanceID.equals(volumeDto.instanceID) : volumeDto.instanceID != null);
 
     }
@@ -119,6 +150,7 @@ public class VolumeDto {
         result = 31 * result + (createTime != null ? createTime.hashCode() : 0);
         result = 31 * result + (availabilityZone != null ? availabilityZone.hashCode() : 0);
         result = 31 * result + (state != null ? state.hashCode() : 0);
+        result = 31 * result + (scheduled ? 1 : 0);
         result = 31 * result + (tags != null ? tags.hashCode() : 0);
         result = 31 * result + (instanceID != null ? instanceID.hashCode() : 0);
         return result;
@@ -134,6 +166,7 @@ public class VolumeDto {
                 ", createTime=" + createTime +
                 ", availabilityZone='" + availabilityZone + '\'' +
                 ", state='" + state + '\'' +
+                ", scheduled=" + scheduled +
                 ", tags=" + tags +
                 ", instanceID='" + instanceID + '\'' +
                 '}';
