@@ -211,6 +211,7 @@ class CreateAppConfigurationImpl {
 
     private void storeAdminUserIfProvided() {
         UserDto userDto = sharedDataService.getAdminUser();
+        userDto.setEmail(userDto.getEmail().toLowerCase());
         String password = sharedDataService.getAdminPassword();
         if (userDto != null && password != null) {
             User userToCreate = UserDtoConverter.convert(userDto);
