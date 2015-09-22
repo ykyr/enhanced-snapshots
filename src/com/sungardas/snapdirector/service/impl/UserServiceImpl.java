@@ -166,7 +166,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(String user, String password) {
-        List<UserDto> list = UserDtoConverter.convert(userRepository.findByEmailAndPasswordAndInstanceId(user, DigestUtils.sha512Hex(password), instanceId));
+        List<UserDto> list = UserDtoConverter.convert(userRepository.findByEmailAndPasswordAndInstanceId(user.toLowerCase(), DigestUtils.sha512Hex(password), instanceId));
         if (list.isEmpty()) {
             return null;
         } else {

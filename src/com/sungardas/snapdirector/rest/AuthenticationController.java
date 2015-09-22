@@ -46,7 +46,7 @@ public class AuthenticationController {
         if (!allowedSessions.get(sessionId).equals(user.getEmail().toLowerCase())) {
             allowedSessions.put(sessionId, user.getEmail().toLowerCase());
         }
-        UserDto result = userService.getUser(user.getEmail(), user.getPassword());
+        UserDto result = userService.getUser(user.getEmail().toLowerCase(), user.getPassword());
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
