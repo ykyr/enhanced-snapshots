@@ -16,17 +16,16 @@ import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.GetBucketLocationRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sun.management.UnixOperatingSystemMXBean;
-import com.sungardas.snapdirector.aws.dynamodb.model.User;
-import com.sungardas.snapdirector.dto.InitConfigurationDto;
-import com.sungardas.snapdirector.exception.ConfigurationException;
-import com.sungardas.snapdirector.exception.DataAccessException;
-import com.sungardas.snapdirector.exception.SnapdirectorException;
-import com.sungardas.snapdirector.service.CryptoService;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+import com.sungardas.enhancedsnapshots.exception.DataAccessException;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
+import com.sungardas.enhancedsnapshots.service.CryptoService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,13 +60,13 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
     private static final long BYTES_IN_GB = 1_073_741_824;
     private AWSCredentials credentials = null;
-    private final String DEFAULT_LOGIN = "admin@snapdirector";
+    private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
     private String instanceId;
 
-    @Value("${snapdirector.sdfs.default.size}")
+    @Value("${enhancedsnapshots.sdfs.default.size}")
     private String defaultVolumeSize;
 
-    @Value("${snapdirector.db.tables}")
+    @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
 
     private InitConfigurationDto initConfigurationDto = null;
@@ -144,7 +143,7 @@ class CredentialsServiceImpl implements CredentialsService {
         AmazonS3Client client = new AmazonS3Client(credentials);
         List<Bucket> allBuckets = client.listBuckets();
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
-        String bucketName = "com.sungardas.snapdirector." + instanceId;
+        String bucketName = "com.sungardas.enhancedsnapshots." + instanceId;
         result.add(new InitConfigurationDto.S3(bucketName, false));
 
         String currentLocation = Regions.getCurrentRegion().toString();
@@ -182,7 +181,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
 
-        String queueName = getAccountId() + "/snapdirector_" + instanceId;
+        String queueName = getAccountId() + "/enhancedsnapshots_" + instanceId;
         InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
         queue.setQueueName(queueName);
         queue.setCreated(queueAlreadyExists(queueName));
@@ -212,7 +211,7 @@ class CredentialsServiceImpl implements CredentialsService {
         long required = (long) (3.5 * BYTES_IN_GB);
         if (total < required) {
             LOG.error("Total memory {}. Required memory {}", total, required);
-            throw new SnapdirectorException("Not enough memory to create SDFS volume");
+            throw new EnhancedSnapshotsException("Not enough memory to create SDFS volume");
         }
     }
 

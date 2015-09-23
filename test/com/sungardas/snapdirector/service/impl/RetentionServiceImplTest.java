@@ -1,15 +1,15 @@
-package com.sungardas.snapdirector.service.impl;
+package com.sungardas.enhancedsnapshots.service.impl;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
-import com.sungardas.snapdirector.aws.dynamodb.model.BackupEntry;
-import com.sungardas.snapdirector.aws.dynamodb.model.RetentionEntry;
-import com.sungardas.snapdirector.aws.dynamodb.repository.BackupRepository;
-import com.sungardas.snapdirector.aws.dynamodb.repository.RetentionRepository;
-import com.sungardas.snapdirector.service.BackupService;
-import com.sungardas.snapdirector.service.VolumeService;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.RetentionRepository;
+import com.sungardas.enhancedsnapshots.service.BackupService;
+import com.sungardas.enhancedsnapshots.service.VolumeService;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -20,7 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static com.sungardas.snapdirector.aws.dynamodb.model.BackupState.COMPLETED;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState.COMPLETED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

@@ -6,11 +6,11 @@
 
     <context:annotation-config/>
 
-    <context:component-scan base-package="com.sungardas.snapdirector.aws"/>
+    <context:component-scan base-package="com.sungardas.enhancedsnapshots.aws"/>
 
-    <context:property-placeholder location="classpath:/snapdirector.properties,file:${canalina.home}/conf/snapdirector.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
+    <context:property-placeholder location="classpath:/enhancedsnapshots.properties,file:${canalina.home}/conf/enhancedsnapshots.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
 
-    <bean class="com.sungardas.snapdirector.service.impl.CryptoServiceImpl"/>
+    <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
 
     <bean class="com.sungardas.destroy.RemoveAppConfiguration"/>
 

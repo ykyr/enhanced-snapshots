@@ -8,12 +8,10 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.sungardas.snapdirector.aws.dynamodb.model.*;
-import com.sungardas.snapdirector.aws.dynamodb.repository.*;
-import com.sungardas.snapdirector.service.*;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Iterator;
@@ -21,7 +19,7 @@ import java.util.List;
 
 public class RemoveAppConfiguration {
 
-    @Value("${snapdirector.db.tables}")
+    @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
 
     @Autowired

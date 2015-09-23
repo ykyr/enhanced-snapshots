@@ -1,14 +1,14 @@
 package com.sungardas.init;
 
 import com.amazonaws.AmazonClientException;
-import com.sungardas.snapdirector.aws.dynamodb.model.User;
-import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
-import com.sungardas.snapdirector.dto.InitConfigurationDto;
-import com.sungardas.snapdirector.exception.ConfigurationException;
-import com.sungardas.snapdirector.exception.SnapdirectorException;
-import com.sungardas.snapdirector.rest.RestAuthenticationFilter;
-import com.sungardas.snapdirector.rest.filters.FilterProxy;
-import com.sungardas.snapdirector.service.SharedDataService;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
+import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
+import com.sungardas.enhancedsnapshots.rest.RestAuthenticationFilter;
+import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
+import com.sungardas.enhancedsnapshots.service.SharedDataService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -56,7 +56,7 @@ class InitController implements ApplicationContextAware {
         }
     }
 
-    @ExceptionHandler(value = {SnapdirectorException.class, ConfigurationException.class})
+    @ExceptionHandler(value = {EnhancedSnapshotsException.class, ConfigurationException.class})
     @ResponseBody
     @ResponseStatus(INTERNAL_SERVER_ERROR)
     private Exception internalServerError(Exception exception) {
@@ -70,7 +70,7 @@ class InitController implements ApplicationContextAware {
     @ResponseStatus(INTERNAL_SERVER_ERROR)
     private Exception amazonException(Exception exception) {
         LOG.error(exception);
-        return new SnapdirectorException("Internal server error", exception);
+        return new EnhancedSnapshotsException("Internal server error", exception);
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/session")
@@ -79,7 +79,7 @@ class InitController implements ApplicationContextAware {
             return new ResponseEntity<>("", HttpStatus.NOT_FOUND);
         }
         // no aws credentials are provided
-        // try to authenticate as default user admin@snapdirector:<instance-id>
+        // try to authenticate as default user admin@enhancedsnapshots:<instance-id>
         else if (credentialsService.checkDefaultUser(user.getEmail(), user.getPassword())) {
             return new ResponseEntity<>("{ \"role\":\"configurator\" }", HttpStatus.OK);
         } else {

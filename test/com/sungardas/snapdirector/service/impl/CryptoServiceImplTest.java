@@ -1,6 +1,6 @@
-package com.sungardas.snapdirector.service.impl;
+package com.sungardas.enhancedsnapshots.service.impl;
 
-import com.sungardas.snapdirector.service.CryptoService;
+import com.sungardas.enhancedsnapshots.service.CryptoService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ import static org.junit.Assert.assertNotEquals;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("classpath:com/sungardas/snapdirector/service/impl/spring-test-config.xml")
+@ContextConfiguration("classpath:com/sungardas/enhancedsnapshots/service/impl/spring-test-config.xml")
 public class CryptoServiceImplTest {
 
     @Autowired

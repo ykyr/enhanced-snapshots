@@ -1,4 +1,4 @@
-package com.sungardas.snapdirector.service.impl;
+package com.sungardas.enhancedsnapshots.service.impl;
 
 
 import com.amazonaws.AmazonServiceException;

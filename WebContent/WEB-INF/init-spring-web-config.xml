@@ -11,9 +11,9 @@
 
     <context:annotation-config/>
 
-    <context:property-placeholder location="classpath:/snapdirector.properties,file:${canalina.home}/conf/snapdirector.properties" ignore-resource-not-found="true"/>
+    <context:property-placeholder location="classpath:/enhancedsnapshots.properties,file:${canalina.home}/conf/enhancedsnapshots.properties" ignore-resource-not-found="true"/>
 
-    <bean class="com.sungardas.snapdirector.service.impl.CryptoServiceImpl"/>
+    <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
 
     <beans profile="dev">
         <bean class="com.sungardas.init.CredentialsServiceDev"/>

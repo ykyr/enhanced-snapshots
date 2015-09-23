@@ -13,5 +13,5 @@
         </property>
     </bean>
 
-    <bean class="com.sungardas.snapdirector.service.impl.CryptoServiceImpl"/>
+    <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
 </beans>
