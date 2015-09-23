@@ -1,9 +1,9 @@
-package com.sungardas.snapdirector.dto.converter;
+package com.sungardas.enhancedsnapshots.dto.converter;
 
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeAttachment;
-import com.sungardas.snapdirector.dto.VolumeDto;
+import com.sungardas.enhancedsnapshots.dto.VolumeDto;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

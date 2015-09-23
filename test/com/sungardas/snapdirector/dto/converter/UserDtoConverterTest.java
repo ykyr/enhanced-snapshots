@@ -1,7 +1,7 @@
-package com.sungardas.snapdirector.dto.converter;
+package com.sungardas.enhancedsnapshots.dto.converter;
 
-import com.sungardas.snapdirector.aws.dynamodb.model.User;
-import com.sungardas.snapdirector.dto.UserDto;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.dto.UserDto;
 import org.junit.Assert;
 import org.junit.Test;
 

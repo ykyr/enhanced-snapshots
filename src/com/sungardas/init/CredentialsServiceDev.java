@@ -1,6 +1,6 @@
 package com.sungardas.init;
 
-import com.sungardas.snapdirector.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ class CredentialsServiceDev implements CredentialsService {
         sdfs.setVolumeSize("40");
 
         InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
-        queue.setQueueName("snapdirector_i-12f5a345");
+        queue.setQueueName("enhancedsnapshots_i-12f5a345");
         queue.setCreated(true);
 
         InitConfigurationDto.DB db = new InitConfigurationDto.DB();

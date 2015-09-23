@@ -1,13 +1,13 @@
-package com.sungardas.snapdirector.service.impl;
+package com.sungardas.enhancedsnapshots.service.impl;
 
-import com.sungardas.snapdirector.aws.dynamodb.Roles;
-import com.sungardas.snapdirector.aws.dynamodb.model.User;
-import com.sungardas.snapdirector.aws.dynamodb.repository.UserRepository;
-import com.sungardas.snapdirector.dto.UserDto;
-import com.sungardas.snapdirector.dto.converter.UserDtoConverter;
-import com.sungardas.snapdirector.exception.DataAccessException;
-import com.sungardas.snapdirector.exception.OperationNotAllowedException;
-import com.sungardas.snapdirector.exception.UniqueConstraintViolationException;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.Roles;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
+import com.sungardas.enhancedsnapshots.dto.UserDto;
+import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
+import com.sungardas.enhancedsnapshots.exception.DataAccessException;
+import com.sungardas.enhancedsnapshots.exception.OperationNotAllowedException;
+import com.sungardas.enhancedsnapshots.exception.UniqueConstraintViolationException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Before;
 import org.junit.Test;

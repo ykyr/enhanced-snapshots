@@ -1,6 +1,6 @@
 package com.sungardas.init;
 
-import com.sungardas.snapdirector.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 
 import javax.validation.constraints.NotNull;
 
