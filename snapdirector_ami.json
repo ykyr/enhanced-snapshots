@@ -10,11 +10,11 @@
       "access_key": "{{user `aws_access_key`}}",
       "secret_key": "{{user `aws_secret_key`}}",
       "region": "us-east-1",
-      "source_ami": "ami-0d4cfd66",
+      "source_ami": "ami-e3106686",
       "instance_type": "t2.micro",
       "ssh_username": "ec2-user",
       "ssh_pty": true,
-      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Snapdirector-{{timestamp}}",
+      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-{{timestamp}}",
       "tags": {
         "Name": "Snapdirector",
         "Description": "Backup, recovery, disaster recovery, snapshot, schedule"
@@ -53,10 +53,10 @@
       "type": "shell",
       "inline": [
         "echo 'Starting deploynment process...'",
-        "sudo wget http://com.sungardas.releases.s3.amazonaws.com/travis-builds/snapdirector_latest.war -O snapdirector.war",
+        "sudo wget http://com.sungardas.releases.s3.amazonaws.com/travis-builds/enhancedsnapshots_latest.war -O enhancedsnapshots.war",
         "sudo service tomcat8 stop",
         "sudo rm -rf /opt/tomcat-latest/webapps/*",
-        "sudo cp snapdirector.war /opt/tomcat-latest/webapps/ROOT.war",
+        "sudo cp enhancedsnapshots.war /opt/tomcat-latest/webapps/ROOT.war",
         "sudo service tomcat8 start",
         "sudo pip uninstall -y ansible",
         "sudo yum-config-manager --disable epel",

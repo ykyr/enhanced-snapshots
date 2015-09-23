@@ -34,8 +34,8 @@ script:
 
 before_deploy:
   - mkdir build_artifacts
-  - cp target/enhancedsnapshots*.war build_artifacts/snapdirector_latest.war
-  - mv -f target/enhancedsnapshots*.war build_artifacts/snapdirector_0.0.1_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
+  - cp target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_latest.war
+  - mv -f target/enhancedsnapshots*.war build_artifacts/enhancedsnapshots_0.0.1_${TRAVIS_BUILD_NUMBER}_${TRAVIS_COMMIT}.war
 
 deploy:
   provider: s3
