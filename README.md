@@ -56,7 +56,7 @@ Enter the AWS Public Key and AWS Secret Key
 *Step 3*
 
 The next picture shows the list of additional resources that will be created: S3 bucket, SDFS settings, SQS Queue, and DynamoDB tables. To view more information these resource the user can click the question mark.
-![Settings(2)](https://cloud.githubusercontent.com/assets/1557544/9996395/c726f828-6054-11e5-88ef-bbefdce83cd2.png)
+![Settings(2)](https://cloud.githubusercontent.com/assets/14750068/10023444/e40ff136-615a-11e5-9f38-a3e153826ab8.png)
 
 **Warning**
 Once "Setup" has been clicked on this screen, these settings cannot be changed.
@@ -69,10 +69,10 @@ Time to create a first user. The first user always will receive admin rights. Em
 *Step 5*
 
 After the system is received all necessary input data it will create all necessary environment.
-![Please wait](https://cloud.githubusercontent.com/assets/1557544/9996397/c727651a-6054-11e5-8547-bc5b9b69ee98.png)
+![Please wait](https://cloud.githubusercontent.com/assets/14750068/10023445/e410406e-615a-11e5-9ae4-53e9b20a5b95.png)
 
 After the configurations process will be successfully completed, the following notification will appear.
-![Congratulations](https://cloud.githubusercontent.com/assets/1557544/9996393/c72474f4-6054-11e5-817e-16cae42b4a69.png)
+![Congratulations](https://cloud.githubusercontent.com/assets/14750068/10023442/e40e7c02-615a-11e5-8d36-46ae12bc50c8.png)
 
 *Step 6*
 
@@ -81,13 +81,13 @@ wizard to log in.
 ![Login](https://cloud.githubusercontent.com/assets/1557544/9996396/c7270c32-6054-11e5-95ff-47632ba834b8.png)
 
 After logging in, the list of EBS volumes for the local region is displayed.
-![Volumes](https://cloud.githubusercontent.com/assets/1557544/9996398/c72d1fb4-6054-11e5-8047-44e2fb2e21ef.png)
+![Volumes](https://cloud.githubusercontent.com/assets/14750068/10023446/e4102a70-615a-11e5-9eda-915d04bbb5b1.png)
 
 
 # Management Tasks
 ## Peforming Manual Backups
 To perform a backup, the user selects the appropriate EBS volume and clicks the button Backup selected. Also, the user can configure multi-backup, or several volumes during one task. For this, a user selects several appropriate volumes and clicks the button Backup selected. (Backups are performed one at a time.)
-![Volumes (backup selected)](https://cloud.githubusercontent.com/assets/1557544/9996399/c72f2a66-6054-11e5-957a-b71bd33185c9.png)
+![Volumes (backup selected)](https://cloud.githubusercontent.com/assets/14750068/10023447/e410e4d8-615a-11e5-8bc3-93b9b9580528.png)
 
 ## Creating a Schedule
 The user can automate the process of creating backups thanks to the Schedule feature. Schedules can be edited with Enhanced Snapshots web UI; schedules are displayed and stored in [Cron](https://en.wikipedia.org/wiki/Cron) format. The interval of backups is from one minute to one year. If necessary, schedules can be disabled.
@@ -104,7 +104,7 @@ The retention policy function that allows the user to automatically delete backu
 Only one retention policy can be created for each volume. If a volume does not have any backups, the retention policy cannot be created.
 
 Filters for users are available in order to sort according to different parameters: Volume ID, Name, Size, Instance ID and date of creation.
-![Filter](https://cloud.githubusercontent.com/assets/1557544/9996406/c73a0dfa-6054-11e5-834e-8e8a4c75bd45.png)
+![Filter](https://cloud.githubusercontent.com/assets/14750068/10023443/e40fcada-615a-11e5-8412-5a090a3917a7.png)
 
 ##  Other Management Tasks
 A list of all active and pending tasks can be found in the tab Tasks. The user can cancel any task before it starts running.
