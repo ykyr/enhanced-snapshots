@@ -16,7 +16,7 @@
       "ssh_pty": true,
       "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-{{timestamp}}",
       "tags": {
-        "Name": "Snapdirector",
+        "Name": "Enhanced Snapshots",
         "Description": "Backup, recovery, disaster recovery, snapshot, schedule"
       }
     }
