@@ -92,7 +92,7 @@ To perform a backup, the user selects the appropriate EBS volume and clicks the 
 ## Creating a Schedule
 The user can automate the process of creating backups thanks to the Schedule feature. Schedules can be edited with Enhanced Snapshots web UI; schedules are displayed and stored in [Cron](https://en.wikipedia.org/wiki/Cron) format. The interval of backups is from one minute to one year. If necessary, schedules can be disabled.
 
-![New schedule](https://cloud.githubusercontent.com/assets/1557544/9999927/1331a7ec-6067-11e5-868a-cf2a7c831168.png)
+![New schedule](https://cloud.githubusercontent.com/assets/14750068/10096546/1b936620-637b-11e5-859c-6e4e1b58d62e.png)
 
 Users can also edit or delete existing schedules.
 ![Schedule menu](https://cloud.githubusercontent.com/assets/1557544/10000004/8c13719a-6067-11e5-9775-11e166d143d1.png)
@@ -113,11 +113,11 @@ A list of all users is available in the Users tab. All information about users e
 
 # Removing the Enhanced Snapshots system
 If you choose to remove Enhanced Snapshots, you can do so by clicking the Uninstall button on the Settings tab.
-![Settings](https://cloud.githubusercontent.com/assets/1557544/10001465/cfdb5a70-606f-11e5-8e43-2334c7f14600.png)
+![Settings](https://cloud.githubusercontent.com/assets/14750068/10096547/1baaef7a-637b-11e5-8a70-09a38198abfa.png)
 
 The system will continue with the removal of all resources once you enter the EC2 Instance Id for the EC2 instance that Enhanced Snapshots is running on.
 
-![Delete](https://cloud.githubusercontent.com/assets/1557544/10001468/d462832a-606f-11e5-8ec9-539f31c3d1db.png)
+![Delete](https://cloud.githubusercontent.com/assets/14750068/10096548/1bbace0e-637b-11e5-9e5e-a295bd8464c9.png)
 
 The following resources are deleted:
 * EC2 Instance 
