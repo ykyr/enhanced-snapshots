@@ -44,19 +44,19 @@ Open source is another important feature of this solution and we plan to create 
 *Step 1*
 
 For the first login please use the following credentials:
-* Login: admin@snapdirector
+* Login: admin@enhancedsnapshots
 * Password:  Your AWS EC2 Instance ID (available on the [AWS console](https://console.aws.amazon.com/ec2))
-![Login](https://cloud.githubusercontent.com/assets/1557544/9996392/c7223fe0-6054-11e5-8f26-d81fd5240840.png)
+![Login](https://cloud.githubusercontent.com/assets/14750068/10096550/1bbf5294-637b-11e5-93d2-e1de26060c46.png)
 
 *Step 2*
 
 Enter the AWS Public Key and AWS Secret Key
-![Settings](https://cloud.githubusercontent.com/assets/1557544/9996391/c7212b5a-6054-11e5-9597-4e0e55e20343.png)
+![Settings](https://cloud.githubusercontent.com/assets/14750068/10096549/1bbe26a8-637b-11e5-9580-0b86c72f9839.png)
 
 *Step 3*
 
 The next picture shows the list of additional resources that will be created: S3 bucket, SDFS settings, SQS Queue, and DynamoDB tables. To view more information these resource the user can click the question mark.
-![Settings(2)](https://cloud.githubusercontent.com/assets/14750068/10023444/e40ff136-615a-11e5-9f38-a3e153826ab8.png)
+![Settings(2)](https://cloud.githubusercontent.com/assets/14750068/10096552/1bc0a446-637b-11e5-993d-ec3ec9411c2b.png)
 
 **Warning**
 Once "Setup" has been clicked on this screen, these settings cannot be changed.
@@ -64,24 +64,24 @@ Once "Setup" has been clicked on this screen, these settings cannot be changed.
 *Step 4*
 
 Time to create a first user. The first user always will receive admin rights. Email is used as user ID.
-![New user](https://cloud.githubusercontent.com/assets/1557544/9996394/c726a210-6054-11e5-968a-f3c989ffd358.png)
+![New user](https://cloud.githubusercontent.com/assets/14750068/10096551/1bc07480-637b-11e5-8bbb-e1720c1959ca.png)
 
 *Step 5*
 
 After the system is received all necessary input data it will create all necessary environment.
-![Please wait](https://cloud.githubusercontent.com/assets/14750068/10023445/e410406e-615a-11e5-9ae4-53e9b20a5b95.png)
+![Please wait](https://cloud.githubusercontent.com/assets/14750068/10096553/1bc35a1a-637b-11e5-8a1a-857cf14e010f.png)
 
 After the configurations process will be successfully completed, the following notification will appear.
-![Congratulations](https://cloud.githubusercontent.com/assets/14750068/10023442/e40e7c02-615a-11e5-8d36-46ae12bc50c8.png)
+![Congratulations](https://cloud.githubusercontent.com/assets/14750068/10096554/1bd25362-637b-11e5-91c8-32d0dcee7498.png)
 
 *Step 6*
 
 The system automatically redirects the user to the login page. Now the user will use their credentials that were created during
 wizard to log in.
-![Login](https://cloud.githubusercontent.com/assets/1557544/9996396/c7270c32-6054-11e5-95ff-47632ba834b8.png)
+![Login](https://cloud.githubusercontent.com/assets/14750068/10096556/1bdcd81e-637b-11e5-86ff-205b3d992a13.png)
 
 After logging in, the list of EBS volumes for the local region is displayed.
-![Volumes](https://cloud.githubusercontent.com/assets/14750068/10023446/e4102a70-615a-11e5-9eda-915d04bbb5b1.png)
+![Volumes](https://cloud.githubusercontent.com/assets/14750068/10096555/1bda2dd0-637b-11e5-86b5-87d4463e337d.png)
 
 
 # Management Tasks
