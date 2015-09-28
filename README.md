@@ -6,6 +6,7 @@
 *Table of contents*
 * [Product Description](#product-description)
 * [Key Features](#key-features)
+* [Customer managed policies](#customer-managed-policies)
 * [Getting Started](#getting-started)
 * [Management Tasks](#management-tasks)
 * [Removing the Enhanced Snapshots system](#removing-the-enhanced-snapshots-system)
@@ -40,6 +41,56 @@ Open source is another important feature of this solution and we plan to create 
 * The ability to assign different (two) roles for users.
 * Simple and intuitive wizard for initial setup process.
 
+# Customer managed policies
+* Before starting work, the user must make sure that his credentials correspond to the following right permission.
+  
+ {
+    "Version": "2012-10-17", 
+    "Statement": [
+        {
+            "Sid": "1",
+            "Effect": "Allow",  
+            "Action": [  
+                "iam:GetUser",  
+                "iam:ListRoles",  
+                "ec2:AttachVolume",  
+                "ec2:CreateSnapshot",  
+                "ec2:CreateTags",  
+                "ec2:CreateVolume",  
+                "ec2:DeleteSnapshot",  
+                "ec2:DeleteTags",  
+                "ec2:DeleteVolume",  
+                "ec2:DescribeAvailabilityZones",  
+                "ec2:DescribeInstanceAttribute",  
+                "ec2:DescribeInstanceStatus",  
+                "ec2:DescribeInstances",  
+                "ec2:TerminateInstances",  
+                "ec2:DescribeRegions",  
+                "ec2:DescribeReservedInstances",  
+                "ec2:DescribeReservedInstancesListings",  
+                "ec2:DescribeSnapshotAttribute",  
+                "ec2:DescribeSnapshots",  
+                "ec2:DescribeTags",  
+                "ec2:DescribeVolumeAttribute",  
+                "ec2:DescribeVolumeStatus",  
+                "ec2:DescribeVolumes",  
+                "ec2:DetachVolume",  
+                "ec2:EnableVolumeIO",  
+                "ec2:ModifyInstanceAttribute",  
+                "ec2:ModifySnapshotAttribute",  
+                "ec2:ModifyVolumeAttribute",  
+                "ec2:ResetSnapshotAttribute",  
+                "sqs:\*",  
+                "s3:\*",  
+                "dynamodb:\*"  
+            ],  
+            "Resource": "\*"
+        }
+    ]
+}
+  
+Otherwise, the user will get an error message. For example:
+![DynamoDBAccessDenied](https://cloud.githubusercontent.com/assets/14750068/10131876/08b816c8-65dc-11e5-871e-0f8d5fcdd303.png)
 # Getting Started
 *Step 1*
 
