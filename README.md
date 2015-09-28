@@ -6,6 +6,7 @@
 *Table of contents*
 * [Product Description](#product-description)
 * [Key Features](#key-features)
+* [Customer managed policies](#customer-managed-policies)
 * [Getting Started](#getting-started)
 * [Management Tasks](#management-tasks)
 * [Removing the Enhanced Snapshots system](#removing-the-enhanced-snapshots-system)
@@ -40,23 +41,73 @@ Open source is another important feature of this solution and we plan to create 
 * The ability to assign different (two) roles for users.
 * Simple and intuitive wizard for initial setup process.
 
+# Customer managed policies
+ Before starting work, the user must make sure that his credentials correspond to the following right permission.
+  
+ {
+    "Version": "2012-10-17", 
+    "Statement": [
+        {
+            "Sid": "1",
+            "Effect": "Allow",  
+            "Action": [  
+                "iam:GetUser",  
+                "iam:ListRoles",  
+                "ec2:AttachVolume",  
+                "ec2:CreateSnapshot",  
+                "ec2:CreateTags",  
+                "ec2:CreateVolume",  
+                "ec2:DeleteSnapshot",  
+                "ec2:DeleteTags",  
+                "ec2:DeleteVolume",  
+                "ec2:DescribeAvailabilityZones",  
+                "ec2:DescribeInstanceAttribute",  
+                "ec2:DescribeInstanceStatus",  
+                "ec2:DescribeInstances",  
+                "ec2:TerminateInstances",  
+                "ec2:DescribeRegions",  
+                "ec2:DescribeReservedInstances",  
+                "ec2:DescribeReservedInstancesListings",  
+                "ec2:DescribeSnapshotAttribute",  
+                "ec2:DescribeSnapshots",  
+                "ec2:DescribeTags",  
+                "ec2:DescribeVolumeAttribute",  
+                "ec2:DescribeVolumeStatus",  
+                "ec2:DescribeVolumes",  
+                "ec2:DetachVolume",  
+                "ec2:EnableVolumeIO",  
+                "ec2:ModifyInstanceAttribute",  
+                "ec2:ModifySnapshotAttribute",  
+                "ec2:ModifyVolumeAttribute",  
+                "ec2:ResetSnapshotAttribute",  
+                "sqs:\*",  
+                "s3:\*",  
+                "dynamodb:\*"  
+            ],  
+            "Resource": "\*"
+        }
+    ]
+}
+  
+Otherwise, the user will get an error message. For example:
+![DynamoDBAccessDenied](https://cloud.githubusercontent.com/assets/14750068/10131876/08b816c8-65dc-11e5-871e-0f8d5fcdd303.png)
 # Getting Started
 *Step 1*
 
 For the first login please use the following credentials:
-* Login: admin@snapdirector
+* Login: admin@enhancedsnapshots
 * Password:  Your AWS EC2 Instance ID (available on the [AWS console](https://console.aws.amazon.com/ec2))
-![Login](https://cloud.githubusercontent.com/assets/1557544/9996392/c7223fe0-6054-11e5-8f26-d81fd5240840.png)
+![Login](https://cloud.githubusercontent.com/assets/14750068/10096550/1bbf5294-637b-11e5-93d2-e1de26060c46.png)
 
 *Step 2*
 
 Enter the AWS Public Key and AWS Secret Key
-![Settings](https://cloud.githubusercontent.com/assets/1557544/9996391/c7212b5a-6054-11e5-9597-4e0e55e20343.png)
+![Settings](https://cloud.githubusercontent.com/assets/14750068/10096549/1bbe26a8-637b-11e5-9580-0b86c72f9839.png)
 
 *Step 3*
 
 The next picture shows the list of additional resources that will be created: S3 bucket, SDFS settings, SQS Queue, and DynamoDB tables. To view more information these resource the user can click the question mark.
-![Settings(2)](https://cloud.githubusercontent.com/assets/14750068/10023444/e40ff136-615a-11e5-9f38-a3e153826ab8.png)
+![Settings(2)](https://cloud.githubusercontent.com/assets/14750068/10096552/1bc0a446-637b-11e5-993d-ec3ec9411c2b.png)
 
 **Warning**
 Once "Setup" has been clicked on this screen, these settings cannot be changed.
@@ -64,24 +115,24 @@ Once "Setup" has been clicked on this screen, these settings cannot be changed.
 *Step 4*
 
 Time to create a first user. The first user always will receive admin rights. Email is used as user ID.
-![New user](https://cloud.githubusercontent.com/assets/1557544/9996394/c726a210-6054-11e5-968a-f3c989ffd358.png)
+![New user](https://cloud.githubusercontent.com/assets/14750068/10096551/1bc07480-637b-11e5-8bbb-e1720c1959ca.png)
 
 *Step 5*
 
 After the system is received all necessary input data it will create all necessary environment.
-![Please wait](https://cloud.githubusercontent.com/assets/14750068/10023445/e410406e-615a-11e5-9ae4-53e9b20a5b95.png)
+![Please wait](https://cloud.githubusercontent.com/assets/14750068/10096553/1bc35a1a-637b-11e5-8a1a-857cf14e010f.png)
 
 After the configurations process will be successfully completed, the following notification will appear.
-![Congratulations](https://cloud.githubusercontent.com/assets/14750068/10023442/e40e7c02-615a-11e5-8d36-46ae12bc50c8.png)
+![Congratulations](https://cloud.githubusercontent.com/assets/14750068/10096554/1bd25362-637b-11e5-91c8-32d0dcee7498.png)
 
 *Step 6*
 
 The system automatically redirects the user to the login page. Now the user will use their credentials that were created during
 wizard to log in.
-![Login](https://cloud.githubusercontent.com/assets/1557544/9996396/c7270c32-6054-11e5-95ff-47632ba834b8.png)
+![Login](https://cloud.githubusercontent.com/assets/14750068/10096556/1bdcd81e-637b-11e5-86ff-205b3d992a13.png)
 
 After logging in, the list of EBS volumes for the local region is displayed.
-![Volumes](https://cloud.githubusercontent.com/assets/14750068/10023446/e4102a70-615a-11e5-9eda-915d04bbb5b1.png)
+![Volumes](https://cloud.githubusercontent.com/assets/14750068/10096555/1bda2dd0-637b-11e5-86b5-87d4463e337d.png)
 
 
 # Management Tasks
@@ -92,7 +143,7 @@ To perform a backup, the user selects the appropriate EBS volume and clicks the 
 ## Creating a Schedule
 The user can automate the process of creating backups thanks to the Schedule feature. Schedules can be edited with Enhanced Snapshots web UI; schedules are displayed and stored in [Cron](https://en.wikipedia.org/wiki/Cron) format. The interval of backups is from one minute to one year. If necessary, schedules can be disabled.
 
-![New schedule](https://cloud.githubusercontent.com/assets/1557544/9999927/1331a7ec-6067-11e5-868a-cf2a7c831168.png)
+![New schedule](https://cloud.githubusercontent.com/assets/14750068/10096546/1b936620-637b-11e5-859c-6e4e1b58d62e.png)
 
 Users can also edit or delete existing schedules.
 ![Schedule menu](https://cloud.githubusercontent.com/assets/1557544/10000004/8c13719a-6067-11e5-9775-11e166d143d1.png)
@@ -113,11 +164,11 @@ A list of all users is available in the Users tab. All information about users e
 
 # Removing the Enhanced Snapshots system
 If you choose to remove Enhanced Snapshots, you can do so by clicking the Uninstall button on the Settings tab.
-![Settings](https://cloud.githubusercontent.com/assets/1557544/10001465/cfdb5a70-606f-11e5-8e43-2334c7f14600.png)
+![Settings](https://cloud.githubusercontent.com/assets/14750068/10096547/1baaef7a-637b-11e5-8a70-09a38198abfa.png)
 
 The system will continue with the removal of all resources once you enter the EC2 Instance Id for the EC2 instance that Enhanced Snapshots is running on.
 
-![Delete](https://cloud.githubusercontent.com/assets/1557544/10001468/d462832a-606f-11e5-8ec9-539f31c3d1db.png)
+![Delete](https://cloud.githubusercontent.com/assets/14750068/10096548/1bbace0e-637b-11e5-9e5e-a295bd8464c9.png)
 
 The following resources are deleted:
 * EC2 Instance 
