@@ -52,8 +52,9 @@ angular.module('web')
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
                 $scope.isAWS = false;
-            }, function () {
+            }, function (data, status) {
                 $scope.isValidInstance = false;
+                $scope.invalidMessage = data.localizedMessage;
             })
         };
 
