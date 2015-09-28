@@ -42,7 +42,7 @@ Open source is another important feature of this solution and we plan to create 
 * Simple and intuitive wizard for initial setup process.
 
 # Customer managed policies
-* Before starting work, the user must make sure that his credentials correspond to the following right permission.
+ Before starting work, the user must make sure that his credentials correspond to the following right permission.
   
  {
     "Version": "2012-10-17", 
