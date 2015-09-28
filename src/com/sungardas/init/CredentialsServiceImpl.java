@@ -48,6 +48,13 @@ import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
 @Service
 class CredentialsServiceImpl implements CredentialsService {
+    private static final String NOT_ENOUGH_MEMORY_ERROR = "Current instance doesn't  provide enough memory to start SDFS. At least 3.75GB  of total memory expected.";
+    private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
+    private static final String CANT_GET_ACCESS_SQS = "Can't get access to SQS. Check policy list used for AWS user";
+    private static final String CANT_GET_INSTANCE_ID = "Can't get instance ID from metadata . Check policy list used for AWS user";
+    private static final String INVALID_CREDS =   "Invalid AWS credentials";
+    private static final String CANT_GET_ACCESS_S3 =   "Can't get access to S3. Check policy list used for AWS user";
+
     private final String catalinaHomeEnvPropName = "catalina.home";
     private final String confFolderName = "conf";
     private final String propFileName = "amazon.properties";
@@ -140,30 +147,36 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
-        AmazonS3Client client = new AmazonS3Client(credentials);
-        List<Bucket> allBuckets = client.listBuckets();
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
-        String bucketName = "com.sungardas.enhancedsnapshots." + instanceId;
-        result.add(new InitConfigurationDto.S3(bucketName, false));
+        try {
+            AmazonS3Client client = new AmazonS3Client(credentials);
+            List<Bucket> allBuckets = client.listBuckets();
+            String bucketName = "com.sungardas.enhancedsnapshots." + instanceId;
+            result.add(new InitConfigurationDto.S3(bucketName, false));
 
-        String currentLocation = Regions.getCurrentRegion().toString();
-        if(currentLocation.equalsIgnoreCase("us-east-1")) currentLocation = "US";
-        for (Bucket bucket : allBuckets) {
-            try {
-                ListObjectsRequest request = new ListObjectsRequest()
-                        .withBucketName(bucket.getName()).withPrefix("sdfsstate");
-                if (client.listObjects(request).getObjectSummaries().size() > 0) {
-                    if (bucketName.equals(bucket.getName())) {
-                        result.get(0).setCreated(true);
-                    } else {
-                        String location = client.getBucketLocation(bucket.getName());
+            String currentLocation = Regions.getCurrentRegion().toString();
+            if (currentLocation.equalsIgnoreCase("us-east-1")) currentLocation = "US";
+            for (Bucket bucket : allBuckets) {
+                try {
+                    ListObjectsRequest request = new ListObjectsRequest()
+                            .withBucketName(bucket.getName()).withPrefix("sdfsstate");
+                    if (client.listObjects(request).getObjectSummaries().size() > 0) {
+                        if (bucketName.equals(bucket.getName())) {
+                            result.get(0).setCreated(true);
+                        } else {
+                            String location = client.getBucketLocation(bucket.getName());
 
-                        if (!location.equalsIgnoreCase(currentLocation))
-                            continue;
-                        result.add(new InitConfigurationDto.S3(bucket.getName(), true));
+                            if (!location.equalsIgnoreCase(currentLocation))
+                                continue;
+                            result.add(new InitConfigurationDto.S3(bucket.getName(), true));
+                        }
                     }
+                } catch (AmazonS3Exception ignored) {
                 }
-            }catch( AmazonS3Exception ignored) {}
+            }
+        }catch (AmazonS3Exception e) {
+            LOG.warn("Can't get access to S3");
+            throw new DataAccessException(CANT_GET_ACCESS_S3, e);
         }
         return result;
 
@@ -211,7 +224,7 @@ class CredentialsServiceImpl implements CredentialsService {
         long required = (long) (3.5 * BYTES_IN_GB);
         if (total < required) {
             LOG.error("Total memory {}. Required memory {}", total, required);
-            throw new EnhancedSnapshotsException("Not enough memory to create SDFS volume");
+            throw new EnhancedSnapshotsException(NOT_ENOUGH_MEMORY_ERROR);
         }
     }
 
@@ -226,7 +239,7 @@ class CredentialsServiceImpl implements CredentialsService {
             return tableNames.containsAll(Arrays.asList(tables));
         } catch (AmazonServiceException e) {
             LOG.warn("Can't get a list of existed tables", e);
-            throw new DataAccessException(e);
+            throw new DataAccessException(CANT_GET_ACCESS_DYNAMODB, e);
         }
     }
 
@@ -255,7 +268,7 @@ class CredentialsServiceImpl implements CredentialsService {
             return false;
         } catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of queues. Check AWS credentials!", accessError);
-            throw new DataAccessException(accessError);
+            throw new DataAccessException(CANT_GET_ACCESS_SQS,accessError);
         }
     }
 
@@ -277,7 +290,7 @@ class CredentialsServiceImpl implements CredentialsService {
             AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(accessKey, secretKey));
             ec2Client.describeRegions();
         } catch (AmazonClientException e) {
-            throw new ConfigurationException("Invalid AWS credentials", e);
+            throw new ConfigurationException(INVALID_CREDS, e);
         }
     }
 
@@ -291,7 +304,7 @@ class CredentialsServiceImpl implements CredentialsService {
             return iamClient.getUser().getUser().getArn().replaceAll("[^\\d]", "");
         } catch (AmazonServiceException accessError) {
             LOG.info("Can't get userId. Check AWS credentials!", accessError);
-            throw new DataAccessException(accessError);
+            throw new DataAccessException(CANT_GET_INSTANCE_ID, accessError);
         }
     }
 
