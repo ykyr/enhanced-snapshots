@@ -54,7 +54,7 @@ angular.module('web')
                 $scope.isAWS = false;
             }, function (data, status) {
                 $scope.isValidInstance = false;
-                $scope.invalidMessage = data.localizedMessage;
+                $scope.invalidMessage = data.data.localizedMessage;
             })
         };
 
