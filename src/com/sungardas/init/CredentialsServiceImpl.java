@@ -93,13 +93,10 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
-        validateCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
-        this.credentials = new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
     }
 
     @Override
     public void storeCredentials() {
-        validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
@@ -277,21 +274,6 @@ class CredentialsServiceImpl implements CredentialsService {
         File configf = new File(volumeConfigPath);
         File mountPointf = new File(mountPoint);
         return configf.exists() && mountPointf.exists();
-    }
-
-    private void validateCredentials(String accessKey, String secretKey) {
-        if (accessKey == null || accessKey.isEmpty()) {
-            throw new ConfigurationException("Empty AWS AccessKey");
-        }
-        if (secretKey == null || secretKey.isEmpty()) {
-            throw new ConfigurationException("Empty AWS SecretKey");
-        }
-        try {
-            AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(accessKey, secretKey));
-            ec2Client.describeRegions();
-        } catch (AmazonClientException e) {
-            throw new ConfigurationException(INVALID_CREDS, e);
-        }
     }
 
     private File getPropertyFile() {
