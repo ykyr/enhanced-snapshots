@@ -44,8 +44,12 @@ public class AmazonConfigProvider {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        return new InstanceProfileCredentialsProvider().getCredentials();
+        if(credentials==null) {
+            credentials = new InstanceProfileCredentialsProvider().getCredentials();
+        }
+        return credentials;
     }
+    private AWSCredentials credentials;
 
     @Bean(name = "amazonDynamoDB")
     public ProxyFactoryBean amazonDynamoDbProxy(){
