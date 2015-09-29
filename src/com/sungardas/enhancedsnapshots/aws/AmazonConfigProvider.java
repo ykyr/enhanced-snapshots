@@ -2,6 +2,7 @@ package com.sungardas.enhancedsnapshots.aws;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -48,7 +49,7 @@ public class AmazonConfigProvider {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        return new ProfileCredentialsProvider().getCredentials();
+        return new InstanceProfileCredentialsProvider().getCredentials();
     }
 
     @Bean(name = "amazonDynamoDB")

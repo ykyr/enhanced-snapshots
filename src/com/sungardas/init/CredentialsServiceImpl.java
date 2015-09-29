@@ -4,7 +4,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -86,13 +86,12 @@ class CredentialsServiceImpl implements CredentialsService {
     @PostConstruct
     private void init() {
         instanceId = EC2MetadataUtils.getInstanceId();
-        credentials = new ProfileCredentialsProvider().getCredentials();
+        credentials = new InstanceProfileCredentialsProvider().getCredentials();
     }
 
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
-        //TODO: add credential provider
         validateCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
         this.credentials = new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
     }
