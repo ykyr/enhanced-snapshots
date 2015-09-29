@@ -7,30 +7,7 @@
                 </div>
                 <div class="panel-body">
 
-                    <form ng-show="isAWS && isValidInstance" class="form-horizontal">
-                        <div class="form-group">
-                            <label class="col-sm-4 control-label">AWS Public Key:</label>
-                            <div class="col-sm-6">
-                                <input type="text" class="form-control" ng-model="awsPublicKey" required autofocus>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="col-sm-4 control-label">AWS Secret Key:</label>
-                            <div class="col-sm-6">
-                                <input type="password" class="form-control" ng-model="awsSecretKey" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group col-sm-10">
-                        <div class="pull-right">
-                            <button type="button" class="btn btn-success" ng-click="sendAWS()">OK</button>
-                            <a ui-sref="login" href class="btn btn-default">Cancel</a>
-                        </div>
-                        </div>
-                    </form>
-
-                    <div class="form-horizontal" ng-hide="isAWS">
+                    <div class="form-horizontal">
 
                         <div class="flex-container card">
                             <div class="flex-2 flex-center">

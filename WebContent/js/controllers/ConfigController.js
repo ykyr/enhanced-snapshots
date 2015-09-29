@@ -41,7 +41,6 @@ angular.module('web')
             false: 'danger'
         };
 
-        $scope.isAWS = true;
         $scope.isValidInstance = true;
         $scope.selectBucket = function (bucket) {
             $scope.selectedBucket = bucket;
@@ -57,22 +56,7 @@ angular.module('web')
                 $scope.invalidMessage = data.data.localizedMessage;
             })
         };
-
-        $scope.awsPublicKey = '';
-        $scope.awsSecretKey = '';
-
-        $scope.sendAWS = function () {
-            var keysCollection = {
-                'awsPublicKey': $scope.awsPublicKey,
-                'awsSecretKey': $scope.awsSecretKey
-            };
-
-            Configuration.send('awscreds', keysCollection).then(function () {
-                getCurrentConfig();
-
-            }, function (data, status) {
-            });
-        };
+        getCurrentConfig();
 
         $scope.sendSettings = function () {
             var settings = {
