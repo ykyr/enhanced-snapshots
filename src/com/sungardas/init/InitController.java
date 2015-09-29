@@ -50,7 +50,7 @@ class InitController implements ApplicationContextAware {
     private void init() {
         // check that aws credentials are provided
         // try to authenticate as real admin user
-        if (credentialsService.isAwsPropertyFileExists()) {
+        if (credentialsService.areCredentialsValid() && credentialsService.isAwsPropertyFileExists()) {
             LOG.info("Valid aws credentials were provided.");
             refreshContext();
         }
@@ -92,6 +92,11 @@ class InitController implements ApplicationContextAware {
         credentialsService.setCredentialsIfValid(credentials);
         LOG.info("provided aws keys");
         return new ResponseEntity<>(OK);
+    }
+
+    @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.GET)
+    public ResponseEntity getAwsCredentialsInfo() {
+        return new ResponseEntity<>(credentialsService.credentialsAreProvided(), HttpStatus.OK);
     }
 
 

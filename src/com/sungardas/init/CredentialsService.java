@@ -13,6 +13,8 @@ interface CredentialsService {
 
     boolean areCredentialsValid();
 
+    boolean credentialsAreProvided();
+
     InitConfigurationDto getInitConfigurationDto();
 
     boolean isAwsPropertyFileExists();

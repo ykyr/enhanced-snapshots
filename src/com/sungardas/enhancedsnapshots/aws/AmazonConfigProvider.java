@@ -15,6 +15,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
+import com.sungardas.enhancedsnapshots.service.SharedDataService;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +26,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository")
 public class AmazonConfigProvider {
-    @Value("${amazon.aws.accesskey}")
-    private String amazonAWSAccessKey;
 
-    @Value("${amazon.aws.secretkey}")
-    private String amazonAWSSecretKey;
+    private String amazonAWSAccessKey = System.getenv("AWS_ACCESS_KEY_ID");
+    private String amazonAWSSecretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
 
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
@@ -38,7 +37,7 @@ public class AmazonConfigProvider {
     private String region;
 
     @Autowired
-    private CryptoService cryptoService;
+    private SharedDataService sharedDataService;
 
 
     @Bean(name = "retryInterceptor")
@@ -48,10 +47,11 @@ public class AmazonConfigProvider {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
-        String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
-        new ProfileCredentialsProvider();
-        return new BasicAWSCredentials(accessKey, secretKey);
+        if (amazonAWSAccessKey != null && amazonAWSSecretKey != null) {
+            return new BasicAWSCredentials(amazonAWSAccessKey, amazonAWSSecretKey);
+        } else {
+            return sharedDataService.getAWSCredentials();
+        }
     }
 
     @Bean(name = "amazonDynamoDB")
