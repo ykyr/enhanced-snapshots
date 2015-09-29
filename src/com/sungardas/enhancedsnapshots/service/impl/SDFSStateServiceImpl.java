@@ -172,7 +172,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
-            System.out.println("getAWSAccessKeyId: "+credentials.getAWSAccessKeyId()+"; getAWSSecretKey: "+credentials.getAWSSecretKey());
             String[] parameters = {pathToExec, credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey(), size, bucketName};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
