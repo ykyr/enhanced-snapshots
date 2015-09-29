@@ -49,7 +49,7 @@ public class AmazonConfigProvider {
         }
         return credentials;
     }
-    private AWSCredentials credentials;
+    private static AWSCredentials credentials;
 
     @Bean(name = "amazonDynamoDB")
     public ProxyFactoryBean amazonDynamoDbProxy(){
@@ -93,9 +93,14 @@ public class AmazonConfigProvider {
     }
 
     private AmazonDynamoDB amazonDynamoDB() {
-        AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
-        amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
-        return amazonDynamoDB;
+        try{
+            AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
+            amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
+            return amazonDynamoDB;
+        }catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        }
     }
 
     private AmazonEC2 amazonEC2() {

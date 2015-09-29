@@ -60,8 +60,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private final String catalinaHomeEnvPropName = "catalina.home";
     private final String confFolderName = "conf";
     private final String propFileName = "amazon.properties";
-    private final String accessKeyPropName = "amazon.aws.accesskey";
-    private final String secretKeyPropName = "amazon.aws.secretkey";
+
     private static final String AMAZON_S3_BUCKET = "amazon.s3.bucket";
     private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
     private static final String AMAZON_AWS_REGION = "amazon.aws.region";
