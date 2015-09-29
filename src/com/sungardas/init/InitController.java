@@ -89,7 +89,7 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.POST)
     public ResponseEntity<String> setAwsCredential(@RequestBody CredentialsDto credentials) {
-        credentialsService.setCredentialsIfValid(credentials);
+        //credentialsService.setCredentialsIfValid(credentials);
         LOG.info("provided aws keys");
         return new ResponseEntity<>(OK);
     }
