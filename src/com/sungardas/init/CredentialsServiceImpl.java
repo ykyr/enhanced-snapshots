@@ -301,7 +301,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private String getAccountId() {
         AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentials);
         try {
-            return iamClient.getRole(new GetRoleRequest()).getRole().getArn().replaceAll("[^\\d]", "");
+            return iamClient.getRole(new GetRoleRequest().withRoleName("es_admin")).getRole().getArn().replaceAll("[^\\d]", "");
         } catch (AmazonServiceException accessError) {
             LOG.info("Can't get account Id. Check AWS roles!", accessError);
             throw new DataAccessException(CANT_GET_INSTANCE_ID, accessError);
