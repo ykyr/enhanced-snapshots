@@ -103,14 +103,14 @@ class CreateAppConfigurationImpl {
             } else {
                 isBucketContainsSDFSMetadata = sdfsService.containsSdfsMetadata(s3.getBucketName());
             }
-            LOG.info("Initialization SDFS");
-            if (isBucketContainsSDFSMetadata) {
-                sdfsService.restoreState();
-            } else {
-                File sdfsConfig = new File("/etc/sdfs/awspool-volume-cfg.xml");
-                if(sdfsConfig.exists()) sdfsConfig.delete();
-                sdfsService.startupSDFS(sdfsSize, s3Bucket);
-            }
+//            LOG.info("Initialization SDFS");
+//            if (isBucketContainsSDFSMetadata) {
+//                sdfsService.restoreState();
+//            } else {
+//                File sdfsConfig = new File("/etc/sdfs/awspool-volume-cfg.xml");
+//                if(sdfsConfig.exists()) sdfsConfig.delete();
+//                sdfsService.startupSDFS(sdfsSize, s3Bucket);
+//            }
 
             System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
