@@ -26,11 +26,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository")
 public class AmazonConfigProvider {
-    @Value("${amazon.aws.accesskey}")
-    private String amazonAWSAccessKey;
-
-    @Value("${amazon.aws.secretkey}")
-    private String amazonAWSSecretKey;
 
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
