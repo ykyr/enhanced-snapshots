@@ -48,10 +48,7 @@ public class AmazonConfigProvider {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
-        String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
-        new ProfileCredentialsProvider();
-        return new BasicAWSCredentials(accessKey, secretKey);
+        return new ProfileCredentialsProvider().getCredentials();
     }
 
     @Bean(name = "amazonDynamoDB")

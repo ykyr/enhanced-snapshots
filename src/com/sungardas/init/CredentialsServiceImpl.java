@@ -4,6 +4,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -85,11 +86,13 @@ class CredentialsServiceImpl implements CredentialsService {
     @PostConstruct
     private void init() {
         instanceId = EC2MetadataUtils.getInstanceId();
+        credentials = new ProfileCredentialsProvider().getCredentials();
     }
 
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
+        //TODO: add credential provider
         validateCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
         this.credentials = new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
     }
@@ -100,9 +103,6 @@ class CredentialsServiceImpl implements CredentialsService {
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
-
-            properties.setProperty(accessKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSAccessKeyId()));
-            properties.setProperty(secretKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSSecretKey()));
             properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, instanceId);
             properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().get(0).getBucketName());
