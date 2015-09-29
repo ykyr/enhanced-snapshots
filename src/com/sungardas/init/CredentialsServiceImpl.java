@@ -14,6 +14,7 @@ import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
+import com.amazonaws.services.identitymanagement.model.GetRoleRequest;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
@@ -300,9 +301,9 @@ class CredentialsServiceImpl implements CredentialsService {
     private String getAccountId() {
         AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentials);
         try {
-            return iamClient.getUser().getUser().getArn().replaceAll("[^\\d]", "");
+            return iamClient.getRole(new GetRoleRequest()).getRole().getArn().replaceAll("[^\\d]", "");
         } catch (AmazonServiceException accessError) {
-            LOG.info("Can't get userId. Check AWS credentials!", accessError);
+            LOG.info("Can't get account Id. Check AWS roles!", accessError);
             throw new DataAccessException(CANT_GET_INSTANCE_ID, accessError);
         }
     }
