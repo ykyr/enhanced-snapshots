@@ -50,7 +50,7 @@ class InitController implements ApplicationContextAware {
     private void init() {
         // check that aws credentials are provided
         // try to authenticate as real admin user
-        if (credentialsService.areCredentialsValid() && credentialsService.isAwsPropertyFileExists()) {
+        if (credentialsService.isAwsPropertyFileExists()) {
             LOG.info("Valid aws credentials were provided.");
             refreshContext();
         }

@@ -2,7 +2,6 @@ package com.sungardas.enhancedsnapshots.aws;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -15,7 +14,6 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
-import com.sungardas.enhancedsnapshots.service.SharedDataService;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +24,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository")
 public class AmazonConfigProvider {
+    @Value("${amazon.aws.accesskey}")
+    private String amazonAWSAccessKey;
 
-    private String amazonAWSAccessKey = System.getenv("AWS_ACCESS_KEY_ID");
-    private String amazonAWSSecretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+    @Value("${amazon.aws.secretkey}")
+    private String amazonAWSSecretKey;
 
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
@@ -37,7 +37,7 @@ public class AmazonConfigProvider {
     private String region;
 
     @Autowired
-    private SharedDataService sharedDataService;
+    private CryptoService cryptoService;
 
 
     @Bean(name = "retryInterceptor")
@@ -47,11 +47,9 @@ public class AmazonConfigProvider {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        if (amazonAWSAccessKey != null && amazonAWSSecretKey != null) {
-            return new BasicAWSCredentials(amazonAWSAccessKey, amazonAWSSecretKey);
-        } else {
-            return sharedDataService.getAWSCredentials();
-        }
+        String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
+        String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
+        return new BasicAWSCredentials(accessKey, secretKey);
     }
 
     @Bean(name = "amazonDynamoDB")
