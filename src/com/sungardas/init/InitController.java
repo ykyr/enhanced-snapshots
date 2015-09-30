@@ -95,8 +95,12 @@ class InitController implements ApplicationContextAware {
     }
 
     @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.GET)
-    public ResponseEntity getAwsCredentialsInfo() {
-        return new ResponseEntity<>(credentialsService.credentialsAreProvided(), HttpStatus.OK);
+    public ResponseEntity<String> getAwsCredentialsInfo() {
+        if (credentialsService.credentialsAreProvided()) {
+            return new ResponseEntity<>("{\"contains\": true}", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("{\"contains\": false}", HttpStatus.OK);
+        }
     }
 
 

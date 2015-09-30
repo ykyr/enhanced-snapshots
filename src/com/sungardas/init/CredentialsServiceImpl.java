@@ -25,7 +25,6 @@ import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.CryptoService;
 import com.sungardas.enhancedsnapshots.service.SharedDataService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,8 +55,8 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
     private static final String CANT_GET_ACCESS_SQS = "Can't get access to SQS. Check policy list used for AWS user";
     private static final String CANT_GET_INSTANCE_ID = "Can't get instance ID from metadata . Check policy list used for AWS user";
-    private static final String INVALID_CREDS =   "Invalid AWS credentials";
-    private static final String CANT_GET_ACCESS_S3 =   "Can't get access to S3. Check policy list used for AWS user";
+    private static final String INVALID_CREDS = "Invalid AWS credentials";
+    private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
 
     private final String catalinaHomeEnvPropName = "catalina.home";
     private final String confFolderName = "conf";
@@ -89,14 +88,6 @@ class CredentialsServiceImpl implements CredentialsService {
         AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
         if (AWS_ACCESS_KEY_ID != null || AWS_SECRET_ACCESS_KEY != null) {
             credentials = new BasicAWSCredentials(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
-            if (!areCredentialsValid()) {
-                try {
-                    LOG.error("Provided AWS credentials are invalid! Stopping application... ");
-                    Runtime.getRuntime().exec("sudo service tomcat8 stop");
-                } catch (IOException e) {
-                    LOG.warn("Failed to stop Tomcat. ", e);
-                }
-            }
         }
         instanceId = EC2MetadataUtils.getInstanceId();
     }
@@ -189,7 +180,7 @@ class CredentialsServiceImpl implements CredentialsService {
                 } catch (AmazonS3Exception ignored) {
                 }
             }
-        }catch (AmazonS3Exception e) {
+        } catch (AmazonS3Exception e) {
             LOG.warn("Can't get access to S3");
             throw new DataAccessException(CANT_GET_ACCESS_S3, e);
         }
@@ -283,7 +274,7 @@ class CredentialsServiceImpl implements CredentialsService {
             return false;
         } catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of queues. Check AWS credentials!", accessError);
-            throw new DataAccessException(CANT_GET_ACCESS_SQS,accessError);
+            throw new DataAccessException(CANT_GET_ACCESS_SQS, accessError);
         }
     }
 
