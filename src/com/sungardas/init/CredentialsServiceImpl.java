@@ -26,7 +26,6 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
-import com.sungardas.enhancedsnapshots.service.SharedDataService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,7 +144,13 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public boolean credentialsAreProvided() {
-        return credentials != null;
+       if(credentials!=null) {
+           validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+           return true;
+       } else {
+           return false;
+       }
+
     }
 
     @Override
