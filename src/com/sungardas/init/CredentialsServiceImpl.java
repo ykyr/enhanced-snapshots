@@ -26,7 +26,6 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
-import com.sungardas.enhancedsnapshots.service.SharedDataService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,12 +55,14 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
     private static final String CANT_GET_ACCESS_SQS = "Can't get access to SQS. Check policy list used for AWS user";
     private static final String CANT_GET_INSTANCE_ID = "Can't get instance ID from metadata . Check policy list used for AWS user";
-    private static final String INVALID_CREDS =   "Invalid AWS credentials";
-    private static final String CANT_GET_ACCESS_S3 =   "Can't get access to S3. Check policy list used for AWS user";
+    private static final String INVALID_CREDS = "Invalid AWS credentials";
+    private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
 
     private final String catalinaHomeEnvPropName = "catalina.home";
     private final String confFolderName = "conf";
     private final String propFileName = "amazon.properties";
+    private final String accessKeyPropName = "amazon.aws.accesskey";
+    private final String secretKeyPropName = "amazon.aws.secretkey";
     private static final String AMAZON_S3_BUCKET = "amazon.s3.bucket";
     private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
     private static final String AMAZON_AWS_REGION = "amazon.aws.region";
@@ -78,25 +79,18 @@ class CredentialsServiceImpl implements CredentialsService {
     @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
 
-    @Autowired
-    private SharedDataService sharedDataService;
-
     private InitConfigurationDto initConfigurationDto = null;
+
+
+    @Autowired
+    private CryptoService cryptoService;
 
     @PostConstruct
     private void init() {
         AWS_ACCESS_KEY_ID = System.getenv().get("AWS_ACCESS_KEY_ID");
         AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
-        if (AWS_ACCESS_KEY_ID != null || AWS_SECRET_ACCESS_KEY != null) {
+        if (AWS_ACCESS_KEY_ID != null && AWS_SECRET_ACCESS_KEY != null) {
             credentials = new BasicAWSCredentials(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
-            if (!areCredentialsValid()) {
-                try {
-                    LOG.error("Provided AWS credentials are invalid! Stopping application... ");
-                    Runtime.getRuntime().exec("sudo service tomcat8 stop");
-                } catch (IOException e) {
-                    LOG.warn("Failed to stop Tomcat. ", e);
-                }
-            }
         }
         instanceId = EC2MetadataUtils.getInstanceId();
     }
@@ -106,7 +100,6 @@ class CredentialsServiceImpl implements CredentialsService {
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
         validateCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
         this.credentials = new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
-        sharedDataService.setAWSCredentials(this.credentials);
     }
 
     @Override
@@ -115,6 +108,9 @@ class CredentialsServiceImpl implements CredentialsService {
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
+
+            properties.setProperty(accessKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSAccessKeyId()));
+            properties.setProperty(secretKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSSecretKey()));
             properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, instanceId);
             properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().get(0).getBucketName());
@@ -148,7 +144,13 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public boolean credentialsAreProvided() {
-        return credentials != null;
+       if(credentials!=null) {
+           validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+           return true;
+       } else {
+           return false;
+       }
+
     }
 
     @Override
@@ -189,7 +191,7 @@ class CredentialsServiceImpl implements CredentialsService {
                 } catch (AmazonS3Exception ignored) {
                 }
             }
-        }catch (AmazonS3Exception e) {
+        } catch (AmazonS3Exception e) {
             LOG.warn("Can't get access to S3");
             throw new DataAccessException(CANT_GET_ACCESS_S3, e);
         }
@@ -283,7 +285,7 @@ class CredentialsServiceImpl implements CredentialsService {
             return false;
         } catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of queues. Check AWS credentials!", accessError);
-            throw new DataAccessException(CANT_GET_ACCESS_SQS,accessError);
+            throw new DataAccessException(CANT_GET_ACCESS_SQS, accessError);
         }
     }
 
