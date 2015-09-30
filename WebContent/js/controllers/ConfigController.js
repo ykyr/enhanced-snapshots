@@ -48,7 +48,7 @@ angular.module('web')
         };
 
         var getAwsStatus = function () {
-            Configuration.get().then(function (result, status) {
+            Configuration.get('awscreds').then(function (result, status) {
                 if (result.data.contains) {
                     getCurrentConfig();
                 }
