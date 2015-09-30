@@ -41,11 +41,26 @@ angular.module('web')
             false: 'danger'
         };
 
-        $scope.isAWS = true;
+        $scope.isAWS = false;
         $scope.isValidInstance = true;
         $scope.selectBucket = function (bucket) {
             $scope.selectedBucket = bucket;
         };
+
+        var getAwsStatus = function () {
+            Configuration.get().then(function (result, status) {
+                if (result.data.contains) {
+                    getCurrentConfig();
+                }
+                else{
+                    $scope.isAWS = true;
+                }
+            }, function (data, status) {
+                $scope.isValidInstance = false;
+                $scope.invalidMessage = data.data.localizedMessage;
+            });
+        };
+        getAwsStatus();
 
         var getCurrentConfig = function () {
             Configuration.get('current').then(function (result, status) {
