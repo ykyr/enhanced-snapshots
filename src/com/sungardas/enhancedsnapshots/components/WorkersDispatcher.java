@@ -147,7 +147,7 @@ public class WorkersDispatcher {
                     }
                     sleep();
                 } catch (AmazonClientException e) {
-                    // Skip amazon exceptions
+                    LOGtw.error(e);
                 } catch (Exception e) {
                     LOGtw.error(e);
                     if(entry != null) {

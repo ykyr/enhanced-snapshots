@@ -78,7 +78,6 @@ public class TasksDispatcher {
 
 
             while (true) {
-                //LOGts.info("\n\nLook for waiting tasks..");
                 try {
                     List<TaskEntry> taskModels = taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.WAITING.getStatus(), instanceId, Boolean.FALSE.toString());
                     for (TaskEntry entry : taskModels) {
@@ -90,7 +89,7 @@ public class TasksDispatcher {
                     }
                     taskRepository.save(taskModels);
                 } catch (AmazonClientException e){
-
+                    LOGts.error("Failed to send task to SQS", e);
                 }
                 sleep();
             }

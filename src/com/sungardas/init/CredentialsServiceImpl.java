@@ -318,7 +318,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private String getAccountId() {
         AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentials);
         try {
-            return iamClient.getUser().getUser().getArn().replaceAll("[^\\d]", "");
+            return iamClient.getUser().getUser().getArn().split(":")[4];
         } catch (AmazonServiceException accessError) {
             LOG.info("Can't get userId. Check AWS credentials!", accessError);
             throw new DataAccessException(CANT_GET_INSTANCE_ID, accessError);
