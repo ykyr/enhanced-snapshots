@@ -2,7 +2,6 @@ package com.sungardas.enhancedsnapshots.aws;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -50,7 +49,6 @@ public class AmazonConfigProvider {
     public AWSCredentials amazonAWSCredentials() {
         String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
         String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
-        new ProfileCredentialsProvider();
         return new BasicAWSCredentials(accessKey, secretKey);
     }
 

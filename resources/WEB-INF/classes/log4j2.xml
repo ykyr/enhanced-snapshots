@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO">
+<Configuration status="DEBUG">
   <Appenders>
     <Console target="SYSTEM_OUT" name="console">
       <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1} - %msg%n"/>
@@ -15,7 +15,7 @@
     </RollingFile>
   </Appenders>
   <Loggers>
-    <Root additivity="false" level="info">
+    <Root additivity="false" level="debug">
       <AppenderRef ref="console"/>
       <AppenderRef ref="RollingFile"/>
     </Root>

@@ -29,6 +29,11 @@ class CredentialsServiceDev implements CredentialsService {
     }
 
     @Override
+    public boolean credentialsAreProvided() {
+        return false;
+    }
+
+    @Override
     public InitConfigurationDto getInitConfigurationDto() {
         InitConfigurationDto config = new InitConfigurationDto();
 

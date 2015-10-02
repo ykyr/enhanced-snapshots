@@ -30,7 +30,7 @@ import java.util.Map;
 @Service
 @Profile("prod")
 public class SDFSStateServiceImpl implements SDFSStateService {
-    private static final org.apache.log4j.Logger LOG = org.apache.log4j.LogManager.getLogger(SDFSStateServiceImpl.class);
+    private static final Logger LOG = LogManager.getLogger(SDFSStateServiceImpl.class);
 
     @Autowired
     private AWSCredentials credentials;
@@ -105,6 +105,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             //SDFS mount time
             Thread.sleep(15000);
             restoreBackups();
+            LOG.info("SDFS state restored.");
         } catch (Exception e) {
             if (file != null && file.exists()) {
                 file.delete();
@@ -115,13 +116,15 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     private void restoreBackups() {
         File[] files = new File(SDFS_MOUNT_POINT).listFiles();
-        System.out.println("Found "+files.length+" files in system backup");
+        LOG.info("Found {} files in system backup", files.length);
         for (File file : files) {
             BackupEntry entry = getBackupFromFile(file);
             if (entry != null) {
                 backupRepository.save(entry);
             }
         }
+        LOG.info("All backups restored.");
+
     }
 
     private BackupEntry getBackupFromFile(File file) {

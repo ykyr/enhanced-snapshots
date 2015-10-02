@@ -48,12 +48,15 @@ import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
 @Service
 class CredentialsServiceImpl implements CredentialsService {
+
+    private static String AWS_ACCESS_KEY_ID;
+    private static String AWS_SECRET_ACCESS_KEY;
     private static final String NOT_ENOUGH_MEMORY_ERROR = "Current instance doesn't  provide enough memory to start SDFS. At least 3.75GB  of total memory expected.";
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
     private static final String CANT_GET_ACCESS_SQS = "Can't get access to SQS. Check policy list used for AWS user";
     private static final String CANT_GET_INSTANCE_ID = "Can't get instance ID from metadata . Check policy list used for AWS user";
-    private static final String INVALID_CREDS =   "Invalid AWS credentials";
-    private static final String CANT_GET_ACCESS_S3 =   "Can't get access to S3. Check policy list used for AWS user";
+    private static final String INVALID_CREDS = "Invalid AWS credentials! The instance should be terminated. Please, provide correct AccessKeyID and SecretKey for a new Instance.";
+    private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
 
     private final String catalinaHomeEnvPropName = "catalina.home";
     private final String confFolderName = "conf";
@@ -84,6 +87,11 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @PostConstruct
     private void init() {
+        AWS_ACCESS_KEY_ID = System.getenv().get("AWS_ACCESS_KEY_ID");
+        AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
+        if (AWS_ACCESS_KEY_ID != null && AWS_SECRET_ACCESS_KEY != null) {
+            credentials = new BasicAWSCredentials(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
+        }
         instanceId = EC2MetadataUtils.getInstanceId();
     }
 
@@ -107,13 +115,11 @@ class CredentialsServiceImpl implements CredentialsService {
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, instanceId);
             properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().get(0).getBucketName());
             properties.setProperty(AMAZON_SDFS_SIZE, initConfigurationDto.getSdfs().getVolumeSize());
-
             properties.store(new FileOutputStream(file), "AWS Credentials");
         } catch (IOException ioException) {
             throw new ConfigurationException("Can not create amazon.properties file\n" +
                     "Check path or permission: " + file.getAbsolutePath(), ioException);
         }
-
     }
 
     @Override
@@ -134,6 +140,17 @@ class CredentialsServiceImpl implements CredentialsService {
             LOG.warn("Provided AWS credentials are invalid.");
             return false;
         }
+    }
+
+    @Override
+    public boolean credentialsAreProvided() {
+       if(credentials!=null) {
+           validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+           return true;
+       } else {
+           return false;
+       }
+
     }
 
     @Override
@@ -174,7 +191,7 @@ class CredentialsServiceImpl implements CredentialsService {
                 } catch (AmazonS3Exception ignored) {
                 }
             }
-        }catch (AmazonS3Exception e) {
+        } catch (AmazonS3Exception e) {
             LOG.warn("Can't get access to S3");
             throw new DataAccessException(CANT_GET_ACCESS_S3, e);
         }
@@ -268,7 +285,7 @@ class CredentialsServiceImpl implements CredentialsService {
             return false;
         } catch (AmazonServiceException accessError) {
             LOG.info("Can't get a list of queues. Check AWS credentials!", accessError);
-            throw new DataAccessException(CANT_GET_ACCESS_SQS,accessError);
+            throw new DataAccessException(CANT_GET_ACCESS_SQS, accessError);
         }
     }
 
@@ -301,7 +318,7 @@ class CredentialsServiceImpl implements CredentialsService {
     private String getAccountId() {
         AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentials);
         try {
-            return iamClient.getUser().getUser().getArn().replaceAll("[^\\d]", "");
+            return iamClient.getUser().getUser().getArn().split(":")[4];
         } catch (AmazonServiceException accessError) {
             LOG.info("Can't get userId. Check AWS credentials!", accessError);
             throw new DataAccessException(CANT_GET_INSTANCE_ID, accessError);

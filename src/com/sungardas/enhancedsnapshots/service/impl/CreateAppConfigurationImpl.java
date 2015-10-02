@@ -32,8 +32,8 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -153,7 +153,6 @@ class CreateAppConfigurationImpl {
     private void createTable(
             String tableName, long readCapacityUnits, long writeCapacityUnits,
             String hashKeyName, String hashKeyType) {
-
         createTable(tableName, readCapacityUnits, writeCapacityUnits,
                 hashKeyName, hashKeyType, null, null);
     }
@@ -162,11 +161,8 @@ class CreateAppConfigurationImpl {
             String tableName, long readCapacityUnits, long writeCapacityUnits,
             String hashKeyName, String hashKeyType,
             String rangeKeyName, String rangeKeyType) {
-
         DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
-
         try {
-
             ArrayList<KeySchemaElement> keySchema = new ArrayList<>();
             keySchema.add(new KeySchemaElement()
                     .withAttributeName(hashKeyName)
@@ -185,24 +181,18 @@ class CreateAppConfigurationImpl {
                         .withAttributeName(rangeKeyName)
                         .withAttributeType(rangeKeyType));
             }
-
             CreateTableRequest request = new CreateTableRequest()
                     .withTableName(tableName)
                     .withKeySchema(keySchema)
                     .withProvisionedThroughput(new ProvisionedThroughput()
                             .withReadCapacityUnits(readCapacityUnits)
                             .withWriteCapacityUnits(writeCapacityUnits));
-
-
             request.setAttributeDefinitions(attributeDefinitions);
-
             LOG.info("Issuing CreateTable request for " + tableName);
-
             Table table = dynamoDB.createTable(request);
             LOG.info("Waiting for " + tableName
                     + " to be created...this may take a while...");
             table.waitForActive();
-
         } catch (Exception e) {
             LOG.error("CreateTable request failed for " + tableName, e);
             throw new ConfigurationException("CreateTable request failed for " + tableName, e);
@@ -232,17 +222,19 @@ class CreateAppConfigurationImpl {
             try {
                 TimeUnit.SECONDS.sleep(65);
             } catch (InterruptedException e) {
+                LOG.warn("Failed to delete queue [{}].", queue);
             }
         }
-
         CreateQueueRequest createQueueRequest = new CreateQueueRequest()
                 .withQueueName(queue);
         amazonSQS.createQueue(createQueueRequest);
+        LOG.info("Queue [{}] was created successfully.", queue);
     }
 
     private void createS3Bucket() {
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
         amazonS3.createBucket(bucketName);
+        LOG.info("Bucket [{}] was created successfully.", bucketName);
     }
 
     private void storeWorkerConfiguration() {
@@ -277,9 +269,11 @@ class CreateAppConfigurationImpl {
                     Table table = dynamoDB.getTable(tableToDelete);
                     table.delete();
                     table.waitForDelete();
+                    LOG.info("Table {} was removed successfully.", table);
                 } catch (ResourceNotFoundException e) {
                     // Skip exception if resource not found
                 } catch (AmazonServiceException tableNotFoundOrCredError) {
+                    LOG.warn("Failed to remove table {}", tableToDelete);
                     throw new ConfigurationException("Can't delete tables. check AWS credentials");
                 } catch (InterruptedException e) {
                     throw new ConfigurationException(e);
