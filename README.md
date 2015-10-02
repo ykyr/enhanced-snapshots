@@ -47,29 +47,26 @@ Open source is another important feature of this solution and we plan to create 
 Or, stop making me read stuff and let me try it out!
 
 We have provided an easy way to get up and running with Enhanced Snapshots via a [Condensation](https://github.com/SungardAS/condensation) [template](https://github.com/SungardAS/particles-enhanced-snapshots). To launch a CloudFormation stack based on the template, first decide which region you will deploy in. In that region you will need the following information:
-* An Enhanced Snapshots AMI id from the following table
-
-| Region | Region ID | AMI ID |
-| ------------- | --------| ------------- |
-| N. California |us-west-1| ami-17bb7d53 |
-| Oregon |us-west-2| ami-98a643ab |
-| N. Virginia |us-east-1| ami-f30e4f96| 
 * An [EC2 keypair](https://us-east-1.console.aws.amazon.com/ec2/v2/home?region=us-west-1#KeyPairs)
 * A [VPC id](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:) (Not needed if you are using the default VPC.)
 
-Once you have collected that information, click the link below for your chosen region:
+**Note** When creating the CloudFormation stack, on the Review page, make sure to check the box at the bottom of the page in the Capabilities section.
 
-| Region | Link |
-| ------ | ---- |
-| us-east-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-east-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
-| us-west-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
-| us-west-2 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-2.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
-| eu-west-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
-| eu-central-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-central-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
-| ap-southeast-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
-| ap-southeast-2 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-2.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
-| ap-northeast-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-northeast-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
-| sa-east-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.sa-east-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+![Capabilities_checkbox](https://cloud.githubusercontent.com/assets/1557544/10256747/2feb29cc-6921-11e5-9d3b-d7974fb5753f.png)
+
+Once you have collected that information, find your target region, note the AMI ID for that region, and click the corresponding Launch Stack link.
+
+| Region | AMI ID | Link |
+| ------ | ------ | ---- |
+| us-east-1 | ami-f30e4f96 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-east-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| us-west-1 |  ami-17bb7d53 |[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| us-west-2 | ami-98a643ab |[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-2.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| eu-west-1 | | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| eu-central-1 | | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-central-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| ap-southeast-1 | | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| ap-southeast-2 | | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-2.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| ap-northeast-1 | | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-northeast-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| sa-east-1 | | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.sa-east-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
 
 Once the CloudFormation stack has finished building, go to its Outputs tab at the bottom of the AWS Console and click the URL, then proceed to [Getting Started](#getting-started).
 
