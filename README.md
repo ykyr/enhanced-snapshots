@@ -3,6 +3,7 @@
 
 ![SGAS Logo](https://cloud.githubusercontent.com/assets/1557544/10001677/ed73c260-6070-11e5-86d1-8b85a146688d.png)
 ![Enhanced Snapshots Logo](https://cloud.githubusercontent.com/assets/1557544/10249820/431a4e82-68f5-11e5-9d97-95498364d9a4.png)
+
 *Table of contents*
 * [Product Description](#product-description)
 * [Key Features](#key-features)
@@ -53,7 +54,7 @@ We have provided an easy way to get up and running with Enhanced Snapshots via a
 | N. California |us-west-1| ami-17bb7d53 |
 | Oregon |us-west-2| ami-98a643ab |
 | N. Virginia |us-east-1| ami-f30e4f96| 
-* An [EC2 keypair](https://us-east-1.console.aws.amazon.com/ec2/v2/home?region=us-west-1#KeyPairs
+* An [EC2 keypair](https://us-east-1.console.aws.amazon.com/ec2/v2/home?region=us-west-1#KeyPairs)
 * A [VPC id](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:) (Not needed if you are using the default VPC.)
 
 Once you have collected that information, click the link below for your chosen region:
@@ -83,6 +84,7 @@ For the first login please use the following credentials:
 ![Login](https://cloud.githubusercontent.com/assets/14750068/10096550/1bbf5294-637b-11e5-93d2-e1de26060c46.png)
 
 *Step 2*
+
 **Note**
 This step is only required if you built your environment directly from our AMI rather than following the [Quick start](#quick-start) section above.
 
@@ -112,8 +114,8 @@ After the configurations process will be successfully completed, the following n
 
 *Step 6*
 
-The system automatically redirects the user to the login page. Now the user will use their credentials that were created during
-wizard to log in.
+The system automatically redirects the user to the login page. Now the user will use their credentials that were created in step 4.
+
 ![Login](https://cloud.githubusercontent.com/assets/14750068/10096556/1bdcd81e-637b-11e5-86ff-205b3d992a13.png)
 
 After logging in, the list of EBS volumes for the local region is displayed.
