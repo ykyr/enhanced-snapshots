@@ -74,7 +74,7 @@ Once you have collected that information, click the link below for your chosen r
 Once the CloudFormation stack has finished building, go to its Outputs tab at the bottom of the AWS Console and click the URL, then proceed to [Getting Started](#getting-started).
 
 # Getting Started
-If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
+**Note** If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually [create an IAM user](#iam-user-creation-optional) and then create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
 
 *Step 1*
 
