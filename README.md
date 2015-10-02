@@ -2,25 +2,26 @@
 **[Sungard Availability Services](http://sungardas.com) | [Labs](http://blog.sungardas.com/CTOLabs/)**
 
 ![SGAS Logo](https://cloud.githubusercontent.com/assets/1557544/10001677/ed73c260-6070-11e5-86d1-8b85a146688d.png)
-
+![Enhanced Snapshots Logo](https://cloud.githubusercontent.com/assets/1557544/10249820/431a4e82-68f5-11e5-9d97-95498364d9a4.png)
 *Table of contents*
 * [Product Description](#product-description)
 * [Key Features](#key-features)
-* [Customer managed policies](#customer-managed-policies)
+* [Quick start](#quick-start)
 * [Getting Started](#getting-started)
 * [Management Tasks](#management-tasks)
 * [Removing the Enhanced Snapshots system](#removing-the-enhanced-snapshots-system)
+* [IAM user creation (optional)](#iam-user-creation-optional)
 
 # Product Description
-The Sungard AS Enhanced Snapshots tool is intended for managing backups for infrastructure that is located in the Amazon Web Services cloud. The product will be useful for customers who want to reduce:
+The Sungard AS Enhanced Snapshots software manages backups for servers located in the Amazon Web Services cloud. The product will be useful for customers who want to reduce:
 * the cost of storing backups
 * time spent by IT engineers on routine backup management tasks.
 
-Using to an intuitive interface, you can automate routine tasks such as creation of backups and deletion of old (unused) backups easily. Since these tasks are automated, you will minimize the risks that are associated with human error.
+Using an intuitive interface, you can easily automate routine tasks such as creation of backups and deletion of old backups. Since these tasks are automated, you will minimize the risks that are associated with human error.
 
-Technical support is not available for the first version of the product. Comments and suggestions can be sent to AWSEnhancedSnapshots@sungardas.com. Customer support service may be added in a future release.
+Technical support is not available for the first version of the product; however, comments and suggestions are welcomed at AWSEnhancedSnapshots@sungardas.com. Customer support service may be added in a future release.
 
-Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, ASM will be free.
+Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, Enhanced Snapshots will be free.
 
 # Key Features
 ## Backup & Recovery 
@@ -41,57 +42,39 @@ Open source is another important feature of this solution and we plan to create 
 * The ability to assign different (two) roles for users.
 * Simple and intuitive wizard for initial setup process.
 
-# Customer managed policies
- Before starting work, the user must make sure that his credentials correspond to the following right permission.
-  
- {
-    "Version": "2012-10-17", 
-    "Statement": [
-        {
-            "Sid": "1",
-            "Effect": "Allow",  
-            "Action": [  
-                "iam:GetUser",  
-                "iam:ListRoles",  
-                "ec2:AttachVolume",  
-                "ec2:CreateSnapshot",  
-                "ec2:CreateTags",  
-                "ec2:CreateVolume",  
-                "ec2:DeleteSnapshot",  
-                "ec2:DeleteTags",  
-                "ec2:DeleteVolume",  
-                "ec2:DescribeAvailabilityZones",  
-                "ec2:DescribeInstanceAttribute",  
-                "ec2:DescribeInstanceStatus",  
-                "ec2:DescribeInstances",  
-                "ec2:TerminateInstances",  
-                "ec2:DescribeRegions",  
-                "ec2:DescribeReservedInstances",  
-                "ec2:DescribeReservedInstancesListings",  
-                "ec2:DescribeSnapshotAttribute",  
-                "ec2:DescribeSnapshots",  
-                "ec2:DescribeTags",  
-                "ec2:DescribeVolumeAttribute",  
-                "ec2:DescribeVolumeStatus",  
-                "ec2:DescribeVolumes",  
-                "ec2:DetachVolume",  
-                "ec2:EnableVolumeIO",  
-                "ec2:ModifyInstanceAttribute",  
-                "ec2:ModifySnapshotAttribute",  
-                "ec2:ModifyVolumeAttribute",  
-                "ec2:ResetSnapshotAttribute",  
-                "sqs:\*",  
-                "s3:\*",  
-                "dynamodb:\*"  
-            ],  
-            "Resource": "\*"
-        }
-    ]
-}
-  
-Otherwise, the user will get an error message. For example:
-![DynamoDBAccessDenied](https://cloud.githubusercontent.com/assets/14750068/10131876/08b816c8-65dc-11e5-871e-0f8d5fcdd303.png)
+# Quick start
+Or, stop making me read stuff and let me try it out!
+
+We have provided an easy way to get up and running with Enhanced Snapshots via a [Condensation](https://github.com/SungardAS/condensation) [template](https://github.com/SungardAS/particles-enhanced-snapshots). To launch a CloudFormation stack based on the template, first decide which region you will deploy in. In that region you will need the following information:
+* An Enhanced Snapshots AMI id from the following table
+
+| Region | Region ID | AMI ID |
+| ------------- | --------| ------------- |
+| N. California |us-west-1| ami-17bb7d53 |
+| Oregon |us-west-2| ami-98a643ab |
+| N. Virginia |us-east-1| ami-f30e4f96| 
+* An [EC2 keypair](https://us-east-1.console.aws.amazon.com/ec2/v2/home?region=us-west-1#KeyPairs
+* A [VPC id](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:) (Not needed if you are using the default VPC.)
+
+Once you have collected that information, click the link below for your chosen region:
+
+| Region | Link |
+| ------ | ---- |
+| us-east-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-east-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| us-west-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| us-west-2 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-2.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| eu-west-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| eu-central-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-central-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| ap-southeast-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| ap-southeast-2 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-2.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| ap-northeast-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-northeast-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+| sa-east-1 | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.sa-east-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json) |
+
+Once the CloudFormation stack has finished building, go to its Outputs tab at the bottom of the AWS Console and click the URL, then proceed to [Getting Started](#getting-started).
+
 # Getting Started
+If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
+
 *Step 1*
 
 For the first login please use the following credentials:
@@ -100,6 +83,8 @@ For the first login please use the following credentials:
 ![Login](https://cloud.githubusercontent.com/assets/14750068/10096550/1bbf5294-637b-11e5-93d2-e1de26060c46.png)
 
 *Step 2*
+**Note**
+This step is only required if you built your environment directly from our AMI rather than following the [Quick start](#quick-start) section above.
 
 Enter the AWS Public Key and AWS Secret Key
 ![Settings](https://cloud.githubusercontent.com/assets/14750068/10096549/1bbe26a8-637b-11e5-9580-0b86c72f9839.png)
@@ -175,3 +160,56 @@ The following resources are deleted:
 * S3 bucket and all backup data
 * SQS queue
 * DynamoDB tables
+
+# IAM user creation (optional)
+If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM user with the following policy.
+```
+ {
+    "Version": "2012-10-17", 
+    "Statement": [
+        {
+            "Sid": "1",
+            "Effect": "Allow",  
+            "Action": [  
+                "iam:GetUser",  
+                "iam:ListRoles",  
+                "ec2:AttachVolume",  
+                "ec2:CreateSnapshot",  
+                "ec2:CreateTags",  
+                "ec2:CreateVolume",  
+                "ec2:DeleteSnapshot",  
+                "ec2:DeleteTags",  
+                "ec2:DeleteVolume",  
+                "ec2:DescribeAvailabilityZones",  
+                "ec2:DescribeInstanceAttribute",  
+                "ec2:DescribeInstanceStatus",  
+                "ec2:DescribeInstances",  
+                "ec2:TerminateInstances",  
+                "ec2:DescribeRegions",  
+                "ec2:DescribeReservedInstances",  
+                "ec2:DescribeReservedInstancesListings",  
+                "ec2:DescribeSnapshotAttribute",  
+                "ec2:DescribeSnapshots",  
+                "ec2:DescribeTags",  
+                "ec2:DescribeVolumeAttribute",  
+                "ec2:DescribeVolumeStatus",  
+                "ec2:DescribeVolumes",  
+                "ec2:DetachVolume",  
+                "ec2:EnableVolumeIO",  
+                "ec2:ModifyInstanceAttribute",  
+                "ec2:ModifySnapshotAttribute",  
+                "ec2:ModifyVolumeAttribute",  
+                "ec2:ResetSnapshotAttribute",  
+                "sqs:\*",  
+                "s3:\*",  
+                "dynamodb:\*"  
+            ],  
+            "Resource": "\*"
+        }
+    ]
+}
+```
+Once the user is created, also create and save an API key, which will be needed to configure Enhanced Snapshots. 
+
+Without a properly configured user, the following error message will appear during configuration:
+![DynamoDBAccessDenied](https://cloud.githubusercontent.com/assets/14750068/10131876/08b816c8-65dc-11e5-871e-0f8d5fcdd303.png)
