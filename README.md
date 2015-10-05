@@ -148,7 +148,7 @@ A list of all users is available in the Users tab. All information about users e
 If you choose to remove Enhanced Snapshots, you can do so by clicking the Uninstall button on the Settings tab.
 ![Settings](https://cloud.githubusercontent.com/assets/14750068/10096547/1baaef7a-637b-11e5-8a70-09a38198abfa.png)
 
-The system will continue with the removal of all resources once you enter the EC2 Instance Id for the EC2 instance that Enhanced Snapshots is running on.
+The system will continue with the removal of all resources once you enter the EC2 Instance Id for the EC2 instance that Enhanced Snapshots is running on. 
 
 ![Delete](https://cloud.githubusercontent.com/assets/14750068/10096548/1bbace0e-637b-11e5-9e5e-a295bd8464c9.png)
 
@@ -157,6 +157,8 @@ The following resources are deleted:
 * S3 bucket and all backup data
 * SQS queue
 * DynamoDB tables
+
+**Note** It may take several minutes to delete all the resources, especially if backup data has been stored.
 
 # IAM user creation (optional)
 If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM user with the following policy.
