@@ -12,6 +12,7 @@
 * [Management Tasks](#management-tasks)
 * [Removing the Enhanced Snapshots system](#removing-the-enhanced-snapshots-system)
 * [IAM user creation (optional)](#iam-user-creation-optional)
+* [License](#license)
 
 # Product Description
 The Sungard AS Enhanced Snapshots software manages backups for servers located in the Amazon Web Services cloud. The product will be useful for customers who want to reduce:
@@ -66,10 +67,12 @@ Once you have collected that information, find your target region, note the AMI 
 
 **Note** Due to feature differences between the AWS regions, the service is not yet available in the following regions: ap-northeast-1, ap-southeast-1, ap-southeast-2, eu-central-1, eu-west-1 and sa-east-1.
 
-Once the CloudFormation stack has finished building, go to its Outputs tab at the bottom of the AWS Console and click the URL, then proceed to [Getting Started](#getting-started).
+Once the CloudFormation stack has finished building, go to its Outputs tab at the bottom of the AWS Console. Copy the instance ID (you will need it in a later step) and click the URL, then proceed to [Getting Started](#getting-started).
 
 # Getting Started
 **Note** If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually [create an IAM user](#iam-user-creation-optional) and then create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
+
+**Note** By default a new instance has a self-signed SSL certificate, so you will need to bypass your browser's security warning to start.
 
 *Step 1*
 
@@ -212,3 +215,10 @@ Once the user is created, also create and save an API key, which will be needed 
 
 Without a properly configured user, the following error message will appear during configuration:
 ![DynamoDBAccessDenied](https://cloud.githubusercontent.com/assets/14750068/10131876/08b816c8-65dc-11e5-871e-0f8d5fcdd303.png)
+
+# License
+
+See the [LICENSE.md](LICENSE.md) file for license rights and limitations (Apache 2).
+
+Use of the provided AMIs is covered by a separate [End User License Agreement](https://s3-us-west-2.amazonaws.com/sgaslogo/EULA_Enhanced_Snapshots_1.0.docx).
+
