@@ -21,7 +21,7 @@ The Sungard AS Enhanced Snapshots software manages backups for servers located i
 
 Using an intuitive interface, you can easily automate routine tasks such as creation of backups and deletion of old backups. Since these tasks are automated, you will minimize the risks that are associated with human error.
 
-Technical support is not available for the first version of the product; however, comments and suggestions are welcomed at sgaslabs+enhanced-snapshots@sungardas.com. Customer support service may be added in a future release.
+Technical support is not available for the first version of the product; however, please create a Github issue if you have any comments and suggestions. Customer support service may be added in a future release.
 
 Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, Enhanced Snapshots will be free.
 
