@@ -2,7 +2,8 @@
 **[Sungard Availability Services](http://sungardas.com) | [Labs](http://blog.sungardas.com/CTOLabs/)**
 
 ![SGAS Logo](https://cloud.githubusercontent.com/assets/1557544/10001677/ed73c260-6070-11e5-86d1-8b85a146688d.png)
-![Enhanced Snapshots Logo](https://cloud.githubusercontent.com/assets/1557544/10249820/431a4e82-68f5-11e5-9d97-95498364d9a4.png)
+
+![Enhanced Snapshots Logo](https://cloud.githubusercontent.com/assets/1557544/10324458/c19466ca-6c57-11e5-8318-a2eb1cd9e99b.png)
 
 *Table of contents*
 * [Product Description](#product-description)
