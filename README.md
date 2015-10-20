@@ -8,6 +8,7 @@
 *Table of contents*
 * [Product Description](#product-description)
 * [Key Features](#key-features)
+* [Limitations](#limitations)
 * [Quick start](#quick-start)
 * [Getting Started](#getting-started)
 * [Management Tasks](#management-tasks)
@@ -44,6 +45,10 @@ Open source is another important feature of this solution and we plan to create 
 ## Management
 * The ability to assign different (two) roles for users.
 * Simple and intuitive wizard for initial setup process.
+
+# Limitations
+* No support for management of volumes using OS level RAID
+* EBS volumes using EBS encryption must be [pre-warmed](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) to avoid significant storage overhead
 
 # Quick start
 Or, stop making me read stuff and let me try it out!
