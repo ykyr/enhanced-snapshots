@@ -226,5 +226,5 @@ Without a properly configured user, the following error message will appear duri
 
 See the [LICENSE.md](LICENSE.md) file for license rights and limitations (Apache 2).
 
-Use of the provided AMIs is covered by a separate [End User License Agreement](https://s3-us-west-2.amazonaws.com/sgaslogo/EULA_Enhanced_Snapshots_1.0.docx).
+Use of the provided AMIs is covered by a separate [End User License Agreement](https://s3-us-west-2.amazonaws.com/sgaslogo/EULA_Enhanced+Snapshots+for+AWS+2015-10-27.docx).
 
