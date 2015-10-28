@@ -50,7 +50,6 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private static final String NOT_ENOUGH_MEMORY_ERROR = "Current instance doesn't  provide enough memory to start SDFS. At least 3.75GB  of total memory expected.";
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
-    private static final String CANT_GET_ACCESS_SQS = "Can't get access to SQS. Check policy list used for AWS user";
     private static final String CANT_GET_INSTANCE_ID = "Can't get instance ID from metadata . Check policy list used for AWS user";
     private static final String INVALID_CREDS = "Invalid AWS credentials! The instance should be terminated. Please, provide correct AccessKeyID and SecretKey for a new Instance.";
     private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
