@@ -5,7 +5,6 @@ public class SystemConfiguration {
 
     private S3 s3;
     private SDFS sdfs;
-    private Queue queue;
     private Long lastBackup;
     private EC2Instance ec2Instance;
 
@@ -43,21 +42,12 @@ public class SystemConfiguration {
         this.lastBackup = lastBackup;
     }
 
-    public Queue getQueue() {
-        return queue;
-    }
-
-    public void setQueue(Queue queue) {
-        this.queue = queue;
-    }
-
-
     public static class S3 {
+        private String bucketName;
+
         public String getBucketName() {
             return bucketName;
         }
-
-        private String bucketName;
 
         public void setBucketName(String bucketName) {
             this.bucketName = bucketName;
@@ -94,19 +84,9 @@ public class SystemConfiguration {
         }
     }
 
-    public static class Queue {
-        private String queueName;
-
-        public String getQueueName() {
-            return queueName;
-        }
-
-        public void setQueueName(String queueName) {
-            this.queueName = queueName;
-        }
-    }
-
     public static class EC2Instance {
+        private String instanceID;
+
         public String getInstanceID() {
             return instanceID;
         }
@@ -114,8 +94,6 @@ public class SystemConfiguration {
         public void setInstanceID(String instanceID) {
             this.instanceID = instanceID;
         }
-
-        private String instanceID;
     }
 
 }

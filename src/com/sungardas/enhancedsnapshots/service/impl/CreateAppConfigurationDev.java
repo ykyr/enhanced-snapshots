@@ -30,12 +30,8 @@ public class CreateAppConfigurationDev {
         WorkerConfiguration workerConfiguration = new WorkerConfiguration();
         workerConfiguration.setConfigurationId("DEV");
         workerConfiguration.setEc2Region(Regions.EU_WEST_1.getName());
-        workerConfiguration.setFakeBackupSource(null);
         workerConfiguration.setSdfsMountPoint("");
         workerConfiguration.setSdfsVolumeName("");
-        workerConfiguration.setTaskQueueURL("DEV");
-        workerConfiguration.setUseFakeBackup(true);
-        workerConfiguration.setUseFakeEC2(true);
         return workerConfiguration;
     }
 }

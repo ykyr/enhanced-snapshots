@@ -8,7 +8,6 @@ import java.util.List;
 public class InitConfigurationDto {
     private List<S3> s3 = Collections.EMPTY_LIST;
     private SDFS sdfs;
-    private Queue queue;
     private DB db;
 
     public List<S3> getS3() {
@@ -25,14 +24,6 @@ public class InitConfigurationDto {
 
     public void setSdfs(SDFS sdfs) {
         this.sdfs = sdfs;
-    }
-
-    public Queue getQueue() {
-        return queue;
-    }
-
-    public void setQueue(Queue queue) {
-        this.queue = queue;
     }
 
     public DB getDb() {
@@ -111,28 +102,6 @@ public class InitConfigurationDto {
 
         public void setMountPoint(String mountPoint) {
             this.mountPoint = mountPoint;
-        }
-    }
-
-    public static class Queue {
-        @JsonProperty("isCreated")
-        private boolean created;
-        private String queueName;
-
-        public boolean isCreated() {
-            return created;
-        }
-
-        public void setCreated(boolean created) {
-            this.created = created;
-        }
-
-        public String getQueueName() {
-            return queueName;
-        }
-
-        public void setQueueName(String queueName) {
-            this.queueName = queueName;
         }
     }
 

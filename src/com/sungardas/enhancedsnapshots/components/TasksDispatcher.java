@@ -19,8 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.String.format;
-
 @Component
 @DependsOn("CreateAppConfiguration")
 public class TasksDispatcher {
@@ -61,17 +59,16 @@ public class TasksDispatcher {
         private final Logger LOGts = LogManager.getLogger(TasksSender.class);
 
         public void run() {
-            String queueURL = configuration.getTaskQueueURL();
             String instanceId = configuration.getConfigurationId();
 
-            LOGts.info(format("Starting recieving to tasks queue: %s", queueURL));
+            LOGts.info("Starting task dispatcher");
 
             while (true) {
                 try {
                     List<TaskEntry> taskModels = taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.WAITING.getStatus(), instanceId, Boolean.FALSE.toString());
                     for (TaskEntry entry : taskModels) {
                         entry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
-                        LOGts.info("QUEUED message: \n" + entry.toString());
+                        LOGts.info("QUEUED message: \n" + entry.getId());
                     }
                     taskRepository.save(taskModels);
                 } catch (AmazonClientException e) {

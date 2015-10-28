@@ -214,12 +214,8 @@ class CreateAppConfigurationImpl {
         WorkerConfiguration workerConfiguration = new WorkerConfiguration();
         workerConfiguration.setConfigurationId(EC2MetadataUtils.getInstanceId());
         workerConfiguration.setEc2Region(Regions.getCurrentRegion().getName());
-        workerConfiguration.setFakeBackupSource(null);
         workerConfiguration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
         workerConfiguration.setSdfsVolumeName(dto.getSdfs().getVolumeName());
-        workerConfiguration.setTaskQueueURL(dto.getQueue().getQueueName());
-        workerConfiguration.setUseFakeBackup(false);
-        workerConfiguration.setUseFakeEC2(false);
         workerConfiguration.setS3Bucket(sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName());
         return workerConfiguration;
     }

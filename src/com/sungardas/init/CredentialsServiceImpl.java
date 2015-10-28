@@ -48,28 +48,27 @@ import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 @Service
 class CredentialsServiceImpl implements CredentialsService {
 
-    private static String AWS_ACCESS_KEY_ID;
-    private static String AWS_SECRET_ACCESS_KEY;
     private static final String NOT_ENOUGH_MEMORY_ERROR = "Current instance doesn't  provide enough memory to start SDFS. At least 3.75GB  of total memory expected.";
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
     private static final String CANT_GET_ACCESS_SQS = "Can't get access to SQS. Check policy list used for AWS user";
     private static final String CANT_GET_INSTANCE_ID = "Can't get instance ID from metadata . Check policy list used for AWS user";
     private static final String INVALID_CREDS = "Invalid AWS credentials! The instance should be terminated. Please, provide correct AccessKeyID and SecretKey for a new Instance.";
     private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
-
-    private final String catalinaHomeEnvPropName = "catalina.home";
-    private final String confFolderName = "conf";
-    private final String propFileName = "amazon.properties";
-    private final String accessKeyPropName = "amazon.aws.accesskey";
-    private final String secretKeyPropName = "amazon.aws.secretkey";
     private static final String AMAZON_S3_BUCKET = "amazon.s3.bucket";
     private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
     private static final String AMAZON_AWS_REGION = "amazon.aws.region";
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
     private static final long BYTES_IN_GB = 1_073_741_824;
-    private AWSCredentials credentials = null;
+    private static String AWS_ACCESS_KEY_ID;
+    private static String AWS_SECRET_ACCESS_KEY;
+    private final String catalinaHomeEnvPropName = "catalina.home";
+    private final String confFolderName = "conf";
+    private final String propFileName = "amazon.properties";
+    private final String accessKeyPropName = "amazon.aws.accesskey";
+    private final String secretKeyPropName = "amazon.aws.secretkey";
     private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
+    private AWSCredentials credentials = null;
     private String instanceId;
 
     @Value("${enhancedsnapshots.sdfs.default.size}")
@@ -210,12 +209,6 @@ class CredentialsServiceImpl implements CredentialsService {
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
 
-        String queueName = getAccountId() + "/enhancedsnapshots_" + instanceId;
-        //TODO remove queue from model
-        InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
-        queue.setQueueName(queueName);
-        queue.setCreated(true);
-
         String volumeName = "awspool";
         String mountPoint = "/mnt/awspool/";
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
@@ -225,7 +218,6 @@ class CredentialsServiceImpl implements CredentialsService {
         sdfs.setCreated(sdfsAlreadyExists(volumeName, mountPoint));
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
-        initConfigurationDto.setQueue(queue);
         initConfigurationDto.setSdfs(sdfs);
         return initConfigurationDto;
     }
