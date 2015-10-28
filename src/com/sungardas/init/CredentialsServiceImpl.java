@@ -17,7 +17,6 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sun.management.UnixOperatingSystemMXBean;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
@@ -144,12 +143,12 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public boolean credentialsAreProvided() {
-       if(credentials!=null) {
-           validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
-           return true;
-       } else {
-           return false;
-       }
+        if (credentials != null) {
+            validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+            return true;
+        } else {
+            return false;
+        }
 
     }
 
@@ -212,9 +211,10 @@ class CredentialsServiceImpl implements CredentialsService {
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
 
         String queueName = getAccountId() + "/enhancedsnapshots_" + instanceId;
+        //TODO remove queue from model
         InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
         queue.setQueueName(queueName);
-        queue.setCreated(queueAlreadyExists(queueName));
+        queue.setCreated(true);
 
         String volumeName = "awspool";
         String mountPoint = "/mnt/awspool/";
@@ -274,20 +274,6 @@ class CredentialsServiceImpl implements CredentialsService {
         return !users.isEmpty();
     }
 
-
-    private boolean queueAlreadyExists(String queueName) {
-        AmazonSQSClient amazonSQSClient = new AmazonSQSClient(credentials);
-        amazonSQSClient.setRegion(Regions.getCurrentRegion());
-        try {
-            for (String s : amazonSQSClient.listQueues().getQueueUrls()) {
-                if (s.contains(queueName)) return true;
-            }
-            return false;
-        } catch (AmazonServiceException accessError) {
-            LOG.info("Can't get a list of queues. Check AWS credentials!", accessError);
-            throw new DataAccessException(CANT_GET_ACCESS_SQS, accessError);
-        }
-    }
 
     private boolean sdfsAlreadyExists(String volumeName, String mountPoint) {
         String volumeConfigPath = "/etc/sdfs/" + volumeName + "-volume-cfg.xml";
