@@ -13,22 +13,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class ConfigurationServiceImpl implements ConfigurationService {
 
-    @Value("${sungardas.worker.configuration}")
-    private String instanceId;
-
-    @Value("${amazon.s3.bucket}")
-    private String s3BucketName;
-
-    @Value("${enhancedsnapshots.sdfs.default.size}")
-    private String defaultVolumeSize;
-
     @Autowired
     WorkerConfigurationRepository configurationRepository;
-
     WorkerConfiguration currectConfiguration;
-
     @Autowired
     SDFSStateService sdfsStateService;
+    @Value("${sungardas.worker.configuration}")
+    private String instanceId;
+    @Value("${amazon.s3.bucket}")
+    private String s3BucketName;
+    @Value("${enhancedsnapshots.sdfs.default.size}")
+    private String defaultVolumeSize;
 
     @Override
     public WorkerConfiguration getWorkerConfiguration() {
@@ -41,8 +36,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     @Override
     public SystemConfiguration getSystemConfiguration() {
         SystemConfiguration configuration = new SystemConfiguration();
-        configuration.setQueue(new SystemConfiguration.Queue());
-        configuration.getQueue().setQueueName(currectConfiguration.getTaskQueueURL());
 
         configuration.setS3(new SystemConfiguration.S3());
         configuration.getS3().setBucketName(s3BucketName);
@@ -59,8 +52,8 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         return configuration;
     }
 
-	@Override
-	public void reload() {
-		currectConfiguration = null;
-	}
+    @Override
+    public void reload() {
+        currectConfiguration = null;
+    }
 }

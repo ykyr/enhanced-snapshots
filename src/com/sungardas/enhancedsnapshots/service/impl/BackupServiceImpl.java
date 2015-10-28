@@ -91,7 +91,7 @@ public class BackupServiceImpl implements BackupService {
         taskEntry.setVolume(volumeId);
         taskEntry.setType(DELETE.getType());
         taskEntry.setInstanceId(instanceId);
-        taskEntry.setStatus(TaskEntry.TaskEntryStatus.WAITING.getStatus());
+        taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
         taskEntry.setOptions(backupFile);
         taskEntry.setSchedulerName(user);
         taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));

@@ -39,7 +39,7 @@ public class TaskServiceImpl implements TaskService {
         String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
         newTask.setWorker(configurationId);
         newTask.setInstanceId(configurationId);
-        newTask.setStatus(TaskEntry.TaskEntryStatus.WAITING.getStatus());
+        newTask.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
         taskRepository.save(newTask);
         if (Boolean.valueOf(newTask.getRegular())) {
             try {
