@@ -145,8 +145,8 @@
                         </div>
                         <div class="flex-3 flex-center th"><span st-sort="volumeId">Volume ID</span></div>
                         <div class="flex-3 flex-center th"><span st-sort="volumeName">Name</span></div>
-                        <div class="flex-3 flex-center th"><span st-sort="size">Size</span></div>
                         <div class="flex-3 flex-center th"><span st-sort="instanceID">Instance</span></div>
+                        <div class="flex-3 flex-center th"><span st-sort="size">Size</span></div>
                         <div class="flex-3 flex-center th"><span st-sort="createTime">Created</span></div>
                         <div class="flex-2 flex-center th"><span st-sort="scheduled">Scheduled</span></div>
                     </div>
@@ -182,8 +182,8 @@
                         </div>
                         <div class="flex-3 flex-center">{{volume.volumeId}}</div>
                         <div class="flex-3 flex-center">{{volume.volumeName}}</div>
-                        <div class="flex-3 flex-center">{{volume.size}} GiB</div>
                         <div class="flex-3 flex-center">{{volume.instanceID}}</div>
+                        <div class="flex-3 flex-center">{{volume.size}} GiB</div>
                         <div class="flex-3 flex-center">{{volume.createTime | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
                         <div class="flex-2 flex-center">{{volume.scheduled ? 'Yes' : 'No'}}</div>
                     </div>
