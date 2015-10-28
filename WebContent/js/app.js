@@ -85,7 +85,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             }
         })
         .state('login', {
-            url: "/login",
+            url: "/login?err",
             templateUrl: "partials/login.html",
             controller: "LoginController"
         })
