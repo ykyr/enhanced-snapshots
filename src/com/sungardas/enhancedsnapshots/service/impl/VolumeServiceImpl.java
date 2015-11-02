@@ -1,11 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -15,13 +9,16 @@ import com.sungardas.enhancedsnapshots.dto.VolumeDto;
 import com.sungardas.enhancedsnapshots.dto.converter.VolumeDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
+import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.VolumeService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
 
 
 @Service
@@ -30,21 +27,33 @@ public class VolumeServiceImpl implements VolumeService {
     private static final Logger LOG = LogManager.getLogger(VolumeServiceImpl.class);
     private static final String REMOVED_VOLUME_STATE = "removed";
     private static final String EMPTY = "";
-
+    private static final VolumeDtoComparator volumeDtoComparator = new VolumeDtoComparator();
     @Autowired
     private AmazonEC2 amazonEC2;
-
     @Autowired
     private BackupRepository backupRepository;
-
     @Autowired
     private SchedulerService schedulerService;
-
     @Value("${amazon.aws.region}")
     private String region;
-
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
+    private Set<VolumeDto> cache;
+
+    @PostConstruct
+    private void init() {
+        schedulerService.addTask(new Task() {
+            @Override
+            public String getId() {
+                return getClass().getName();
+            }
+
+            @Override
+            public void run() {
+                expireCache();
+            }
+        }, "* * * * *");
+    }
 
     @Override
     public Set<VolumeDto> getVolumes() {
@@ -54,17 +63,27 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     private Set<VolumeDto> getVolumes(AmazonEC2 amazonEC2) {
-        try {
-            Set<VolumeDto> result = new TreeSet<>(volumeDtoComparator);
-            result.addAll(VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes()));
-            result.addAll(getHistoryVolumes());
-            result = setSchedules(result);
-            LOG.debug("Volume list: [{}]", result);
-            return result;
-        } catch (RuntimeException e) {
-            LOG.error("Failed to get volume list.", e);
-            throw new DataAccessException("Failed to get volume list.", e);
+        if (cache != null) {
+            return cache;
+        } else {
+            try {
+                Set<VolumeDto> result = new TreeSet<>(volumeDtoComparator);
+                result.addAll(VolumeDtoConverter.convert(amazonEC2.describeVolumes().getVolumes()));
+                result.addAll(getHistoryVolumes());
+                result = setSchedules(result);
+                LOG.debug("Volume list: [{}]", result);
+                cache = result;
+                return result;
+            } catch (RuntimeException e) {
+                LOG.error("Failed to get volume list.", e);
+                throw new DataAccessException("Failed to get volume list.", e);
+            }
         }
+    }
+
+    @Override
+    public void expireCache() {
+        cache = null;
     }
 
     @Override
@@ -120,8 +139,6 @@ public class VolumeServiceImpl implements VolumeService {
 
         return dtos;
     }
-
-    private static final VolumeDtoComparator volumeDtoComparator = new VolumeDtoComparator();
 
     private static final class VolumeDtoComparator implements Comparator<VolumeDto> {
         @Override

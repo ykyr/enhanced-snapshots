@@ -1,14 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
@@ -16,7 +7,7 @@ import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
-
+import com.sungardas.enhancedsnapshots.service.VolumeService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -25,6 +16,10 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 
 @Service
 @DependsOn("CreateAppConfiguration")
@@ -44,6 +39,9 @@ public class SpringSchedulerService implements SchedulerService {
     private Map<String, ScheduledFuture> jobs = new HashMap<>();
 
     private String instanceId;
+
+    @Autowired
+    private VolumeService volumeService;
 
     @PostConstruct
     private void init() {
@@ -68,6 +66,7 @@ public class SpringSchedulerService implements SchedulerService {
             if (Boolean.valueOf(taskEntry.getEnabled())) {
                 addTask(new TaskImpl(taskEntry), taskEntry.getCron());
             }
+            volumeService.expireCache();
         } else {
             throw new EnhancedSnapshotsException("Invalid task: " + taskEntry);
         }
@@ -84,6 +83,7 @@ public class SpringSchedulerService implements SchedulerService {
         ScheduledFuture future = jobs.remove(id);
         if (future != null) {
             future.cancel(false);
+            volumeService.expireCache();
         } else {
             LOG.debug("Task with id: {} not found", id);
         }
