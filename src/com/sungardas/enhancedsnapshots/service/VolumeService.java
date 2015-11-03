@@ -6,7 +6,7 @@ import com.sungardas.enhancedsnapshots.dto.VolumeDto;
 import java.util.Set;
 
 
-public interface VolumeService {
+public interface VolumeService extends Cached {
     Set<VolumeDto> getVolumes();
 
     Set<VolumeDto> getVolumesByRegion(Region region);
