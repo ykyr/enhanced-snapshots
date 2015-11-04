@@ -21,6 +21,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -31,32 +35,33 @@ import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskE
 @Service
 @DependsOn("CreateAppConfiguration")
 public class WorkersDispatcher {
+    private static final Comparator<TaskEntry> taskComparatorByTimeAndPriority = new Comparator<TaskEntry>() {
+        @Override
+        public int compare(TaskEntry o1, TaskEntry o2) {
+            int priority = o2.getPriority() - o1.getPriority();
+            if (priority != 0) {
+                return priority;
+            }
+            return o1.getSchedulerTime().compareTo(o2.getSchedulerTime());
+        }
+    };
     @Autowired
     private ConfigurationService configurationService;
-
     @Autowired
     private ObjectFactory<BackupTask> backupTaskObjectFactory;
-
     @Autowired
     private ObjectFactory<DeleteTask> deleteTaskObjectFactory;
-
     @Autowired
     private ObjectFactory<RestoreTask> restoreTaskObjectFactory;
-
     @Autowired
     private TaskService taskService;
-
     @Autowired
     private SDFSStateService sdfsStateService;
-
     @Autowired
     private TaskRepository taskRepository;
-
     @Value("${enhancedsnapshots.polling.rate}")
     private int pollingRate;
-
     private WorkerConfiguration configuration;
-
     private ExecutorService executor;
 
     @PostConstruct
@@ -71,6 +76,14 @@ public class WorkersDispatcher {
         executor.shutdownNow();
     }
 
+    private Set<TaskEntry> sortByTimeAndPriority(List<TaskEntry> list) {
+        Set<TaskEntry> result = new TreeSet<>(taskComparatorByTimeAndPriority);
+
+        result.addAll(list);
+
+        return result;
+    }
+
     private class TaskWorker implements Runnable {
         private final Logger LOGtw = LogManager.getLogger(TaskWorker.class);
 
@@ -80,8 +93,12 @@ public class WorkersDispatcher {
 
             LOGtw.info("Starting worker dispatcher");
             while (true) {
-                for (TaskEntry entry : taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), instanceId, Boolean.FALSE.toString())) {
-                    try {
+                TaskEntry entry = null;
+                try {
+                    Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), instanceId, Boolean.FALSE.toString()));
+                    while (!taskEntrySet.isEmpty()) {
+                        entry = taskEntrySet.iterator().next();
+
                         Task task = null;
                         if (!taskService.isCanceled(entry.getId())) {
                             switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
@@ -119,20 +136,21 @@ public class WorkersDispatcher {
                         if (task != null) {
                             task.execute();
                         }
-                    } catch (AmazonClientException e) {
-                        LOGtw.error(e);
-                    } catch (Exception e) {
-                        LOGtw.error(e);
-                        if (entry != null) {
-                            entry.setStatus(ERROR.getStatus());
-                            taskRepository.save(entry);
-                        }
-                        if (executor.isShutdown() || executor.isTerminated()) {
-                            return;
-                        }
+                        taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), instanceId, Boolean.FALSE.toString()));
+                    }
+                    sleep();
+                } catch (AmazonClientException e) {
+                    LOGtw.error(e);
+                } catch (Exception e) {
+                    LOGtw.error(e);
+                    if (entry != null) {
+                        entry.setStatus(ERROR.getStatus());
+                        taskRepository.save(entry);
+                    }
+                    if (executor.isShutdown() || executor.isTerminated()) {
+                        return;
                     }
                 }
-                sleep();
             }
         }
 

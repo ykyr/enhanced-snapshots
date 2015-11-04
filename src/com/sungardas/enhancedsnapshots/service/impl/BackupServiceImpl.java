@@ -95,10 +95,10 @@ public class BackupServiceImpl implements BackupService {
         taskEntry.setOptions(backupFile);
         taskEntry.setSchedulerName(user);
         taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
+        taskEntry.setPriority(1);
 
         //TODO Remove hardcode
         taskEntry.setWorker(taskEntry.getInstanceId());
-        taskEntry.setPriority(0);
         taskEntry.setSchedulerManual(schedulerManual);
         taskEntry.setRegular(false);
 

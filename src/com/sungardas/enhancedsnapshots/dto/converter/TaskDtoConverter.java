@@ -21,6 +21,12 @@ public class TaskDtoConverter {
 		TaskEntry task = new TaskEntry();
 		BeanUtils.copyProperties(taskDto, task);
 		task.setOptions(taskDto.getBackupFileName());
+		switch (task.getType()) {
+			case "delete":
+				task.setPriority(1);
+				break;
+
+		}
 		return task;
 	}
 
