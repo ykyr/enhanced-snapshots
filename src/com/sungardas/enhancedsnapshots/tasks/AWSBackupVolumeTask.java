@@ -205,6 +205,9 @@ public class AWSBackupVolumeTask implements BackupTask {
         LOG.info("\nVolume created. Check volume data:\n"
                 + volumeDest.toString());
 
+        // create temporary tag
+        awsCommunication.createTemporaryTag(volumeDest.getVolumeId(),volumeSrc.getVolumeId());
+
         // mount AMI volume
         awsCommunication.attachVolume(instance, volumeDest);
         return awsCommunication.syncVolume(volumeDest);

@@ -35,8 +35,18 @@ public class VolumeDtoConverter {
     public static Set<VolumeDto> convert(Iterable<Volume> volumes) {
         Set<VolumeDto> volumeDtoList = new LinkedHashSet<>();
         for (Volume volume : volumes) {
-            volumeDtoList.add(convert(volume));
+            if(!isTempVolume(volume)){
+                volumeDtoList.add(convert(volume));
+            }
         }
         return volumeDtoList;
+    }
+
+    private static boolean isTempVolume(Volume volume) {
+        List<Tag> tags = volume.getTags();
+        for (Tag toCheck: tags) {
+            if(toCheck.getKey().equals("ESTempVolume")) return true;
+        }
+        return false;
     }
 }

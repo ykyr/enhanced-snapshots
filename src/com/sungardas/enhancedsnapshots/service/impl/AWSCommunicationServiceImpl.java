@@ -41,6 +41,13 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     private int retryRestoreTimeout;
 
     @Override
+    public void createTemporaryTag(String resourceId, String description) {
+        CreateTagsRequest tagsRequest = new CreateTagsRequest().withResources(resourceId).withTags(
+                new Tag().withKey("ESTempVolume").withValue(description));
+        ec2client.createTags(tagsRequest);
+    }
+
+    @Override
     public Volume createVolume(int size, int iiops, String type) {
         String availabilityZone = getInstance(configurationId).getPlacement()
                 .getAvailabilityZone();
