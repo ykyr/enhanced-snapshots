@@ -135,7 +135,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
                 LOG.info("Created IO1 volume:\n" + volumeToRestore.toString());
                 break;
         }
-
+        awsCommunication.createTemporaryTag(volumeToRestore.getVolumeId(),backupentry.getFileName());
         awsCommunication.attachVolume(instance, volumeToRestore);
         try {
             TimeUnit.MINUTES.sleep(1);
@@ -162,6 +162,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 
         awsCommunication.detachVolume(volumeToRestore);
         LOG.info("Detaching volume after restoring data: " + volumeToRestore.toString());
+        awsCommunication.deleteTemporaryTag(volumeToRestore.getVolumeId());
         awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
     }
 

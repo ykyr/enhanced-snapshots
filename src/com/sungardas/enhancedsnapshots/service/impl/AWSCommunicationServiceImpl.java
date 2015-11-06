@@ -48,6 +48,30 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
+    public void deleteTemporaryTag(String resourceId) {
+        List<Volume> volumes= ec2client.describeVolumes(new DescribeVolumesRequest().withVolumeIds(resourceId)).getVolumes();
+        if(volumes.size()>0) {
+            Volume volume = volumes.get(0);
+            List<Tag> tags = volume.getTags();
+            boolean tagWasDeleted = false;
+            for(Tag tag: tags) {
+                if (tag.getKey().equals("ESTempVolume")) {
+                    DeleteTagsRequest tagsRequest = new DeleteTagsRequest().withResources(resourceId).withTags();
+                    ec2client.deleteTags(tagsRequest);
+                    tagWasDeleted = true;
+                    break;
+                }
+            }
+            if(! tagWasDeleted) {
+                LOG.info("No temporary tag associated with volume {}",resourceId);
+            }
+        } else {
+            LOG.info("Volume with id {} does not exist ",resourceId);
+        }
+
+    }
+
+    @Override
     public Volume createVolume(int size, int iiops, String type) {
         String availabilityZone = getInstance(configurationId).getPlacement()
                 .getAvailabilityZone();

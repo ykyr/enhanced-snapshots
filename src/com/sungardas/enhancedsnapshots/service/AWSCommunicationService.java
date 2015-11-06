@@ -32,6 +32,8 @@ public interface AWSCommunicationService {
 
     void createTemporaryTag(String resourceId, String description);
 
+    void deleteTemporaryTag(String resourceId);
+
     Volume createVolume(int size, int iiops, String type);
 
     Volume createIO1Volume(int size, int iops);
