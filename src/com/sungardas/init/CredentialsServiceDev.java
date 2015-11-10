@@ -48,10 +48,6 @@ class CredentialsServiceDev implements CredentialsService {
         sdfs.setVolumeName("awspool");
         sdfs.setVolumeSize("40");
 
-        InitConfigurationDto.Queue queue = new InitConfigurationDto.Queue();
-        queue.setQueueName("enhancedsnapshots_i-12f5a345");
-        queue.setCreated(true);
-
         InitConfigurationDto.DB db = new InitConfigurationDto.DB();
         db.setValid(true);
         db.setAdminExist(false);
@@ -59,7 +55,6 @@ class CredentialsServiceDev implements CredentialsService {
 
         config.setS3(names);
         config.setSdfs(sdfs);
-        config.setQueue(queue);
         config.setDb(db);
 
         return config;

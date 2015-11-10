@@ -37,6 +37,10 @@ angular.module('web')
             return priorities[task.status] || 0;
         };
 
+        $scope.typePriority = function (task) {
+            return parseInt(task.priority) || 0;
+        };
+
         $scope.tasks = [];
         $rootScope.isLoading = false;
         $scope.refresh = function () {

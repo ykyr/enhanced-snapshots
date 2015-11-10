@@ -31,6 +31,7 @@ import static java.lang.String.format;
 @Profile("prod")
 public class AWSRestoreVolumeTask implements RestoreTask {
     private static final Logger LOG = LogManager.getLogger(AWSRestoreVolumeTask.class);
+    private static final String RESTORED_NAME_PREFIX = "Restore of ";
 
     @Autowired
     private TaskRepository taskRepository;
@@ -106,7 +107,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 			throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
 		}
 		Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, awsCommunication.getVolume(volumeId).getAvailabilityZone());
-		awsCommunication.setResourceName(volume.getVolumeId(), "Restore of "+backupEntry.getVolumeId());
+		awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + backupEntry.getVolumeId());
 	}
 
     private void restoreFromBackupFile() {
@@ -134,7 +135,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
                 LOG.info("Created IO1 volume:\n" + volumeToRestore.toString());
                 break;
         }
-
+        awsCommunication.createTemporaryTag(volumeToRestore.getVolumeId(),backupentry.getFileName());
         awsCommunication.attachVolume(instance, volumeToRestore);
         try {
             TimeUnit.MINUTES.sleep(1);
@@ -161,7 +162,8 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 
         awsCommunication.detachVolume(volumeToRestore);
         LOG.info("Detaching volume after restoring data: " + volumeToRestore.toString());
-        awsCommunication.setResourceName(volumeToRestore.getVolumeId(), backupentry.getFileName());
+        awsCommunication.deleteTemporaryTag(volumeToRestore.getVolumeId());
+        awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
     }
 
     private void sleep() {

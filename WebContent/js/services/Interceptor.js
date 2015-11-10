@@ -8,7 +8,7 @@ angular.module('web')
         return {
             responseError: function (rejection) {
                 if (rejection.status === 401) {
-                    window.location = "#/login";
+                    window.location = "#/login?err=session";
                 } else if (rejection.status === 500 && rejection.data.localizedMessage){
                     Exception.handle(rejection);
                 }

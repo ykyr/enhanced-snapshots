@@ -166,30 +166,22 @@ angular.module('web')
 
         //-----------Volumes-get/refresh-------------
 
-        $rootScope.isLoading = true;
-        $scope.volumes = [];
-
-        Volumes.get().then(function (data) {
-            $scope.volumes = processVolumes(data);
-            $rootScope.isLoading = false;
-        }, function () {
-            $rootScope.isLoading = false;
-        });
-
         $scope.changeRegion = function (region) {
             $scope.selectedRegion = region;
         };
 
         $scope.refresh = function () {
             $rootScope.isLoading = true;
-            $scope.volumes = undefined;
-            Volumes.refresh().then(function (data) {
+            $scope.volumes = [];
+            Volumes.get().then(function (data) {
                 $scope.volumes = processVolumes(data);
                 $rootScope.isLoading = false;
             }, function () {
                 $rootScope.isLoading = false;
             });
         };
+
+        $scope.refresh();
         //-----------Volumes-get/refresh-end------------
 
         //-----------Volume-backup/restore/retention-------------

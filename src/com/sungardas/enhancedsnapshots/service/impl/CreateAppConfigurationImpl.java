@@ -1,27 +1,13 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PostConstruct;
-
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
-import com.amazonaws.services.dynamodbv2.model.KeyType;
-import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
@@ -30,14 +16,16 @@ import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
-
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 class CreateAppConfigurationImpl {
     private static final Logger LOG = LogManager.getLogger(CreateAppConfigurationImpl.class);
@@ -59,8 +47,6 @@ class CreateAppConfigurationImpl {
 
     @Autowired
     private AmazonDynamoDB amazonDynamoDB;
-    @Autowired
-    private AmazonSQS amazonSQS;
 
     @Autowired
     private AmazonS3 amazonS3;
@@ -90,11 +76,6 @@ class CreateAppConfigurationImpl {
                 }
             }
 
-            LOG.info("Initialization Queue");
-            if (!initConfigurationDto.getQueue().isCreated()) {
-                createTaskQueue();
-            }
-
             boolean isBucketContainsSDFSMetadata = false;
             InitConfigurationDto.S3 s3 = initConfigurationDto.getS3().get(0);
             if (!isBucketExits(s3Bucket)) {
@@ -108,7 +89,9 @@ class CreateAppConfigurationImpl {
                 sdfsService.restoreState();
             } else {
                 File sdfsConfig = new File("/etc/sdfs/awspool-volume-cfg.xml");
-                if(sdfsConfig.exists()) sdfsConfig.delete();
+                if (sdfsConfig.exists()) {
+                    sdfsConfig.delete();
+                }
                 sdfsService.startupSDFS(sdfsSize, s3Bucket);
             }
 
@@ -213,23 +196,6 @@ class CreateAppConfigurationImpl {
         }
     }
 
-    private void createTaskQueue() {
-        boolean deleteFirst = sharedDataService.getInitConfigurationDto().getQueue().isCreated();
-        String queue = sharedDataService.getInitConfigurationDto().getQueue().getQueueName();
-        queue = queue.substring(queue.lastIndexOf("/") + 1);
-        if (deleteFirst) {
-            amazonSQS.deleteQueue(queue);
-            try {
-                TimeUnit.SECONDS.sleep(65);
-            } catch (InterruptedException e) {
-                LOG.warn("Failed to delete queue [{}].", queue);
-            }
-        }
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest()
-                .withQueueName(queue);
-        amazonSQS.createQueue(createQueueRequest);
-        LOG.info("Queue [{}] was created successfully.", queue);
-    }
 
     private void createS3Bucket() {
         String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
@@ -248,12 +214,8 @@ class CreateAppConfigurationImpl {
         WorkerConfiguration workerConfiguration = new WorkerConfiguration();
         workerConfiguration.setConfigurationId(EC2MetadataUtils.getInstanceId());
         workerConfiguration.setEc2Region(Regions.getCurrentRegion().getName());
-        workerConfiguration.setFakeBackupSource(null);
         workerConfiguration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
         workerConfiguration.setSdfsVolumeName(dto.getSdfs().getVolumeName());
-        workerConfiguration.setTaskQueueURL(dto.getQueue().getQueueName());
-        workerConfiguration.setUseFakeBackup(false);
-        workerConfiguration.setUseFakeEC2(false);
         workerConfiguration.setS3Bucket(sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName());
         return workerConfiguration;
     }

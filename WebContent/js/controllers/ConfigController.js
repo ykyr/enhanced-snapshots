@@ -18,10 +18,6 @@ angular.module('web')
                     false: 'You will need to create a new user on the next step'
                 }
             },
-            queue: {
-                new: 'Will be created new as ',
-                existing: 'Will be used existing queue:'
-            },
             sdfs: {
                 name: {
                     new: 'Will be created new volume:',

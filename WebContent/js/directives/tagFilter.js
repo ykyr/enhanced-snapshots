@@ -23,8 +23,8 @@ angular.module('web')
                 $scope.srcKeys = [];
                 var inputs = angular.element( $element[0].querySelectorAll('input') );
 
-                $scope.$watch($attrs.src, function (v) {
-                    $scope.srcKeys = Object.keys($scope.src) || [];
+                $scope.$watch("src", function (v) {
+                    $scope.srcKeys = Object.keys(v) || [];
                 });
 
                 // This adds the new tag to the tags array

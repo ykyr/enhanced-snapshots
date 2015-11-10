@@ -1,9 +1,13 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoginController', function ($scope, $state, Auth, Storage) {
+    .controller('LoginController', function ($scope, $state, $stateParams, Auth, Storage, toastr) {
 
-        if(angular.isDefined(Storage.get("currentUser"))) {
+        if ($stateParams.err && $stateParams.err == 'session') {
+            toastr.warning('You was loged out. Please relogin.', 'Session expired.');
+        }
+
+        if (angular.isDefined(Storage.get("currentUser"))) {
             Auth.logOut();
         }
 

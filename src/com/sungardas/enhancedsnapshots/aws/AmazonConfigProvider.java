@@ -10,8 +10,6 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
@@ -53,7 +51,7 @@ public class AmazonConfigProvider {
     }
 
     @Bean(name = "amazonDynamoDB")
-    public ProxyFactoryBean amazonDynamoDbProxy(){
+    public ProxyFactoryBean amazonDynamoDbProxy() {
         ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
 
         proxyFactoryBean.setTarget(amazonDynamoDB());
@@ -63,7 +61,7 @@ public class AmazonConfigProvider {
     }
 
     @Bean
-    public ProxyFactoryBean amazonEC2Proxy(){
+    public ProxyFactoryBean amazonEC2Proxy() {
         ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
 
         proxyFactoryBean.setTarget(amazonEC2());
@@ -73,18 +71,7 @@ public class AmazonConfigProvider {
     }
 
     @Bean
-    public ProxyFactoryBean amazonSQSProxy(){
-        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-
-        proxyFactoryBean.setTarget(amazonSQS());
-        proxyFactoryBean.setInterceptorNames("retryInterceptor");
-
-        return proxyFactoryBean;
-    }
-
-
-    @Bean
-    public ProxyFactoryBean amazonS3Proxy(){
+    public ProxyFactoryBean amazonS3Proxy() {
         ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
 
         proxyFactoryBean.setTarget(amazonS3());
@@ -105,16 +92,10 @@ public class AmazonConfigProvider {
         return amazonEC2;
     }
 
-    private AmazonSQS amazonSQS() {
-        AmazonSQS amazonSQS = new AmazonSQSClient(amazonAWSCredentials());
-        amazonSQS.setRegion(Region.getRegion(Regions.fromName(region)));
-        return amazonSQS;
-    }
-
     private AmazonS3 amazonS3() {
         AmazonS3 amazonS3 = new AmazonS3Client(amazonAWSCredentials());
         Region current = Region.getRegion(Regions.fromName(region));
-        if(!current.equals(Region.getRegion(Regions.US_EAST_1))) {
+        if (!current.equals(Region.getRegion(Regions.US_EAST_1))) {
             amazonS3.setRegion(current);
         }
         return amazonS3;

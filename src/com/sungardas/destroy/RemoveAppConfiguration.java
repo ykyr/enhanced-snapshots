@@ -7,7 +7,6 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +20,6 @@ public class RemoveAppConfiguration {
 
     @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
-
-    @Autowired
-    private AmazonSQS sqs;
 
     @Autowired
     private AmazonDynamoDB db;
@@ -68,7 +64,6 @@ public class RemoveAppConfiguration {
 
     private void dropConfiguration() {
         dropS3Bucket();
-        dropQueue();
         dropDbData();
 
         terminateInstance();
@@ -103,12 +98,6 @@ public class RemoveAppConfiguration {
         ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(configurationId));
     }
 
-    private void dropQueue() {
-        String queueURL = configuration.getTaskQueueURL();
-        sqs.deleteQueue(queueURL);
-        sqs.shutdown();
-    }
-
     private void dropDbData() {
         deleteAllUsers();
         deleteAllTasks();
@@ -132,7 +121,7 @@ public class RemoveAppConfiguration {
                 + backupRepository.count()
                 + snapshotRepository.count()
                 + configurationRepository.count();
-        return count==0;
+        return count == 0;
     }
 
     private void deleteConfiguration() {
