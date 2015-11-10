@@ -20,7 +20,7 @@
 <div class="container app">
 
     <div class="card with-hover status-{{task.status}}" title="Status: '{{task.status | uppercase}}'"
-            ng-repeat="task in tasks | orderBy:'schedulerTime' | orderBy:typePriority:true | orderBy:statusPriority:true ">
+            ng-repeat="task in tasks | orderBy: [statusPriority,typePriority,'-schedulerTime']:true ">
         <div class="flex-container">
             <div class="flex-1 flex-center">
                 <span class="icon glyphicon glyphicon-{{ typeIconClass[task.type] }} text-{{ typeColorClass[task.type] }}"></span>
