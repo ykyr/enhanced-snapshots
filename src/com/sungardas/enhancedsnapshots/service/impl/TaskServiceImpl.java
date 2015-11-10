@@ -35,21 +35,23 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void createTask(TaskDto taskDto) {
-        TaskEntry newTask = TaskDtoConverter.convert(taskDto);
+        List<TaskEntry> newTasks = TaskDtoConverter.convert(taskDto);
         String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
-        newTask.setWorker(configurationId);
-        newTask.setInstanceId(configurationId);
-        newTask.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
-        taskRepository.save(newTask);
-        if (Boolean.valueOf(newTask.getRegular())) {
-            try {
-                schedulerService.addTask(newTask);
-            } catch (EnhancedSnapshotsException e) {
-                taskRepository.delete(newTask);
-                LOG.error(e);
-                throw e;
+        for (TaskEntry taskEntry : newTasks) {
+            taskEntry.setWorker(configurationId);
+            taskEntry.setInstanceId(configurationId);
+            taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
+            if (Boolean.valueOf(taskEntry.getRegular())) {
+                try {
+                    schedulerService.addTask(taskEntry);
+                } catch (EnhancedSnapshotsException e) {
+                    taskRepository.delete(taskEntry);
+                    LOG.error(e);
+                    throw e;
+                }
             }
         }
+        taskRepository.save(newTasks);
     }
 
     @Override

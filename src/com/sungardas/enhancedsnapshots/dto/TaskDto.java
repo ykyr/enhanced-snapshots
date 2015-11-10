@@ -1,13 +1,15 @@
 package com.sungardas.enhancedsnapshots.dto;
 
 
+import java.util.List;
+
 public class TaskDto {
 
     private String id;
     private String priority;
     private String status;
     private String type;
-    private String volume;
+    private List<String> volumes;
     private String schedulerManual;
     private String schedulerName;
     private String schedulerTime;
@@ -17,15 +19,15 @@ public class TaskDto {
     private String regular = Boolean.FALSE.toString();
     private String enabled;
 
+    public TaskDto() {
+    }
+
     public String getBackupFileName() {
         return backupFileName;
     }
 
     public void setBackupFileName(String backupFileName) {
         this.backupFileName = backupFileName;
-    }
-
-    public TaskDto() {
     }
 
     public String getPriority() {
@@ -52,12 +54,12 @@ public class TaskDto {
         this.type = type;
     }
 
-    public String getVolume() {
-        return volume;
+    public List<String> getVolumes() {
+        return volumes;
     }
 
-    public void setVolume(String volume) {
-        this.volume = volume;
+    public void setVolumes(List<String> volumes) {
+        this.volumes = volumes;
     }
 
     public String getSchedulerManual() {
