@@ -37,7 +37,16 @@ public class TaskController {
         }
     }
 
-    @RequestMapping(method = RequestMethod.GET, value = "/{valueId}")
+    @RequestMapping(method = RequestMethod.GET, value = "/{volumeId}")
+    public ResponseEntity getTasks(@PathVariable String volumeId) throws ParseException {
+        try {
+            return new ResponseEntity(taskService.getAllTasks(volumeId), OK);
+        } catch (EnhancedSnapshotsException e) {
+            return new ResponseEntity(e.getMessage(), HttpStatus.NO_CONTENT);
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/regular/{valueId}")
     public ResponseEntity getRegularTasks(@PathVariable String valueId) throws ParseException {
         try {
             return new ResponseEntity(taskService.getAllRegularTasks(valueId), OK);

@@ -24,6 +24,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private TaskRepository taskRepository;
+
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
 
@@ -59,6 +60,17 @@ public class TaskServiceImpl implements TaskService {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
                     configuration.getWorkerConfiguration().getConfigurationId()));
+        } catch (RuntimeException e) {
+            LOG.error("Failed to get tasks.", e);
+            throw new DataAccessException("Failed to get tasks.", e);
+        }
+    }
+
+    @Override
+    public List<TaskDto> getAllTasks(String volumeId) {
+        try {
+            return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.FALSE.toString(),
+                    volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);

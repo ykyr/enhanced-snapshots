@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.dto;
 
 
+import java.util.Collections;
 import java.util.List;
 
 public class TaskDto {
@@ -9,7 +10,7 @@ public class TaskDto {
     private String priority;
     private String status;
     private String type;
-    private List<String> volumes;
+    private List<String> volumes = Collections.emptyList();
     private String schedulerManual;
     private String schedulerName;
     private String schedulerTime;

@@ -16,4 +16,6 @@ public interface TaskService {
     boolean isCanceled(String id);
 
     void updateTask(TaskDto taskInfo);
+
+    List<TaskDto> getAllTasks(String volumeId);
 }
