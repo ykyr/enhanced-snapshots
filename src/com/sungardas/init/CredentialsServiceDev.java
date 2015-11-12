@@ -50,7 +50,7 @@ class CredentialsServiceDev implements CredentialsService {
 
         InitConfigurationDto.DB db = new InitConfigurationDto.DB();
         db.setValid(true);
-        db.setAdminExist(false);
+        db.setAdminExist(true);
 
 
         config.setS3(names);

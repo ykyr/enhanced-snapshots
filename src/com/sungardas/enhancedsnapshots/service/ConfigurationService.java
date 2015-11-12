@@ -11,4 +11,6 @@ public interface ConfigurationService {
 
 	SystemConfiguration getSystemConfiguration();
 
+	boolean isNewVersionAvailable();
+
 }
