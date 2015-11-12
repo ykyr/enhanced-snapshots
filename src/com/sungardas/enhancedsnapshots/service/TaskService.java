@@ -5,7 +5,7 @@ import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import java.util.List;
 
 public interface TaskService {
-    void createTask(TaskDto taskDto);
+    List<String> createTask(TaskDto taskDto);
 
     List<TaskDto> getAllTasks();
 

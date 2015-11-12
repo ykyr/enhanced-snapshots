@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
@@ -9,12 +10,15 @@ import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.tasks.AWSRestoreVolumeTask;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,6 +28,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private BackupRepository backupRepository;
 
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
@@ -35,8 +42,9 @@ public class TaskServiceImpl implements TaskService {
     private SchedulerService schedulerService;
 
     @Override
-    public void createTask(TaskDto taskDto) {
+    public List<String> createTask(TaskDto taskDto) {
         List<TaskEntry> newTasks = TaskDtoConverter.convert(taskDto);
+        List<String> messages = new ArrayList<>();
         String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
         for (TaskEntry taskEntry : newTasks) {
             taskEntry.setWorker(configurationId);
@@ -51,8 +59,23 @@ public class TaskServiceImpl implements TaskService {
                     throw e;
                 }
             }
+            messages.add(getMessage(taskEntry));
         }
         taskRepository.save(newTasks);
+        return messages;
+    }
+
+    private String getMessage(TaskEntry taskEntry) {
+        switch (taskEntry.getType()) {
+            case "restore":
+                String sourceFile = taskEntry.getOptions();
+                if (sourceFile == null || sourceFile.isEmpty()) {
+                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupRepository.getLast(taskEntry.getVolume(), configurationId).getFileName();
+                } else {
+                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupRepository.getByBackupFileName(sourceFile).getFileName();
+                }
+        }
+        return StringUtils.EMPTY;
     }
 
     @Override

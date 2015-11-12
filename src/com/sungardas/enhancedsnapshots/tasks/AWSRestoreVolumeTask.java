@@ -30,9 +30,8 @@ import static java.lang.String.format;
 @Scope("prototype")
 @Profile("prod")
 public class AWSRestoreVolumeTask implements RestoreTask {
+    public static final String RESTORED_NAME_PREFIX = "Restore of ";
     private static final Logger LOG = LogManager.getLogger(AWSRestoreVolumeTask.class);
-    private static final String RESTORED_NAME_PREFIX = "Restore of ";
-
     @Autowired
     private TaskRepository taskRepository;
     @Autowired

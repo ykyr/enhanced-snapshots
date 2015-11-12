@@ -1,5 +1,6 @@
 package com.sungardas.enhancedsnapshots.rest;
 
+import com.sungardas.enhancedsnapshots.dto.MessageDto;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.TaskService;
@@ -56,10 +57,10 @@ public class TaskController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity addTask(@RequestBody TaskDto taskInfo) {
+    public ResponseEntity<MessageDto> addTask(@RequestBody TaskDto taskInfo) {
         taskInfo.setId(null);
-        taskService.createTask(taskInfo);
-        return new ResponseEntity("", OK);
+
+        return new ResponseEntity(new MessageDto(taskService.createTask(taskInfo)), OK);
     }
 
     @RequestMapping(method = RequestMethod.PUT)
