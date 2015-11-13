@@ -203,6 +203,11 @@
 
             <div ng-show="filteredVolumes.length">
                 <div class="pull-right">
+                    <button type="button" class="btn btn-warning" ng-disabled="!selectedAmount"
+                            ng-click="volumeAction('schedule')">
+                        <span class="glyphicon glyphicon-time" title="Add Schedule"></span> Add schedule
+                    </button>
+
                     <button type="button" class="btn btn-primary" ng-disabled="!selectedAmount"
                             ng-click="volumeAction('backup')">
                         <span class="glyphicon glyphicon-cloud-download" title="Backup now"></span> Backup selected
