@@ -109,7 +109,7 @@ angular.module('web')
                 var newTask = {
                     id: "",
                     priority: "",
-                    volume: $scope.objectToProcess.volumeId,
+                    volumes: [$scope.objectToProcess.volumeId],
                     backupFileName: $scope.objectToProcess.fileName,
                     type: "restore",
                     status: "waiting",

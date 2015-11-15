@@ -16,7 +16,7 @@ angular.module('web')
 
         var _getRegular = function (vol) {
             var deferred = $q.defer();
-            $http.get(url + '/' + vol).then(function (result) {
+            $http.get(url + '/regular/' + vol).then(function (result) {
                 deferred.resolve(result.data);
             }, function (e) {
                 deferred.reject(e);
