@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -42,26 +44,29 @@ public class TaskServiceImpl implements TaskService {
     private SchedulerService schedulerService;
 
     @Override
-    public List<String> createTask(TaskDto taskDto) {
-        List<TaskEntry> newTasks = TaskDtoConverter.convert(taskDto);
-        List<String> messages = new ArrayList<>();
+    public Map<String, String> createTask(TaskDto taskDto) {
+        Map<String, String> messages = new HashMap<>();
         String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
-        for (TaskEntry taskEntry : newTasks) {
+        List<TaskEntry> validTasks = new ArrayList<>();
+        for (TaskEntry taskEntry : TaskDtoConverter.convert(taskDto)) {
             taskEntry.setWorker(configurationId);
             taskEntry.setInstanceId(configurationId);
             taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
             if (Boolean.valueOf(taskEntry.getRegular())) {
                 try {
                     schedulerService.addTask(taskEntry);
+                    messages.put(taskEntry.getVolume(), getMessage(taskEntry));
+                    validTasks.add(taskEntry);
                 } catch (EnhancedSnapshotsException e) {
-                    taskRepository.delete(taskEntry);
                     LOG.error(e);
-                    throw e;
+                    messages.put(taskEntry.getVolume(), e.getLocalizedMessage());
                 }
+            } else {
+                messages.put(taskEntry.getVolume(), getMessage(taskEntry));
+                validTasks.add(taskEntry);
             }
-            messages.add(getMessage(taskEntry));
         }
-        taskRepository.save(newTasks);
+        taskRepository.save(validTasks);
         return messages;
     }
 
@@ -75,7 +80,7 @@ public class TaskServiceImpl implements TaskService {
                     return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupRepository.getByBackupFileName(sourceFile).getFileName();
                 }
         }
-        return StringUtils.EMPTY;
+        return "Processed";
     }
 
     @Override

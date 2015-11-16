@@ -3,9 +3,10 @@ package com.sungardas.enhancedsnapshots.service;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 
 import java.util.List;
+import java.util.Map;
 
 public interface TaskService {
-    List<String> createTask(TaskDto taskDto);
+    Map<String, String> createTask(TaskDto taskDto);
 
     List<TaskDto> getAllTasks();
 

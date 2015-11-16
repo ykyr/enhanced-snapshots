@@ -2,19 +2,20 @@ package com.sungardas.enhancedsnapshots.dto;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class MessageDto {
-    private List<String> messages = Collections.emptyList();
+    private Map<String, String> messages = Collections.emptyMap();
 
-    public MessageDto(List<String> messages) {
+    public MessageDto(final Map<String, String> messages) {
         this.messages = messages;
     }
 
-    public List<String> getMessages() {
+    public Map<String, String> getMessages() {
         return messages;
     }
 
-    public void setMessages(List<String> messages) {
+    public void setMessages(final Map<String, String> messages) {
         this.messages = messages;
     }
 }
