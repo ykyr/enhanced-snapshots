@@ -10,7 +10,4 @@ public interface ConfigurationService {
 	WorkerConfiguration getWorkerConfiguration();
 
 	SystemConfiguration getSystemConfiguration();
-
-	boolean isNewVersionAvailable();
-
 }

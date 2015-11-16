@@ -55,23 +55,25 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.getEc2Instance().setInstanceID(instanceId);
 
         configuration.setLastBackup(sdfsStateService.getBackupTime());
+        configuration.setCurrentVersion(CURRENT_VERSION);
+        configuration.setLatestVersion(getLatestVersion());
+
         return configuration;
     }
 
-    @Override
-    public boolean isNewVersionAvailable() {
+    private String getLatestVersion() {
         try {
             URL infoURL = new URL(INFO_URL);
             Properties properties = new Properties();
             properties.load(infoURL.openStream());
             String latestVersion = properties.getProperty(LATEST_VERSION);
-            if (latestVersion != null && CURRENT_VERSION.compareTo(latestVersion) < 0) {
-                return true;
+            if (latestVersion != null) {
+                return latestVersion;
             }
         } catch (Exception e) {
 
         }
-        return false;
+        return CURRENT_VERSION;
     }
 
     @Override

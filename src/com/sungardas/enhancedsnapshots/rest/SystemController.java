@@ -44,16 +44,6 @@ public class SystemController {
     @Autowired
     private XmlWebApplicationContext applicationContext;
 
-
-    @RequestMapping(value = "/update")
-    public ResponseEntity<Void> isNewVersionAvailable() {
-        if (configurationService.isNewVersionAvailable()) {
-            return new ResponseEntity<>(HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-    }
-
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody InstanceId instanceId) {
         String session = servletRequest.getSession().getId();
