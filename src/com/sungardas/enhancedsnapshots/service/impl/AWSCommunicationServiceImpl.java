@@ -40,6 +40,11 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     @Value("${sungardas.restore.snapshot.timeout:30}")
     private int retryRestoreTimeout;
 
+   @Override
+   public List<AvailabilityZone> describeAvailabilityZonesForCurrentRegion() {
+       return ec2client.describeAvailabilityZones().getAvailabilityZones();
+   }
+
     @Override
     public void createTemporaryTag(String resourceId, String description) {
         CreateTagsRequest tagsRequest = new CreateTagsRequest().withResources(resourceId).withTags(
