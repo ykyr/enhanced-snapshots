@@ -5,11 +5,24 @@
     <p>You are going to start restore process for: </p>
     <blockquote>
         <p>Volume: <span class="h4 text-primary">{{objectToProcess.volumeId}}</span></p>
+
         <p>Backup: <span class="h4 text-warning">{{objectToProcess.fileName}}</span></p>
     </blockquote>
+    <div>Restore will be done to
+        <span dropdown>
+            <a href dropdown-toggle>{{selectedZone}}</a>
+            <ul class="dropdown-menu" >
+                <li ng-repeat="zone in zones">
+                    <a href ng-click="selectZone(zone)">{{zone}}</a>
+                </li>
+            </ul>
+        </span> availability zone
+    </div>
     <p> Do you want to start it now?</p>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-warning" ng-click="$close()"><span class="glyphicon glyphicon-cloud-upload"></span>&nbsp; Add Restore Task</button>
+    <button class="btn btn-warning" ng-click="$close()"><span class="glyphicon glyphicon-cloud-upload"></span>&nbsp; Add
+        Restore Task
+    </button>
     <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
 </div>

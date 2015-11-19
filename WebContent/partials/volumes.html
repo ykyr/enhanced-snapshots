@@ -67,8 +67,8 @@
                                 aria-labelledby="simple-btn-keyboard-nav">
                                 <li role="menuitem"><a href ng-click="filter.instanceID = ''">None</a></li>
                                 <li role="separator" class="divider"></li>
-                                <li role="menuitem" ng-repeat="instance in instances"><a href
-                                                                                         ng-click="filter.instanceID = instance">{{instance}}</a>
+                                <li role="menuitem" ng-repeat="instance in instances">
+                                    <a href ng-click="filter.instanceID = instance">{{instance}}</a>
                                 </li>
                             </ul>
                         </div>

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('VolumesController', function ($scope, $rootScope, $state, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
+    .controller('VolumesController', function ($scope, $rootScope, $state, $q, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks, Zones) {
         $scope.maxVolumeDisplay = 5;
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
@@ -202,8 +202,22 @@ angular.module('web')
         //-----------Volumes-get/refresh-end------------
 
         //-----------Volume-backup/restore/retention-------------
+        $scope.selectZone = function (zone) {
+            $scope.selectedZone = zone;
+        };
 
         $scope.volumeAction = function (actionType) {
+            $rootScope.isLoading = true;
+            $q.all([Zones.get(), Zones.getCurrent])
+                .then(function (results) {
+                    $scope.zones = results[0];
+                    $scope.selectedZone = results[1];
+                })
+                .finally(function () {
+                    $rootScope.isLoading = false;
+                });
+
+
             $scope.selectedVolumes = $scope.volumes.filter(function (v) { return v.isSelected; });
             $scope.actionType = actionType;
             $scope.action = actions[actionType];
@@ -228,8 +242,10 @@ angular.module('web')
                     };
 
                     switch (actionType) {
-                        case 'backup':
                         case 'restore':
+                            newTask.backupFileName = "";
+                            newTask.zone = $scope.selectedZone;
+                        case 'backup':
                             newTask.type = actionType;
                             newTask.schedulerManual = true;
                             newTask.schedulerName = Storage.get('currentUser').email;
