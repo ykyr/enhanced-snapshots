@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -20,10 +21,11 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 
 @Service
-public class AWSCommunicationServiceImpl implements AWSCommunicationService {
+@Profile("dev")
+public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     private static final Logger LOG = LogManager
-            .getLogger(AWSCommunicationServiceImpl.class);
+            .getLogger(AWSCommunicationServiceDev.class);
 
     @Autowired
     private SnapshotService snapshotService;
@@ -47,8 +49,8 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public String getCurrentAvailabilityZone() {
-        return getInstance(configurationId).getPlacement()
-                .getAvailabilityZone();    }
+        return describeAvailabilityZonesForCurrentRegion().get(0).getZoneName();
+    }
 
     @Override
     public void createTemporaryTag(String resourceId, String description) {

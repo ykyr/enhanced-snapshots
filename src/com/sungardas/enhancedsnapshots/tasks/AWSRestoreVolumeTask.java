@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.tasks;
 
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
@@ -98,6 +99,9 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     }
 
 	private void restoreFromSnapshot() {
+        //TODO: change targetZone assignment to real code from TaskEntry
+        String targetZone = awsCommunication.describeAvailabilityZonesForCurrentRegion().get(0).getZoneName();
+
 		String volumeId = taskEntry.getVolume();
 		String snapshotId = snapshotService.getSnapshotId(volumeId, configurationId);
 		BackupEntry backupEntry = backupRepository.getLast(volumeId, configurationId);
@@ -105,11 +109,14 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 			LOG.error("Failed to find snapshot for volume {} ", volumeId);
 			throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
 		}
-		Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, awsCommunication.getVolume(volumeId).getAvailabilityZone());
+		Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone);
 		awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + backupEntry.getVolumeId());
 	}
 
     private void restoreFromBackupFile() {
+        //TODO: change targetZone assignment to real code from TaskEntry
+        String targetZone = awsCommunication.describeAvailabilityZonesForCurrentRegion().get(0).getZoneName();
+
         String sourceFile = taskEntry.getOptions();
         String instanceId = taskEntry.getInstanceId();
 
@@ -161,6 +168,12 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 
         awsCommunication.detachVolume(volumeToRestore);
         LOG.info("Detaching volume after restoring data: " + volumeToRestore.toString());
+
+        Snapshot tempSnapshot = awsCommunication.createSnapshot(volumeToRestore);
+        Volume volume = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), targetZone);
+        awsCommunication.createTemporaryTag(volume.getVolumeId(),backupentry.getFileName());
+
+
         awsCommunication.deleteTemporaryTag(volumeToRestore.getVolumeId());
         awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
     }
