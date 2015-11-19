@@ -6,6 +6,7 @@ import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,9 @@ public class RegionsController {
 
     @Autowired
     AWSCommunicationService communicationService;
+
+    @Value("${sungardas.worker.configuration}")
+    private String configurationId;
 
     @RequestMapping(value = "/regions", method = RequestMethod.GET)
     public String getRegions() {
@@ -45,6 +49,17 @@ public class RegionsController {
             return new ResponseEntity<>(availabilityZones, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to get list of availability zones.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping( value = "/zones/current", method = RequestMethod.GET)
+    public ResponseEntity getCurrentAvailabilityZone() {
+        try {
+            String availabilityZone = communicationService.getInstance(configurationId).getPlacement()
+                    .getAvailabilityZone();
+            return new ResponseEntity<String>(availabilityZone, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to get current availability zone.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
