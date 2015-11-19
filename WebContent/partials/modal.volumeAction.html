@@ -10,6 +10,7 @@
         <p ng-hide="selectedVolumes.length<=maxVolumeDisplay">{{selectedVolumes.length}} selected volumes</p>
         <p ng-show="actionType === 'restore'"><span>Volume's last backup will be used</span></p>
     </blockquote>
+
     <div ng-show="action.type == 'schedule'">
         <div class="form-group">
             <label for="name" class="control-label">Name:</label>
@@ -35,6 +36,19 @@
         </div>
         <!-- enabled end-->
     </div>
+
+    <div ng-show="action.type == 'restore'">
+        Restore will be done to
+        <span dropdown>
+            <a href dropdown-toggle>{{selectedZone}}</a>
+            <ul class="dropdown-menu" >
+                <li ng-repeat="zone in zones">
+                    <a href ng-click="selectZone(zone)">{{zone}}</a>
+                </li>
+            </ul>
+        </span> availability zone
+    </div>
+
     <p> Do you want to {{action.description}} now?</p>
 </div>
 <div class="modal-footer">
