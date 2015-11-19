@@ -103,7 +103,7 @@ angular.module('web')
 
         $scope.restore = function (backup) {
             $rootScope.isLoading = true;
-            $q.all([Zones.get(), Zones.getCurrent])
+            $q.all([Zones.get(), Zones.getCurrent()])
                 .then(function (results) {
                     $scope.zones = results[0];
                     $scope.selectedZone = results[1];

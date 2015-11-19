@@ -208,7 +208,7 @@ angular.module('web')
 
         $scope.volumeAction = function (actionType) {
             $rootScope.isLoading = true;
-            $q.all([Zones.get(), Zones.getCurrent])
+            $q.all([Zones.get(), Zones.getCurrent()])
                 .then(function (results) {
                     $scope.zones = results[0];
                     $scope.selectedZone = results[1];
