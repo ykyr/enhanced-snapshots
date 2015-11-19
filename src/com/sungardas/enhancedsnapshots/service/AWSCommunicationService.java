@@ -35,6 +35,8 @@ public interface AWSCommunicationService {
 
     List<AvailabilityZone> describeAvailabilityZonesForCurrentRegion();
 
+    String getCurrentAvailabilityZone();
+
     void createTemporaryTag(String resourceId, String description);
 
     void deleteTemporaryTag(String resourceId);

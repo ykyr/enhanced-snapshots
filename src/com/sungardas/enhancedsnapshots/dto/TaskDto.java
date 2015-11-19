@@ -17,6 +17,7 @@ public class TaskDto {
     private String instanceId;
     private String backupFileName;
     private String cron;
+    private String zone;
     private String regular = Boolean.FALSE.toString();
     private String enabled;
 
@@ -125,5 +126,12 @@ public class TaskDto {
 
     public void setEnabled(String enabled) {
         this.enabled = enabled;
+    }
+    public String getZone() {
+        return zone;
+    }
+
+    public void setZone(String zone) {
+        this.zone = zone;
     }
 }
