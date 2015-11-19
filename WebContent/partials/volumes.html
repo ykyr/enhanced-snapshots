@@ -157,6 +157,11 @@
                      ng-class="{'row-disabled': isDisabled(volume)}">
                     <div class="row-hover">
                         <div class="flex-container data-container">
+                            <div class="flex-3 flex-center">
+                                <a ui-sref="app.volume.tasks({ volumeId: volume.volumeId })">
+                                    <span class="glyphicon glyphicon-tasks icon"></span>&nbsp;Tasks
+                                </a>
+                            </div>
                             <div class="flex-3 flex-center" ng-hide="isDisabled(volume)">
                                 <a href ng-click="retentionRule(volume)">
                                     <span class="glyphicon glyphicon-erase icon"></span>&nbsp;Retention

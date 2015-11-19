@@ -61,6 +61,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             templateUrl: "partials/history.html",
             controller: 'HistoryController'
         })
+        .state('app.volume.tasks', {
+            url: "/tasks/:volumeId",
+            templateUrl: "partials/tasks.html",
+            controller: "TasksController"
+        })
         .state('app.tasks', {
             url: "/tasks",
             templateUrl: "partials/tasks.html",

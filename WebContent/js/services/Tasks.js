@@ -4,9 +4,9 @@ angular.module('web')
     .service('Tasks', function ($q, $http, Storage, BASE_URL) {
         var url = BASE_URL + 'rest/task';
 
-        var getAll = function () {
+        var getAll = function (volumeId) {
             var deferred = $q.defer();
-            $http.get(url).then(function (result) {
+            $http.get(url + (volumeId ? "/" + volumeId : "")).then(function (result) {
                 deferred.resolve(result.data);
             }, function (e) {
                 deferred.reject(e);
@@ -48,8 +48,8 @@ angular.module('web')
         };
 
         return {
-            get: function () {
-                return getAll();
+            get: function (volumeId) {
+                return getAll(volumeId);
             },
             getRegular: function (vol) {
                 return _getRegular(vol);
