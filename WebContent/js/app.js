@@ -32,11 +32,14 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             resolve: {
                 authenticated: authenticated
             },
-            controller: function ($scope, $state, $rootScope) {
-                $scope.isVolume = $state.current.name === 'app.volume.list';
+            controller: function ($scope, $rootScope, Storage, toastr) {
                 $rootScope.$on('$stateChangeSuccess',
                     function(event, toState, toParams, fromState, fromParams){
-                        $scope.isVolume = $state.is('app.volume.list') || $state.is('app.users');
+                        var notification = Storage.get("notification");
+                        if (notification) {
+                            toastr.info(notification);
+                            Storage.remove("notification");
+                        }
                     });
             }
         })
