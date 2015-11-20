@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryType.SYSTEM_BACKUP;
+
 
 public class TaskDtoConverter {
 
@@ -22,22 +24,33 @@ public class TaskDtoConverter {
 
 	public static List<TaskEntry> convert(TaskDto taskDto) {
 		List<TaskEntry> result = new ArrayList<>();
-		for (String volumeId : taskDto.getVolumes()) {
-			TaskEntry task = new TaskEntry();
-			BeanUtils.copyProperties(taskDto, task);
-			task.setOptions(taskDto.getBackupFileName());
-			switch (task.getType()) {
-				case "delete":
-					task.setPriority(1);
-					break;
-				default:
-					task.setPriority(0);
-					break;
+        if(SYSTEM_BACKUP.getType().equals(taskDto.getType())){
+            TaskEntry task = copy(taskDto);
+            task.setVolume(SYSTEM_BACKUP.getType());
+            result.add(task);
+        } else {
+            for (String volumeId : taskDto.getVolumes()) {
+                TaskEntry task = copy(taskDto);
+                task.setVolume(volumeId);
+				result.add(task);
 			}
-			task.setVolume(volumeId);
-			result.add(task);
 		}
 		return result;
+	}
+
+	private static TaskEntry copy(TaskDto taskDto){
+		TaskEntry task = new TaskEntry();
+		BeanUtils.copyProperties(taskDto, task);
+		task.setOptions(taskDto.getBackupFileName());
+		switch (task.getType()) {
+			case "delete":
+				task.setPriority(1);
+				break;
+			default:
+				task.setPriority(0);
+				break;
+		}
+		return task;
 	}
 
 	public static List<TaskDto> convert(Iterable<TaskEntry> taskEntries) {
