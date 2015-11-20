@@ -72,13 +72,22 @@ public class TaskServiceImpl implements TaskService {
 
     private String getMessage(TaskEntry taskEntry) {
         switch (taskEntry.getType()) {
-            case "restore":
+            case "restore": {
+                BackupEntry backupEntry = null;
                 String sourceFile = taskEntry.getSourceFileName();
                 if (sourceFile == null || sourceFile.isEmpty()) {
-                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupRepository.getLast(taskEntry.getVolume(), configurationId).getFileName();
+                    backupEntry = backupRepository.getLast(taskEntry.getVolume(), configurationId);
+
                 } else {
-                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupRepository.getByBackupFileName(sourceFile).getFileName();
+                    backupEntry = backupRepository.getByBackupFileName(sourceFile);
                 }
+                if (backupEntry == null) {
+                    //TODO: add more messages
+                    return "Unable to execute: backup history is empty";
+                } else {
+                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupEntry.getFileName();
+                }
+            }
         }
         return "Processed";
     }
