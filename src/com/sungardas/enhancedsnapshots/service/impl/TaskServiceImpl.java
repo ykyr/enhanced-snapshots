@@ -1,5 +1,6 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
@@ -72,13 +73,22 @@ public class TaskServiceImpl implements TaskService {
 
     private String getMessage(TaskEntry taskEntry) {
         switch (taskEntry.getType()) {
-            case "restore":
+            case "restore": {
+                BackupEntry backupEntry = null;
                 String sourceFile = taskEntry.getOptions();
                 if (sourceFile == null || sourceFile.isEmpty()) {
-                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupRepository.getLast(taskEntry.getVolume(), configurationId).getFileName();
+                    backupEntry = backupRepository.getLast(taskEntry.getVolume(), configurationId);
+
                 } else {
-                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupRepository.getByBackupFileName(sourceFile).getFileName();
+                    backupEntry = backupRepository.getByBackupFileName(sourceFile);
                 }
+                if (backupEntry == null) {
+                    //TODO: add more messages
+                    return "Unable to execute: backup history is empty";
+                } else {
+                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupEntry.getFileName();
+                }
+            }
         }
         return "Processed";
     }
