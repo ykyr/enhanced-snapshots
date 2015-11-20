@@ -40,7 +40,7 @@
     <div ng-show="action.type == 'restore'">
         Restore will be done to
         <span dropdown>
-            <a href dropdown-toggle>{{selectedZone}}</a>
+            <a href dropdown-toggle>{{selectedZone || "current"}}</a>
             <ul class="dropdown-menu" >
                 <li ng-repeat="zone in zones">
                     <a href ng-click="selectZone(zone)">{{zone}}</a>

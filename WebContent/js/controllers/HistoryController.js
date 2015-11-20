@@ -106,7 +106,7 @@ angular.module('web')
             $q.all([Zones.get(), Zones.getCurrent()])
                 .then(function (results) {
                     $scope.zones = results[0];
-                    $scope.selectedZone = results[1];
+                    $scope.selectedZone = results[1]["zone-name"] || "";
                 })
                 .finally(function () {
                     $rootScope.isLoading = false;
