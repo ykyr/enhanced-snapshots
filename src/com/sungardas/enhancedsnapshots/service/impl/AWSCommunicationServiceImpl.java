@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 
 @Service
+@Profile("prod")
 public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     private static final Logger LOG = LogManager
