@@ -55,8 +55,10 @@ public class RegionsController {
     @RequestMapping( value = "/zones/current", method = RequestMethod.GET)
     public ResponseEntity getCurrentAvailabilityZone() {
         try {
-            String availabilityZone = communicationService.getCurrentAvailabilityZone();
-            return new ResponseEntity<String>(availabilityZone, HttpStatus.OK);
+            JSONObject record = new JSONObject();;
+            record.put("zone-name", communicationService.getCurrentAvailabilityZone());
+
+            return new ResponseEntity<String>(record.toString(), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to get current availability zone.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
