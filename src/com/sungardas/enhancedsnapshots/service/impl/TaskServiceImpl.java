@@ -73,7 +73,7 @@ public class TaskServiceImpl implements TaskService {
     private String getMessage(TaskEntry taskEntry) {
         switch (taskEntry.getType()) {
             case "restore":
-                String sourceFile = taskEntry.getOptions();
+                String sourceFile = taskEntry.getSourceFileName();
                 if (sourceFile == null || sourceFile.isEmpty()) {
                     return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupRepository.getLast(taskEntry.getVolume(), configurationId).getFileName();
                 } else {

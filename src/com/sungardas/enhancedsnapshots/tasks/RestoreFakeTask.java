@@ -45,6 +45,12 @@ public class RestoreFakeTask implements RestoreTask {
 		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
 		taskEntry.setStatus("running");
 		taskRepository.save(taskEntry);
+		String[] options = taskEntry.getOptions().split(", ");
+		String targetZone = options[1];
+
+		String sourceFile = options[0];
+		LOG.info("restore from: {}; restore to az: {}", sourceFile, targetZone);
+		String instanceId = taskEntry.getInstanceId();
 
 		try {
 			TimeUnit.SECONDS.sleep(10);

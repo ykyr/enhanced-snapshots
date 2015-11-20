@@ -11,6 +11,7 @@ import java.util.List;
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryType.SYSTEM_BACKUP;
 
 
+
 public class TaskDtoConverter {
 
 	public static TaskDto convert(TaskEntry task) {
@@ -41,7 +42,9 @@ public class TaskDtoConverter {
 	private static TaskEntry copy(TaskDto taskDto){
 		TaskEntry task = new TaskEntry();
 		BeanUtils.copyProperties(taskDto, task);
-		task.setOptions(taskDto.getBackupFileName());
+		String options = new StringBuffer().
+				append(taskDto.getBackupFileName()).append(", ").append(taskDto.getZone()).toString();
+		task.setOptions(options);
 		switch (task.getType()) {
 			case "delete":
 				task.setPriority(1);

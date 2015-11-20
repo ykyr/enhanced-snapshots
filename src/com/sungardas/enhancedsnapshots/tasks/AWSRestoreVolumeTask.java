@@ -66,7 +66,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     @Override
     public void execute() {
         LOG.info("Executing restore task:\n" + taskEntry.toString());
-        String sourceFile = taskEntry.getOptions();
+        String sourceFile = taskEntry.getSourceFileName();
         configuration = configurationService.getWorkerConfiguration();
         changeTaskStatusToRunning();
         try {
@@ -99,8 +99,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     }
 
 	private void restoreFromSnapshot() {
-        //TODO: change targetZone assignment to real code from TaskEntry
-        String targetZone = awsCommunication.describeAvailabilityZonesForCurrentRegion().get(0).getZoneName();
+        String targetZone = taskEntry.getAvailabilityZone();
 
 		String volumeId = taskEntry.getVolume();
 		String snapshotId = snapshotService.getSnapshotId(volumeId, configurationId);
@@ -114,10 +113,8 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 	}
 
     private void restoreFromBackupFile() {
-        //TODO: change targetZone assignment to real code from TaskEntry
-        String targetZone = awsCommunication.describeAvailabilityZonesForCurrentRegion().get(0).getZoneName();
-
-        String sourceFile = taskEntry.getOptions();
+        String targetZone = taskEntry.getAvailabilityZone();
+        String sourceFile =taskEntry.getSourceFileName();
         String instanceId = taskEntry.getInstanceId();
 
         BackupEntry backupentry = backupRepository.getByBackupFileName(sourceFile);
@@ -126,23 +123,23 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         String volumeType = backupentry.getVolumeType();
         String size = backupentry.getSizeGiB();
         String iops = backupentry.getIops();
-        Volume volumeToRestore = null;
+        Volume tempVolume = null;
         switch (VolumeType.fromValue(volumeType)) {
             case Standard:
-                volumeToRestore = awsCommunication.createStandardVolume(Integer.parseInt(size));
-                LOG.info("Created standard volume:\n" + volumeToRestore.toString());
+                tempVolume = awsCommunication.createStandardVolume(Integer.parseInt(size));
+                LOG.info("Created standard volume:\n" + tempVolume.toString());
                 break;
             case Gp2:
-                volumeToRestore = awsCommunication.createGP2Volume(Integer.parseInt(size));
-                LOG.info("Created GP2 volume:\n" + volumeToRestore.toString());
+                tempVolume = awsCommunication.createGP2Volume(Integer.parseInt(size));
+                LOG.info("Created GP2 volume:\n" + tempVolume.toString());
                 break;
             case Io1:
-                volumeToRestore = awsCommunication.createIO1Volume(Integer.parseInt(size), Integer.parseInt(iops));
-                LOG.info("Created IO1 volume:\n" + volumeToRestore.toString());
+                tempVolume = awsCommunication.createIO1Volume(Integer.parseInt(size), Integer.parseInt(iops));
+                LOG.info("Created IO1 volume:\n" + tempVolume.toString());
                 break;
         }
-        awsCommunication.createTemporaryTag(volumeToRestore.getVolumeId(),backupentry.getFileName());
-        awsCommunication.attachVolume(instance, volumeToRestore);
+        awsCommunication.createTemporaryTag(tempVolume.getVolumeId(),backupentry.getFileName());
+        awsCommunication.attachVolume(instance, tempVolume);
         try {
             TimeUnit.MINUTES.sleep(1);
         } catch (InterruptedException e1) {
@@ -151,31 +148,29 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         LOG.info("Trying to attach volume to innstance " + instance.getInstanceId());
         //wait for attached state
 
-        while (volumeToRestore.getAttachments().size() == 0) {
+        while (tempVolume.getAttachments().size() == 0) {
             sleep();
-            volumeToRestore = awsCommunication.syncVolume(volumeToRestore);
+            tempVolume = awsCommunication.syncVolume(tempVolume);
         }
 
-        String attachedDeviceName = storageService.detectFsDevName(volumeToRestore);
+        String attachedDeviceName = storageService.detectFsDevName(tempVolume);
         LOG.info("Volume was attached as device: " + attachedDeviceName);
         try {
             storageService.javaBinaryCopy(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
         } catch (IOException | InterruptedException e) {
-            LOG.fatal(format("Restore of volume %s failed", volumeToRestore));
+            LOG.fatal(format("Restore of volume %s failed", tempVolume));
             taskEntry.setStatus("error");
             e.printStackTrace();
         }
 
-        awsCommunication.detachVolume(volumeToRestore);
-        LOG.info("Detaching volume after restoring data: " + volumeToRestore.toString());
+        awsCommunication.detachVolume(tempVolume);
+        LOG.info("Detaching volume after restoring data: " + tempVolume.toString());
 
-        Snapshot tempSnapshot = awsCommunication.createSnapshot(volumeToRestore);
-        Volume volume = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), targetZone);
-        awsCommunication.createTemporaryTag(volume.getVolumeId(),backupentry.getFileName());
+        Snapshot tempSnapshot = awsCommunication.createSnapshot(tempVolume);
+        Volume volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), targetZone);
 
-
-        awsCommunication.deleteTemporaryTag(volumeToRestore.getVolumeId());
-        awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
+        awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getVolumeId());
+        awsCommunication.deleteVolume(tempVolume);
     }
 
     private void sleep() {
