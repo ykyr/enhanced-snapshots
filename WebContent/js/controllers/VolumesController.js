@@ -6,12 +6,6 @@ angular.module('web')
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
-        $scope.globalRegion = {
-            location: "",
-            name: "GLOBAL",
-            id: ""
-        };
-
         $scope.stateColorClass = {
             "in-use": "success",
             "creating": "error",
@@ -88,28 +82,30 @@ angular.module('web')
             }
         };
 
-        $scope.tags = {};
-        $scope.instances = [];
-        Regions.get().then(function (regions) {
-            $scope.regions = regions
-        });
-
-        $scope.selectedRegion = $scope.globalRegion;
-
         $scope.isDisabled = function (volume) {
             return volume.state === 'removed'
         };
 
         // ---------filtering------------
 
-        $scope.isFilterCollapsed = true;
+        $scope.showFilter = function () {
+            var filterInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.volume-filter.html',
+                controller: 'modalVolumeFilterCtrl',
+                resolve: {
+                    tags: function () {
+                        return $scope.tags;
+                    },
+                    instances: function () {
+                        return $scope.instances;
+                    }
+                }
+            });
 
-        $scope.sliderOptions = {
-            from: 0,
-            to: 16384,
-            step: 4,
-            dimension: " GB",
-            skin: "plastic"
+            filterInstance.result.then(function (filter) {
+                $scope.stAdvancedFilter = filter;
+            });
         };
 
         var processVolumes = function (data) {
@@ -135,48 +131,6 @@ angular.module('web')
             }
             $scope.isAllSelected = false;
             return data;
-        };
-
-        $scope.filter = {
-            volumeId: "",
-            name: "",
-            size: "0;16384",
-            instanceID: "",
-            region: $scope.globalRegion,
-            tags: []
-        };
-
-        $scope.applyFilter = function () {
-            var f = angular.copy($scope.filter);
-            $scope.stAdvancedFilter = {
-                "volumeId": {
-                    "type": "str",
-                    "value": f.volumeId
-                },
-                "volumeName": {
-                    "type": "str",
-                    "value": f.name
-                },
-                "size": {
-                    "type": "int-range",
-                    "value": {
-                        "lower": parseInt(f.size.split(";")[0], 10),
-                        "higher": parseInt(f.size.split(";")[1], 10)
-                    }
-                },
-                "instanceID": {
-                    "type": "str-strict",
-                    "value": f.instanceID
-                },
-                "availabilityZone": {
-                    "type": "str",
-                    "value": f.region.id
-                },
-                "tags": {
-                    "type": "array-inc",
-                    "value": f.tags
-                }
-            };
         };
 
         //----------filtering-end-----------
