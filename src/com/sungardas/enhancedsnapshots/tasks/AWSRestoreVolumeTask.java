@@ -169,7 +169,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         Snapshot tempSnapshot = awsCommunication.createSnapshot(tempVolume);
         Volume volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), targetZone);
 
-        awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getVolumeId());
+        awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
         awsCommunication.deleteVolume(tempVolume);
     }
 
