@@ -32,11 +32,14 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             resolve: {
                 authenticated: authenticated
             },
-            controller: function ($scope, $state, $rootScope) {
-                $scope.isVolume = $state.current.name === 'app.volume.list';
+            controller: function ($scope, $rootScope, Storage, toastr) {
                 $rootScope.$on('$stateChangeSuccess',
                     function(event, toState, toParams, fromState, fromParams){
-                        $scope.isVolume = $state.is('app.volume.list') || $state.is('app.users');
+                        var notification = Storage.get("notification");
+                        if (notification) {
+                            toastr.info(notification);
+                            Storage.remove("notification");
+                        }
                     });
             }
         })
@@ -60,6 +63,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             url: "/history/:volumeId",
             templateUrl: "partials/history.html",
             controller: 'HistoryController'
+        })
+        .state('app.volume.tasks', {
+            url: "/tasks/:volumeId",
+            templateUrl: "partials/tasks.html",
+            controller: "TasksController"
         })
         .state('app.tasks', {
             url: "/tasks",

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('LoginController', function ($scope, $state, $stateParams, Auth, Storage, toastr) {
+    .controller('LoginController', function ($scope, $state, $stateParams, Auth, System, Storage, toastr) {
 
         if ($stateParams.err && $stateParams.err == 'session') {
             toastr.warning('You was loged out. Please relogin.', 'Session expired.');
@@ -25,7 +25,13 @@ angular.module('web')
                 if (data.role === 'configurator') {
                     $state.go('config');
                 } else {
-                    $state.go('app.volume.list');
+                    System.get().then(function (data) {
+                        if (data.currentVersion != data.latestVersion) {
+                            Storage.save("notification", "Newer version is available! Please, create a new instance from the latest AMI.");
+                        }
+                    }).finally(function () {
+                        $state.go('app.volume.list');
+                    });
                 }
             }, function (res) {
                 $scope.error = res;

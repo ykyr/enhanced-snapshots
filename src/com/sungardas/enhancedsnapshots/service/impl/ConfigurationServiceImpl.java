@@ -10,9 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URL;
+import java.util.Properties;
+
 @Service
 public class ConfigurationServiceImpl implements ConfigurationService {
 
+    private static final String CURRENT_VERSION = "0.0.1";
+    private static final String LATEST_VERSION = "latest-version";
+    private static final String INFO_URL = "http://com.sungardas.releases.s3.amazonaws.com/info";
     @Autowired
     WorkerConfigurationRepository configurationRepository;
     WorkerConfiguration currectConfiguration;
@@ -49,7 +55,25 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.getEc2Instance().setInstanceID(instanceId);
 
         configuration.setLastBackup(sdfsStateService.getBackupTime());
+        configuration.setCurrentVersion(CURRENT_VERSION);
+        configuration.setLatestVersion(getLatestVersion());
+
         return configuration;
+    }
+
+    private String getLatestVersion() {
+        try {
+            URL infoURL = new URL(INFO_URL);
+            Properties properties = new Properties();
+            properties.load(infoURL.openStream());
+            String latestVersion = properties.getProperty(LATEST_VERSION);
+            if (latestVersion != null) {
+                return latestVersion;
+            }
+        } catch (Exception e) {
+
+        }
+        return CURRENT_VERSION;
     }
 
     @Override

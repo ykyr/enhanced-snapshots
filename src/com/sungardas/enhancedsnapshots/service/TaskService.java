@@ -3,9 +3,10 @@ package com.sungardas.enhancedsnapshots.service;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 
 import java.util.List;
+import java.util.Map;
 
 public interface TaskService {
-    void createTask(TaskDto taskDto);
+    Map<String, String> createTask(TaskDto taskDto);
 
     List<TaskDto> getAllTasks();
 
@@ -16,4 +17,6 @@ public interface TaskService {
     boolean isCanceled(String id);
 
     void updateTask(TaskDto taskInfo);
+
+    List<TaskDto> getAllTasks(String volumeId);
 }

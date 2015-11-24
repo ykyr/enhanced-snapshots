@@ -1,8 +1,8 @@
-<div class="modal-header bg-{{bgClass[actionType]}}">
-    <h3 class="modal-title"><span class="glyphicon glyphicon-cloud-{{iconClass[actionType]}}"></span>&nbsp; {{modalTitle[actionType]}}</h3>
+<div class="modal-header bg-{{action.bgClass}}">
+    <h3 class="modal-title"><span class="glyphicon glyphicon-{{action.iconClass}}"></span>&nbsp; {{action.modalTitle}}</h3>
 </div>
 <div class="modal-body">
-    <p>You are going to start {{actionType}} process for: </p>
+    <p>You are going to {{action.description}} for: </p>
     <blockquote>
         <div ng-show="selectedVolumes.length<=maxVolumeDisplay">
             <div class="h4 text-primary" ng-repeat="volume in selectedVolumes">{{volume.volumeId}}</div>
@@ -10,9 +10,48 @@
         <p ng-hide="selectedVolumes.length<=maxVolumeDisplay">{{selectedVolumes.length}} selected volumes</p>
         <p ng-show="actionType === 'restore'"><span>Volume's last backup will be used</span></p>
     </blockquote>
-    <p> Do you want to start it now?</p>
+
+    <div ng-show="action.type == 'schedule'">
+        <div class="form-group">
+            <label for="name" class="control-label">Name:</label>
+            <input type="text" id="name" class="form-control" ng-model="schedule.name">
+        </div>
+
+
+        <!-- cron-->
+        <div class="form-group">
+            <label>Schedule:</label>
+            <jq-cron class="form-control" ng-model="schedule.cron"></jq-cron>
+            Cron: <code>"{{schedule.cron}}"</code>
+        </div>
+        <!-- cron end-->
+
+        <!-- enabled-->
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" ng-model="schedule.enabled"/> Enabled
+                </label>
+            </div>
+        </div>
+        <!-- enabled end-->
+    </div>
+
+    <div ng-show="action.type == 'restore'">
+        Restore will be done to
+        <span dropdown>
+            <a href dropdown-toggle>{{selectedZone || "current"}}</a>
+            <ul class="dropdown-menu" >
+                <li ng-repeat="zone in zones">
+                    <a href ng-click="selectZone(zone)">{{zone}}</a>
+                </li>
+            </ul>
+        </span> availability zone
+    </div>
+
+    <p> Do you want to {{action.description}} now?</p>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-{{bgClass[actionType]}}" ng-click="$close()"><span class="glyphicon glyphicon-cloud-{{iconClass[actionType]}}"></span>&nbsp; Add {{actionType}} task</button>
+    <button class="btn btn-{{action.bgClass}}" ng-click="$close()"><span class="glyphicon glyphicon-{{action.iconClass}}"></span>&nbsp; {{action.buttonText}}</button>
     <button class="btn btn-default" ng-click="$dismiss()">Cancel</button>
 </div>

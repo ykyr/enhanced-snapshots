@@ -8,7 +8,7 @@
             <div class="page-btns">
                 <a href ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Refresh</a>
                 <span class="separator"></span>
-                <a href ng-click="isFilterCollapsed = !isFilterCollapsed"><span
+                <a href ng-click="showFilter()"><span
                         class="glyphicon glyphicon-filter"></span>&nbsp;Filter</a>
             </div>
         </div>
@@ -22,117 +22,6 @@
 
 
 <div class="container app">
-    <div collapse="isFilterCollapsed">
-        <div class="well">
-
-            <form class="form-horizontal">
-                <div class="form-group">
-                    <label for="volumeId" class="col-sm-2 control-label">ID:</label>
-
-                    <div class="col-sm-10">
-                        <input type="text" id="volumeId" class="form-control"
-                               ng-model="filter.volumeId"/>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="volumeName" class="col-sm-2 control-label">Name:</label>
-
-                    <div class="col-sm-10">
-                        <input type="text" id="volumeName" class="form-control"
-                               ng-model="filter.name"/>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="sizeSlider" class="col-sm-2 control-label">Size:</label>
-
-                    <div class="col-sm-10">
-                        <input ng-model="filter.size" type="text" id="sizeSlider" slider options="sliderOptions"/>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">Instance:</label>
-
-                    <div class="col-sm-10">
-                        <div class="btn-group full-width" dropdown keyboard-nav>
-                            <button id="simple-btn-keyboard-nav" type="button"
-                                    class="btn btn-default dropdown-toggle full-width" dropdown-toggle>
-                                <div class="text-right">
-                                    {{filter.instanceID || 'None'}} &nbsp;<span class="caret"></span>
-                                </div>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-right" role="menu"
-                                aria-labelledby="simple-btn-keyboard-nav">
-                                <li role="menuitem"><a href ng-click="filter.instanceID = ''">None</a></li>
-                                <li role="separator" class="divider"></li>
-                                <li role="menuitem" ng-repeat="instance in instances"><a href
-                                                                                         ng-click="filter.instanceID = instance">{{instance}}</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">Region:</label>
-
-                    <div class="col-sm-10">
-                        <div class="btn-group full-width" dropdown>
-                            <button class="btn btn-default dropdown-toggle full-width" dropdown-toggle>
-                                <div class="text-right">
-                                <span ng-show="filter.region.location" class="hidden-xs">
-                                {{filter.region.location}} -
-                                </span>
-                                    {{filter.region.name | uppercase}} &nbsp;
-                                    <span class="caret"></span>
-                                </div>
-                            </button>
-                            <!--<button class="btn btn-default dropdown-toggle" dropdown-toggle>-->
-                            <!--</button>-->
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li>
-                                    <a ng-click="filter.region = globalRegion">
-                    <span ng-show="globalRegion.location" class="hidden-xs">
-                        {{globalRegion.location}} -
-                    </span>
-                                        {{globalRegion.name}}
-                                    </a>
-                                </li>
-                                <li role="separator" class="divider"></li>
-                                <li ng-repeat="region in regions">
-                                    <a ng-click="filter.region = region">
-                    <span ng-show="region.location" class="hidden-xs">
-                        {{region.location}} -
-                    </span>
-                                        {{region.name | uppercase}}
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">Tags:</label>
-
-                    <div class="col-sm-10">
-
-                        <tag-filter tags="filter.tags" src="tags" keyph="key" valueph="value"></tag-filter>
-
-                    </div>
-                </div>
-            </form>
-
-            <div class="form-group text-right">
-                <button class="btn btn-default" ng-click="applyFilter()">Apply filter</button>
-            </div>
-
-        </div>
-    </div>
-
     <div class="row">
         <div st-table="displayedCollection" st-safe-src="volumes ">
             <div class="page-table">
@@ -157,6 +46,11 @@
                      ng-class="{'row-disabled': isDisabled(volume)}">
                     <div class="row-hover">
                         <div class="flex-container data-container">
+                            <div class="flex-3 flex-center">
+                                <a ui-sref="app.volume.tasks({ volumeId: volume.volumeId })">
+                                    <span class="glyphicon glyphicon-tasks icon"></span>&nbsp;Tasks
+                                </a>
+                            </div>
                             <div class="flex-3 flex-center" ng-hide="isDisabled(volume)">
                                 <a href ng-click="retentionRule(volume)">
                                     <span class="glyphicon glyphicon-erase icon"></span>&nbsp;Retention
@@ -203,6 +97,11 @@
 
             <div ng-show="filteredVolumes.length">
                 <div class="pull-right">
+                    <button type="button" class="btn btn-warning" ng-disabled="!selectedAmount"
+                            ng-click="volumeAction('schedule')">
+                        <span class="glyphicon glyphicon-time" title="Add Schedule"></span> Add schedule
+                    </button>
+
                     <button type="button" class="btn btn-primary" ng-disabled="!selectedAmount"
                             ng-click="volumeAction('backup')">
                         <span class="glyphicon glyphicon-cloud-download" title="Backup now"></span> Backup selected

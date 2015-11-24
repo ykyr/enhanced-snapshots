@@ -21,11 +21,11 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 
 @Service
-@Profile("prod")
-public class AWSCommunicationServiceImpl implements AWSCommunicationService {
+@Profile("dev")
+public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     private static final Logger LOG = LogManager
-            .getLogger(AWSCommunicationServiceImpl.class);
+            .getLogger(AWSCommunicationServiceDev.class);
 
     @Autowired
     private SnapshotService snapshotService;
@@ -49,8 +49,8 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public String getCurrentAvailabilityZone() {
-        return getInstance(configurationId).getPlacement()
-                .getAvailabilityZone();    }
+        return describeAvailabilityZonesForCurrentRegion().get(0).getZoneName();
+    }
 
     @Override
     public void createTemporaryTag(String resourceId, String description) {

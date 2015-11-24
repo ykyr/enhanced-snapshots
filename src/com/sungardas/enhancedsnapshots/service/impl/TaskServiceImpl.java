@@ -1,6 +1,8 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
@@ -9,13 +11,18 @@ import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.tasks.AWSRestoreVolumeTask;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -24,6 +31,10 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private BackupRepository backupRepository;
+
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
 
@@ -34,22 +45,52 @@ public class TaskServiceImpl implements TaskService {
     private SchedulerService schedulerService;
 
     @Override
-    public void createTask(TaskDto taskDto) {
-        TaskEntry newTask = TaskDtoConverter.convert(taskDto);
+    public Map<String, String> createTask(TaskDto taskDto) {
+        Map<String, String> messages = new HashMap<>();
         String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
-        newTask.setWorker(configurationId);
-        newTask.setInstanceId(configurationId);
-        newTask.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
-        taskRepository.save(newTask);
-        if (Boolean.valueOf(newTask.getRegular())) {
-            try {
-                schedulerService.addTask(newTask);
-            } catch (EnhancedSnapshotsException e) {
-                taskRepository.delete(newTask);
-                LOG.error(e);
-                throw e;
+        List<TaskEntry> validTasks = new ArrayList<>();
+        for (TaskEntry taskEntry : TaskDtoConverter.convert(taskDto)) {
+            taskEntry.setWorker(configurationId);
+            taskEntry.setInstanceId(configurationId);
+            taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
+            if (Boolean.valueOf(taskEntry.getRegular())) {
+                try {
+                    schedulerService.addTask(taskEntry);
+                    messages.put(taskEntry.getVolume(), getMessage(taskEntry));
+                    validTasks.add(taskEntry);
+                } catch (EnhancedSnapshotsException e) {
+                    LOG.error(e);
+                    messages.put(taskEntry.getVolume(), e.getLocalizedMessage());
+                }
+            } else {
+                messages.put(taskEntry.getVolume(), getMessage(taskEntry));
+                validTasks.add(taskEntry);
             }
         }
+        taskRepository.save(validTasks);
+        return messages;
+    }
+
+    private String getMessage(TaskEntry taskEntry) {
+        switch (taskEntry.getType()) {
+            case "restore": {
+                BackupEntry backupEntry = null;
+                String sourceFile = taskEntry.getSourceFileName();
+                if (sourceFile == null || sourceFile.isEmpty()) {
+                    backupEntry = backupRepository.getLast(taskEntry.getVolume(), configurationId);
+
+                } else {
+                    backupEntry = backupRepository.getByBackupFileName(sourceFile);
+                }
+                if (backupEntry == null) {
+                    //TODO: add more messages
+                    return "Unable to execute: backup history is empty";
+                } else {
+                    return AWSRestoreVolumeTask.RESTORED_NAME_PREFIX + backupEntry.getFileName();
+                }
+            }
+        }
+        return "Processed";
     }
 
     @Override
@@ -57,6 +98,17 @@ public class TaskServiceImpl implements TaskService {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
                     configuration.getWorkerConfiguration().getConfigurationId()));
+        } catch (RuntimeException e) {
+            LOG.error("Failed to get tasks.", e);
+            throw new DataAccessException("Failed to get tasks.", e);
+        }
+    }
+
+    @Override
+    public List<TaskDto> getAllTasks(String volumeId) {
+        try {
+            return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.FALSE.toString(),
+                    volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
