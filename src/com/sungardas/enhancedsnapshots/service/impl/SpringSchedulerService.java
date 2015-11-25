@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
@@ -27,6 +28,7 @@ public class SpringSchedulerService implements SchedulerService {
 
     private static final Logger LOG = LogManager.getLogger(SpringSchedulerService.class);
 
+    @Qualifier("taskScheduler")
     @Autowired
     private TaskScheduler scheduler;
 
