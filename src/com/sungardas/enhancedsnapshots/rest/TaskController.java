@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
+import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
@@ -58,7 +59,7 @@ public class TaskController {
 
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<MessageDto> addTask(@RequestBody TaskDto taskInfo) {
-        taskInfo.setId(null);
+        taskInfo.setId(UUID.randomUUID().toString());
 
         return new ResponseEntity(new MessageDto(taskService.createTask(taskInfo)), OK);
     }
