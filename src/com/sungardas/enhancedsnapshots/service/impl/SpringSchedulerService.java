@@ -110,7 +110,7 @@ public class SpringSchedulerService implements SchedulerService {
 
         @Override
         public void run() {
-            taskEntry.setId(null);
+            taskEntry.setId(UUID.randomUUID().toString());
             taskEntry.setSchedulerManual(false);
             taskEntry.setRegular(false);
             taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
