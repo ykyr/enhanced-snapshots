@@ -4,15 +4,16 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.AWSRestoreVolumeTask;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private SchedulerService schedulerService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Override
     public Map<String, String> createTask(TaskDto taskDto) {
         Map<String, String> messages = new HashMap<>();
@@ -57,6 +61,7 @@ public class TaskServiceImpl implements TaskService {
                     messages.put(taskEntry.getVolume(), getMessage(taskEntry));
                     validTasks.add(taskEntry);
                 } catch (EnhancedSnapshotsException e) {
+                    notificationService.notifyAboutError(new ExceptionDto(e.getLocalizedMessage()));
                     LOG.error(e);
                     messages.put(taskEntry.getVolume(), e.getLocalizedMessage());
                 }
@@ -97,6 +102,7 @@ public class TaskServiceImpl implements TaskService {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
                     configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
+            notificationService.notifyAboutError(new ExceptionDto("Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
         }
@@ -108,6 +114,7 @@ public class TaskServiceImpl implements TaskService {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.FALSE.toString(),
                     volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
+            notificationService.notifyAboutError(new ExceptionDto("Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
         }
@@ -119,6 +126,7 @@ public class TaskServiceImpl implements TaskService {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.TRUE.toString(),
                     volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
+            notificationService.notifyAboutError(new ExceptionDto("Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
         }
