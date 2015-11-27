@@ -5,6 +5,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.RetentionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +31,10 @@ public class BackupFakeTask implements BackupTask {
     
     @Autowired
     private RetentionService retentionService;
-    
+
+    @Autowired
+    private NotificationService notificationService;
+
     private TaskEntry taskEntry;
 
     
@@ -41,13 +45,17 @@ public class BackupFakeTask implements BackupTask {
     @Override
     public void execute() {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting delete task", 0);
+
         taskEntry.setStatus(RUNNING.getStatus());
         taskRepository.save(taskEntry);
 
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Finding source file", 30);
         LOG.info(taskEntry.toString());
         String timestamp = Long.toString(System.currentTimeMillis());
         String volumeId = taskEntry.getVolume();
         String filename = volumeId + "." + timestamp + ".backup";
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting file...", 60);
         BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId(),
         		"snap-00100110","gp2","3000", "10");
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
@@ -57,7 +65,8 @@ public class BackupFakeTask implements BackupTask {
             TimeUnit.SECONDS.sleep(10);
         } catch (InterruptedException ignored) {
         }
-        
+
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
         LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
         taskRepository.delete(taskEntry);
         LOG.info("Task completed.");

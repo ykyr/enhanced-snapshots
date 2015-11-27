@@ -61,7 +61,7 @@ public class TaskServiceImpl implements TaskService {
                     messages.put(taskEntry.getVolume(), getMessage(taskEntry));
                     validTasks.add(taskEntry);
                 } catch (EnhancedSnapshotsException e) {
-                    notificationService.notifyAboutError(new ExceptionDto(e.getLocalizedMessage()));
+                    notificationService.notifyAboutError(new ExceptionDto("Task creation has failed", e.getLocalizedMessage()));
                     LOG.error(e);
                     messages.put(taskEntry.getVolume(), e.getLocalizedMessage());
                 }
@@ -102,7 +102,7 @@ public class TaskServiceImpl implements TaskService {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
                     configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
-            notificationService.notifyAboutError(new ExceptionDto("Failed to get tasks."));
+            notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
         }
@@ -114,7 +114,7 @@ public class TaskServiceImpl implements TaskService {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.FALSE.toString(),
                     volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
-            notificationService.notifyAboutError(new ExceptionDto("Failed to get tasks."));
+            notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
         }
@@ -126,7 +126,7 @@ public class TaskServiceImpl implements TaskService {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.TRUE.toString(),
                     volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
-            notificationService.notifyAboutError(new ExceptionDto("Failed to get tasks."));
+            notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
         }

@@ -17,6 +17,10 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private SimpMessagingTemplate template;
 
+    @Override
+    public void notifyAboutTaskProgress(String taskId, String message, double progress) {
+        notifyAboutTaskProgress(new TaskProgressDto(taskId, message, progress));
+    }
 
     @Override
     public void notifyAboutTaskProgress(TaskProgressDto dto) {

@@ -1,7 +1,6 @@
 package com.sungardas.enhancedsnapshots.tasks;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
@@ -42,9 +41,6 @@ public class AWSBackupVolumeTask implements BackupTask {
     private TaskRepository taskRepository;
 
     @Autowired
-    private AmazonEC2 ec2client;
-
-    @Autowired
     private StorageService storageService;
 
     @Autowired
@@ -64,6 +60,9 @@ public class AWSBackupVolumeTask implements BackupTask {
     @Autowired
     private RetentionService retentionService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     private WorkerConfiguration configuration;
 
     public void setTaskEntry(TaskEntry taskEntry) {
@@ -73,6 +72,7 @@ public class AWSBackupVolumeTask implements BackupTask {
     public void execute() {
         String volumeId = taskEntry.getVolume();
         try {
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting backup task", 0);
             configuration = configurationService.getWorkerConfiguration();
 
             LOG.info(format(
@@ -86,6 +86,7 @@ public class AWSBackupVolumeTask implements BackupTask {
             Volume tempVolume = null;
             String attachedDeviceName = null;
 
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Preparing temp volume", 5);
             tempVolume = createAndAttachBackupVolume(volumeId,
                     configuration.getConfigurationId());
             try {
@@ -93,6 +94,7 @@ public class AWSBackupVolumeTask implements BackupTask {
             } catch (InterruptedException e1) {
                 e1.printStackTrace();
             }
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Checking volume", 10);
             attachedDeviceName = storageService.detectFsDevName(tempVolume);
 
             String backupDate = String.valueOf(System.currentTimeMillis());
@@ -108,7 +110,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 
             BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS,
                     configuration.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
-
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Copying...", 15);
             boolean backupStatus = false;
             try {
                 String source = attachedDeviceName;
@@ -127,8 +129,10 @@ public class AWSBackupVolumeTask implements BackupTask {
                     }
                 }
             }
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Detaching temp volume", 80);
             LOG.info("Detaching volume: {}", tempVolume.getVolumeId());
             awsCommunication.detachVolume(tempVolume);
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting temp volume", 85);
             LOG.info("Deleting temporary volume: {}", tempVolume.getVolumeId());
             awsCommunication.deleteVolume(tempVolume);
 
@@ -139,6 +143,7 @@ public class AWSBackupVolumeTask implements BackupTask {
                 LOG.info("Backup size: {}", backupSize);
 
                 LOG.info("Put backup entry to the Backup List: {}", backup.toString());
+                notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Backup complete", 90);
                 backup.setState(BackupState.COMPLETED.getState());
                 backup.setSize(String.valueOf(backupSize));
                 backupRepository.save(backup);
@@ -150,6 +155,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 
                 String previousSnapshot = snapshotService.getSnapshotId(volumeId, configurationId);
                 if (previousSnapshot != null) {
+                    notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
                     LOG.info("Deleting previous snapshot {}", previousSnapshot);
                     awsCommunication.deleteSnapshot(previousSnapshot);
                 }
@@ -159,6 +165,7 @@ public class AWSBackupVolumeTask implements BackupTask {
 
                 taskRepository.delete(taskEntry);
                 LOG.info("Task completed.");
+                notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
                 retentionService.apply();
             } else {
                 LOG.warn(format("Backup process for volume %s failed ", volumeId));

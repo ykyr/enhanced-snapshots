@@ -1,10 +1,21 @@
 package com.sungardas.enhancedsnapshots.dto;
 
 public class ExceptionDto implements Dto{
+    private String title;
+
     private String message;
 
-    public ExceptionDto(String message) {
+    public ExceptionDto(String title, String message) {
+        this.title = title;
         this.message = message;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getMessage() {
