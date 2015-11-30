@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('TasksController', function ($scope, $rootScope, $stateParams, Tasks, $modal) {
+    .controller('TasksController', function ($scope, $rootScope, $stateParams, $stomp, Tasks, $modal) {
         $scope.statusColorClass = {
             "waiting": "",
             "queued": "info",
@@ -49,6 +49,21 @@ angular.module('web')
             $rootScope.isLoading = true;
             Tasks.get($scope.volumeId).then(function (data) {
                 $scope.tasks = data;
+                var taskSubscription = $stomp.subscribe('/task', function (msg) {
+                    var task = $scope.tasks.filter(function (t) {
+                        return t.id == msg.taskId;
+                    })[0];
+                    if (task) {
+                        task.status = 'running';
+                        task.progress = msg.progress;
+                        task.message = msg.message;
+                        $scope.$apply();
+                        if (task.progress == 100) {
+                            taskSubscription.unsubscribe();
+                            $scope.refresh();
+                        }
+                    }
+                });
                 $rootScope.isLoading = false;
             }, function () {
                 $rootScope.isLoading = false;

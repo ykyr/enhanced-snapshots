@@ -21,6 +21,9 @@
 
     <div class="card with-hover status-{{task.status}}" title="Status: '{{task.status | uppercase}}'"
             ng-repeat="task in tasks | orderBy: [statusPriority,typePriority,'-schedulerTime']:true ">
+        <div class="task-progress" style="width: {{ 100 - (task.progress || 0) }}%">
+            &nbsp;
+        </div>
         <div class="flex-container">
             <div class="flex-1 flex-center">
                 <span class="icon glyphicon glyphicon-{{ typeIconClass[task.type] }} text-{{ typeColorClass[task.type] }}"
@@ -35,7 +38,11 @@
                 </p>
             </div>
 
-            <div class="flex-1 flex-center show-on-hover">
+            <div class="flex-3 flex-center" ng-show="task.message">
+                <h4 class="muted">{{task.message}}</h4>
+            </div>
+
+            <div class="flex-1 flex-center show-on-hover" ng-hide="task.status == 'running'">
                 <a class="lnk-danger" title="Reject" ng-click="reject(task)"><span class="glyphicon glyphicon-remove"></span></a>
             </div>
 

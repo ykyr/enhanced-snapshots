@@ -14,14 +14,21 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         return true;
     }];
 
-    var isConfig = ['$rootScope', function ($rootScope) {
-        if (!$rootScope.isConfigState())  throw "System is not in configuration state!";
+    var subscribed = ['$stomp', 'toastr', function ($stomp, toastr) {
+        $stomp
+            .connect('/rest/ws')
+            .then(function (frame) {
+                var errorSubscription = $stomp.subscribe('/error', function (err) {
+                    toastr.error(err.message, err.title);
+                });
+            });
+
         return true;
     }];
 
-    var logout = ['$q', 'Auth', function ($q, Auth) {
-        Auth.logOut();
-        return $q.reject('Logged out');
+    var isConfig = ['$rootScope', function ($rootScope) {
+        if (!$rootScope.isConfigState())  throw "System is not in configuration state!";
+        return true;
     }];
 
     $stateProvider
@@ -30,14 +37,18 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             url: "/app",
             templateUrl: "partials/app.html",
             resolve: {
-                authenticated: authenticated
+                authenticated: authenticated,
+                subscribed: subscribed
             },
             controller: function ($scope, $rootScope, Storage, toastr) {
                 $rootScope.$on('$stateChangeSuccess',
                     function(event, toState, toParams, fromState, fromParams){
                         var notification = Storage.get("notification");
                         if (notification) {
-                            toastr.info(notification);
+                            toastr.info(notification, undefined, {
+                                closeButton: true,
+                                timeOut: 20000
+                            });
                             Storage.remove("notification");
                         }
                     });
@@ -101,14 +112,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             url: "/registration",
             templateUrl: "partials/registration.html",
             controller: "RegistrationController"
-        })
-        /*.state('logout', {
-            url: "/logout",
-            controller: function ($state, Auth) {
-                Auth.logOut();
-                $state.go('login');
-            }
-        })*/;
+        });
 
     $httpProvider.interceptors.push('Interceptor');
 })
@@ -128,17 +132,5 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             $state.go('login');
         });
 
-        $stomp
-            .connect('/rest/ws')
-            .then(function (frame) {
-                var taskSubscription = $stomp.subscribe('/task', function (obj) {
-                    console.log("WS Task:");
-                    console.log(obj);
-                });
-                var errorSubscription = $stomp.subscribe('/error', function (obj) {
-                    console.log("WS Error:");
-                    console.log(obj);
-                });
-            });
     });
 
