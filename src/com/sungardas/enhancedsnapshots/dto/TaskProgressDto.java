@@ -7,6 +7,9 @@ public class TaskProgressDto implements Dto {
 
     private double progress;
 
+    public TaskProgressDto() {
+    }
+
     public TaskProgressDto(String taskId, String message, double progress) {
         this.taskId = taskId;
         this.message = message;

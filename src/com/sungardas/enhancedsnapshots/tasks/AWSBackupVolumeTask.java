@@ -10,6 +10,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -115,7 +116,8 @@ public class AWSBackupVolumeTask implements BackupTask {
             try {
                 String source = attachedDeviceName;
                 LOG.info("Starting copying: " + source + " to:" + backupFileName);
-                storageService.javaBinaryCopy(source, configuration.getSdfsMountPoint() + backupFileName);
+                CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80);
+                storageService.javaBinaryCopy(source, configuration.getSdfsMountPoint() + backupFileName, dto);
                 backupStatus = true;
             } catch (IOException | InterruptedException e) {
                 LOG.fatal(format("Backup of volume %s failed", volumeId));

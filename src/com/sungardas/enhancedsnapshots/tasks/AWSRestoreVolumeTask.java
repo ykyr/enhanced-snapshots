@@ -9,6 +9,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
@@ -156,7 +157,8 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         String attachedDeviceName = storageService.detectFsDevName(tempVolume);
         LOG.info("Volume was attached as device: " + attachedDeviceName);
         try {
-            storageService.javaBinaryCopy(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName);
+            CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80);
+            storageService.javaBinaryCopy(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
         } catch (IOException | InterruptedException e) {
             LOG.fatal(format("Restore of volume %s failed", tempVolume));
             taskEntry.setStatus("error");
