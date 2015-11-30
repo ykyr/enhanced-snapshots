@@ -133,11 +133,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             .then(function (frame) {
                 var taskSubscription = $stomp.subscribe('/task', function (obj) {
                     console.log("WS Task:");
-                    console.log(JSON.parse(obj));
+                    console.log(obj);
                 });
                 var errorSubscription = $stomp.subscribe('/error', function (obj) {
                     console.log("WS Error:");
-                    console.log(JSON.parse(obj));
+                    console.log(obj);
                 });
             });
     });
