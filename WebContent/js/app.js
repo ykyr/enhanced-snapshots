@@ -1,4 +1,4 @@
-var app = angular.module('web', ['ui.router', 'angularAwesomeSlider', 'ui.bootstrap', 'smart-table', 'ngTagsInput', 'toastr']);
+var app = angular.module('web', ['ui.router', 'angularAwesomeSlider', 'ui.bootstrap', 'smart-table', 'ngTagsInput', 'ngStomp', 'toastr']);
 
 app.constant('BASE_URL', './');
 
@@ -112,7 +112,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 
     $httpProvider.interceptors.push('Interceptor');
 })
-    .run(function ($rootScope, $state, $modal, Storage, System) {
+    .run(function ($rootScope, $state, $modal, Storage, $stomp) {
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;
         };
@@ -127,5 +127,18 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             e.preventDefault();
             $state.go('login');
         });
+
+        $stomp
+            .connect('/rest/ws')
+            .then(function (frame) {
+                var taskSubscription = $stomp.subscribe('/task', function (obj) {
+                    console.log("WS Task:");
+                    console.log(JSON.parse(obj));
+                });
+                var errorSubscription = $stomp.subscribe('/error', function (obj) {
+                    console.log("WS Error:");
+                    console.log(JSON.parse(obj));
+                });
+            });
     });
 

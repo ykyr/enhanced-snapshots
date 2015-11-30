@@ -19,6 +19,7 @@
     "angular-ui-router": "~0.2.15",
     "bootstrap": "~3.3.5",
     "jquery-cron": "~0.1.4",
+    "ng-stomp": "~0.0.2",
     "ng-tags-input": "3.0.0"
   },
   "resolutions": {
