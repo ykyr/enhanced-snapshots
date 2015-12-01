@@ -62,7 +62,7 @@ public class BackupFakeTask implements BackupTask {
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
         backupRepository.save(backup);
 
-        CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 60, 100, 1);
+        CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 60, 100, Long.parseLong(backup.getSizeGiB()));
         for (int i = 0; i <= 10; i++) {
             try {
                 TimeUnit.SECONDS.sleep(1);

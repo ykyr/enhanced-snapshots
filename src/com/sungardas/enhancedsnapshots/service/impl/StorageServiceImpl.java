@@ -30,6 +30,7 @@ import static java.lang.String.format;
 @DependsOn("CreateAppConfiguration")
 @Profile("prod")
 public class StorageServiceImpl implements StorageService {
+    public static final int BYTES_IN_MEGABYTE = 1000000;
 
     public static final Logger LOG = LogManager.getLogger(StorageServiceImpl.class);
 
@@ -68,7 +69,7 @@ public class StorageServiceImpl implements StorageService {
             fis = new FileInputStream(source);
             fos = new FileOutputStream(destination);
 
-            byte[] buffer = new byte[4096];
+            byte[] buffer = new byte[BYTES_IN_MEGABYTE];
             int noOfBytes;
 
             long total = 0;
