@@ -9,12 +9,10 @@ angular.module('web')
 
         if (angular.isDefined(Storage.get("currentUser"))) {
             Auth.logOut();
-            $stomp.disconnect();
         }
 
         if (Storage.get("currentUser") && Storage.get("currentUser").length > 1) {
             Auth.logOut();
-            $stomp.disconnect();
         }
 
         $scope.clearErr = function () {
