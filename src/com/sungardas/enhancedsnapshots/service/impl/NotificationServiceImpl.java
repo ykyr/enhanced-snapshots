@@ -34,6 +34,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void notifyUser(String destination, Dto dto) {
-        template.convertAndSend(destination, dto);
+        try {
+            template.convertAndSend(destination, dto);
+        } catch (Throwable t) {
+
+        }
     }
 }

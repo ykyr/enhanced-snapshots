@@ -1,5 +1,20 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import com.amazonaws.services.ec2.model.Volume;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
+import com.sungardas.enhancedsnapshots.exception.SDFSException;
+import com.sungardas.enhancedsnapshots.service.ConfigurationService;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.StorageService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,23 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-
-import javax.annotation.PostConstruct;
-
-import com.amazonaws.services.ec2.model.Volume;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
-import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
-import com.sungardas.enhancedsnapshots.exception.SDFSException;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
 
 import static java.lang.String.format;
 
@@ -67,7 +65,6 @@ public class StorageServiceImpl implements StorageService {
         FileOutputStream fos = null;
 
         try {
-            long size = getSize(source);
             fis = new FileInputStream(source);
             fos = new FileOutputStream(destination);
 
@@ -81,7 +78,7 @@ public class StorageServiceImpl implements StorageService {
             while ((noOfBytes = fis.read(buffer)) != -1) {
                 fos.write(buffer, 0, noOfBytes);
                 total += noOfBytes;
-                dto.setCopyingProgress(total, size);
+                dto.setCopyingProgress(total);
                 notificationService.notifyAboutTaskProgress(dto);
             }
 

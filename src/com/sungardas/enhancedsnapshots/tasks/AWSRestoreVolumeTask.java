@@ -165,7 +165,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         String attachedDeviceName = storageService.detectFsDevName(tempVolume);
         LOG.info("Volume was attached as device: " + attachedDeviceName);
         try {
-            CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 25, 80);
+            CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 25, 80, Long.parseLong(backupentry.getSizeGiB()));
             storageService.javaBinaryCopy(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
         } catch (IOException | InterruptedException e) {
             LOG.fatal(format("Restore of volume %s failed", tempVolume));
