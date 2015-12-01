@@ -5,6 +5,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.RetentionService;
 import org.apache.logging.log4j.LogManager;
@@ -55,15 +56,20 @@ public class BackupFakeTask implements BackupTask {
         String timestamp = Long.toString(System.currentTimeMillis());
         String volumeId = taskEntry.getVolume();
         String filename = volumeId + "." + timestamp + ".backup";
-        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting file...", 60);
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Checking volume", 60);
         BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId(),
         		"snap-00100110","gp2","3000", "10");
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
         backupRepository.save(backup);
 
-        try {
-            TimeUnit.SECONDS.sleep(10);
-        } catch (InterruptedException ignored) {
+        CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 60, 100, 1);
+        for (int i = 0; i <= 10; i++) {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException ignored) {
+            }
+            dto.setCopyingProgress(i * 100000000);
+            notificationService.notifyAboutTaskProgress(dto);
         }
 
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
