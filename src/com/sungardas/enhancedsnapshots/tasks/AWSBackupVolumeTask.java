@@ -64,6 +64,9 @@ public class AWSBackupVolumeTask implements BackupTask {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private TaskService taskService;
+
     private WorkerConfiguration configuration;
 
     public void setTaskEntry(TaskEntry taskEntry) {
@@ -165,7 +168,7 @@ public class AWSBackupVolumeTask implements BackupTask {
                 snapshotService.saveSnapshot(volumeId, configurationId, snapshotId);
 
 
-                taskRepository.delete(taskEntry);
+                taskService.complete(taskEntry);
                 LOG.info("Task completed.");
                 notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
                 retentionService.apply();

@@ -3,6 +3,7 @@ package com.sungardas.enhancedsnapshots.tasks;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.TaskService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class RestoreFakeTask implements RestoreTask {
 
 	@Autowired
 	private NotificationService notificationService;
+
+	@Autowired
+	private TaskService taskService;
 
 	private TaskEntry taskEntry;
 
@@ -52,7 +56,7 @@ public class RestoreFakeTask implements RestoreTask {
 		}
 
 		LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
-		taskRepository.delete(taskEntry);
+		taskService.complete(taskEntry);
 		LOG.info("Task completed.");
 		notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
 

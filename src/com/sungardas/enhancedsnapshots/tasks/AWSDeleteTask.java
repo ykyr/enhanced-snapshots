@@ -8,6 +8,7 @@ import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.StorageService;
+import com.sungardas.enhancedsnapshots.service.TaskService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
 @Component
 @Scope("prototype")
@@ -37,6 +39,9 @@ public class AWSDeleteTask implements DeleteTask {
 
     @Autowired
     private StorageService storageService;
+
+    @Autowired
+    private TaskService taskService;
 
     @Override
     public void setTaskEntry(TaskEntry taskEntry) {
@@ -60,9 +65,7 @@ public class AWSDeleteTask implements DeleteTask {
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting file...", 60);
             storageService.deleteFile(backupEntry.getFileName());
             backupRepository.delete(backupEntry);
-            taskEntry.setStatus(COMPLETE.getStatus());
-            taskRepository.save(taskEntry);
-            taskRepository.delete(taskEntry);
+            taskService.complete(taskEntry);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
         } catch (EnhancedSnapshotsException e){

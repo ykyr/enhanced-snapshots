@@ -54,6 +54,9 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private TaskService taskService;
+
     private WorkerConfiguration configuration;
 
     private TaskEntry taskEntry;
@@ -79,7 +82,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
                 LOG.info("Task was defined as restore from history.");
                 restoreFromBackupFile();
             }
-            deleteCompletedTask();
+            completeTask();
         } catch (RuntimeException e) {
             e.printStackTrace();
             LOG.error("Failed to execute {} task {}. Changing task status to '{}'", taskEntry.getType(), taskEntry.getId(), TaskEntry.TaskEntryStatus.ERROR);
@@ -94,11 +97,10 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         taskRepository.save(taskEntry);
     }
 
-    private void deleteCompletedTask() {
+    private void completeTask() {
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore complete", 100);
-        LOG.info("Deleting completed {} task {}", taskEntry.getType(), taskEntry.getId());
-        taskRepository.delete(taskEntry);
-        LOG.info("{} task {} was completed and removed", taskEntry.getType(), taskEntry.getId());
+        taskService.complete(taskEntry);
+        LOG.info("{} task {} was completed", taskEntry.getType(), taskEntry.getId());
     }
 
 	private void restoreFromSnapshot() {
