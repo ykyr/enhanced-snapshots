@@ -14,7 +14,7 @@ public class CopyingTaskProgressDto extends TaskProgressDto {
 
     public void setCopyingProgress(final long progress, final long volumeSize){
         double p = ((double)progress)/volumeSize;
-        setProgress(((progressMax -progressMin)/100)*p);
-        setMessage("Copying: "+(progress/BYTES_IN_MEGABYTE)+"/"+(volumeSize/BYTES_IN_MEGABYTE));
+        setProgress(progressMin + (((progressMax - progressMin) / 100) * (p * 100)));
+        setMessage("Copying: " + (progress / BYTES_IN_MEGABYTE) + "/" + (volumeSize / BYTES_IN_MEGABYTE) + "MB");
     }
 }

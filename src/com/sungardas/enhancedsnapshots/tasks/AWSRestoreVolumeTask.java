@@ -11,10 +11,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
-import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
-import com.sungardas.enhancedsnapshots.service.StorageService;
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,12 +48,15 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     @Autowired
     private StorageService storageService;
 
-    private TaskEntry taskEntry;
-
     @Autowired
     private ConfigurationService configurationService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     private WorkerConfiguration configuration;
+
+    private TaskEntry taskEntry;
 
     @Override
     public void setTaskEntry(TaskEntry taskEntry) {
@@ -67,6 +67,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     @Override
     public void execute() {
         LOG.info("Executing restore task:\n" + taskEntry.toString());
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting restore", 0);
         String sourceFile = taskEntry.getSourceFileName();
         configuration = configurationService.getWorkerConfiguration();
         changeTaskStatusToRunning();
@@ -94,12 +95,14 @@ public class AWSRestoreVolumeTask implements RestoreTask {
     }
 
     private void deleteCompletedTask() {
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore complete", 100);
         LOG.info("Deleting completed {} task {}", taskEntry.getType(), taskEntry.getId());
         taskRepository.delete(taskEntry);
         LOG.info("{} task {} was completed and removed", taskEntry.getType(), taskEntry.getId());
     }
 
 	private void restoreFromSnapshot() {
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from snapshot", 20);
         String targetZone = taskEntry.getAvailabilityZone();
 
 		String volumeId = taskEntry.getVolume();
@@ -109,11 +112,13 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 			LOG.error("Failed to find snapshot for volume {} ", volumeId);
 			throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
 		}
-		Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone);
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume from snapshot", 50);
+        Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone);
 		awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + backupEntry.getVolumeId());
 	}
 
     private void restoreFromBackupFile() {
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from file", 10);
         String targetZone = taskEntry.getAvailabilityZone();
         String sourceFile =taskEntry.getSourceFileName();
         String instanceId = taskEntry.getInstanceId();
@@ -124,6 +129,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         String volumeType = backupentry.getVolumeType();
         String size = backupentry.getSizeGiB();
         String iops = backupentry.getIops();
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume...", 15);
         Volume tempVolume = null;
         switch (VolumeType.fromValue(volumeType)) {
             case Standard:
@@ -139,7 +145,8 @@ public class AWSRestoreVolumeTask implements RestoreTask {
                 LOG.info("Created IO1 volume:\n" + tempVolume.toString());
                 break;
         }
-        awsCommunication.createTemporaryTag(tempVolume.getVolumeId(),backupentry.getFileName());
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Attaching volume...", 20);
+        awsCommunication.createTemporaryTag(tempVolume.getVolumeId(), backupentry.getFileName());
         awsCommunication.attachVolume(instance, tempVolume);
         try {
             TimeUnit.MINUTES.sleep(1);
@@ -149,6 +156,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         LOG.info("Trying to attach volume to innstance " + instance.getInstanceId());
         //wait for attached state
 
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Synchronizing volume...", 25);
         while (tempVolume.getAttachments().size() == 0) {
             sleep();
             tempVolume = awsCommunication.syncVolume(tempVolume);
@@ -157,7 +165,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         String attachedDeviceName = storageService.detectFsDevName(tempVolume);
         LOG.info("Volume was attached as device: " + attachedDeviceName);
         try {
-            CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 15, 80);
+            CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 25, 80);
             storageService.javaBinaryCopy(configuration.getSdfsMountPoint() + backupentry.getFileName(), attachedDeviceName, dto);
         } catch (IOException | InterruptedException e) {
             LOG.fatal(format("Restore of volume %s failed", tempVolume));
@@ -165,10 +173,13 @@ public class AWSRestoreVolumeTask implements RestoreTask {
             e.printStackTrace();
         }
 
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Detaching volume...", 85);
         awsCommunication.detachVolume(tempVolume);
         LOG.info("Detaching volume after restoring data: " + tempVolume.toString());
 
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 90);
         Snapshot tempSnapshot = awsCommunication.createSnapshot(tempVolume);
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 95);
         Volume volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), targetZone);
 
         awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
