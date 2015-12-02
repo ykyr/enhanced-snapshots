@@ -1,11 +1,10 @@
 package com.sungardas.enhancedsnapshots.aws.dynamodb.repository;
 
-import java.util.List;
-
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-
 import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
 import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
 
 @EnableScan
 public interface TaskRepository extends CrudRepository<TaskEntry, String> {
@@ -20,4 +19,6 @@ public interface TaskRepository extends CrudRepository<TaskEntry, String> {
     List<TaskEntry> findByVolumeAndTypeAndInstanceIdAndOptions(String volumeId, String type, String instanceId, String options);
 
     List<TaskEntry> findByInstanceId(String instanceId);
+
+    List<TaskEntry> findByExpirationDateLessThanEqual(String expirationDate);
 }

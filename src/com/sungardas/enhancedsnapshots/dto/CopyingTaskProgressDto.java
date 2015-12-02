@@ -12,7 +12,7 @@ public class CopyingTaskProgressDto extends TaskProgressDto {
         setTaskId(taskId);
         this.progressMax = progressMax;
         this.progressMin = progressMin;
-        this.volumeSize = (long) (volumeSize * MEGABYTE_IN_GIBIBYTE);
+        this.volumeSize = (long) (volumeSize * MEGABYTE_IN_GIBIBYTE) * BYTES_IN_MEGABYTE;
     }
 
     public void setCopyingProgress(final long progress) {

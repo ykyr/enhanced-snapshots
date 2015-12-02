@@ -9,10 +9,7 @@ import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.service.*;
 import com.sungardas.enhancedsnapshots.tasks.AWSRestoreVolumeTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,12 +17,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 
 @Service
 public class TaskServiceImpl implements TaskService {
 
     private static final Logger LOG = LogManager.getLogger(TaskServiceImpl.class);
+    private static final long TTL = 300000;
 
     @Autowired
     private TaskRepository taskRepository;
@@ -44,6 +43,23 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private NotificationService notificationService;
+
+    @PostConstruct
+    private void init() {
+        schedulerService.addTask(new Task() {
+            @Override
+            public String getId() {
+                return "taskRetentionPolicy";
+            }
+
+            @Override
+            public void run() {
+                long currentTime = System.currentTimeMillis();
+                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqual(currentTime + "");
+                taskRepository.delete(list);
+            }
+        }, "*/5 * * * *");
+    }
 
     @Override
     public Map<String, String> createTask(TaskDto taskDto) {
@@ -118,6 +134,14 @@ public class TaskServiceImpl implements TaskService {
             LOG.error("Failed to get tasks.", e);
             throw new DataAccessException("Failed to get tasks.", e);
         }
+    }
+
+    @Override
+    public void complete(TaskEntry taskEntry) {
+        long expirationDate = System.currentTimeMillis() + TTL;
+        taskEntry.setExpirationDate(expirationDate + "");
+        taskEntry.setStatus(TaskEntry.TaskEntryStatus.COMPLETE.getStatus());
+        taskRepository.save(taskEntry);
     }
 
     @Override

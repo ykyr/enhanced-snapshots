@@ -8,6 +8,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.RetentionService;
+import com.sungardas.enhancedsnapshots.service.TaskService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ public class BackupFakeTask implements BackupTask {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private TaskService taskService;
+
     private TaskEntry taskEntry;
 
     
@@ -62,7 +66,7 @@ public class BackupFakeTask implements BackupTask {
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
         backupRepository.save(backup);
 
-        CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 60, 100, 1);
+        CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 60, 100, Long.parseLong(backup.getSizeGiB()));
         for (int i = 0; i <= 10; i++) {
             try {
                 TimeUnit.SECONDS.sleep(1);
@@ -74,7 +78,7 @@ public class BackupFakeTask implements BackupTask {
 
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
         LOG.info("Task " + taskEntry.getId() + ": Delete completed task:" + taskEntry.getId());
-        taskRepository.delete(taskEntry);
+        taskService.complete(taskEntry);
         LOG.info("Task completed.");
         retentionService.apply();
     }
