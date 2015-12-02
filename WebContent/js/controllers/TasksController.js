@@ -2,13 +2,6 @@
 
 angular.module('web')
     .controller('TasksController', function ($scope, $rootScope, $stateParams, $stomp, Tasks, Storage, $modal) {
-        $scope.statusColorClass = {
-            "waiting": "",
-            "queued": "info",
-            "running": "primary",
-            "completed": "success",
-            "error": "danger"
-        };
         $scope.typeColorClass = {
             backup: "primary",
             restore: "success",
@@ -65,7 +58,7 @@ angular.module('web')
         var updateTaskStatus = function () {
             var msg = Storage.get('lastTaskStatus') || {};
             var task = $scope.tasks.filter(function (t) {
-                return t.id == msg.taskId;
+                return t.id == msg.taskId && t.status != "complete" && t.status != "error";
             })[0];
             if (task) {
                 if (task.status != 'running') {

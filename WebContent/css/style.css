@@ -602,6 +602,10 @@ div.tr.state-removed {
     /* background-color: #7d7d7d; */
 }
 
+.snap .card.status-complete {
+    background-color: #dddddd;
+}
+
 .snap .card.status-queued {
     background-color: #febe11;
 }
