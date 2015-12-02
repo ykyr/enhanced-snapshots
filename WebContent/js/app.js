@@ -14,18 +14,6 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         return true;
     }];
 
-    var subscribed = ['$stomp', 'toastr', function ($stomp, toastr) {
-        $stomp
-            .connect('/rest/ws')
-            .then(function (frame) {
-                var errorSubscription = $stomp.subscribe('/error', function (err) {
-                    toastr.error(err.message, err.title);
-                });
-            });
-
-        return true;
-    }];
-
     var isConfig = ['$rootScope', function ($rootScope) {
         if (!$rootScope.isConfigState())  throw "System is not in configuration state!";
         return true;
@@ -37,8 +25,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             url: "/app",
             templateUrl: "partials/app.html",
             resolve: {
-                authenticated: authenticated,
-                subscribed: subscribed
+                authenticated: authenticated
             },
             controller: function ($scope, $rootScope, Storage, toastr) {
                 $rootScope.$on('$stateChangeSuccess',
@@ -116,13 +103,31 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
 
     $httpProvider.interceptors.push('Interceptor');
 })
-    .run(function ($rootScope, $state, $modal, Storage, $stomp) {
+    .run(function ($rootScope, $state, $modal, $stomp, toastr, Storage) {
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;
         };
 
         $rootScope.isConfigState = function () {
             return (Storage.get("currentUser") || {}).role === 'configurator';
+        };
+
+        $rootScope.subscribeWS = function () {
+            $stomp.setDebug(function (args) {
+                // console.log(args);
+            });
+
+            $stomp
+                .connect('/rest/ws')
+                .then(function (frame) {
+                    $rootScope.errorListener = $stomp.subscribe('/error', function (err) {
+                        toastr.error(err.message, err.title);
+                    });
+                    $rootScope.taskListener = $stomp.subscribe('/task', function (msg) {
+                        Storage.save('lastTaskStatus', msg);
+                        $rootScope.$broadcast("task-status-changed");
+                    });
+                });
         };
 
         $rootScope.isLoading = false;
@@ -132,5 +137,8 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             $state.go('login');
         });
 
+        $rootScope.errorListener = {};
+        $rootScope.taskListener = {};
+        if (angular.isDefined($rootScope.getUserName())) { $rootScope.subscribeWS(); }
     });
 
