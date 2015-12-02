@@ -1,24 +1,36 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.SnapshotRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.service.ConfigurationService;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.SchedulerService;
+import com.sungardas.enhancedsnapshots.service.Task;
+import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.AWSRestoreVolumeTask;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.*;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -31,6 +43,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private BackupRepository backupRepository;
+
+    @Autowired
+    private SnapshotRepository snapshotRepository;
 
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
@@ -55,7 +70,7 @@ public class TaskServiceImpl implements TaskService {
             @Override
             public void run() {
                 long currentTime = System.currentTimeMillis();
-                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqual(currentTime + "");
+                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqualAndInstanceId(currentTime + "", configurationId);
                 taskRepository.delete(list);
             }
         }, "*/5 * * * *");
@@ -81,10 +96,19 @@ public class TaskServiceImpl implements TaskService {
                     LOG.error(e);
                     messages.put(taskEntry.getVolume(), e.getLocalizedMessage());
                 }
+            } else if (TaskEntry.TaskEntryType.RESTORE.getType().equals(taskEntry.getType())) {
+                if (backupRepository.getLast(taskEntry.getVolume(), configurationId) == null || snapshotRepository.findOne(SnapshotEntry.getId(taskEntry.getVolume(), configurationId)) == null) {
+                    notificationService.notifyAboutError(new ExceptionDto("Restore task error", "Backup for volume: " + taskEntry.getVolume() + " not found!"));
+                    messages.put(taskEntry.getVolume(), "Restore task error");
+                } else {
+                    messages.put(taskEntry.getVolume(), getMessage(taskEntry));
+                    validTasks.add(taskEntry);
+                }
             } else {
                 messages.put(taskEntry.getVolume(), getMessage(taskEntry));
                 validTasks.add(taskEntry);
             }
+
         }
         taskRepository.save(validTasks);
         return messages;
