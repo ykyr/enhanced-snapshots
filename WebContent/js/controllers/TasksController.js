@@ -66,6 +66,7 @@ angular.module('web')
                 } else {
                     task.progress = msg.progress;
                     task.message = msg.message;
+                    $scope.$apply();
                     if (task.progress == 100) {
                         $scope.refresh();
                     }
