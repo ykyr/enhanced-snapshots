@@ -9,6 +9,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.SDFSException;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,55 +31,55 @@ import java.util.Map;
 @Service
 @Profile("prod")
 public class SDFSStateServiceImpl implements SDFSStateService {
-    private static final Logger LOG = LogManager.getLogger(SDFSStateServiceImpl.class);
-
-    @Autowired
-    private AWSCredentials credentials;
-
-    @Autowired
-    private AmazonS3 amazonS3;
-
-    @Autowired
-    private BackupRepository backupRepository;
-
-    @Value("${amazon.s3.bucket}")
-    private String s3Bucket;
-
-    @Value("${sdfs.volume.metadata.path}")
-    private String volumeMetadataPath;
-
-    @Value("${sdfs.volume.config.path}")
-    private String volumeConfigPath;
-
-    @Value("${amazon.sdfs.size}")
-    private String sdfsSize;
-
-    @Value("${sungardas.worker.configuration}")
-    private String instanceId;
-
-    private static final String SDFS_MOUNT_POINT = "/mnt/awspool/";
-
-    @Autowired
-    private XmlWebApplicationContext applicationContext;
-
     public static final String SDFS_STATE_BACKUP_FILE_NAME = "sdfsstate";
     public static final String SDFS_STATE_BACKUP_FILE_EXT = ".zip";
+    private static final Logger LOG = LogManager.getLogger(SDFSStateServiceImpl.class);
+    private static final String SDFS_MOUNT_POINT = "/mnt/awspool/";
     private static final String KEY_NAME = "sdfsstate.zip";
     private static final String SDFS_STATE_DESTINATION = "/";
-
     private static final int VOLUME_ID_INDEX = 0;
     private static final int TIME_INDEX = 1;
     private static final int TYPE_INDEX = 2;
     private static final int IOPS_INDEX = 3;
-
     private static final long BYTES_IN_GIB = 1073741824l;
+    @Autowired
+    private AWSCredentials credentials;
+    @Autowired
+    private AmazonS3 amazonS3;
+    @Autowired
+    private BackupRepository backupRepository;
+    @Autowired
+    private NotificationService notificationService;
+    @Value("${amazon.s3.bucket}")
+    private String s3Bucket;
+    @Value("${sdfs.volume.metadata.path}")
+    private String volumeMetadataPath;
+    @Value("${sdfs.volume.config.path}")
+    private String volumeConfigPath;
+    @Value("${amazon.sdfs.size}")
+    private String sdfsSize;
+    @Value("${sungardas.worker.configuration}")
+    private String instanceId;
+    @Autowired
+    private XmlWebApplicationContext applicationContext;
 
     @Override
-    public void backupState() throws AmazonClientException {
+    public void backupState() {
+        backupState(null);
+    }
+
+    @Override
+    public void backupState(String taskId) {
+        if (taskId != null) {
+            notificationService.notifyAboutTaskProgress(taskId, "Stopping SDFS...", 20);
+        }
         shutdownSDFS(sdfsSize, s3Bucket);
         String[] paths = {volumeMetadataPath, volumeConfigPath};
         File tempFile = null;
         try {
+            if (taskId != null) {
+                notificationService.notifyAboutTaskProgress(taskId, "Compressing SDFS files...", 40);
+            }
             tempFile = ZipUtils.zip(paths);
         } catch (Throwable e) {
             startupSDFS(sdfsSize, s3Bucket);
@@ -87,7 +88,13 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             }
             throw new SDFSException("Cant create system backup ", e);
         }
+        if (taskId != null) {
+            notificationService.notifyAboutTaskProgress(taskId, "Uploading SDFS files to S3...", 60);
+        }
         uploadToS3(KEY_NAME, tempFile);
+        if (taskId != null) {
+            notificationService.notifyAboutTaskProgress(taskId, "Starting SDFS...", 80);
+        }
         startupSDFS(sdfsSize, s3Bucket);
         tempFile.delete();
     }
