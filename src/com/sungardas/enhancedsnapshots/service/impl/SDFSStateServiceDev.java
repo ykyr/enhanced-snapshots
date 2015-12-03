@@ -14,6 +14,11 @@ public class SDFSStateServiceDev implements SDFSStateService {
     }
 
     @Override
+    public void backupState(String taskId) {
+
+    }
+
+    @Override
     public void restoreState() throws AmazonClientException {
     }
 

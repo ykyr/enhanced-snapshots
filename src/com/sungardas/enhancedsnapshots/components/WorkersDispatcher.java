@@ -5,6 +5,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.BackupTask;
@@ -59,6 +60,10 @@ public class WorkersDispatcher {
     private SDFSStateService sdfsStateService;
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
     @Value("${enhancedsnapshots.polling.rate}")
     private int pollingRate;
     private WorkerConfiguration configuration;
@@ -120,10 +125,12 @@ public class WorkersDispatcher {
                                     break;
                                 case SYSTEM_BACKUP: {
                                     LOGtw.info("Task was identified as system backup");
+                                    notificationService.notifyAboutTaskProgress(entry.getId(), "System backup started", 0);
                                     entry.setStatus(RUNNING.getStatus());
                                     taskRepository.save(entry);
-                                    sdfsStateService.backupState();
+                                    sdfsStateService.backupState(entry.getId());
                                     taskRepository.delete(entry);
+                                    notificationService.notifyAboutTaskProgress(entry.getId(), "System backup finished", 100);
                                     break;
                                 }
                                 case UNKNOWN:

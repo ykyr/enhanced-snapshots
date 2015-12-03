@@ -22,4 +22,6 @@ public interface TaskService {
     List<TaskDto> getAllTasks(String volumeId);
 
     void complete(TaskEntry taskEntry);
+
+    boolean isQueueFull();
 }
