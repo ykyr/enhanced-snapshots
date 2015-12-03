@@ -1,13 +1,5 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.PostConstruct;
-
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -19,18 +11,16 @@ import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import com.sungardas.enhancedsnapshots.service.Task;
-import com.sungardas.enhancedsnapshots.service.TaskService;
+import com.sungardas.enhancedsnapshots.service.*;
 import com.sungardas.enhancedsnapshots.tasks.AWSRestoreVolumeTask;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -49,6 +39,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
+
+    @Value("${enhancedsnapshots.queue.size}")
+    private int queueSize;
 
     @Autowired
     private ConfigurationService configuration;
@@ -81,7 +74,12 @@ public class TaskServiceImpl implements TaskService {
         Map<String, String> messages = new HashMap<>();
         String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
         List<TaskEntry> validTasks = new ArrayList<>();
+        int tasksInQueue = getTasksInQueue();
         for (TaskEntry taskEntry : TaskDtoConverter.convert(taskDto)) {
+            if (tasksInQueue >= queueSize) {
+                notificationService.notifyAboutError(new ExceptionDto("Task creation error", "Task queue is full"));
+                break;
+            }
             taskEntry.setWorker(configurationId);
             taskEntry.setInstanceId(configurationId);
             taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
@@ -91,6 +89,7 @@ public class TaskServiceImpl implements TaskService {
                     schedulerService.addTask(taskEntry);
                     messages.put(taskEntry.getVolume(), getMessage(taskEntry));
                     validTasks.add(taskEntry);
+                    tasksInQueue++;
                 } catch (EnhancedSnapshotsException e) {
                     notificationService.notifyAboutError(new ExceptionDto("Task creation has failed", e.getLocalizedMessage()));
                     LOG.error(e);
@@ -103,10 +102,12 @@ public class TaskServiceImpl implements TaskService {
                 } else {
                     messages.put(taskEntry.getVolume(), getMessage(taskEntry));
                     validTasks.add(taskEntry);
+                    tasksInQueue++;
                 }
             } else {
                 messages.put(taskEntry.getVolume(), getMessage(taskEntry));
                 validTasks.add(taskEntry);
+                tasksInQueue++;
             }
 
         }
@@ -169,6 +170,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public boolean isQueueFull() {
+        return getTasksInQueue() > queueSize;
+    }
+
+    @Override
     public List<TaskDto> getAllRegularTasks(String volumeId) {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.TRUE.toString(),
@@ -206,5 +212,10 @@ public class TaskServiceImpl implements TaskService {
     public void updateTask(TaskDto taskInfo) {
         removeTask(taskInfo.getId());
         createTask(taskInfo);
+    }
+
+    private int getTasksInQueue() {
+        return (int) (taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationId, TaskEntry.TaskEntryType.BACKUP.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()) +
+                taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationId, TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()));
     }
 }
