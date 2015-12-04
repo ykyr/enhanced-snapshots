@@ -38,7 +38,7 @@ angular.module('web')
 
         $scope.tasks = [];
         $rootScope.isLoading = false;
-        $scope.refresh = function () {
+        var doRefresh = function () {
             $rootScope.isLoading = true;
             Tasks.get($scope.volumeId).then(function (data) {
                 $scope.tasks = data;
@@ -47,11 +47,13 @@ angular.module('web')
             }, function () {
                 $rootScope.isLoading = false;
             });
-
         };
-        $scope.refresh();
+        doRefresh();
+        $scope.refresh = function () {
+            doRefresh();
+        };
 
-        $scope.$on("task-status-changed", function () {
+        $rootScope.$on("task-status-changed", function () {
             updateTaskStatus();
         });
 
@@ -62,13 +64,12 @@ angular.module('web')
             })[0];
             if (task) {
                 if (task.status != 'running') {
-                    $scope.refresh();
+                    doRefresh();
                 } else {
                     task.progress = msg.progress;
                     task.message = msg.message;
-                    $scope.$apply();
                     if (task.progress == 100) {
-                        $scope.refresh();
+                        doRefresh();
                     }
                 }
             }
