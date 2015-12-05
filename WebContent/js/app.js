@@ -125,7 +125,7 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                     });
                     $rootScope.taskListener = $stomp.subscribe('/task', function (msg) {
                         Storage.save('lastTaskStatus', msg);
-                        $rootScope.$broadcast("task-status-changed");
+                        $rootScope.$broadcast("task-status-changed", msg);
                     });
                 });
         };
