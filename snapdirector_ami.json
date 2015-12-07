@@ -14,7 +14,7 @@
       "instance_type": "t2.micro",
       "ssh_username": "ec2-user",
       "ssh_pty": true,
-      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2015.11.1",
+      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2015.11.2",
       "tags": {
         "Name": "Enhanced Snapshots",
         "Description": "Backup, recovery, disaster recovery, snapshot, schedule"
@@ -46,7 +46,8 @@
         "ansible/roles/openjdk",
         "ansible/roles/oracle-java8",
         "ansible/roles/tomcat8",
-        "ansible/roles/nginx"
+        "ansible/roles/nginx",
+	"ansible/roles/awslogs"
       ]
           },
     {
