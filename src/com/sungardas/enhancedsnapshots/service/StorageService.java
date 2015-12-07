@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.service;
 
 import com.amazonaws.services.ec2.model.Volume;
+import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 
 import java.io.IOException;
 
@@ -14,6 +15,5 @@ public interface StorageService {
 
     String detectFsDevName(Volume volume);
 
-    void javaBinaryCopy(String source, String destination) throws IOException, InterruptedException;
-
+    void javaBinaryCopy(String source, String destination, CopyingTaskProgressDto dto) throws IOException, InterruptedException;
 }

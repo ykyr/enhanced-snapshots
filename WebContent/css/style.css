@@ -524,6 +524,7 @@ div.tr.state-removed {
     background-color: #ffffff;
     box-shadow: rgba(0,0,0,0.3) 5px 5px 10px -5px;
     margin-bottom: 15px;
+    position: relative;
 }
 
 .snap .card.with-hover {
@@ -584,13 +585,25 @@ div.tr.state-removed {
 .snap .card.status-queued > div,
 .snap .card.status-running > div,
 .snap .card.status-error > div {
-    background-color: rgba(255,255,255,.9);
+    background-color: rgba(255,255,255,.6);
     border-radius: 4px;
+    position: relative;
+}
+
+.snap .card > div.task-progress {
+    position: absolute !important;
+    top: 0;
+    bottom: 0;
+    right: 0;
 }
 
 
 .snap .card.status-waiting {
     /* background-color: #7d7d7d; */
+}
+
+.snap .card.status-complete {
+    background-color: #dddddd;
 }
 
 .snap .card.status-queued {

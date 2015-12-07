@@ -11,3 +11,4 @@
     - maven
     - nodejs
     - nginx
+    - awslogs

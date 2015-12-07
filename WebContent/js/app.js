@@ -1,4 +1,4 @@
-var app = angular.module('web', ['ui.router', 'angularAwesomeSlider', 'ui.bootstrap', 'smart-table', 'ngTagsInput', 'toastr']);
+var app = angular.module('web', ['ui.router', 'angularAwesomeSlider', 'ui.bootstrap', 'smart-table', 'ngTagsInput', 'ngStomp', 'toastr']);
 
 app.constant('BASE_URL', './');
 
@@ -19,11 +19,6 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
         return true;
     }];
 
-    var logout = ['$q', 'Auth', function ($q, Auth) {
-        Auth.logOut();
-        return $q.reject('Logged out');
-    }];
-
     $stateProvider
         .state('app', {
             abstract: true,
@@ -37,7 +32,10 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
                     function(event, toState, toParams, fromState, fromParams){
                         var notification = Storage.get("notification");
                         if (notification) {
-                            toastr.info(notification);
+                            toastr.info(notification, undefined, {
+                                closeButton: true,
+                                timeOut: 20000
+                            });
                             Storage.remove("notification");
                         }
                     });
@@ -101,18 +99,11 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             url: "/registration",
             templateUrl: "partials/registration.html",
             controller: "RegistrationController"
-        })
-        /*.state('logout', {
-            url: "/logout",
-            controller: function ($state, Auth) {
-                Auth.logOut();
-                $state.go('login');
-            }
-        })*/;
+        });
 
     $httpProvider.interceptors.push('Interceptor');
 })
-    .run(function ($rootScope, $state, $modal, Storage, System) {
+    .run(function ($rootScope, $state, $modal, $stomp, toastr, Storage) {
         $rootScope.getUserName = function () {
             return (Storage.get("currentUser") || {}).email;
         };
@@ -121,11 +112,33 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             return (Storage.get("currentUser") || {}).role === 'configurator';
         };
 
+        $rootScope.subscribeWS = function () {
+            $stomp.setDebug(function (args) {
+                // console.log(args);
+            });
+
+            $stomp
+                .connect('/rest/ws')
+                .then(function (frame) {
+                    $rootScope.errorListener = $stomp.subscribe('/error', function (err) {
+                        toastr.error(err.message, err.title);
+                    });
+                    $rootScope.taskListener = $stomp.subscribe('/task', function (msg) {
+                        Storage.save('lastTaskStatus', msg);
+                        $rootScope.$broadcast("task-status-changed", msg);
+                    });
+                });
+        };
+
         $rootScope.isLoading = false;
 
         $rootScope.$on('$stateChangeError', function (e) {
             e.preventDefault();
             $state.go('login');
         });
+
+        $rootScope.errorListener = {};
+        $rootScope.taskListener = {};
+        if (angular.isDefined($rootScope.getUserName())) { $rootScope.subscribeWS(); }
     });
 
