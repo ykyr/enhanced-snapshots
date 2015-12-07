@@ -1,5 +1,6 @@
 ---
-- debug: msg="install awslogs"
+
+- debug: msg="awslog install"
 
 - name: get InstanceId
   action: command /usr/bin/curl http://169.254.169.254/latest/meta-data/instance-id
