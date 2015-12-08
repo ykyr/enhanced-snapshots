@@ -25,6 +25,7 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.CryptoService;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -305,5 +306,25 @@ class CredentialsServiceImpl implements CredentialsService {
     @Override
     public String getInstanceId() {
         return instanceId;
+    }
+
+    @Override
+    public void configureAWSLogAgent() {
+        try {
+            replaceInFile(new File("/etc/awslogs/awscli.conf"), "<region>", Regions.getCurrentRegion().toString());
+            replaceInFile(new File("/etc/awslogs/awslogs.conf"), "<instance-id>", instanceId);
+        }catch (Exception e) {
+            LOG.warn("Cant initialize AWS Log agent");
+        }
+    }
+
+    private void replaceInFile(File file, String marker, String value) throws IOException {
+        String lines[] = FileUtils.readLines(file).toArray(new String[1]);
+        for (int i=0; i< lines.length; i++) {
+            if(lines[i].contains(marker)) {
+                lines[i] = lines[i].replace(marker, value);
+            }
+        }
+        FileUtils.writeLines(file, Arrays.asList(lines));
     }
 }

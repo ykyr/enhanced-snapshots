@@ -1,10 +1,15 @@
 package com.sungardas.init;
 
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import org.apache.commons.io.FileUtils;
 
 import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.ListIterator;
 
 class CredentialsServiceDev implements CredentialsService {
 
@@ -74,4 +79,10 @@ class CredentialsServiceDev implements CredentialsService {
     public String getInstanceId() {
         return "DEV";
     }
+
+    @Override
+    public void configureAWSLogAgent() {
+    }
+
+
 }

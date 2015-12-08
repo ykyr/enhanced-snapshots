@@ -53,6 +53,9 @@ class InitController implements ApplicationContextAware {
         if (credentialsService.isAwsPropertyFileExists()) {
             LOG.info("Valid aws credentials were provided.");
             refreshContext();
+        } else {
+            credentialsService.configureAWSLogAgent();
+
         }
     }
 

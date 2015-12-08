@@ -22,4 +22,6 @@ interface CredentialsService {
     boolean checkDefaultUser(String login, String password);
 
     String getInstanceId();
+
+    void configureAWSLogAgent();
 }
