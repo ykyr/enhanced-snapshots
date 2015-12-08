@@ -2,20 +2,11 @@
 
 - debug: msg="awslog install"
 
-- name: get InstanceId
-  action: command /usr/bin/curl http://169.254.169.254/latest/meta-data/instance-id
-  register: InstanceId
-
-- name: get region
-  action: command /usr/bin/curl http://169.254.169.254/latest/meta-data/placement/availability-zone | /usr/bin/rev | /bin/cut -c 2- | /usr/bin/rev
-  ignore_errors: yes
-  register: region
-
 - name: install awslogs
   yum: name=awslogs state=latest
 
-- template: src=awslogs_templ.j2 dest=/etc/awslogs/awslogs.conf owner=root group=root mode=0600
-- template: src=aws_logs_cnf.j2 dest=/etc/awslogs/awscli.conf owner=root group=root mode=0600
+- file: src=awslogs_conf dest=/etc/awslogs/awslogs.conf owner=root group=root mode=0600
+- file: src=awslogs_cli dest=/etc/awslogs/awscli.conf owner=root group=root mode=0600
 
 - name: ensure that awslogs is running
   service: name=awslogs state=running enabled=yes
