@@ -4,8 +4,8 @@ import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
 import com.sungardas.enhancedsnapshots.rest.utils.Constants;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
-import com.sungardas.enhancedsnapshots.service.UserService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +44,6 @@ public class SystemController {
     @Autowired
     private XmlWebApplicationContext applicationContext;
 
-
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody InstanceId instanceId) {
         String session = servletRequest.getSession().getId();
@@ -68,6 +67,17 @@ public class SystemController {
     @RequestMapping(value = "/backup", method = RequestMethod.GET)
     public ResponseEntity<SystemBackupDto> getConfiguration() {
         return new ResponseEntity<>(new SystemBackupDto(sdfsStateService.getBackupTime()), HttpStatus.OK);
+    }
+
+    private void refreshContext() {
+        filterProxy.setFilter(null);
+        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
+        new Thread() {
+            @Override
+            public void run() {
+                applicationContext.refresh();
+            }
+        }.start();
     }
 
     private static class SystemBackupDto {
@@ -97,16 +107,5 @@ public class SystemController {
         public void setInstanceId(String instanceId) {
             this.instanceId = instanceId;
         }
-    }
-
-    private void refreshContext() {
-        filterProxy.setFilter(null);
-        applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
-        new Thread() {
-            @Override
-            public void run() {
-                applicationContext.refresh();
-            }
-        }.start();
     }
 }

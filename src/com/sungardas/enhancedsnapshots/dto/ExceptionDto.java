@@ -1,23 +1,28 @@
 package com.sungardas.enhancedsnapshots.dto;
 
-/**
- * Created by Kostiantyn Glukhenko on 31.08.2015.
- */
-public class ExceptionDto {
-    private int status;
+public class ExceptionDto implements Dto{
+    private String title;
 
-    private Object data;
+    private String message;
 
-    public ExceptionDto(final int status, final Object data) {
-        this.status = status;
-        this.data = data;
+    public ExceptionDto(String title, String message) {
+        this.title = title;
+        this.message = message;
     }
 
-    public int getStatus() {
-        return status;
+    public String getTitle() {
+        return title;
     }
 
-    public Object getData() {
-        return data;
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

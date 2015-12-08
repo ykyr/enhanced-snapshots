@@ -5,6 +5,8 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.TaskService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +14,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
 @Component
 @Scope("prototype")
@@ -29,6 +32,12 @@ public class DeleteFakeTask implements DeleteTask {
     @Autowired
     private BackupRepository backupRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private TaskService taskService;
+
     @Override
     public void setTaskEntry(TaskEntry taskEntry) {
         this.taskEntry = taskEntry;
@@ -37,6 +46,7 @@ public class DeleteFakeTask implements DeleteTask {
     @Override
     public void execute() {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'running'");
+        notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Delete task started", 0);
         taskEntry.setStatus(RUNNING.getStatus());
         taskRepository.save(taskEntry);
 
@@ -45,12 +55,10 @@ public class DeleteFakeTask implements DeleteTask {
         backupEntry.setFileName(taskEntry.getOptions());
 
         try {
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting", 50);
             backupRepository.delete(backupEntry);
-            taskEntry.setStatus(COMPLETE.getStatus());
-            taskRepository.save(taskEntry);
-
-            //TODO check delete logic
-            taskRepository.delete(taskEntry);
+            taskService.complete(taskEntry);
+            notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Delete complete", 100);
             LOG.info("Task " + taskEntry.getId() + ": Change task state to 'complete'");
         } catch (DataAccessException e){
             LOG.error(e);

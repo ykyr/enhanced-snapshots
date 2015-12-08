@@ -7,7 +7,24 @@ public class SystemConfiguration {
     private SDFS sdfs;
     private Long lastBackup;
     private EC2Instance ec2Instance;
+    private String currentVersion;
+    private String latestVersion;
 
+    public String getCurrentVersion() {
+        return currentVersion;
+    }
+
+    public void setCurrentVersion(final String currentVersion) {
+        this.currentVersion = currentVersion;
+    }
+
+    public String getLatestVersion() {
+        return latestVersion;
+    }
+
+    public void setLatestVersion(final String latestVersion) {
+        this.latestVersion = latestVersion;
+    }
 
     public EC2Instance getEc2Instance() {
         return ec2Instance;

@@ -4,6 +4,8 @@ public interface SDFSStateService {
 
     void backupState();
 
+    void backupState(String taskId);
+
     void restoreState();
 
     boolean containsSdfsMetadata(String sBucket);

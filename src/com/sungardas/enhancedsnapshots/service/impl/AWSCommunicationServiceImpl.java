@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 
 @Service
+@Profile("prod")
 public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     private static final Logger LOG = LogManager
@@ -39,6 +41,16 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Value("${sungardas.restore.snapshot.timeout:30}")
     private int retryRestoreTimeout;
+
+   @Override
+   public List<AvailabilityZone> describeAvailabilityZonesForCurrentRegion() {
+       return ec2client.describeAvailabilityZones().getAvailabilityZones();
+   }
+
+    @Override
+    public String getCurrentAvailabilityZone() {
+        return getInstance(configurationId).getPlacement()
+                .getAvailabilityZone();    }
 
     @Override
     public void createTemporaryTag(String resourceId, String description) {

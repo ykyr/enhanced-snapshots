@@ -1,14 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('TasksController', function ($scope, $rootScope, Tasks, $modal) {
-        $scope.statusColorClass = {
-            "waiting": "",
-            "queued": "info",
-            "running": "primary",
-            "completed": "success",
-            "error": "danger"
-        };
+    .controller('TasksController', function ($scope, $rootScope, $stateParams, $stomp, Tasks, Storage, $modal, $timeout) {
         $scope.typeColorClass = {
             backup: "primary",
             restore: "success",
@@ -41,19 +34,48 @@ angular.module('web')
             return parseInt(task.priority) || 0;
         };
 
+        $scope.volumeId = $stateParams.volumeId;
+
         $scope.tasks = [];
         $rootScope.isLoading = false;
         $scope.refresh = function () {
             $rootScope.isLoading = true;
-            Tasks.get().then(function (data) {
+            Tasks.get($scope.volumeId).then(function (data) {
                 $scope.tasks = data;
+                updateTaskStatus(false);
                 $rootScope.isLoading = false;
             }, function () {
                 $rootScope.isLoading = false;
             });
-
         };
         $scope.refresh();
+
+        $scope.$on("task-status-changed", function (e, d) {
+            updateTaskStatus(d);
+        });
+
+        var updateTaskStatus = function (msg) {
+            if (!msg) {
+                msg = Storage.get('lastTaskStatus') || {};
+            }
+            var task = $scope.tasks.filter(function (t) {
+                return t.id == msg.taskId && t.status != "complete" && t.status != "error";
+            })[0];
+            if (task) {
+                if (task.status != 'running' ) {
+                    $scope.refresh();
+                } else {
+                    $timeout(function() {
+                        task.progress = msg.progress;
+                        task.message = msg.message;
+                    }, 0);
+
+                    if (msg.progress == 100) {
+                        $scope.refresh();
+                    }
+                }
+            }
+        };
 
         $scope.isRunning = function (task) {
             return task.status == "running";

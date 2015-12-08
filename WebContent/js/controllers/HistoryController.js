@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('web')
-    .controller('HistoryController', function ($scope, $rootScope, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks) {
+    .controller('HistoryController', function ($scope, $rootScope, $q, Storage, ITEMS_BY_PAGE, DISPLAY_PAGES, $stateParams, $state, $modal, $filter, Backups, Tasks, Zones) {
         $scope.maxDeleteBackupDisplay = 5;
 
         $scope.itemsByPage = ITEMS_BY_PAGE;
@@ -17,6 +17,10 @@ angular.module('web')
         $scope.iconClass = {
             'false': 'unchecked',
             'true': 'check'
+        };
+
+        $scope.selectZone = function (zone) {
+            $scope.selectedZone = zone;
         };
 
         $scope.isAllSelected = false;
@@ -98,6 +102,16 @@ angular.module('web')
         loadBackups();
 
         $scope.restore = function (backup) {
+            $rootScope.isLoading = true;
+            $q.all([Zones.get(), Zones.getCurrent()])
+                .then(function (results) {
+                    $scope.zones = results[0];
+                    $scope.selectedZone = results[1]["zone-name"] || "";
+                })
+                .finally(function () {
+                    $rootScope.isLoading = false;
+                });
+
             $scope.objectToProcess = backup;
             var confirmInstance = $modal.open({
                 animation: true,
@@ -109,9 +123,10 @@ angular.module('web')
                 var newTask = {
                     id: "",
                     priority: "",
-                    volume: $scope.objectToProcess.volumeId,
+                    volumes: [$scope.objectToProcess.volumeId],
                     backupFileName: $scope.objectToProcess.fileName,
                     type: "restore",
+                    zone: $scope.selectedZone,
                     status: "waiting",
                     schedulerManual: true,
                     schedulerName: Storage.get('currentUser').email,

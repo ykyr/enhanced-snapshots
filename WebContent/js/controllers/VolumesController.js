@@ -1,16 +1,11 @@
 'use strict';
 
 angular.module('web')
-    .controller('VolumesController', function ($scope, $rootScope, $state, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks) {
+    .controller('VolumesController', function ($scope, $rootScope, $state, $q, Retention, $filter, Storage, Regions, ITEMS_BY_PAGE, DISPLAY_PAGES, $modal, Volumes, Tasks, Zones) {
         $scope.maxVolumeDisplay = 5;
         $scope.itemsByPage = ITEMS_BY_PAGE;
         $scope.displayedPages = DISPLAY_PAGES;
 
-        $scope.globalRegion = {
-            location: "",
-            name: "GLOBAL",
-            id: ""
-        };
         $scope.stateColorClass = {
             "in-use": "success",
             "creating": "error",
@@ -29,20 +24,36 @@ angular.module('web')
 
         $scope.iconClass = {
             'false': 'unchecked',
-            'true': 'check',
-            'restore': 'upload',
-            'backup': 'download'
+            'true': 'check'
         };
 
-        $scope.modalTitle = {
-            'restore': 'Restore Backup',
-            'backup': 'Backup Volume'
-        };
+        var actions = {
+            backup: {
+                type: 'backup',
+                bgClass: 'primary',
+                modalTitle: 'Backup Volume',
+                iconClass: 'cloud-download',
+                description: 'start backup task',
+                buttonText: 'Add backup task'
+            },
+            restore: {
+                type: 'restore',
+                bgClass: 'success',
+                modalTitle: 'Restore Backup',
+                iconClass: 'cloud-upload',
+                description: 'start restore task',
+                buttonText: 'Add restore task'
 
-        $scope.bgClass = {
-            'restore': 'success',
-            'backup': 'primary'
-        };
+            },
+            schedule: {
+                type: 'schedule',
+                bgClass: 'warning',
+                modalTitle: 'Add Schedule',
+                iconClass: 'time',
+                description: 'add schedule',
+                buttonText: 'Add schedule'
+            }
+        }
 
         $scope.isAllSelected = false;
         $scope.selectedAmount = 0;
@@ -71,28 +82,30 @@ angular.module('web')
             }
         };
 
-        $scope.tags = {};
-        $scope.instances = [];
-        Regions.get().then(function (regions) {
-            $scope.regions = regions
-        });
-
-        $scope.selectedRegion = $scope.globalRegion;
-
         $scope.isDisabled = function (volume) {
             return volume.state === 'removed'
         };
 
         // ---------filtering------------
 
-        $scope.isFilterCollapsed = true;
+        $scope.showFilter = function () {
+            var filterInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.volume-filter.html',
+                controller: 'modalVolumeFilterCtrl',
+                resolve: {
+                    tags: function () {
+                        return $scope.tags;
+                    },
+                    instances: function () {
+                        return $scope.instances;
+                    }
+                }
+            });
 
-        $scope.sliderOptions = {
-            from: 0,
-            to: 16384,
-            step: 4,
-            dimension: " GB",
-            skin: "plastic"
+            filterInstance.result.then(function (filter) {
+                $scope.stAdvancedFilter = filter;
+            });
         };
 
         var processVolumes = function (data) {
@@ -120,48 +133,6 @@ angular.module('web')
             return data;
         };
 
-        $scope.filter = {
-            volumeId: "",
-            name: "",
-            size: "0;16384",
-            instanceID: "",
-            region: $scope.globalRegion,
-            tags: []
-        };
-
-        $scope.applyFilter = function () {
-            var f = angular.copy($scope.filter);
-            $scope.stAdvancedFilter = {
-                "volumeId": {
-                    "type": "str",
-                    "value": f.volumeId
-                },
-                "volumeName": {
-                    "type": "str",
-                    "value": f.name
-                },
-                "size": {
-                    "type": "int-range",
-                    "value": {
-                        "lower": parseInt(f.size.split(";")[0], 10),
-                        "higher": parseInt(f.size.split(";")[1], 10)
-                    }
-                },
-                "instanceID": {
-                    "type": "str-strict",
-                    "value": f.instanceID
-                },
-                "availabilityZone": {
-                    "type": "str",
-                    "value": f.region.id
-                },
-                "tags": {
-                    "type": "array-inc",
-                    "value": f.tags
-                }
-            };
-        };
-
         //----------filtering-end-----------
 
         //-----------Volumes-get/refresh-------------
@@ -185,10 +156,26 @@ angular.module('web')
         //-----------Volumes-get/refresh-end------------
 
         //-----------Volume-backup/restore/retention-------------
+        $scope.selectZone = function (zone) {
+            $scope.selectedZone = zone;
+        };
 
         $scope.volumeAction = function (actionType) {
+            $rootScope.isLoading = true;
+            $q.all([Zones.get(), Zones.getCurrent()])
+                .then(function (results) {
+                    $scope.zones = results[0];
+                    $scope.selectedZone = results[1]["zone-name"] || "";
+                 })
+                .finally(function () {
+                    $rootScope.isLoading = false;
+                });
+
+
             $scope.selectedVolumes = $scope.volumes.filter(function (v) { return v.isSelected; });
             $scope.actionType = actionType;
+            $scope.action = actions[actionType];
+            $scope.schedule = { name: '', cron: '', enabled: true };
 
             var confirmInstance = $modal.open({
                 animation: true,
@@ -197,17 +184,44 @@ angular.module('web')
             });
 
             confirmInstance.result.then(function () {
-
                 $rootScope.isLoading = true;
-                $scope.processErrors = [];
-                var remaining = $scope.selectedVolumes.length;
+                var volList = $scope.selectedVolumes.map(function (v) { return v.volumeId; });
 
-                var checkProcessFinished = function () {
-                    $rootScope.isLoading = remaining > 0;
-                    if (!$rootScope.isLoading) {
-                        if ($scope.processErrors.length) {
-                            console.log($scope.processErrors);
-                        }
+                var getNewTask = function(){
+                    var newTask = {
+                        id: "",
+                        priority: "",
+                        volumes: volList,
+                        status: "waiting"
+                    };
+
+                    switch (actionType) {
+                        case 'restore':
+                            newTask.backupFileName = "";
+                            newTask.zone = $scope.selectedZone;
+                        case 'backup':
+                            newTask.type = actionType;
+                            newTask.schedulerManual = true;
+                            newTask.schedulerName = Storage.get('currentUser').email;
+                            newTask.schedulerTime = Date.now();
+                            break;
+                        case 'schedule':
+                            newTask.type = 'backup';
+                            newTask.regular = true;
+                            newTask.schedulerManual = false;
+                            newTask.schedulerName = $scope.schedule.name;
+                            newTask.cron = $scope.schedule.cron;
+                            newTask.enabled = $scope.schedule.enabled;
+                            break;
+                    }
+
+                    return newTask;
+                };
+
+                var t = getNewTask();
+                Tasks.insert(t).then(function () {
+                    $rootScope.isLoading = false;
+                    if (actionType != 'schedule') {
                         var successInstance = $modal.open({
                             animation: true,
                             templateUrl: './partials/modal.task-created.html',
@@ -217,36 +231,12 @@ angular.module('web')
                         successInstance.result.then(function () {
                             $state.go('app.tasks');
                         });
-
                     }
-                };
+                }, function (e) {
+                    $rootScope.isLoading = false;
+                    console.log(e);
+                });
 
-                for (var i = 0; i < $scope.selectedVolumes.length; i++) {
-                    $scope.objectToProcess = {
-                        fileName: '',
-                        volumeId: $scope.selectedVolumes[i].volumeId
-                    };
-
-                    var newTask = {
-                        id: "",
-                        priority: "",
-                        volume: $scope.objectToProcess.volumeId,
-                        type: actionType,
-                        status: "waiting",
-                        schedulerManual: true,
-                        schedulerName: Storage.get('currentUser').email,
-                        schedulerTime: Date.now()
-                    };
-
-                    Tasks.insert(newTask).then(function () {
-                        remaining--;
-                        checkProcessFinished();
-                    }, function (e) {
-                        $scope.processErrors.push(e);
-                        remaining--;
-                        checkProcessFinished();
-                    });
-                }
             });
 
         };

@@ -1,21 +1,28 @@
 package com.sungardas.enhancedsnapshots.dto;
 
 
+import java.util.Collections;
+import java.util.List;
+
 public class TaskDto {
 
     private String id;
     private String priority;
     private String status;
     private String type;
-    private String volume;
+    private List<String> volumes = Collections.emptyList();
     private String schedulerManual;
     private String schedulerName;
     private String schedulerTime;
     private String instanceId;
     private String backupFileName;
     private String cron;
+    private String zone;
     private String regular = Boolean.FALSE.toString();
     private String enabled;
+
+    public TaskDto() {
+    }
 
     public String getBackupFileName() {
         return backupFileName;
@@ -23,9 +30,6 @@ public class TaskDto {
 
     public void setBackupFileName(String backupFileName) {
         this.backupFileName = backupFileName;
-    }
-
-    public TaskDto() {
     }
 
     public String getPriority() {
@@ -52,12 +56,12 @@ public class TaskDto {
         this.type = type;
     }
 
-    public String getVolume() {
-        return volume;
+    public List<String> getVolumes() {
+        return volumes;
     }
 
-    public void setVolume(String volume) {
-        this.volume = volume;
+    public void setVolumes(List<String> volumes) {
+        this.volumes = volumes;
     }
 
     public String getSchedulerManual() {
@@ -122,5 +126,12 @@ public class TaskDto {
 
     public void setEnabled(String enabled) {
         this.enabled = enabled;
+    }
+    public String getZone() {
+        return zone;
+    }
+
+    public void setZone(String zone) {
+        this.zone = zone;
     }
 }

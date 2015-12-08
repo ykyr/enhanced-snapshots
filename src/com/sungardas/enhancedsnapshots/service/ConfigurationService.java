@@ -10,5 +10,4 @@ public interface ConfigurationService {
 	WorkerConfiguration getWorkerConfiguration();
 
 	SystemConfiguration getSystemConfiguration();
-
 }

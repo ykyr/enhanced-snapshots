@@ -17,6 +17,7 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryType.DELETE;
 
@@ -88,6 +89,7 @@ public class BackupServiceImpl implements BackupService {
 
         TaskEntry taskEntry = new TaskEntry();
 
+        taskEntry.setId(UUID.randomUUID().toString());
         taskEntry.setVolume(volumeId);
         taskEntry.setType(DELETE.getType());
         taskEntry.setInstanceId(instanceId);

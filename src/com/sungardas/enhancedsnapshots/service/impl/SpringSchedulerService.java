@@ -3,15 +3,14 @@ package com.sungardas.enhancedsnapshots.service.impl;
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
-import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import com.sungardas.enhancedsnapshots.service.Task;
-import com.sungardas.enhancedsnapshots.service.VolumeService;
+import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
@@ -27,6 +26,7 @@ public class SpringSchedulerService implements SchedulerService {
 
     private static final Logger LOG = LogManager.getLogger(SpringSchedulerService.class);
 
+    @Qualifier("taskScheduler")
     @Autowired
     private TaskScheduler scheduler;
 
@@ -42,6 +42,12 @@ public class SpringSchedulerService implements SchedulerService {
 
     @Autowired
     private VolumeService volumeService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private TaskService taskService;
 
     @PostConstruct
     private void init() {
@@ -108,11 +114,15 @@ public class SpringSchedulerService implements SchedulerService {
 
         @Override
         public void run() {
-            taskEntry.setId(null);
-            taskEntry.setSchedulerManual(false);
-            taskEntry.setRegular(false);
-            taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
-            taskRepository.save(taskEntry);
+            if (taskService.isQueueFull()) {
+                notificationService.notifyAboutError(new ExceptionDto("Task creation error", "Task queue is full"));
+            } else {
+                taskEntry.setId(UUID.randomUUID().toString());
+                taskEntry.setSchedulerManual(false);
+                taskEntry.setRegular(false);
+                taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
+                taskRepository.save(taskEntry);
+            }
         }
 
         @Override

@@ -8,9 +8,9 @@
     <form name="addUser" autocomplete="off" class="form-horizontal">
 
         <div class="form-group">
-            <label for="email" class="control-label col-sm-3">Email:<span class="text-danger">*</span></label>
+            <label for="email" class="control-label col-sm-4">Email:<span class="text-danger">*</span></label>
 
-            <div class="col-sm-9">
+            <div class="col-sm-8">
                 <input type="email" id="email" name="modalUserEmail" class="form-control" ng-model="userToEdit.email"
                        ng-disabled="!userToEdit.isNew"
                        ng-required="userToEdit.isNew">
@@ -19,23 +19,23 @@
 
 
         <div class="form-group error-notification" ng-show="addUser.modalUserEmail.$error.email">
-            <div class="col-sm-9 col-sm-offset-3">
+            <div class="col-sm-8 col-sm-offset-4">
             <span class="text-danger">Please, enter valid Email</span>
             </div>
         </div>
 
         <div class="form-group">
-            <label for="firstname" class="control-label col-sm-3">First name:</label>
+            <label for="firstname" class="control-label col-sm-4">First name:</label>
 
-            <div class="col-sm-9">
+            <div class="col-sm-8">
                 <input type="text" id="firstname" class="form-control" ng-model="userToEdit.firstName">
             </div>
         </div>
 
         <div class="form-group">
-            <label for="modalUserLastName" class="control-label col-sm-3">Last name:</label>
+            <label for="modalUserLastName" class="control-label col-sm-4">Last name:</label>
 
-            <div class="col-sm-9">
+            <div class="col-sm-8">
                 <input type="text" id="modalUserLastName" autocomplete="off" class="form-control col-sm-8"
                        ng-model="userToEdit.lastName">
             </div>
@@ -43,18 +43,45 @@
 
 
         <div class="form-group">
-            <label class="control-label col-sm-3">Set password:<span class="text-danger"
+            <label class="control-label col-sm-4">Set password:<span class="text-danger"
                                                                      ng-show="userToEdit.isNew">*</span></label>
 
-            <div class="col-sm-9">
-                <input type="text" id="password" class="form-control col-sm-8"
+            <div class="col-sm-8">
+                <input type="password" id="password" class="form-control col-sm-8" name="modalUserPassword"
+                       autocomplete="off"
+                       complex-password
                        ng-model="userToEdit.password"
                        ng-required="userToEdit.isNew">
             </div>
         </div>
 
+        <div class="form-group error-notification" ng-show="addUser.modalUserPassword.$error.complexity">
+            <div class="col-sm-8 col-sm-offset-4">
+                <span class="text-danger">Password is too weak.</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-sm-4">Confirm password:<span class="text-danger"
+                                                                     ng-show="userToEdit.isNew">*</span></label>
+
+            <div class="col-sm-8">
+                <input type="password" id="password2" class="form-control col-sm-8" name="modalUserPassword2"
+                       autocomplete="off"
+                       check-password="password"
+                       ng-model="userToEdit.password2"
+                       ng-required="userToEdit.isNew">
+            </div>
+        </div>
+
+        <div class="form-group error-notification" ng-show="addUser.modalUserPassword2.$dirty && addUser.modalUserPassword2.$error.passwordmatch">
+            <div class="col-sm-8 col-sm-offset-4">
+                <span class="text-danger">Passwords don't match.</span>
+            </div>
+        </div>
+
         <div class="form-group" ng-show="isAdmin">
-            <div class="col-sm-9 col-sm-offset-3">
+            <div class="col-sm-8 col-sm-offset-4">
             <button type="button" class="btn"
                     ng-class="{'btn-success': userToEdit.admin, 'btn-default': !userToEdit.admin}"
                     ng-model="userToEdit.admin"
