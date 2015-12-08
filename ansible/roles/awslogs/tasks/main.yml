@@ -5,8 +5,8 @@
 - name: install awslogs
   yum: name=awslogs state=latest
 
-- file: src=awslogs_conf dest=/etc/awslogs/awslogs.conf owner=root group=root mode=0600
-- file: src=awslogs_cli dest=/etc/awslogs/awscli.conf owner=root group=root mode=0600
+- copy: src=awslogs_conf dest=/etc/awslogs/awslogs.conf owner=root group=root mode=0600
+- copy: src=awslogs_cli dest=/etc/awslogs/awscli.conf owner=root group=root mode=0600
 
 - name: ensure that awslogs is running
   service: name=awslogs state=running enabled=yes
