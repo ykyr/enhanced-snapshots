@@ -54,3 +54,6 @@ else
     echo '  SDFS sucessfully mounted  '
     exit 0
 fi
+
+### restart awslogs service  
+service awslogs restart

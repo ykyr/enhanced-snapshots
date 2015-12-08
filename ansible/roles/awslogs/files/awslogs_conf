@@ -4,7 +4,7 @@
 datetime_format = %b %d %H:%M:%S
 file = /var/log/sdfs/awspool-volume-cfg.xml.log
 buffer_duration = 5000
-log_stream_name = {{ InstanceId.stdout_lines[0] }}
+log_stream_name = <instance-id>
 initial_position = start_of_file
 log_group_name = /var/log/sdfs
 
@@ -12,7 +12,7 @@ log_group_name = /var/log/sdfs
 datetime_format = %b %d %H:%M:%S
 file = /opt/tomcat-latest/logs/catalina.out
 buffer_duration = 5000
-log_stream_name = {{ InstanceId.stdout_lines[0] }}
+log_stream_name = <instance-id>
 initial_position = start_of_file
 log_group_name = /opt/tomcat-latest/logs/catalina.out
 
@@ -20,7 +20,7 @@ log_group_name = /opt/tomcat-latest/logs/catalina.out
 datetime_format = %b %d %H:%M:%S
 file = /var/log/sdfs_mount.log
 buffer_duration = 5000
-log_stream_name = {{ InstanceId.stdout_lines[0] }}
+log_stream_name = <instance-id>
 initial_position = start_of_file
 log_group_name = /var/log/sdfs_mount.log
 # ------------------------------------------------------------------------------

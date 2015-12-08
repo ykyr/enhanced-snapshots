@@ -2,5 +2,5 @@
 [plugins]
 cwlogs = cwlogs
 [default]
-region = {{ region.stdout_lines[0] }}
+region = <region>
 # ------------------------------------------------------------------------------
