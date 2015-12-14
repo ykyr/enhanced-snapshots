@@ -124,7 +124,8 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume from snapshot", 50);
         Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone);
 		awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + backupEntry.getVolumeId());
-	}
+        awsCommunication.addTag(volume.getVolumeId(), "Created by", "Enhanced Snapshots");
+    }
 
     private void restoreFromBackupFile() {
         if (Thread.interrupted()) {
@@ -217,6 +218,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         }
         awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
         awsCommunication.deleteVolume(tempVolume);
+        awsCommunication.addTag(volumeToRestore.getVolumeId(), "Created by", "Enhanced Snapshots");
     }
 
     private void sleep() {
