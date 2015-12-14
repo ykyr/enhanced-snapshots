@@ -3,6 +3,7 @@ package com.sungardas.enhancedsnapshots.service.impl;
 import com.amazonaws.services.ec2.model.Volume;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.exception.SDFSException;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
@@ -77,6 +78,9 @@ public class StorageServiceImpl implements StorageService {
             LOG.info("Copying from {} to {} started", source, destination);
 
             while ((noOfBytes = fis.read(buffer)) != -1) {
+                if (Thread.interrupted()) {
+                    throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+                }
                 fos.write(buffer, 0, noOfBytes);
                 total += noOfBytes;
                 dto.setCopyingProgress(total);

@@ -4,6 +4,7 @@ import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
@@ -98,6 +99,9 @@ public class WorkersDispatcher {
 
             LOGtw.info("Starting worker dispatcher");
             while (true) {
+                if (Thread.interrupted()) {
+                    throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+                }
                 TaskEntry entry = null;
                 try {
                     Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), instanceId, Boolean.FALSE.toString()));
@@ -148,14 +152,13 @@ public class WorkersDispatcher {
                     sleep();
                 } catch (AmazonClientException e) {
                     LOGtw.error(e);
+                } catch (EnhancedSnapshotsInterruptedException e) {
+                    return;
                 } catch (Exception e) {
                     LOGtw.error(e);
                     if (entry != null) {
                         entry.setStatus(ERROR.getStatus());
                         taskRepository.save(entry);
-                    }
-                    if (executor.isShutdown() || executor.isTerminated()) {
-                        return;
                     }
                 }
             }

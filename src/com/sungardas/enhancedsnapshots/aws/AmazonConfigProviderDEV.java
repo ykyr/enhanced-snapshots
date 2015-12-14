@@ -1,7 +1,7 @@
 package com.sungardas.enhancedsnapshots.aws;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -11,23 +11,34 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.sungardas.enhancedsnapshots.components.RetryInterceptor;
+import com.sungardas.enhancedsnapshots.service.CryptoService;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("prod")
+@Profile("dev")
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository")
-public class AmazonConfigProvider {
+public class AmazonConfigProviderDEV {
+    @Value("${amazon.aws.accesskey}")
+    private String amazonAWSAccessKey;
+
+    @Value("${amazon.aws.secretkey}")
+    private String amazonAWSSecretKey;
 
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
 
     @Value("${amazon.aws.region}")
     private String region;
+
+    @Autowired
+    private CryptoService cryptoService;
+
 
     @Bean(name = "retryInterceptor")
     public RetryInterceptor retryInterceptor() {
@@ -36,8 +47,9 @@ public class AmazonConfigProvider {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
-        return credentialsProvider.getCredentials();
+        String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
+        String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
+        return new BasicAWSCredentials(accessKey, secretKey);
     }
 
     @Bean(name = "amazonDynamoDB")
