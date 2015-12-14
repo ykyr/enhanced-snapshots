@@ -4,6 +4,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -60,15 +61,13 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
     private static final long BYTES_IN_GB = 1_073_741_824;
-    private static String AWS_ACCESS_KEY_ID;
-    private static String AWS_SECRET_ACCESS_KEY;
     private final String catalinaHomeEnvPropName = "catalina.home";
     private final String confFolderName = "conf";
     private final String propFileName = "amazon.properties";
     private final String accessKeyPropName = "amazon.aws.accesskey";
     private final String secretKeyPropName = "amazon.aws.secretkey";
     private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
-    private AWSCredentials credentials = null;
+    private AWSCredentials credentials;
     private String instanceId;
 
     @Value("${enhancedsnapshots.sdfs.default.size}")
@@ -85,11 +84,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @PostConstruct
     private void init() {
-        AWS_ACCESS_KEY_ID = System.getenv().get("AWS_ACCESS_KEY_ID");
-        AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
-        if (AWS_ACCESS_KEY_ID != null && AWS_SECRET_ACCESS_KEY != null) {
-            credentials = new BasicAWSCredentials(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
-        }
+        credentials= new InstanceProfileCredentialsProvider().getCredentials();
         instanceId = EC2MetadataUtils.getInstanceId();
     }
 
@@ -207,8 +202,6 @@ class CredentialsServiceImpl implements CredentialsService {
             initConfigurationDto.getDb().setAdminExist(adminExist());
         }
 
-        initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
-
         String volumeName = "awspool";
         String mountPoint = "/mnt/awspool/";
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
@@ -268,6 +261,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
 
     private boolean sdfsAlreadyExists(String volumeName, String mountPoint) {
+        LOG.info("sdfsAlreadyExists...");
         String volumeConfigPath = "/etc/sdfs/" + volumeName + "-volume-cfg.xml";
         File configf = new File(volumeConfigPath);
         File mountPointf = new File(mountPoint);
@@ -282,8 +276,8 @@ class CredentialsServiceImpl implements CredentialsService {
             throw new ConfigurationException("Empty AWS SecretKey");
         }
         try {
-            AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(accessKey, secretKey));
-            ec2Client.describeRegions();
+//            AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(accessKey, secretKey));
+//            ec2Client.describeRegions();
         } catch (AmazonClientException e) {
             throw new ConfigurationException(INVALID_CREDS, e);
         }

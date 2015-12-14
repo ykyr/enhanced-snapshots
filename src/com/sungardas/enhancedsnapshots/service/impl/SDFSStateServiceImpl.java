@@ -2,6 +2,7 @@ package com.sungardas.enhancedsnapshots.service.impl;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
@@ -52,8 +53,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private NotificationService notificationService;
     @Value("${amazon.s3.bucket}")
     private String s3Bucket;
-    @Value("${sdfs.volume.metadata.path}")
-    private String volumeMetadataPath;
     @Value("${sdfs.volume.config.path}")
     private String volumeConfigPath;
     @Value("${amazon.sdfs.size}")
@@ -74,7 +73,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             notificationService.notifyAboutTaskProgress(taskId, "Stopping SDFS...", 20);
         }
         shutdownSDFS(sdfsSize, s3Bucket);
-        String[] paths = {volumeMetadataPath, volumeConfigPath};
+        String[] paths = {volumeConfigPath};
         File tempFile = null;
         try {
             if (taskId != null) {
@@ -82,7 +81,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             }
             tempFile = ZipUtils.zip(paths);
         } catch (Throwable e) {
-            startupSDFS(sdfsSize, s3Bucket);
+            startupSDFS(sdfsSize, s3Bucket, false);
             if (tempFile != null && tempFile.exists()) {
                 tempFile.delete();
             }
@@ -95,7 +94,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Starting SDFS...", 80);
         }
-        startupSDFS(sdfsSize, s3Bucket);
+        startupSDFS(sdfsSize, s3Bucket, false);
         tempFile.delete();
     }
 
@@ -108,7 +107,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             downloadFromS3(KEY_NAME, file);
             ZipUtils.unzip(file, SDFS_STATE_DESTINATION);
             file.delete();
-            startupSDFS(sdfsSize, s3Bucket);
+            startupSDFS(sdfsSize, s3Bucket, true);
             //SDFS mount time
             Thread.sleep(15000);
             restoreBackups();
@@ -177,12 +176,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
-    public void startupSDFS(String size, String bucketName) {
+    public void startupSDFS(String size, String bucketName,  Boolean isRestore) {
         try {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey(), size, bucketName};
+            String[] parameters = {pathToExec,  size, bucketName, getBucketLocation(bucketName), isRestore.toString()};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);
@@ -210,13 +209,25 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         }
     }
 
+    private String getBucketLocation(String bucket) {
+        String location;
+        if (amazonS3.doesBucketExist(bucket)) {
+            location = amazonS3.getBucketLocation(bucket);
+        }
+        else {
+            location = Regions.getCurrentRegion().getName();
+        }
+
+        return location;
+    }
+
     @Override
     public void shutdownSDFS(String size, String bucketName) {
         try {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey(), size, bucketName};
+            String[] parameters = {pathToExec, size, bucketName , getBucketLocation(bucketName)};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);

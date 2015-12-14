@@ -2,6 +2,7 @@ package com.sungardas.enhancedsnapshots.aws;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -22,21 +23,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableDynamoDBRepositories(basePackages = "com.sungardas.enhancedsnapshots.aws.dynamodb.repository")
 public class AmazonConfigProvider {
-    @Value("${amazon.aws.accesskey}")
-    private String amazonAWSAccessKey;
-
-    @Value("${amazon.aws.secretkey}")
-    private String amazonAWSSecretKey;
 
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
 
     @Value("${amazon.aws.region}")
     private String region;
-
-    @Autowired
-    private CryptoService cryptoService;
-
 
     @Bean(name = "retryInterceptor")
     public RetryInterceptor retryInterceptor() {
@@ -45,9 +37,8 @@ public class AmazonConfigProvider {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        String accessKey = cryptoService.decrypt(instanceId, amazonAWSAccessKey);
-        String secretKey = cryptoService.decrypt(instanceId, amazonAWSSecretKey);
-        return new BasicAWSCredentials(accessKey, secretKey);
+        InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
+        return credentialsProvider.getCredentials();
     }
 
     @Bean(name = "amazonDynamoDB")

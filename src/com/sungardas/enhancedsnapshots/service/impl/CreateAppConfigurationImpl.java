@@ -60,7 +60,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                sdfsService.startupSDFS(sdfsSize, s3Bucket);
+                sdfsService.startupSDFS(sdfsSize, s3Bucket, false);
                 return;
             }
 
@@ -92,7 +92,7 @@ class CreateAppConfigurationImpl {
                 if (sdfsConfig.exists()) {
                     sdfsConfig.delete();
                 }
-                sdfsService.startupSDFS(sdfsSize, s3Bucket);
+                sdfsService.startupSDFS(sdfsSize, s3Bucket,false);
             }
 
             System.out.println(">>>Initialization finished");
