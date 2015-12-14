@@ -4,7 +4,7 @@ angular.module('web')
     .controller('LoginController', function ($scope, $state, $stateParams, $stomp, Auth, System, Storage, toastr) {
 
         if ($stateParams.err && $stateParams.err == 'session') {
-            toastr.warning('You was loged out. Please relogin.', 'Session expired.');
+            toastr.warning('You were logged out. Please re-login', 'Session expired.');
         }
 
         if (angular.isDefined(Storage.get("currentUser"))) {
