@@ -25,11 +25,9 @@ import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.CryptoService;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -78,10 +76,6 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private InitConfigurationDto initConfigurationDto = null;
 
-
-    @Autowired
-    private CryptoService cryptoService;
-
     @PostConstruct
     private void init() {
         credentials= new InstanceProfileCredentialsProvider().getCredentials();
@@ -101,9 +95,6 @@ class CredentialsServiceImpl implements CredentialsService {
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
-
-            properties.setProperty(accessKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSAccessKeyId()));
-            properties.setProperty(secretKeyPropName, cryptoService.encrypt(instanceId, credentials.getAWSSecretKey()));
             properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, instanceId);
             properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().get(0).getBucketName());
@@ -274,12 +265,6 @@ class CredentialsServiceImpl implements CredentialsService {
         }
         if (secretKey == null || secretKey.isEmpty()) {
             throw new ConfigurationException("Empty AWS SecretKey");
-        }
-        try {
-//            AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(accessKey, secretKey));
-//            ec2Client.describeRegions();
-        } catch (AmazonClientException e) {
-            throw new ConfigurationException(INVALID_CREDS, e);
         }
     }
 
