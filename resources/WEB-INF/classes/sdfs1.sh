@@ -18,7 +18,7 @@ else
         echo 'SDFS configuration is not provided!'
         exit 1
     else
-        /sbin/mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --aws-aim --cloud-bucket-name=$bucket_name --aws-bucket-location=$location
+        /sbin/mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --aws-aim --cloud-bucket-name=$bucket_name --aws-bucket-location=$location --local-cache-size=1GB --chunk-store-encrypt=true
         if [[ ! -e /mnt/awspool ]]; then
            mkdir /mnt/awspool
         fi
@@ -27,7 +27,7 @@ else
 fi
 
 touch /var/log/sdfs_mount.log
-
+cfr
 ### mounting SDFS file system to /mnt/awspool
 sdfs_pid=`ps aux | grep "[f]use.SDFS.MountSDFS" | awk '{ print $2}'`
 if [ "$sdfs_pid" != "" ]; then
