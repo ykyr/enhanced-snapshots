@@ -27,7 +27,7 @@ else
 fi
 
 touch /var/log/sdfs_mount.log
-cfr
+
 ### mounting SDFS file system to /mnt/awspool
 sdfs_pid=`ps aux | grep "[f]use.SDFS.MountSDFS" | awk '{ print $2}'`
 if [ "$sdfs_pid" != "" ]; then

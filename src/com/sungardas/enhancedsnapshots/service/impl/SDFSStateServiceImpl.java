@@ -181,7 +181,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
             file.setExecutable(true);
             String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec,  size, bucketName, getBucketLocation(bucketName), isRestore.toString()};
+            String[] parameters = {pathToExec,  size, bucketName, isRestore.toString(), getBucketLocation(bucketName) };
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);
