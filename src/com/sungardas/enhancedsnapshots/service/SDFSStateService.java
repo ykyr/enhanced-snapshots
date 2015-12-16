@@ -12,8 +12,7 @@ public interface SDFSStateService {
 
     Long getBackupTime();
 
-    void startupSDFS(String size, String bucketName);
-
     void shutdownSDFS(String size, String bucketName);
 
+    void startupSDFS(String size, String bucketName, Boolean isRestore);
 }

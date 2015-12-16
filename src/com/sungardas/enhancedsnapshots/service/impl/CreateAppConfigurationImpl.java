@@ -60,7 +60,7 @@ class CreateAppConfigurationImpl {
             init = true;
             InitConfigurationDto initConfigurationDto = sharedDataService.getInitConfigurationDto();
             if (initConfigurationDto == null) {
-                sdfsService.startupSDFS(sdfsSize, s3Bucket);
+                sdfsService.startupSDFS(sdfsSize, s3Bucket, false);
                 return;
             }
 
@@ -78,10 +78,7 @@ class CreateAppConfigurationImpl {
 
             boolean isBucketContainsSDFSMetadata = false;
             InitConfigurationDto.S3 s3 = initConfigurationDto.getS3().get(0);
-            if (!isBucketExits(s3Bucket)) {
-                LOG.info("Initialization S3 bucket");
-                createS3Bucket();
-            } else {
+            if (isBucketExits(s3Bucket)) {
                 isBucketContainsSDFSMetadata = sdfsService.containsSdfsMetadata(s3.getBucketName());
             }
             LOG.info("Initialization SDFS");
@@ -92,7 +89,7 @@ class CreateAppConfigurationImpl {
                 if (sdfsConfig.exists()) {
                     sdfsConfig.delete();
                 }
-                sdfsService.startupSDFS(sdfsSize, s3Bucket);
+                sdfsService.startupSDFS(sdfsSize, s3Bucket,false);
             }
 
             System.out.println(">>>Initialization finished");

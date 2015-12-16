@@ -6,6 +6,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.RetentionService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
@@ -68,6 +69,9 @@ public class BackupFakeTask implements BackupTask {
 
         CopyingTaskProgressDto dto = new CopyingTaskProgressDto(taskEntry.getId(), 60, 100, Long.parseLong(backup.getSizeGiB()));
         for (int i = 0; i <= 10; i++) {
+            if (Thread.interrupted()) {
+                throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+            }
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException ignored) {

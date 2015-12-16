@@ -1,5 +1,6 @@
 package com.sungardas.enhancedsnapshots.rest;
 
+import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
 import com.sungardas.enhancedsnapshots.rest.utils.Constants;
@@ -44,6 +45,9 @@ public class SystemController {
     @Autowired
     private XmlWebApplicationContext applicationContext;
 
+    @Autowired
+    private WorkersDispatcher workersDispatcher;
+
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody InstanceId instanceId) {
         String session = servletRequest.getSession().getId();
@@ -72,6 +76,7 @@ public class SystemController {
     private void refreshContext() {
         filterProxy.setFilter(null);
         applicationContext.setConfigLocation("/WEB-INF/destroy-spring-web-config.xml");
+        applicationContext.getAutowireCapableBeanFactory().destroyBean(workersDispatcher);
         new Thread() {
             @Override
             public void run() {

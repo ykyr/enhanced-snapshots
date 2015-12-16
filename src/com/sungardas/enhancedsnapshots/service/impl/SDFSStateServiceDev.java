@@ -34,10 +34,13 @@ public class SDFSStateServiceDev implements SDFSStateService {
     }
 
     @Override
-    public void startupSDFS(String size, String bucketName) {
+    public void shutdownSDFS(String size, String bucketName) {
+
     }
 
     @Override
-    public void shutdownSDFS(String size, String bucketName) {
+    public void startupSDFS(String size, String bucketName,  Boolean isRestore) {
+
     }
+
 }

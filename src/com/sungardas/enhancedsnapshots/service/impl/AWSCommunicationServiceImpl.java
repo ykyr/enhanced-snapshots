@@ -314,8 +314,13 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public void setResourceName(String resourceId, String value) {
+        addTag(resourceId, "Name", value);
+    }
+
+    @Override
+    public void addTag(String resourceId, String name, String value) {
         CreateTagsRequest r = new CreateTagsRequest().withResources(resourceId)
-                .withTags(new Tag().withKey("Name").withValue(value));
+                .withTags(new Tag().withKey(name).withValue(value));
         ec2client.createTags(r);
     }
 

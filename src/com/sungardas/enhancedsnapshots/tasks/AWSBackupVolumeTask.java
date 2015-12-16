@@ -11,6 +11,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,6 +77,9 @@ public class AWSBackupVolumeTask implements BackupTask {
     public void execute() {
         String volumeId = taskEntry.getVolume();
         try {
+            if (Thread.interrupted()) {
+                throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+            }
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting backup task", 0);
             configuration = configurationService.getWorkerConfiguration();
 
@@ -90,6 +94,9 @@ public class AWSBackupVolumeTask implements BackupTask {
             Volume tempVolume = null;
             String attachedDeviceName = null;
 
+            if (Thread.interrupted()) {
+                throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+            }
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Preparing temp volume", 5);
             tempVolume = createAndAttachBackupVolume(volumeId,
                     configuration.getConfigurationId());
@@ -97,6 +104,9 @@ public class AWSBackupVolumeTask implements BackupTask {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e1) {
                 e1.printStackTrace();
+            }
+            if (Thread.interrupted()) {
+                throw new EnhancedSnapshotsInterruptedException("Task interrupted");
             }
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Checking volume", 10);
             attachedDeviceName = storageService.detectFsDevName(tempVolume);
@@ -114,6 +124,9 @@ public class AWSBackupVolumeTask implements BackupTask {
 
             BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS,
                     configuration.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
+            if (Thread.interrupted()) {
+                throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+            }
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Copying...", 15);
             boolean backupStatus = false;
             try {
@@ -134,19 +147,30 @@ public class AWSBackupVolumeTask implements BackupTask {
                     }
                 }
             }
+            if (Thread.interrupted()) {
+                throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+            }
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Detaching temp volume", 80);
             LOG.info("Detaching volume: {}", tempVolume.getVolumeId());
             awsCommunication.detachVolume(tempVolume);
+            if (Thread.interrupted()) {
+                throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+            }
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting temp volume", 85);
             LOG.info("Deleting temporary volume: {}", tempVolume.getVolumeId());
             awsCommunication.deleteVolume(tempVolume);
-
+            if (Thread.interrupted()) {
+                throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+            }
             if (backupStatus) {
                 long backupSize = storageService.getSize(configuration.getSdfsMountPoint() + backupFileName);
                 long backupCreationtime = storageService.getBackupCreationTime(configuration.getSdfsMountPoint() + backupFileName);
                 LOG.info("Backup creation time: {}", backupCreationtime);
                 LOG.info("Backup size: {}", backupSize);
 
+                if (Thread.interrupted()) {
+                    throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+                }
                 LOG.info("Put backup entry to the Backup List: {}", backup.toString());
                 notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Backup complete", 90);
                 backup.setState(BackupState.COMPLETED.getState());
@@ -160,6 +184,9 @@ public class AWSBackupVolumeTask implements BackupTask {
 
                 String previousSnapshot = snapshotService.getSnapshotId(volumeId, configurationId);
                 if (previousSnapshot != null) {
+                    if (Thread.interrupted()) {
+                        throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+                    }
                     notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
                     LOG.info("Deleting previous snapshot {}", previousSnapshot);
                     awsCommunication.deleteSnapshot(previousSnapshot);
@@ -170,6 +197,9 @@ public class AWSBackupVolumeTask implements BackupTask {
 
                 taskService.complete(taskEntry);
                 LOG.info("Task completed.");
+                if (Thread.interrupted()) {
+                    throw new EnhancedSnapshotsInterruptedException("Task interrupted");
+                }
                 notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Task complete", 100);
                 retentionService.apply();
             } else {
