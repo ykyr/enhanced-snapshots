@@ -75,8 +75,9 @@ public class TaskServiceImpl implements TaskService {
         String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
         List<TaskEntry> validTasks = new ArrayList<>();
         int tasksInQueue = getTasksInQueue();
+        boolean regular = Boolean.valueOf(taskDto.getRegular());
         for (TaskEntry taskEntry : TaskDtoConverter.convert(taskDto)) {
-            if (tasksInQueue >= queueSize) {
+            if (!regular && tasksInQueue >= queueSize) {
                 notificationService.notifyAboutError(new ExceptionDto("Task creation error", "Task queue is full"));
                 break;
             }
@@ -84,7 +85,7 @@ public class TaskServiceImpl implements TaskService {
             taskEntry.setInstanceId(configurationId);
             taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
             taskEntry.setId(UUID.randomUUID().toString());
-            if (Boolean.valueOf(taskEntry.getRegular())) {
+            if (regular) {
                 try {
                     schedulerService.addTask(taskEntry);
                     messages.put(taskEntry.getVolume(), getMessage(taskEntry));
