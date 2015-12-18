@@ -75,6 +75,12 @@ Once you have collected that information, find your target region, note the AMI 
 
 Once the CloudFormation stack has finished building, go to its Outputs tab at the bottom of the AWS Console. Copy the instance ID (you will need it in a later step) and click the URL, then proceed to [Getting Started](#getting-started).
 
+User also should to:
+* Select minimum m3.large instance and minimum 8 GB size for volume
+* Select es_admin role while launching instance to get acsess to CloudWatch
+
+![Role](https://cloud.githubusercontent.com/assets/13747035/11899135/bcaaee2c-a5a5-11e5-965b-78d60d64f3b8.png)
+
 # Getting Started
 **Note** If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually [create an IAM user](#iam-user-creation-optional) and then create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
 
@@ -89,34 +95,26 @@ For the first login please use the following credentials:
 
 *Step 2*
 
-**Note**
-This step is only required if you built your environment directly from our AMI rather than following the [Quick start](#quick-start) section above.
-
-Enter the AWS Public Key and AWS Secret Key
-![Settings](https://cloud.githubusercontent.com/assets/14750068/10096549/1bbe26a8-637b-11e5-9580-0b86c72f9839.png)
-
-*Step 3*
-
-The next picture shows the list of additional resources that will be created: S3 bucket, SDFS settings, SQS Queue, and DynamoDB tables. To view more information these resource the user can click the question mark.
-![Settings(2)](https://cloud.githubusercontent.com/assets/14750068/10096552/1bc0a446-637b-11e5-993d-ec3ec9411c2b.png)
+The next picture shows the list of additional resources that will be created: S3 bucket, SDFS settings and DynamoDB tables. To view more information these resource the user can click the question mark.
+![Settings(2)](https://cloud.githubusercontent.com/assets/13747035/11899145/ca4ea3a2-a5a5-11e5-9bbc-260e8b9e8bf3.png)
 
 **Warning**
 Once "Setup" has been clicked on this screen, these settings cannot be changed.
 
-*Step 4*
+*Step 3*
 
 Time to create a first user. The first user always will receive admin rights. Email is used as user ID.
-![New user](https://cloud.githubusercontent.com/assets/14750068/10096551/1bc07480-637b-11e5-8bbb-e1720c1959ca.png)
+![New user](https://cloud.githubusercontent.com/assets/13747035/11899153/cee6c6ec-a5a5-11e5-8cc4-fb78a04959e4.png)
 
-*Step 5*
+*Step 4*
 
 After the system is received all necessary input data it will create all necessary environment.
-![Please wait](https://cloud.githubusercontent.com/assets/14750068/10096553/1bc35a1a-637b-11e5-8a1a-857cf14e010f.png)
+![Please wait](https://cloud.githubusercontent.com/assets/13747035/11899154/d4fe6116-a5a5-11e5-8ef5-0c5bdeaba406.png)
 
 After the configurations process will be successfully completed, the following notification will appear.
-![Congratulations](https://cloud.githubusercontent.com/assets/14750068/10096554/1bd25362-637b-11e5-91c8-32d0dcee7498.png)
+![Congratulations](https://cloud.githubusercontent.com/assets/13747035/11899155/d9998728-a5a5-11e5-850e-ef04af12fc6a.png)
 
-*Step 6*
+*Step 5*
 
 The system automatically redirects the user to the login page. Now the user will use their credentials that were created in step 4.
 
@@ -146,7 +144,7 @@ The retention policy function that allows the user to automatically delete backu
 Only one retention policy can be created for each volume. If a volume does not have any backups, the retention policy cannot be created.
 
 Filters for users are available in order to sort according to different parameters: Volume ID, Name, Size, Instance ID and date of creation.
-![Filter](https://cloud.githubusercontent.com/assets/14750068/10023443/e40fcada-615a-11e5-8412-5a090a3917a7.png)
+![Filter](https://cloud.githubusercontent.com/assets/13747035/11899172/ee749502-a5a5-11e5-829c-ec2a3721db73.png)
 
 ##  Other Management Tasks
 A list of all active and pending tasks can be found in the tab Tasks. The user can cancel any task before it starts running.
@@ -155,16 +153,15 @@ A list of all users is available in the Users tab. All information about users e
 
 # Removing the Enhanced Snapshots system
 If you choose to remove Enhanced Snapshots, you can do so by clicking the Uninstall button on the Settings tab.
-![Settings](https://cloud.githubusercontent.com/assets/14750068/10096547/1baaef7a-637b-11e5-8a70-09a38198abfa.png)
+![Settings](https://cloud.githubusercontent.com/assets/13747035/11899175/f3247c98-a5a5-11e5-8883-276a8c4b999a.png)
 
 The system will continue with the removal of all resources once you enter the EC2 Instance Id for the EC2 instance that Enhanced Snapshots is running on. 
 
-![Delete](https://cloud.githubusercontent.com/assets/14750068/10096548/1bbace0e-637b-11e5-9e5e-a295bd8464c9.png)
+![Delete](https://cloud.githubusercontent.com/assets/13747035/11899177/f7ebe626-a5a5-11e5-8a22-969ee55133f8.png)
 
 The following resources are deleted:
 * EC2 Instance 
 * S3 bucket and all backup data
-* SQS queue
 * DynamoDB tables
 
 **Note** It may take several minutes to delete all the resources, especially if backup data has been stored.
@@ -173,46 +170,54 @@ The following resources are deleted:
 If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM user with the following policy.
 ```
  {
-    "Version": "2012-10-17", 
+  "Version": "2012-10-17",
     "Statement": [
         {
             "Sid": "1",
-            "Effect": "Allow",  
-            "Action": [  
-                "iam:GetUser",  
-                "iam:ListRoles",  
-                "ec2:AttachVolume",  
-                "ec2:CreateSnapshot",  
-                "ec2:CreateTags",  
-                "ec2:CreateVolume",  
-                "ec2:DeleteSnapshot",  
-                "ec2:DeleteTags",  
-                "ec2:DeleteVolume",  
-                "ec2:DescribeAvailabilityZones",  
-                "ec2:DescribeInstanceAttribute",  
-                "ec2:DescribeInstanceStatus",  
-                "ec2:DescribeInstances",  
-                "ec2:TerminateInstances",  
-                "ec2:DescribeRegions",  
-                "ec2:DescribeReservedInstances",  
-                "ec2:DescribeReservedInstancesListings",  
-                "ec2:DescribeSnapshotAttribute",  
-                "ec2:DescribeSnapshots",  
-                "ec2:DescribeTags",  
-                "ec2:DescribeVolumeAttribute",  
-                "ec2:DescribeVolumeStatus",  
-                "ec2:DescribeVolumes",  
-                "ec2:DetachVolume",  
-                "ec2:EnableVolumeIO",  
-                "ec2:ModifyInstanceAttribute",  
-                "ec2:ModifySnapshotAttribute",  
-                "ec2:ModifyVolumeAttribute",  
-                "ec2:ResetSnapshotAttribute",  
-                "sqs:\*",  
-                "s3:\*",  
-                "dynamodb:\*"  
-            ],  
-            "Resource": "\*"
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListUserPolicies",
+                "iam:GetUser",
+                "iam:GetRole",
+                "iam:ListRoles",
+                "iam:PassRole",
+                "iam:ListInstanceProfiles",
+                "ec2:AttachVolume",
+                "ec2:CreateSnapshot",
+                "ec2:CreateTags",
+                "ec2:CreateVolume",
+                "ec2:DeleteSnapshot",
+                "ec2:DeleteTags",
+                "ec2:DeleteVolume",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:DescribeInstanceAttribute",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeInstances",
+                "ec2:TerminateInstances",
+                "ec2:DescribeRegions",
+                "ec2:DescribeReservedInstances",
+                "ec2:DescribeReservedInstancesListings",
+                "ec2:DescribeSnapshotAttribute",
+                "ec2:DescribeSnapshots",
+                "ec2:DescribeTags",
+                "ec2:DescribeVolumeAttribute",
+                "ec2:DescribeVolumeStatus",
+                "ec2:DescribeVolumes",
+                "ec2:DetachVolume",
+                "ec2:EnableVolumeIO",
+                "ec2:ModifyInstanceAttribute",
+                "ec2:ModifySnapshotAttribute",
+                "ec2:ModifyVolumeAttribute",
+                "ec2:ResetSnapshotAttribute",
+                "sqs(kiss)",
+                "s3:*",
+                "dynamodb(kiss)",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
+            ],
+            "Resource": "*"
         }
     ]
 }
@@ -221,6 +226,11 @@ Once the user is created, also create and save an API key, which will be needed 
 
 Without a properly configured user, the following error message will appear during configuration:
 ![DynamoDBAccessDenied](https://cloud.githubusercontent.com/assets/14750068/10131876/08b816c8-65dc-11e5-871e-0f8d5fcdd303.png)
+
+# Logging
+
+Application uses AWS CloudWatch as logs storage. Logs can be found in following location:
+![Logs](https://cloud.githubusercontent.com/assets/13747035/11899181/fc56c14a-a5a5-11e5-9b26-c764b65bdbd6.png)
 
 # License
 
