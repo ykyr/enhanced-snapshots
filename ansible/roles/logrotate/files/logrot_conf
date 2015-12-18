@@ -1,0 +1,12 @@
+# logrotate configuration file for tomcat
+/opt/tomcat-latest/logs/catalina.out
+/opt/tomcat-latest/logs/*.log
+/var/log/sdfs/*.log
+{
+        copytruncate
+        daily
+        rotate 7
+        compress
+        missingok
+        size 20M
+}
