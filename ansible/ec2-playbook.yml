@@ -12,3 +12,4 @@
     - nodejs
     - nginx
     - awslogs
+    - logrotate
