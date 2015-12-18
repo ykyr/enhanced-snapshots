@@ -44,8 +44,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final int IOPS_INDEX = 3;
     private static final long BYTES_IN_GIB = 1073741824l;
     @Autowired
-    private AWSCredentials credentials;
-    @Autowired
     private AmazonS3 amazonS3;
     @Autowired
     private BackupRepository backupRepository;
@@ -100,7 +98,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Override
     public void restoreState() throws AmazonClientException {
-        shutdownSDFS(sdfsSize, s3Bucket);
+        //shutdownSDFS(sdfsSize, s3Bucket);
         File file = null;
         try {
             file = Files.createTempFile(SDFS_STATE_BACKUP_FILE_NAME, SDFS_STATE_BACKUP_FILE_EXT).toFile();
