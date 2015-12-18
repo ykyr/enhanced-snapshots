@@ -1,10 +1,7 @@
 ---
 - debug: msg="install logrotate"
 
-- name: install logrotate
+- name: ensure logrotate installed
   yum: name=logrotate state=latest
 
 - copy: src=logrot_conf dest=/etc/logrotate.d/tomcat mode="0640"
-
-- name: ensure that logrotate is running
-  service: name=logrotate state=running enabled=yes
