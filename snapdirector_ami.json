@@ -47,7 +47,8 @@
         "ansible/roles/oracle-java8",
         "ansible/roles/tomcat8",
         "ansible/roles/nginx",
-	"ansible/roles/awslogs"
+	"ansible/roles/awslogs",
+	"ansible/roles/logrotate"
       ]
           },
     {
