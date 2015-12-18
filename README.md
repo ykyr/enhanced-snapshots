@@ -75,6 +75,10 @@ Once you have collected that information, find your target region, note the AMI 
 
 Once the CloudFormation stack has finished building, go to its Outputs tab at the bottom of the AWS Console. Copy the instance ID (you will need it in a later step) and click the URL, then proceed to [Getting Started](#getting-started).
 
+User also should to:
+* Select minimum m3.large instance and minimum 8 GB size for volume
+* Select es_admin role while launching instance to get acsess to CloudWatch
+
 # Getting Started
 **Note** If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually [create an IAM user](#iam-user-creation-optional) and then create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
 
@@ -89,26 +93,18 @@ For the first login please use the following credentials:
 
 *Step 2*
 
-**Note**
-This step is only required if you built your environment directly from our AMI rather than following the [Quick start](#quick-start) section above.
-
-Enter the AWS Public Key and AWS Secret Key
-![Settings](https://cloud.githubusercontent.com/assets/14750068/10096549/1bbe26a8-637b-11e5-9580-0b86c72f9839.png)
-
-*Step 3*
-
-The next picture shows the list of additional resources that will be created: S3 bucket, SDFS settings, SQS Queue, and DynamoDB tables. To view more information these resource the user can click the question mark.
+The next picture shows the list of additional resources that will be created: S3 bucket, SDFS settings and DynamoDB tables. To view more information these resource the user can click the question mark.
 ![Settings(2)](https://cloud.githubusercontent.com/assets/14750068/10096552/1bc0a446-637b-11e5-993d-ec3ec9411c2b.png)
 
 **Warning**
 Once "Setup" has been clicked on this screen, these settings cannot be changed.
 
-*Step 4*
+*Step 3*
 
 Time to create a first user. The first user always will receive admin rights. Email is used as user ID.
 ![New user](https://cloud.githubusercontent.com/assets/14750068/10096551/1bc07480-637b-11e5-8bbb-e1720c1959ca.png)
 
-*Step 5*
+*Step 4*
 
 After the system is received all necessary input data it will create all necessary environment.
 ![Please wait](https://cloud.githubusercontent.com/assets/14750068/10096553/1bc35a1a-637b-11e5-8a1a-857cf14e010f.png)
@@ -116,7 +112,7 @@ After the system is received all necessary input data it will create all necessa
 After the configurations process will be successfully completed, the following notification will appear.
 ![Congratulations](https://cloud.githubusercontent.com/assets/14750068/10096554/1bd25362-637b-11e5-91c8-32d0dcee7498.png)
 
-*Step 6*
+*Step 5*
 
 The system automatically redirects the user to the login page. Now the user will use their credentials that were created in step 4.
 
@@ -173,46 +169,54 @@ The following resources are deleted:
 If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM user with the following policy.
 ```
  {
-    "Version": "2012-10-17", 
+  "Version": "2012-10-17",
     "Statement": [
         {
             "Sid": "1",
-            "Effect": "Allow",  
-            "Action": [  
-                "iam:GetUser",  
-                "iam:ListRoles",  
-                "ec2:AttachVolume",  
-                "ec2:CreateSnapshot",  
-                "ec2:CreateTags",  
-                "ec2:CreateVolume",  
-                "ec2:DeleteSnapshot",  
-                "ec2:DeleteTags",  
-                "ec2:DeleteVolume",  
-                "ec2:DescribeAvailabilityZones",  
-                "ec2:DescribeInstanceAttribute",  
-                "ec2:DescribeInstanceStatus",  
-                "ec2:DescribeInstances",  
-                "ec2:TerminateInstances",  
-                "ec2:DescribeRegions",  
-                "ec2:DescribeReservedInstances",  
-                "ec2:DescribeReservedInstancesListings",  
-                "ec2:DescribeSnapshotAttribute",  
-                "ec2:DescribeSnapshots",  
-                "ec2:DescribeTags",  
-                "ec2:DescribeVolumeAttribute",  
-                "ec2:DescribeVolumeStatus",  
-                "ec2:DescribeVolumes",  
-                "ec2:DetachVolume",  
-                "ec2:EnableVolumeIO",  
-                "ec2:ModifyInstanceAttribute",  
-                "ec2:ModifySnapshotAttribute",  
-                "ec2:ModifyVolumeAttribute",  
-                "ec2:ResetSnapshotAttribute",  
-                "sqs:\*",  
-                "s3:\*",  
-                "dynamodb:\*"  
-            ],  
-            "Resource": "\*"
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListUserPolicies",
+                "iam:GetUser",
+                "iam:GetRole",
+                "iam:ListRoles",
+                "iam:PassRole",
+                "iam:ListInstanceProfiles",
+                "ec2:AttachVolume",
+                "ec2:CreateSnapshot",
+                "ec2:CreateTags",
+                "ec2:CreateVolume",
+                "ec2:DeleteSnapshot",
+                "ec2:DeleteTags",
+                "ec2:DeleteVolume",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:DescribeInstanceAttribute",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeInstances",
+                "ec2:TerminateInstances",
+                "ec2:DescribeRegions",
+                "ec2:DescribeReservedInstances",
+                "ec2:DescribeReservedInstancesListings",
+                "ec2:DescribeSnapshotAttribute",
+                "ec2:DescribeSnapshots",
+                "ec2:DescribeTags",
+                "ec2:DescribeVolumeAttribute",
+                "ec2:DescribeVolumeStatus",
+                "ec2:DescribeVolumes",
+                "ec2:DetachVolume",
+                "ec2:EnableVolumeIO",
+                "ec2:ModifyInstanceAttribute",
+                "ec2:ModifySnapshotAttribute",
+                "ec2:ModifyVolumeAttribute",
+                "ec2:ResetSnapshotAttribute",
+                "sqs(kiss)",
+                "s3:*",
+                "dynamodb(kiss)",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
+            ],
+            "Resource": "*"
         }
     ]
 }
