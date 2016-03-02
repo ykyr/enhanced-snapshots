@@ -166,8 +166,9 @@ The following resources are deleted:
 * S3 bucket and all backup data
 * DynamoDB tables
 
-Note: Though the EC2 instance will be deleted it will not remove the subscription to the software product from AWS and for more
+**Note** Though the EC2 instance will be deleted it will not remove the subscription to the software product from AWS and for more
   details on this refer to https://aws.amazon.com/marketplace/help/200799470 
+  
 **Note** It may take several minutes to delete all the resources, especially if backup data has been stored.
 
 # IAM user creation (optional)
