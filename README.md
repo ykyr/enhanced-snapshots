@@ -27,7 +27,7 @@ Technical support is not available for the first version of the product; however
 
 Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, Enhanced Snapshots will be free.
 
-This tool will be available by launching the AMI by creating a role like es-admin-role using the cloud formation template mentioned in the Quick start section below. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. Refer to the [Removing the enhanced snapshots system](https://github.com/sungardas/enhanced-snapshots#removing-the-enhanced-snapshots-system) for more details.
+This tool will be available by launching the AMI by creating a role like es-admin-role using the cloud formation template mentioned in the [Quick start](https://github.com/sungardas/enhanced-snapshots#quick-start) section below. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. Refer to the [Removing the enhanced snapshots system](https://github.com/sungardas/enhanced-snapshots#removing-the-enhanced-snapshots-system) for more details.
 
 # Key Features
 ## Backup & Recovery 
