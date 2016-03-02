@@ -27,6 +27,8 @@ Technical support is not available for the first version of the product; however
 
 Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, Enhanced Snapshots will be free.
 
+This tool will be available by launching the AMI by creating a role like es-admin-role using the cloud formation template mentioned in the Quick start section. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. 
+
 # Key Features
 ## Backup & Recovery 
 * Performing backups of EBS volumes.
@@ -52,8 +54,8 @@ Open source is another important feature of this solution and we plan to create 
 
 # Quick start
 Or, stop making me read stuff and let me try it out!
-
-We have provided an easy way to get up and running with Enhanced Snapshots via a [Condensation](https://github.com/SungardAS/condensation) [template](https://github.com/SungardAS/particles-enhanced-snapshots). To launch a CloudFormation stack based on the template, first decide which region you will deploy in. In that region you will need the following information:
+- Create a es-admin role using the cloud formation template [es-admin-role](https://github.com/SungardAS/enhanced-snapshots/blob/master/sungardas_es_admin_role_perm_restricted.template) 
+ To launch a CloudFormation stack based on the template, first decide which region you will deploy in. In that region you will need the following information:
 * An [EC2 keypair](https://us-east-1.console.aws.amazon.com/ec2/v2/home?#KeyPairs)
 * A [VPC id](https://console.aws.amazon.com/vpc/home?#vpcs:) (Not needed if you are using the Simple Stack option below.)
 * An IP prefix from which inbound http/https/ssh connections will be allowed. If you're not sure, use your current [public IP address](http://www.myipaddress.com/show-my-ip-address/) with "/32" tacked on the end (like "1.2.3.4/32").
