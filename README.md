@@ -1,8 +1,6 @@
 # Enhanced Snapshots
 **[Sungard Availability Services](http://sungardas.com) | [Labs](http://blog.sungardas.com/CTOLabs/)**
 
-![SGAS Logo](https://cloud.githubusercontent.com/assets/1557544/10001677/ed73c260-6070-11e5-86d1-8b85a146688d.png)
-
 ![Enhanced Snapshots Logo](https://cloud.githubusercontent.com/assets/1557544/10324458/c19466ca-6c57-11e5-8318-a2eb1cd9e99b.png)
 
 *Table of contents*
@@ -242,4 +240,18 @@ Application uses AWS CloudWatch as logs storage. Logs can be found in following 
 See the [LICENSE.md](LICENSE.md) file for license rights and limitations (Apache 2).
 
 Use of the provided AMIs is covered by a separate [End User License Agreement](https://s3-us-west-2.amazonaws.com/sgaslogo/EULA_Enhanced+Snapshots+for+AWS+2015-10-27.docx).
+
+## [![Sungard Availability Services | Labs][labs-logo]][labs-github-url]
+
+This project is maintained by the Labs group at [Sungard Availability
+Services](http://sungardas.com)
+
+GitHub: [https://sungardas.github.io](https://sungardas.github.io)
+
+Blog:
+[http://blog.sungardas.com/CTOLabs/](http://blog.sungardas.com/CTOLabs/)
+
+
+[labs-github-url]: https://sungardas.github.io
+[labs-logo]: https://raw.githubusercontent.com/SungardAS/repo-assets/master/images/logos/sungardas-labs-logo-small.png
 
