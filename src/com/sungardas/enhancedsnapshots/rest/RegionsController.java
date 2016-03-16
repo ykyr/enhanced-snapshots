@@ -32,7 +32,7 @@ public class RegionsController {
         JSONArray regionsJson = new JSONArray();
         System.out.println("Regions load");
     //    for (Regions nextRegion : Regions.values()) {
-            Region nextRegion = Regions.valueOf("US_EAST_1");    
+            Region nextRegion = Region.getRegion(Regions.valueOf("US_EAST_1"));    
             System.out.println(nextRegion.getName());
     //      if (currentRegion.equals("ap-northeast-2")) continue;
             record = new JSONObject();
