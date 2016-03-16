@@ -31,6 +31,8 @@ public class RegionsController {
         JSONObject record;
         JSONArray regionsJson = new JSONArray();
         for (Regions nextRegion : Regions.values()) {
+            String currentRegion = nextRegion.getName();
+            if (currentRegion.equals("ap-northeast-2")) continue;
             record = new JSONObject();
             record.put("id", nextRegion.getName());
             record.put("name", nextRegion.getName());
