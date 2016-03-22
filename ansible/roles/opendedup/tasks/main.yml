@@ -7,7 +7,7 @@
     - jsvc
     - libxml2
 
-- name: install sdfs
+- name: install sdfs - caching fix in 3.1.1
   shell: rpm -ivh --force http://www.opendedup.org/downloads/sdfs-3.1.1-1.x86_64.rpm
 
 - lineinfile: dest=/etc/security/limits.conf state=present
