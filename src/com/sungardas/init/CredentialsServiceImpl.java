@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
@@ -95,12 +97,13 @@ class CredentialsServiceImpl implements CredentialsService {
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
-            properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
+	    properties.setProperty(AMAZON_AWS_REGION, Regions.getCurrentRegion().getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, instanceId);
             properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().get(0).getBucketName());
             properties.setProperty(AMAZON_SDFS_SIZE, initConfigurationDto.getSdfs().getVolumeSize());
             properties.store(new FileOutputStream(file), "AWS Credentials");
         } catch (IOException ioException) {
+	
             throw new ConfigurationException("Can not create amazon.properties file\n" +
                     "Check path or permission: " + file.getAbsolutePath(), ioException);
         }
@@ -118,7 +121,7 @@ class CredentialsServiceImpl implements CredentialsService {
     public boolean areCredentialsValid() {
         AmazonEC2Client ec2Client = new AmazonEC2Client(credentials);
         try {
-            ec2Client.describeRegions();
+            ec2Client.describeRegions(); 
             return true;
         } catch (AmazonClientException e) {
             LOG.warn("Provided AWS credentials are invalid.");
@@ -149,37 +152,53 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
+	
         try {
             AmazonS3Client client = new AmazonS3Client(credentials);
             List<Bucket> allBuckets = client.listBuckets();
             String bucketName = "com.sungardas.enhancedsnapshots." + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
+            
+	  Set<String> regionSet = new HashSet<String>(Arrays.asList(
+          new String[] {"awsconfig","us-east-1","us-west-1","us-west-2","eu-west-1","eu-central-1", 
+		   "ap-southeast-1","ap-southeast-2","ap-northeast-1","sa-east-1","cn-north-1"}
+		 ));
+				
 
             String currentLocation = Regions.getCurrentRegion().toString();
             if (currentLocation.equalsIgnoreCase("us-east-1")) currentLocation = "US";
-            for (Bucket bucket : allBuckets) {
+            for (Bucket bucket : allBuckets)
+		 {
                 try {
-                    ListObjectsRequest request = new ListObjectsRequest()
+		    String bucketRegion = bucket.getName();
+		    String lastRegion   = bucketRegion.substring(bucketRegion.lastIndexOf(".")+1);
+		    if (!(regionSet.contains(lastRegion))) { 
+                        LOG.info("Region"+ lastRegion + "skipped");
+			continue; 
+			}
+		    ListObjectsRequest request = new ListObjectsRequest()
                             .withBucketName(bucket.getName()).withPrefix("sdfsstate");
                     if (client.listObjects(request).getObjectSummaries().size() > 0) {
-                        if (bucketName.equals(bucket.getName())) {
+		       if (bucketName.equals(bucket.getName())) {
                             result.get(0).setCreated(true);
                         } else {
+                            LOG.info("ark: before location");
                             String location = client.getBucketLocation(bucket.getName());
-
+                            System.out.println("ark:location is "+location);
                             if (!location.equalsIgnoreCase(currentLocation))
                                 continue;
                             result.add(new InitConfigurationDto.S3(bucket.getName(), true));
                         }
                     }
                 } catch (AmazonS3Exception ignored) {
-                }
+		}
             }
         } catch (AmazonS3Exception e) {
             LOG.warn("Can't get access to S3");
             throw new DataAccessException(CANT_GET_ACCESS_S3, e);
         }
-        return result;
+       
+	return result;
 
     }
 
