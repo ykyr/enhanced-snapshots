@@ -182,9 +182,9 @@ class CredentialsServiceImpl implements CredentialsService {
 		       if (bucketName.equals(bucket.getName())) {
                             result.get(0).setCreated(true);
                         } else {
-                            LOG.info("ark: before location");
+                            LOG.info("Beefore location");
                             String location = client.getBucketLocation(bucket.getName());
-                            System.out.println("ark:location is "+location);
+                            System.out.println("Location is "+location);
                             if (!location.equalsIgnoreCase(currentLocation))
                                 continue;
                             result.add(new InitConfigurationDto.S3(bucket.getName(), true));
