@@ -41,7 +41,6 @@ class CredentialsServiceDev implements CredentialsService {
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
         InitConfigurationDto config = new InitConfigurationDto();
-
         List<InitConfigurationDto.S3> names = new ArrayList<>();
         names.add(new InitConfigurationDto.S3("S0", false));
         names.add(new InitConfigurationDto.S3("S1", true));

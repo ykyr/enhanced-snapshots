@@ -69,6 +69,9 @@ class CredentialsServiceImpl implements CredentialsService {
     private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
     private AWSCredentials credentials;
     private String instanceId;
+    private static final Set<String> regionSet = new HashSet<String>(Arrays.asList(
+          new String[] {"awsconfig","ap-northeast-1","us-east-1","us-west-1","us-west-2","us-gov--west-1","eu-west-1","eu-central-1", 
+		   "ap-southeast-1","ap-souththeast-2","sa-east-1","cn-north-1"} ));
 
     @Value("${enhancedsnapshots.sdfs.default.size}")
     private String defaultVolumeSize;
@@ -121,7 +124,7 @@ class CredentialsServiceImpl implements CredentialsService {
     public boolean areCredentialsValid() {
         AmazonEC2Client ec2Client = new AmazonEC2Client(credentials);
         try {
-            ec2Client.describeRegions(); 
+            ec2Client.describeRegions();
             return true;
         } catch (AmazonClientException e) {
             LOG.warn("Provided AWS credentials are invalid.");
@@ -158,18 +161,13 @@ class CredentialsServiceImpl implements CredentialsService {
             List<Bucket> allBuckets = client.listBuckets();
             String bucketName = "com.sungardas.enhancedsnapshots." + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
-            
-	  Set<String> regionSet = new HashSet<String>(Arrays.asList(
-          new String[] {"awsconfig","us-east-1","us-west-1","us-west-2","eu-west-1","eu-central-1", 
-		   "ap-southeast-1","ap-southeast-2","ap-northeast-1","sa-east-1","cn-north-1"}
-		 ));
 				
-
             String currentLocation = Regions.getCurrentRegion().toString();
             if (currentLocation.equalsIgnoreCase("us-east-1")) currentLocation = "US";
             for (Bucket bucket : allBuckets)
 		 {
                 try {
+	
 		    String bucketRegion = bucket.getName();
 		    String lastRegion   = bucketRegion.substring(bucketRegion.lastIndexOf(".")+1);
 		    if (!(regionSet.contains(lastRegion))) { 
@@ -178,16 +176,15 @@ class CredentialsServiceImpl implements CredentialsService {
 			}
 		    ListObjectsRequest request = new ListObjectsRequest()
                             .withBucketName(bucket.getName()).withPrefix("sdfsstate");
-                    if (client.listObjects(request).getObjectSummaries().size() > 0) {
+                    if (client.listObjects(request).getObjectSummaries().size() > 0) { 
 		       if (bucketName.equals(bucket.getName())) {
                             result.get(0).setCreated(true);
                         } else {
-                            LOG.info("Beefore location");
                             String location = client.getBucketLocation(bucket.getName());
-                            System.out.println("Location is "+location);
                             if (!location.equalsIgnoreCase(currentLocation))
                                 continue;
                             result.add(new InitConfigurationDto.S3(bucket.getName(), true));
+			    LOG.info("added bucket get name");
                         }
                     }
                 } catch (AmazonS3Exception ignored) {

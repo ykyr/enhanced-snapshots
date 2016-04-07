@@ -92,7 +92,6 @@ class CreateAppConfigurationImpl {
                 sdfsService.startupSDFS(sdfsSize, s3Bucket,false);
             }
 
-            System.out.println(">>>Initialization finished");
             LOG.info("Initialization finished");
         }
     }
@@ -127,7 +126,6 @@ class CreateAppConfigurationImpl {
         createTable("Tasks", 50L, 20L, "id", "S");
         createTable("Snapshots", 50L, 20L, "volumeInstanceId", "S");
         createTable("Users", 50L, 20L, "id", "S");
-        System.out.println(">> after createDbStructure");
     }
 
     private void createTable(

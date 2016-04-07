@@ -85,7 +85,8 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public Volume createVolume(int size, int iiops, String type) {
-        String availabilityZone = getInstance(configurationId).getPlacement()
+        if (type.equals("standard")) type="gp2";
+	String availabilityZone = getInstance(configurationId).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
@@ -150,7 +151,8 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public Snapshot waitForCompleteState(Snapshot snapshot) {
-        String state;
+        String state="";
+	String progress="";
         Snapshot result;
         do {
             try {
@@ -158,14 +160,20 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            result = syncSnapshot(snapshot);
-            state = result.getState();
+	
+	DescribeSnapshotsResult describeSnapRes 
+        = ec2client.describeSnapshots(new DescribeSnapshotsRequest().withSnapshotIds(snapshot.getSnapshotId()));
+        state = describeSnapRes.getSnapshots().get(0).getState();	
+        progress = describeSnapRes.getSnapshots().get(0).getProgress();
+	result = describeSnapRes.getSnapshots().get(0);
+	System.out.println("Snapshot status is"+ state + "progress:"+progress);
+            //result = syncSnapshot(snapshot);
+            //state = result.getState();
             if (state.equals(SnapshotState.Error)) {
                 // TODO:exception
             }
-        } while (state.equals(SnapshotState.Pending));
-
+        } while (state.equals(SnapshotState.Pending)|| (!progress.equals("100%")) );
+        
         return result;
     }
 
@@ -253,8 +261,13 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     @Override
     public Volume createVolumeFromSnapshot(String snapshotId,
                                            String availabilityZoneName) {
-        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
-                snapshotId, availabilityZoneName);
+        String type="gp2";
+	CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest()
+                .withVolumeType(type)
+		.withSnapshotId(snapshotId)
+                .withAvailabilityZone(availabilityZoneName);
+	//CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
+        //        snapshotId, availabilityZoneName);
         CreateVolumeResult crVolumeResult = ec2client
                 .createVolume(crVolumeRequest);
         return crVolumeResult.getVolume();

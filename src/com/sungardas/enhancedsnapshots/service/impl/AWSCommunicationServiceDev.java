@@ -89,7 +89,7 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
-                .withSize(size).withVolumeType(type)
+                .withSize(size).withVolumeType("gp2")
                 .withAvailabilityZone(availabilityZone);
         if (iiops > 0) {
             createVolumeRequest = createVolumeRequest.withIops(iiops);
@@ -100,7 +100,7 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     @Override
     public Volume createStandardVolume(int size) {
-        return createVolume(size, 0, "standard");
+        return createVolume(size, 0, "gp2");
     }
 
     @Override
@@ -150,21 +150,27 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     @Override
     public Snapshot waitForCompleteState(Snapshot snapshot) {
-        String state;
-        Snapshot result;
+        String state="";
+        String progress="";
+	Snapshot result;
         do {
             try {
                 TimeUnit.SECONDS.sleep(20);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            result = syncSnapshot(snapshot);
-            state = result.getState();
+	System.out.println("State Dev:"+state+"progress:"+progress);
+	DescribeSnapshotsResult describeSnapRes 
+        = ec2client.describeSnapshots(new DescribeSnapshotsRequest().withSnapshotIds(snapshot.getSnapshotId()));
+	state = describeSnapRes.getSnapshots().get(0).getState();
+	progress = describeSnapRes.getSnapshots().get(0).getProgress();
+	result = describeSnapRes.getSnapshots().get(0);
+            //result = syncSnapshot(snapshot);
+            //state = result.getState();
             if (state.equals(SnapshotState.Error)) {
                 // TODO:exception
             }
-        } while (state.equals(SnapshotState.Pending));
+        } while (state.equals(SnapshotState.Pending) || (!progress.equals("100%")));
 
         return result;
     }

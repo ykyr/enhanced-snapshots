@@ -109,7 +109,7 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.GET)
     public ResponseEntity<InitConfigurationDto> getConfiguration() {
-        return new ResponseEntity<>(credentialsService.getInitConfigurationDto(), HttpStatus.OK);
+	return new ResponseEntity<>(credentialsService.getInitConfigurationDto(), HttpStatus.OK);
     }
 
 
@@ -138,7 +138,7 @@ class InitController implements ApplicationContextAware {
             }
             return new ResponseEntity<>("", HttpStatus.OK);
         } else {
-            throw new ConfigurationException("AWS credentials invalid");
+	    throw new ConfigurationException("AWS credentials invalid");
         }
     }
 
@@ -150,7 +150,6 @@ class InitController implements ApplicationContextAware {
     private void refreshContext() {
         LOG.info("Context refresh process started.");
         CONTEXT_REFRESH_IN_PROCESS = true;
-
         applicationContext.setConfigLocation("/WEB-INF/spring-web-config.xml");
         applicationContext.refresh();
 
