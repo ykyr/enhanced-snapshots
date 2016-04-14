@@ -53,7 +53,7 @@
                 "ec2:ModifySnapshotAttribute",
                 "ec2:ModifyVolumeAttribute",
                 "ec2:ResetSnapshotAttribute",
-		          "s3:ListAllMyBuckets",
+		"s3:ListAllMyBuckets",
                 "dynamodb:ListTables",
                 "logs:CreateLogGroup",
                 "logs:CreateLogStream",
