@@ -49,11 +49,11 @@ public class RemoveAppConfiguration {
     private SnapshotRepository snapshotRepository;
 
     @Autowired
-    private WorkerConfigurationRepository configurationRepository;
+    private ConfigurationRepository configurationRepository;
 
     private DynamoDB dynamoDB;
 
-    private WorkerConfiguration configuration;
+    private Configuration configuration;
 
     @PostConstruct
     private void init() {

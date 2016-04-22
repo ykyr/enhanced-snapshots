@@ -83,34 +83,27 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     }
 
-    @Override
-    public Volume createVolume(int size, int iiops, String type) {
+    private Volume createVolume(int size, int iiops, VolumeType type) {
         String availabilityZone = getInstance(configurationId).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
                 .withSize(size).withVolumeType(type)
                 .withAvailabilityZone(availabilityZone);
-        if (iiops > 0) {
+        if (iiops > 0 && type.equals(VolumeType.Io1)) {
             createVolumeRequest = createVolumeRequest.withIops(iiops);
         }
-        Volume result = ec2client.createVolume(createVolumeRequest).getVolume();
-        return result;
+        return ec2client.createVolume(createVolumeRequest).getVolume();
     }
 
-    @Override
-    public Volume createStandardVolume(int size) {
-        return createVolume(size, 0, "standard");
-    }
 
-    @Override
-    public Volume createGP2Volume(int size) {
-        return createVolume(size, 0, "gp2");
+    public Volume createVolume(int size, VolumeType type) {
+        return createVolume(size, 0, type);
     }
 
     @Override
     public Volume createIO1Volume(int size, int iops) {
-        return createVolume(size, iops, "io1");
+        return createVolume(size, iops, VolumeType.Io1);
     }
 
     @Override
@@ -251,20 +244,14 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
     }
 
     @Override
-    public Volume createVolumeFromSnapshot(String snapshotId,
-                                           String availabilityZoneName) {
-        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
-                snapshotId, availabilityZoneName);
-        CreateVolumeResult crVolumeResult = ec2client
-                .createVolume(crVolumeRequest);
+    public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iops) {
+        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId, availabilityZoneName);
+        crVolumeRequest.setVolumeType(type);
+        if(iops != 0 && type.equals(VolumeType.Io1)){
+            crVolumeRequest.setIops(iops);
+        }
+        CreateVolumeResult crVolumeResult = ec2client.createVolume(crVolumeRequest);
         return crVolumeResult.getVolume();
-    }
-
-    @Override
-    public Volume createVolumeFromSnapshot(Snapshot snapshot,
-                                           String availabilityZoneName) {
-        return createVolumeFromSnapshot(snapshot.getSnapshotId(),
-                availabilityZoneName);
     }
 
     @Override
@@ -275,6 +262,7 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
                 .describeVolumes(describeVolumesRequest);
         return result.getVolumes().get(0);
     }
+
 
     @Override
     public void deleteVolume(Volume volume) {
@@ -335,6 +323,18 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     void setRetryRestoreTimeout(int retryRestoreTimeout) {
         this.retryRestoreTimeout = retryRestoreTimeout;
+    }
+
+    @Override
+    public Snapshot getSnapshot(String snapshotId) {
+        DescribeSnapshotsResult describeSnapshotsResult = ec2client.describeSnapshots();
+        List<Snapshot> snapshots = describeSnapshotsResult.getSnapshots();
+        for(Snapshot snapshot: snapshots){
+            if(snapshot.getSnapshotId().equals(snapshotId)){
+                return snapshot;
+            }
+        }
+        return null;
     }
 
 }

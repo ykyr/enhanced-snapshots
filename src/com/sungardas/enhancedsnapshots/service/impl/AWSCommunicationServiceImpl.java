@@ -83,8 +83,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     }
 
-    @Override
-    public Volume createVolume(int size, int iiops, String type) {
+    private Volume createVolume(int size, int iiops, VolumeType type) {
         String availabilityZone = getInstance(configurationId).getPlacement()
                 .getAvailabilityZone();
 
@@ -99,18 +98,13 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public Volume createStandardVolume(int size) {
-        return createVolume(size, 0, "standard");
-    }
-
-    @Override
-    public Volume createGP2Volume(int size) {
-        return createVolume(size, 0, "gp2");
+    public Volume createVolume(int size, VolumeType type) {
+        return createVolume(size, 0, type);
     }
 
     @Override
     public Volume createIO1Volume(int size, int iops) {
-        return createVolume(size, iops, "io1");
+        return createVolume(size, iops, VolumeType.Io1);
     }
 
     @Override
@@ -235,8 +229,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         while (incorrectState) {
             try {
                 incorrectState = false;
-                DetachVolumeRequest detachVolumeRequest = new DetachVolumeRequest(volume.getVolumeId());
-                DetachVolumeResult detachVolumeResult = ec2client.detachVolume(detachVolumeRequest);
+                ec2client.detachVolume(new DetachVolumeRequest(volume.getVolumeId()));
             } catch (AmazonClientException incorrectStateException) {
                 LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
                 incorrectState = true;
@@ -247,32 +240,23 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
                 }
             }
         }
-        LOG.info(format("\nVolume %s unattached", volume.getVolumeId()));
+        LOG.info(format("Volume %s unattached", volume.getVolumeId()));
     }
 
     @Override
-    public Volume createVolumeFromSnapshot(String snapshotId,
-                                           String availabilityZoneName) {
-        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
-                snapshotId, availabilityZoneName);
-        CreateVolumeResult crVolumeResult = ec2client
-                .createVolume(crVolumeRequest);
-        return crVolumeResult.getVolume();
-    }
-
-    @Override
-    public Volume createVolumeFromSnapshot(Snapshot snapshot,
-                                           String availabilityZoneName) {
-        return createVolumeFromSnapshot(snapshot.getSnapshotId(),
-                availabilityZoneName);
+    public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iops) {
+        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId, availabilityZoneName);
+        crVolumeRequest.setVolumeType(type);
+        if(iops != 0 && type.equals(VolumeType.Io1)){
+            crVolumeRequest.setIops(iops);
+        }
+        return ec2client.createVolume(crVolumeRequest).getVolume();
     }
 
     @Override
     public Volume syncVolume(Volume volume) {
-        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest()
-                .withVolumeIds(volume.getVolumeId());
-        DescribeVolumesResult result = ec2client
-                .describeVolumes(describeVolumesRequest);
+        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest().withVolumeIds(volume.getVolumeId());
+        DescribeVolumesResult result = ec2client.describeVolumes(describeVolumesRequest);
         return result.getVolumes().get(0);
     }
 
@@ -322,6 +306,18 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         CreateTagsRequest r = new CreateTagsRequest().withResources(resourceId)
                 .withTags(new Tag().withKey(name).withValue(value));
         ec2client.createTags(r);
+    }
+
+    @Override
+    public Snapshot getSnapshot(String snapshotId) {
+        DescribeSnapshotsResult describeSnapshotsResult = ec2client.describeSnapshots();
+        List<Snapshot> snapshots = describeSnapshotsResult.getSnapshots();
+        for(Snapshot snapshot: snapshots){
+            if(snapshot.getSnapshotId().equals(snapshotId)){
+                return snapshot;
+            }
+        }
+        return null;
     }
 
 

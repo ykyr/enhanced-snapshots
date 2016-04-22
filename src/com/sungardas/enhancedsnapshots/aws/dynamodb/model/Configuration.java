@@ -3,9 +3,10 @@ package com.sungardas.enhancedsnapshots.aws.dynamodb.model;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.ec2.model.VolumeType;
 
 @DynamoDBTable(tableName = "Configurations")
-public class WorkerConfiguration {
+public class Configuration {
 
 	private String sdfsVolumeName;
 	private String sdfsMountPoint;
@@ -13,6 +14,14 @@ public class WorkerConfiguration {
 	private String configurationId;
 	private String s3Bucket;
 
+	@DynamoDBAttribute(attributeName = "tempVolumeType")
+	private String tempVolumeType;
+	@DynamoDBAttribute(attributeName = "tempVolumeIopsPerGb")
+	private int tempVolumeIopsPerGb;
+	@DynamoDBAttribute(attributeName = "restoreVolumeType")
+	private String restoreVolumeType;
+	@DynamoDBAttribute(attributeName = "restoreVolumeIopsPerGb")
+	private int restoreVolumeIopsPerGb;
 	@DynamoDBAttribute(attributeName = "sdfsVolumeName")
 	public String getSdfsVolumeName() {
 		return sdfsVolumeName;
@@ -57,5 +66,37 @@ public class WorkerConfiguration {
 	public void setS3Bucket(String taskS3Bucket) {
 		this.s3Bucket = taskS3Bucket;
 	}
-	
+
+	public String getTempVolumeType() {
+		return tempVolumeType;
+	}
+
+	public void setTempVolumeType(String tempVolumeType) {
+		this.tempVolumeType = tempVolumeType;
+	}
+
+	public int getTempVolumeIopsPerGb() {
+		return tempVolumeIopsPerGb;
+	}
+
+	public void setTempVolumeIopsPerGb(int tempVolumeIopsPerGb) {
+		this.tempVolumeIopsPerGb = tempVolumeIopsPerGb;
+	}
+
+	public String getRestoreVolumeType() {
+		return restoreVolumeType;
+	}
+
+	public void setRestoreVolumeType(String restoreVolumeType) {
+		this.restoreVolumeType = restoreVolumeType;
+	}
+
+	public int getRestoreVolumeIopsPerGb() {
+		return restoreVolumeIopsPerGb;
+	}
+
+	public void setRestoreVolumeIopsPerGb(int restoreVolumeIopsPerGb) {
+		this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
+	}
+
 }

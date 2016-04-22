@@ -1,9 +1,6 @@
 package com.sungardas.enhancedsnapshots.service;
 
-import com.amazonaws.services.ec2.model.AvailabilityZone;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.Volume;
+import com.amazonaws.services.ec2.model.*;
 
 import java.util.List;
 
@@ -23,9 +20,10 @@ public interface AWSCommunicationService {
 
     Volume syncVolume(Volume volume);
 
-    Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName);
-
-    Volume createVolumeFromSnapshot(Snapshot sourceSnapshot, String availabilityZoneName);
+    /**
+     * iops paramenter is only required for io1 volume type, for other volume types it will be skipped
+     */
+    Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iops);
 
     void deleteVolume(Volume volume);
 
@@ -41,13 +39,9 @@ public interface AWSCommunicationService {
 
     void deleteTemporaryTag(String resourceId);
 
-    Volume createVolume(int size, int iiops, String type);
+    Volume createVolume(int size, VolumeType type);
 
     Volume createIO1Volume(int size, int iops);
-
-    Volume createGP2Volume(int size);
-
-    Volume createStandardVolume(int size);
 
     Instance getInstance(String instanceId);
 
@@ -56,4 +50,6 @@ public interface AWSCommunicationService {
     void setResourceName(String resourceid, String value);
 
     void addTag(String resourceId, String name, String value);
+
+    Snapshot getSnapshot(String snapshotId);
 }

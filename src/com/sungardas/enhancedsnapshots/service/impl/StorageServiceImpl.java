@@ -1,7 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
 import com.amazonaws.services.ec2.model.Volume;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.exception.SDFSException;
@@ -45,7 +45,7 @@ public class StorageServiceImpl implements StorageService {
 
     @PostConstruct
     public void init() {
-        WorkerConfiguration configuration = configurationService.getWorkerConfiguration();
+        Configuration configuration = configurationService.getConfiguration();
         this.mountPoint = configuration.getSdfsMountPoint();
     }
 

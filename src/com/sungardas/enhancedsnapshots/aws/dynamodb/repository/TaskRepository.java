@@ -24,5 +24,7 @@ public interface TaskRepository extends CrudRepository<TaskEntry, String> {
 
     List<TaskEntry> findByExpirationDateLessThanEqualAndInstanceId(String expirationDate, String instanceId);
 
+    List<TaskEntry> findByRegular(String regular);
+
     Long countByRegularAndInstanceIdAndTypeAndStatus(String regular, String instanceId, String type, String status);
 }

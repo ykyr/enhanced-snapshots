@@ -5,6 +5,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
+import com.amazonaws.services.ec2.model.VolumeType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +38,7 @@ public class AWSCommunicationServiceImplTest {
 		CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId,
 				availableZone);
 		when(ec2client.createVolume(crVolumeRequest)).thenReturn(new CreateVolumeResult());
-		awsCommunticationService.createVolumeFromSnapshot(snapshotId, availableZone);
+		awsCommunticationService.createVolumeFromSnapshot(snapshotId, availableZone, VolumeType.Gp2, 30);
 		verify(ec2client, times(1)).createVolume(crVolumeRequest);
 	}
 
@@ -50,7 +51,7 @@ public class AWSCommunicationServiceImplTest {
 
 		when(ec2client.createVolume(crVolumeRequest)).thenThrow(exception);
 		try {
-			awsCommunticationService.createVolumeFromSnapshot(snapshotId, availableZone);
+			awsCommunticationService.createVolumeFromSnapshot(snapshotId, availableZone, VolumeType.Gp2, 30);
 		} catch (RuntimeException e) {
 			// ignore
 		}
@@ -66,7 +67,7 @@ public class AWSCommunicationServiceImplTest {
 
 		when(ec2client.createVolume(crVolumeRequest)).thenThrow(exception);
 		try {
-			awsCommunticationService.createVolumeFromSnapshot(snapshotId, availableZone);
+			awsCommunticationService.createVolumeFromSnapshot(snapshotId, availableZone, VolumeType.Gp2, 30);
 		} catch (RuntimeException e) {
 			// ignore
 		}

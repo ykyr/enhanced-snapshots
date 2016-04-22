@@ -1,8 +1,8 @@
 package com.sungardas.enhancedsnapshots.components;
 
 import com.amazonaws.AmazonClientException;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
@@ -67,12 +67,12 @@ public class WorkersDispatcher {
 
     @Value("${enhancedsnapshots.polling.rate}")
     private int pollingRate;
-    private WorkerConfiguration configuration;
+    private Configuration configuration;
     private ExecutorService executor;
 
     @PostConstruct
     private void init() {
-        configuration = configurationService.getWorkerConfiguration();
+        configuration = configurationService.getConfiguration();
         executor = Executors.newSingleThreadExecutor();
         executor.execute(new TaskWorker());
     }

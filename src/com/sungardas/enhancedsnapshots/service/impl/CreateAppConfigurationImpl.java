@@ -9,8 +9,8 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.util.EC2MetadataUtils;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
@@ -38,6 +38,15 @@ class CreateAppConfigurationImpl {
 
     @Value("${amazon.aws.region}")
     private String region;
+
+    @Value("${enhancedsnapshots.default.tempVolumeType}")
+    private String tempVolumeType;
+    @Value("${enhancedsnapshots.default.tempVolumeIopsPerGb}")
+    private int tempVolumeIopsPerGb;
+    @Value("${enhancedsnapshots.default.restoreVolumeType}")
+    private String restoreVolumeType;
+    @Value("${enhancedsnapshots.default.restoreVolumeIopsPerGb}")
+    private int restoreVolumeIopsPerGb;
 
     @Autowired
     private SharedDataServiceImpl sharedDataService;
@@ -108,9 +117,9 @@ class CreateAppConfigurationImpl {
 
     private boolean isConfigurationStored() {
         InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();
-        WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
+        Configuration configuration = convertToWorkerConfiguration(dto);
         DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
-        WorkerConfiguration loadedConf = mapper.load(WorkerConfiguration.class, workerConfiguration.getConfigurationId());
+        Configuration loadedConf = mapper.load(Configuration.class, configuration.getConfigurationId());
         return loadedConf != null;
     }
 
@@ -193,28 +202,25 @@ class CreateAppConfigurationImpl {
         }
     }
 
-
-    private void createS3Bucket() {
-        String bucketName = sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName();
-        amazonS3.createBucket(bucketName);
-        LOG.info("Bucket [{}] was created successfully.", bucketName);
-    }
-
     private void storeWorkerConfiguration() {
         InitConfigurationDto dto = sharedDataService.getInitConfigurationDto();
-        WorkerConfiguration workerConfiguration = convertToWorkerConfiguration(dto);
+        Configuration configuration = convertToWorkerConfiguration(dto);
         DynamoDBMapper mapper = new DynamoDBMapper(amazonDynamoDB);
-        mapper.save(workerConfiguration);
+        mapper.save(configuration);
     }
 
-    private WorkerConfiguration convertToWorkerConfiguration(InitConfigurationDto dto) {
-        WorkerConfiguration workerConfiguration = new WorkerConfiguration();
-        workerConfiguration.setConfigurationId(EC2MetadataUtils.getInstanceId());
-        workerConfiguration.setEc2Region(Regions.getCurrentRegion().getName());
-        workerConfiguration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
-        workerConfiguration.setSdfsVolumeName(dto.getSdfs().getVolumeName());
-        workerConfiguration.setS3Bucket(sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName());
-        return workerConfiguration;
+    private Configuration convertToWorkerConfiguration(InitConfigurationDto dto) {
+        Configuration configuration = new Configuration();
+        configuration.setConfigurationId(EC2MetadataUtils.getInstanceId());
+        configuration.setEc2Region(Regions.getCurrentRegion().getName());
+        configuration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
+        configuration.setSdfsVolumeName(dto.getSdfs().getVolumeName());
+        configuration.setS3Bucket(sharedDataService.getInitConfigurationDto().getS3().get(0).getBucketName());
+        configuration.setRestoreVolumeIopsPerGb(restoreVolumeIopsPerGb);
+        configuration.setRestoreVolumeType(restoreVolumeType);
+        configuration.setTempVolumeIopsPerGb(tempVolumeIopsPerGb);
+        configuration.setTempVolumeType(tempVolumeType);
+        return configuration;
     }
 
     private void dropDbTables() {
