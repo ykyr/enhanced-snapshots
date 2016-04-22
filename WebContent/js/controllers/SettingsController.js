@@ -7,6 +7,8 @@ angular.module('web')
 
         System.get().then(function (data) {
             $scope.settings = data;
+            $scope.initialTempVolumeType = data.systemProperties.tempVolumeType;
+            $scope.initialRestoreVolumeType = data.systemProperties.restoreVolumeType;
         }, function (e) {
             console.log(e);
         });
@@ -28,6 +30,15 @@ angular.module('web')
                 controller: 'modalSystemUninstallCtrl'
             });
 
+        };
+
+        $scope.changeType = function () {
+            $modal.open({
+                animation: true,
+                scope: $scope,
+                templateUrl: './partials/modal.volume-type.html',
+                controller: 'modalVolumeTypeChangeCtrl'
+            });
         };
 
     });
