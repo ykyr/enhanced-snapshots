@@ -19,7 +19,10 @@ Enhanced Snapshots, from Sungard Availability Services | Labs, manages EBS snaps
 * Reduce the time IT engineers spend on routine snapshot management tasks
 * Schedule recurring snapshots
 
-Using an intuitive interface, you can easily automate routine tasks such as creation of backups and deletion of old backups. Since these tasks are automated, you will minimize the risks that are associated with human error.
+Deduplication is run across all enabled snapshots in a region, which decreases the amount of total data stored.  Furthermore, deduplicated blocks are stored in S3 at a much lower cost than AWS’ standard EBS snapshots.  This tool provides users with a great way to pay less for long-term retention of snapshot based data in AWS.
+
+Using an intuitive interface, users can easily automate routine tasks like the creation of snapshots and the deletion of old backups. Since these tasks are automated, risks associated with human error are minimized. 
+Enhanced Snapshots is open sourced and licensed under Apache v 2.0. Use of Enhanced Snapshots software is free and you only pay for the underlying infrastructure required to support it.
 
 Technical support is not available for the first version of the product; however, please create a Github issue if you have any comments or suggestions. Customer support service may be added in a future release.
 
