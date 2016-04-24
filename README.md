@@ -14,9 +14,10 @@
 * [License](#license)
 
 # Product Description
-The Sungard AS Enhanced Snapshots software manages backups for servers located in the Amazon Web Services cloud. The product will be useful for customers who want to reduce:
-* the cost of storing backups
-* time spent by IT engineers on routine backup management tasks.
+Enhanced Snapshots, from Sungard Availability Services | Labs, manages EBS snapshots and performs data deduplication to S3 for greater cost savings. The product will be useful for AWS users who want to :
+* Reduce the cost of storing snapshots
+* Reduce the time IT engineers spend on routine snapshot management tasks
+* Schedule recurring snapshots
 
 Using an intuitive interface, you can easily automate routine tasks such as creation of backups and deletion of old backups. Since these tasks are automated, you will minimize the risks that are associated with human error.
 
@@ -24,7 +25,7 @@ Technical support is not available for the first version of the product; however
 
 Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, Enhanced Snapshots will be free.
 
-This tool will be available by launching the AMI by creating a role like es-admin-role using the cloud formation template mentioned in the [Quick start](https://github.com/sungardas/enhanced-snapshots#quick-start) section below. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. Refer to the [Removing the enhanced snapshots system](https://github.com/sungardas/enhanced-snapshots#removing-the-enhanced-snapshots-system) for more details.
+This tool will be available by launching the AMI from the ![enhanced snapshots market place](https://aws.amazon.com/marketplace/pp/B01CIWY4UO) by creating a role like es-admin-role using the cloud formation template mentioned in the [Quick start](https://github.com/sungardas/enhanced-snapshots#quick-start) section below. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. Refer to the [Removing the enhanced snapshots system](https://github.com/sungardas/enhanced-snapshots#removing-the-enhanced-snapshots-system) for more details.
 
 # Key Features
 ## Backup & Recovery 
