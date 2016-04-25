@@ -10,7 +10,7 @@
 * [Getting Started](#getting-started)
 * [Management Tasks](#management-tasks)
 * [Removing the Enhanced Snapshots system](#removing-the-enhanced-snapshots-system)
-* [IAM user creation (optional)](#iam-user-creation-optional)
+* [IAM Role creation (optional)](#iam-role-creation-optional)
 * [License](#license)
 
 # Product Description
@@ -175,65 +175,14 @@ The following resources are deleted:
   
 **Note** It may take several minutes to delete all the resources, especially if backup data has been stored.
 
-# IAM user creation (optional)
-If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM user with the following policy.
+# IAM role creation (optional)
+If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM role with the following policy as defined in this template.
 ```
- {
-  "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "1",
-            "Effect": "Allow",
-            "Action": [
-                "iam:ListUserPolicies",
-                "iam:GetUser",
-                "iam:GetRole",
-                "iam:ListRoles",
-                "iam:PassRole",
-                "iam:ListInstanceProfiles",
-                "ec2:AttachVolume",
-                "ec2:CreateSnapshot",
-                "ec2:CreateTags",
-                "ec2:CreateVolume",
-                "ec2:DeleteSnapshot",
-                "ec2:DeleteTags",
-                "ec2:DeleteVolume",
-                "ec2:DescribeAvailabilityZones",
-                "ec2:DescribeInstanceAttribute",
-                "ec2:DescribeInstanceStatus",
-                "ec2:DescribeInstances",
-                "ec2:TerminateInstances",
-                "ec2:DescribeRegions",
-                "ec2:DescribeReservedInstances",
-                "ec2:DescribeReservedInstancesListings",
-                "ec2:DescribeSnapshotAttribute",
-                "ec2:DescribeSnapshots",
-                "ec2:DescribeTags",
-                "ec2:DescribeVolumeAttribute",
-                "ec2:DescribeVolumeStatus",
-                "ec2:DescribeVolumes",
-                "ec2:DetachVolume",
-                "ec2:EnableVolumeIO",
-                "ec2:ModifyInstanceAttribute",
-                "ec2:ModifySnapshotAttribute",
-                "ec2:ModifyVolumeAttribute",
-                "ec2:ResetSnapshotAttribute",
-                "sqs(kiss)",
-                "s3:*",
-                "dynamodb(kiss)",
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "logs:DescribeLogStreams"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
+https://github.com/SungardAS/particles-enhanced-snapshots/blob/enhanced-mktplace/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json
 ```
-Once the user is created, also create and save an API key, which will be needed to configure Enhanced Snapshots. 
+Once the role is created, also create and save an API key, which will be needed to configure Enhanced Snapshots. 
 
-Without a properly configured user, the following error message will appear during configuration:
+Without a properly configured role, the following error message will appear during configuration:
 ![DynamoDBAccessDenied](https://cloud.githubusercontent.com/assets/14750068/10131876/08b816c8-65dc-11e5-871e-0f8d5fcdd303.png)
 
 # Logging
