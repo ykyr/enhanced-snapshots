@@ -88,7 +88,7 @@ User also should to:
 ![Role](https://cloud.githubusercontent.com/assets/13747035/11899135/bcaaee2c-a5a5-11e5-965b-78d60d64f3b8.png)
 
 # Getting Started
-**Note** If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually [create an IAM user](#iam-user-creation-optional) and then create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
+**Note** If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually [create an IAM role](#iam-role-creation-optional) and then create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
 
 **Note** By default a new instance has a self-signed SSL certificate, so you will need to bypass your browser's security warning to start.
 
