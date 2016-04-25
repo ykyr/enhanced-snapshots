@@ -22,13 +22,12 @@ Enhanced Snapshots, from Sungard Availability Services | Labs, manages EBS snaps
 Deduplication is run across all enabled snapshots in a region, which decreases the amount of total data stored.  Furthermore, deduplicated blocks are stored in S3 at a much lower cost than AWS’ standard EBS snapshots.  This tool provides users with a great way to pay less for long-term retention of snapshot based data in AWS.
 
 Using an intuitive interface, users can easily automate routine tasks like the creation of snapshots and the deletion of old backups. Since these tasks are automated, risks associated with human error are minimized. 
-Enhanced Snapshots is open sourced and licensed under Apache v 2.0. Use of Enhanced Snapshots software is free and you only pay for the underlying infrastructure required to support it.
 
 Technical support is not available for the first version of the product; however, please create a Github issue if you have any comments or suggestions. Customer support service may be added in a future release.
 
-Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, Enhanced Snapshots will be free.
+Enhanced Snapshots is open sourced and licensed under Apache v 2.0. Use of Enhanced Snapshots software is free and you only pay for the underlying infrastructure required to support it.
 
-This tool will be available by launching the AMI from the [enhanced snapshots market place](https://aws.amazon.com/marketplace/pp/B01CIWY4UO) by creating a role like es-admin-role using the cloud formation template mentioned in the [Quick start](https://github.com/sungardas/enhanced-snapshots#quick-start) section below. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. Refer to the [Removing the enhanced snapshots system](https://github.com/sungardas/enhanced-snapshots#removing-the-enhanced-snapshots-system) for more details.
+This tool will be available by launching the AMI from the [enhanced snapshots market place](https://aws.amazon.com/marketplace/pp/B01CIWY4UO) by choosing the "Enhanced Snapshots tool creation stack" option or by creating a role like es-admin-role while using the single AMI option. Cloud formation template mentioned in the [Quick start](https://github.com/sungardas/enhanced-snapshots#quick-start) section can be used to create the es-admin role. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. Refer to the [Removing the enhanced snapshots system](https://github.com/sungardas/enhanced-snapshots#removing-the-enhanced-snapshots-system) for more details.
 
 # Key Features
 ## Backup & Recovery 
@@ -53,8 +52,9 @@ This tool will be available by launching the AMI from the [enhanced snapshots ma
 * No support for management of volumes using OS level RAID
 * EBS volumes using EBS encryption must be [pre-warmed](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) to avoid significant storage overhead
 
-# Quick start
-For the single AMI option from the market place Create a es-admin role using the cloud formation template as prerequisite [es-admin-role](https://github.com/SungardAS/enhanced-snapshots/blob/master/sungardas_es_admin_role_perm_restricted.template) 
+# Quick startEnhanced Snapshots tool creation stack
+- If the "Enhanced Snapshots tool creation stack" is used in marketplace , the es-admin role will be automatically created.
+But for the single AMI option from the market place Create a es-admin role using the cloud formation template as prerequisite [es-admin-role](https://github.com/SungardAS/particles-enhanced-snapshots/blob/enhanced-mktplace/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json) 
  To launch a CloudFormation stack based on the template, first decide which region you will deploy in. In that region you will need the following information:
 
 * An [EC2 keypair](https://us-east-1.console.aws.amazon.com/ec2/v2/home?#KeyPairs)
