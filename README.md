@@ -52,7 +52,7 @@ This tool will be available by launching the AMI from the [enhanced snapshots ma
 * No support for management of volumes using OS level RAID
 * EBS volumes using EBS encryption must be [pre-warmed](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) to avoid significant storage overhead
 
-# Quick startEnhanced Snapshots tool creation stack
+# Quick start
 - If the "Enhanced Snapshots tool creation stack" is used in marketplace , the es-admin role will be automatically created.
 But for the single AMI option from the market place Create a es-admin role using the cloud formation template as prerequisite [es-admin-role](https://github.com/SungardAS/particles-enhanced-snapshots/blob/enhanced-mktplace/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json) 
  To launch a CloudFormation stack based on the template, first decide which region you will deploy in. In that region you will need the following information:
