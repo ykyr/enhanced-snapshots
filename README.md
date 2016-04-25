@@ -178,7 +178,7 @@ The following resources are deleted:
 # IAM role creation (optional)
 If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM role with the following policy as defined in this template.
 ```
-https://github.com/SungardAS/particles-enhanced-snapshots/blob/enhanced-mktplace/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json
+[es-admin role cloud formation template](https://github.com/SungardAS/particles-enhanced-snapshots/blob/enhanced-mktplace/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json)
 ```
 Once the role is created, also create and save an API key, which will be needed to configure Enhanced Snapshots. 
 
