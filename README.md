@@ -176,10 +176,7 @@ The following resources are deleted:
 **Note** It may take several minutes to delete all the resources, especially if backup data has been stored.
 
 # IAM role creation (optional)
-If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM role with the following policy as defined in this template.
-```
-[es-admin role cloud formation template](https://github.com/SungardAS/particles-enhanced-snapshots/blob/enhanced-mktplace/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json)
-```
+If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM role with the following policy as defined in this template. [es-admin role cloud formation template](https://github.com/SungardAS/particles-enhanced-snapshots/blob/enhanced-mktplace/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json) 
 Once the role is created, also create and save an API key, which will be needed to configure Enhanced Snapshots. 
 
 Without a properly configured role, the following error message will appear during configuration:
