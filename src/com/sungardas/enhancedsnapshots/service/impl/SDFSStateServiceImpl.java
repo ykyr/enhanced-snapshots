@@ -1,10 +1,35 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
@@ -12,6 +37,7 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.SDFSException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,15 +45,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.XmlWebApplicationContext;
-
-import java.io.*;
-import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @Profile("prod")
@@ -57,6 +74,9 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private String sdfsSize;
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
+    @Value("${amazon.s3.default.region:us-east-1}")
+    private String defaultS3Region;
+
     @Autowired
     private XmlWebApplicationContext applicationContext;
 
@@ -163,8 +183,17 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Override
     public Long getBackupTime() {
+        try {
+            return getCreationTime(KEY_NAME);
+        } catch (AmazonS3Exception e) {
+            amazonS3.setRegion(com.amazonaws.regions.Region.getRegion(Regions.fromName(defaultS3Region)));
+            return getCreationTime(KEY_NAME);
+        }
+    }
+
+    private Long getCreationTime(String fileName) {
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(s3Bucket).withPrefix(KEY_NAME);
+                .withBucketName(s3Bucket).withPrefix(fileName);
         List<S3ObjectSummary> list = amazonS3.listObjects(request).getObjectSummaries();
         if (list.size() > 0) {
             return list.get(0).getLastModified().getTime();
