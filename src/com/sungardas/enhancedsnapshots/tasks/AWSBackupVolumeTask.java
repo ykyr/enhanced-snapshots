@@ -209,9 +209,8 @@ public class AWSBackupVolumeTask implements BackupTask {
 
         // create volume
         String instanceAvailabilityZone = instance.getPlacement().getAvailabilityZone();
-        int iops = getIops(taskEntry.getTempVolumeIopsPerGb(), volumeSrc.getSize());
         Volume volumeDest = awsCommunication.waitForAvailableState(awsCommunication.createVolumeFromSnapshot(snapshot.getSnapshotId(),
-                instanceAvailabilityZone, VolumeType.fromValue(taskEntry.getTempVolumeType()), iops));
+                instanceAvailabilityZone, VolumeType.fromValue(taskEntry.getTempVolumeType()), taskEntry.getTempVolumeIopsPerGb()));
         LOG.info("Volume created: {}", volumeDest.toString());
 
         // create temporary tag
@@ -234,16 +233,4 @@ public class AWSBackupVolumeTask implements BackupTask {
             super(message);
         }
     }
-
-    // TODO: AWSRestoreVolumeTask has the same method so it's better to move it to some util class
-    // iops can not be less than 100 and more than 20 000
-    private int getIops(int iopsPerGb, int volumeSize) {
-        int iops = volumeSize * iopsPerGb;
-        if (iops < 100)
-            return 100;
-        if (iops > 20000)
-            return 20000;
-        return iops;
-    }
-
 }

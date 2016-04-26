@@ -21,9 +21,9 @@ public interface AWSCommunicationService {
     Volume syncVolume(Volume volume);
 
     /**
-     * iops paramenter is only required for io1 volume type, for other volume types it will be skipped
+     * iopsPerGb paramenter is only required for io1 volume type, for other volume types it will be skipped
      */
-    Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iops);
+    Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iopsPerGb);
 
     void deleteVolume(Volume volume);
 
@@ -41,7 +41,7 @@ public interface AWSCommunicationService {
 
     Volume createVolume(int size, VolumeType type);
 
-    Volume createIO1Volume(int size, int iops);
+    Volume createIO1Volume(int size, int iopsPerGb);
 
     Instance getInstance(String instanceId);
 

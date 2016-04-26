@@ -122,7 +122,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume from snapshot", 50);
 
         Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone, VolumeType.fromValue(taskEntry.getRestoreVolumeType()),
-                getIops(taskEntry.getRestoreVolumeIopsPerGb(), awsCommunication.getSnapshot(snapshotId).getVolumeSize()));
+                taskEntry.getRestoreVolumeIopsPerGb());
         awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + backupEntry.getVolumeId());
         awsCommunication.addTag(volume.getVolumeId(), "Created by", "Enhanced Snapshots");
     }
@@ -136,16 +136,16 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         BackupEntry backupentry = backupRepository.getByBackupFileName(taskEntry.getSourceFileName());
         LOG.info("Used backup record: {}", backupentry.toString());
         Instance instance = awsCommunication.getInstance(taskEntry.getInstanceId());
-        String size = backupentry.getSizeGiB();
+        int size = Integer.parseInt(backupentry.getSizeGiB());
         checkThreadInterruption();
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume...", 15);
 
         // creating temporary volume
         Volume tempVolume;
         if (taskEntry.getTempVolumeType().equals(VolumeType.Io1.toString())) {
-            tempVolume = awsCommunication.createIO1Volume(Integer.parseInt(size), getIops(taskEntry.getTempVolumeIopsPerGb(), Integer.parseInt(size)));
+            tempVolume = awsCommunication.createIO1Volume(size, taskEntry.getTempVolumeIopsPerGb());
         } else {
-            tempVolume = awsCommunication.createVolume(Integer.parseInt(size), VolumeType.fromValue(taskEntry.getTempVolumeType()));
+            tempVolume = awsCommunication.createVolume(size, VolumeType.fromValue(taskEntry.getTempVolumeType()));
         }
         LOG.info("Created {} volume:{}", taskEntry.getTempVolumeType(), tempVolume.toString());
         checkThreadInterruption();
@@ -193,7 +193,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 95);
 
         Volume volumeToRestore = awsCommunication.createVolumeFromSnapshot(tempSnapshot.getSnapshotId(), taskEntry.getAvailabilityZone(),
-                VolumeType.fromValue(taskEntry.getRestoreVolumeType()), getIops(taskEntry.getRestoreVolumeIopsPerGb(), tempVolume.getSize()));
+                VolumeType.fromValue(taskEntry.getRestoreVolumeType()), taskEntry.getRestoreVolumeIopsPerGb());
         checkThreadInterruption();
 
         awsCommunication.setResourceName(volumeToRestore.getVolumeId(), RESTORED_NAME_PREFIX + backupentry.getFileName());
@@ -216,15 +216,5 @@ public class AWSRestoreVolumeTask implements RestoreTask {
             LOG.info("Restore task {} was interrupted.", taskEntry.getId());
             throw new EnhancedSnapshotsInterruptedException("Task interrupted");
         }
-    }
-
-    // iops can not be less than 100 and more than 20 000
-    private int getIops(int iopsPerGb, int volumeSize) {
-        int iops = volumeSize * iopsPerGb;
-        if (iops < 100)
-            return 100;
-        if (iops > 20000)
-            return 20000;
-        return iops;
     }
 }

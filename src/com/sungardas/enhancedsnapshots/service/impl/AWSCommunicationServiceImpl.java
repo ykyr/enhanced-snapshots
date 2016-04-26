@@ -24,8 +24,8 @@ import static java.lang.String.format;
 @Profile("prod")
 public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
-    private static final Logger LOG = LogManager
-            .getLogger(AWSCommunicationServiceImpl.class);
+    private static final Logger LOG = LogManager.getLogger(AWSCommunicationServiceImpl.class);
+    private final static int MIN_SIZE_OF_OI1_VOLUME = 4;
 
     @Autowired
     private SnapshotService snapshotService;
@@ -103,8 +103,10 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public Volume createIO1Volume(int size, int iops) {
-        return createVolume(size, iops, VolumeType.Io1);
+    public Volume createIO1Volume(int size, int iopsPerGb) {
+        // io1 volume size can not be less than 4 Gb
+        size = size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size;
+        return createVolume(size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size, getIops(iopsPerGb, size), VolumeType.Io1);
     }
 
     @Override
@@ -244,11 +246,19 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iops) {
+    public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iopsPerGb) {
         CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId, availabilityZoneName);
         crVolumeRequest.setVolumeType(type);
-        if(iops != 0 && type.equals(VolumeType.Io1)){
-            crVolumeRequest.setIops(iops);
+
+        if (type.equals(VolumeType.Io1)) {
+            Snapshot snapshot = getSnapshot(snapshotId);
+            // io1 volume size can not be less than 4 Gb
+            int size = snapshot.getVolumeSize() < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : snapshot.getVolumeSize();
+            crVolumeRequest.setSize(size);
+            // setting iops
+            if (iopsPerGb != 0) {
+                crVolumeRequest.setIops(getIops(iopsPerGb,  size));
+            }
         }
         return ec2client.createVolume(crVolumeRequest).getVolume();
     }
@@ -333,4 +343,13 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         this.retryRestoreTimeout = retryRestoreTimeout;
     }
 
+    // iops can not be less than 100 and more than 20 000
+    private int getIops(int iopsPerGb, int volumeSize) {
+        int iops = volumeSize * iopsPerGb;
+        if (iops < 100)
+            return 100;
+        if (iops > 20000)
+            return 20000;
+        return iops;
+    }
 }
