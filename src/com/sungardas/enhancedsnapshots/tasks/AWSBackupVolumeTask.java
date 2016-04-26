@@ -75,6 +75,7 @@ public class AWSBackupVolumeTask implements BackupTask {
     }
 
     public void execute() {
+        Volume tempVolume = null;
         String volumeId = taskEntry.getVolume();
         try {
             if (Thread.interrupted()) {
@@ -90,8 +91,6 @@ public class AWSBackupVolumeTask implements BackupTask {
                     + ": Change task state to 'inprogress'");
             taskEntry.setStatus(RUNNING.getStatus());
             taskRepository.save(taskEntry);
-
-            Volume tempVolume = null;
             String attachedDeviceName = null;
 
             if (Thread.interrupted()) {
@@ -208,11 +207,20 @@ public class AWSBackupVolumeTask implements BackupTask {
                 taskEntry.setStatus(ERROR.toString());
                 taskRepository.save(taskEntry);
             }
-        } catch (AmazonClientException e) {
-            LOG.error(format("Backup process for volume %s failed ", volumeId));
-            LOG.error(e);
+        } catch (Exception e) {
+            // TODO: add user notification about task failure
+            LOG.error("Backup process for volume {} failed ", volumeId, e);
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
+
+            // clean up
+            if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
+                tempVolume = awsCommunication.syncVolume(tempVolume);
+                if (tempVolume.getAttachments().size() != 0) {
+                    awsCommunication.detachVolume(tempVolume);
+                }
+                awsCommunication.deleteVolume(tempVolume);
+            }
         }
     }
 

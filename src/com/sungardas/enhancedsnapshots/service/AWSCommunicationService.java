@@ -17,7 +17,7 @@ public interface AWSCommunicationService {
 
     Snapshot waitForCompleteState(Snapshot snapshot);
 
-    Snapshot syncSnapshot(Snapshot snapshot);
+    Snapshot syncSnapshot(String snapshotId);
 
     Volume waitForAvailableState(Volume volume);
 
@@ -56,4 +56,8 @@ public interface AWSCommunicationService {
     void setResourceName(String resourceid, String value);
 
     void addTag(String resourceId, String name, String value);
+
+    boolean snapshotExists(String snapshotId);
+
+    boolean volumeExists(String volumeId);
 }

@@ -3,8 +3,10 @@ package com.sungardas.init;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -53,7 +55,6 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String NOT_ENOUGH_MEMORY_ERROR = "Current instance doesn't  provide enough memory to start SDFS. At least 3.75GB  of total memory expected.";
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
     private static final String CANT_GET_INSTANCE_ID = "Can't get instance ID from metadata . Check policy list used for AWS user";
-    private static final String INVALID_CREDS = "Invalid AWS credentials! The instance should be terminated. Please, provide correct AccessKeyID and SecretKey for a new Instance.";
     private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
     private static final String AMAZON_S3_BUCKET = "amazon.s3.bucket";
     private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
@@ -64,10 +65,8 @@ class CredentialsServiceImpl implements CredentialsService {
     private final String catalinaHomeEnvPropName = "catalina.home";
     private final String confFolderName = "conf";
     private final String propFileName = "amazon.properties";
-    private final String accessKeyPropName = "amazon.aws.accesskey";
-    private final String secretKeyPropName = "amazon.aws.secretkey";
     private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
-    private AWSCredentials credentials;
+    private AWSCredentialsProvider credentialsProvider;
     private String instanceId;
     private static final Set<String> regionSet = new HashSet<String>(Arrays.asList(
           new String[] {"awsconfig","ap-northeast-1","us-east-1","us-west-1","us-west-2","us-gov--west-1","eu-west-1","eu-central-1", 
@@ -83,7 +82,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @PostConstruct
     private void init() {
-        credentials= new InstanceProfileCredentialsProvider().getCredentials();
+        credentialsProvider = new InstanceProfileCredentialsProvider();
         instanceId = EC2MetadataUtils.getInstanceId();
     }
 
@@ -91,12 +90,12 @@ class CredentialsServiceImpl implements CredentialsService {
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
         validateCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
-        this.credentials = new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
+        credentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey()));
     }
 
     @Override
     public void storeCredentials() {
-        validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+        validateCredentials(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
@@ -122,7 +121,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public boolean areCredentialsValid() {
-        AmazonEC2Client ec2Client = new AmazonEC2Client(credentials);
+        AmazonEC2Client ec2Client = new AmazonEC2Client(credentialsProvider);
         try {
             ec2Client.describeRegions();
             return true;
@@ -134,13 +133,12 @@ class CredentialsServiceImpl implements CredentialsService {
 
     @Override
     public boolean credentialsAreProvided() {
-        if (credentials != null) {
-            validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+        if (credentialsProvider.getCredentials() != null) {
+            validateCredentials(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
             return true;
         } else {
             return false;
         }
-
     }
 
     @Override
@@ -157,7 +155,7 @@ class CredentialsServiceImpl implements CredentialsService {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
 	
         try {
-            AmazonS3Client client = new AmazonS3Client(credentials);
+            AmazonS3Client client = new AmazonS3Client(credentialsProvider);
             List<Bucket> allBuckets = client.listBuckets();
             String bucketName = "com.sungardas.enhancedsnapshots." + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
@@ -238,7 +236,7 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private boolean requiredTablesExist() {
-        AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
+        AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
         amazonDynamoDB.setRegion(Regions.getCurrentRegion());
         try {
             ListTablesResult listResult = amazonDynamoDB.listTables();
@@ -253,7 +251,7 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private boolean adminExist() {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(credentials);
+        AmazonDynamoDBClient client = new AmazonDynamoDBClient(credentialsProvider);
         client.setRegion(Regions.getCurrentRegion());
         DynamoDBMapper mapper = new DynamoDBMapper(client);
         DynamoDBScanExpression expression = new DynamoDBScanExpression()
@@ -289,7 +287,7 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     private String getAccountId() {
-        AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentials);
+        AmazonIdentityManagementClient iamClient = new AmazonIdentityManagementClient(credentialsProvider);
         try {
             return iamClient.getUser().getUser().getArn().split(":")[4];
         } catch (AmazonServiceException accessError) {
