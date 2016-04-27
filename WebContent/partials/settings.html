@@ -122,7 +122,11 @@
 
 
                     <div class="col-sm-offset-5 col-sm-7 text-left">
-                        <button ng-show="settings.systemProperties.restoreVolumeType !== initialRestoreVolumeType || settings.systemProperties.tempVolumeType !== initialTempVolumeType"
+                        <button ng-show="
+                        settings.systemProperties.restoreVolumeType !== initialRestoreVolumeType ||
+                        settings.systemProperties.tempVolumeType !== initialTempVolumeType ||
+                        settings.systemProperties.tempVolumeIopsPerGb !== initialTempVolumeSize ||
+                        settings.systemProperties.restoreVolumeIopsPerGb !== initialRestoreVolumeSize"
                                 class="settings btn btn-info" title="Change type"
                                 ng-click="changeType()"
                                 ng-disabled="!settings.systemProperties.tempVolumeIopsPerGb || !settings.systemProperties.restoreVolumeIopsPerGb">

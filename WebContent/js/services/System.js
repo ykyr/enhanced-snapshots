@@ -15,11 +15,17 @@ angular.module('web')
         };
 
         var _send = function (volumeSettings) {
-            return $http({
+            var deferred = $q.defer();
+            $http({
                 url: url,
                 method: "POST",
                 data: volumeSettings
+            }).then(function (result) {
+                deferred.resolve(result.data);
+            }, function (e) {
+                deferred.reject(e);
             });
+            return deferred.promise;
         };
 
         var _delete = function (instanceId) {

@@ -10,13 +10,13 @@
             initialTempVolumeType ?
             "s" : ""}}?</h4>
 
-        <h5 ng-show="settings.systemProperties.tempVolumeType !== initialTempVolumeType">
+        <p ng-show="settings.systemProperties.tempVolumeType !== initialTempVolumeType">
             Your Temporary Volume Type will be changed from <strong>{{initialTempVolumeType}}</strong> to <strong>{{settings.systemProperties.tempVolumeType}}</strong>
-        </h5>
+        </p>
 
-        <h5 ng-show="settings.systemProperties.restoreVolumeType !== initialRestoreVolumeType">
+        <p ng-show="settings.systemProperties.restoreVolumeType !== initialRestoreVolumeType">
             Your Restore Volume Type will be changed from <strong>{{initialRestoreVolumeType}}</strong> to <strong>{{settings.systemProperties.restoreVolumeType}}</strong>
-        </h5>
+        </p>
     </div>
 
     <div ng-show="state === 'done'">
