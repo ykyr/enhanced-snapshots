@@ -1,5 +1,18 @@
 package com.sungardas.init;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+
+import javax.annotation.PostConstruct;
+import javax.validation.constraints.NotNull;
+
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
@@ -25,23 +38,12 @@ import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
 
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
@@ -162,17 +164,18 @@ class CredentialsServiceImpl implements CredentialsService {
             for (Bucket bucket : allBuckets) {
                 try {
                     if (bucket.getName().startsWith(ENHANCED_SNAPSHOT_BUCKET_PREFIX)) {
+                        String location = client.getBucketLocation(bucket.getName());
+
+                        if (!location.equalsIgnoreCase(currentLocation)) {
+                            continue;
+                        }
+
                         ListObjectsRequest request = new ListObjectsRequest()
                                 .withBucketName(bucket.getName()).withPrefix("sdfsstate");
                         if (client.listObjects(request).getObjectSummaries().size() > 0) {
                             if (bucketName.equals(bucket.getName())) {
                                 result.get(0).setCreated(true);
                             } else {
-                                String location = client.getBucketLocation(bucket.getName());
-
-                                if (!location.equalsIgnoreCase(currentLocation)) {
-                                    continue;
-                                }
                                 result.add(new InitConfigurationDto.S3(bucket.getName(), true));
                             }
                         }
