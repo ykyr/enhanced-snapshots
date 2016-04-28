@@ -26,6 +26,7 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     private static final Logger LOG = LogManager
             .getLogger(AWSCommunicationServiceDev.class);
+    private final static int MIN_SIZE_OF_OI1_VOLUME = 4;
 
     @Autowired
     private SnapshotService snapshotService;
@@ -83,34 +84,28 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     }
 
-    @Override
-    public Volume createVolume(int size, int iiops, String type) {
+    private Volume createVolume(int size, int iiops, VolumeType type) {
         String availabilityZone = getInstance(configurationId).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
                 .withSize(size).withVolumeType("gp2")
                 .withAvailabilityZone(availabilityZone);
-        if (iiops > 0) {
+        if (iiops > 0 && type.equals(VolumeType.Io1)) {
             createVolumeRequest = createVolumeRequest.withIops(iiops);
         }
-        Volume result = ec2client.createVolume(createVolumeRequest).getVolume();
-        return result;
+        return ec2client.createVolume(createVolumeRequest).getVolume();
+    }
+
+    public Volume createVolume(int size, VolumeType type) {
+        return createVolume(size, 0, type);
     }
 
     @Override
-    public Volume createStandardVolume(int size) {
-        return createVolume(size, 0, "gp2");
-    }
-
-    @Override
-    public Volume createGP2Volume(int size) {
-        return createVolume(size, 0, "gp2");
-    }
-
-    @Override
-    public Volume createIO1Volume(int size, int iops) {
-        return createVolume(size, iops, "io1");
+    public Volume createIO1Volume(int size, int iopsPerGb) {
+        // io1 volume size can not be less than 4 Gb
+        size = size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size;
+        return createVolume(size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size, getIops(iopsPerGb, size), VolumeType.Io1);
     }
 
     @Override
@@ -257,20 +252,21 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
     }
 
     @Override
-    public Volume createVolumeFromSnapshot(String snapshotId,
-                                           String availabilityZoneName) {
-        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
-                snapshotId, availabilityZoneName);
-        CreateVolumeResult crVolumeResult = ec2client
-                .createVolume(crVolumeRequest);
-        return crVolumeResult.getVolume();
-    }
+    public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iopsPerGb) {
+        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId, availabilityZoneName);
+        crVolumeRequest.setVolumeType(type);
 
-    @Override
-    public Volume createVolumeFromSnapshot(Snapshot snapshot,
-                                           String availabilityZoneName) {
-        return createVolumeFromSnapshot(snapshot.getSnapshotId(),
-                availabilityZoneName);
+        if (type.equals(VolumeType.Io1)) {
+            Snapshot snapshot = getSnapshot(snapshotId);
+            // io1 volume size can not be less than 4 Gb
+            int size = snapshot.getVolumeSize() < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : snapshot.getVolumeSize();
+            crVolumeRequest.setSize(size);
+            // setting iops
+            if (iopsPerGb != 0) {
+                crVolumeRequest.setIops(getIops(iopsPerGb,  size));
+            }
+        }
+        return ec2client.createVolume(crVolumeRequest).getVolume();
     }
 
     @Override
@@ -281,6 +277,7 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
                 .describeVolumes(describeVolumesRequest);
         return result.getVolumes().get(0);
     }
+
 
     @Override
     public void deleteVolume(Volume volume) {
@@ -341,6 +338,29 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     void setRetryRestoreTimeout(int retryRestoreTimeout) {
         this.retryRestoreTimeout = retryRestoreTimeout;
+    }
+
+
+    @Override
+    public Snapshot getSnapshot(String snapshotId) {
+        DescribeSnapshotsResult describeSnapshotsResult = ec2client.describeSnapshots();
+        List<Snapshot> snapshots = describeSnapshotsResult.getSnapshots();
+        for(Snapshot snapshot: snapshots){
+            if(snapshot.getSnapshotId().equals(snapshotId)){
+                return snapshot;
+            }
+        }
+        return null;
+    }
+
+    // iops can not be less than 100 and more than 20 000
+    private int getIops(int iopsPerGb, int volumeSize) {
+        int iops = volumeSize * iopsPerGb;
+        if (iops < 100)
+            return 100;
+        if (iops > 20000)
+            return 20000;
+        return iops;
     }
 
 }

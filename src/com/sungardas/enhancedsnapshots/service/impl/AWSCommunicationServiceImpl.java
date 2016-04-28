@@ -24,8 +24,8 @@ import static java.lang.String.format;
 @Profile("prod")
 public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
-    private static final Logger LOG = LogManager
-            .getLogger(AWSCommunicationServiceImpl.class);
+    private static final Logger LOG = LogManager.getLogger(AWSCommunicationServiceImpl.class);
+    private final static int MIN_SIZE_OF_OI1_VOLUME = 4;
 
     @Autowired
     private SnapshotService snapshotService;
@@ -83,10 +83,9 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     }
 
-    @Override
-    public Volume createVolume(int size, int iiops, String type) {
-        if (type.equals("standard")) type="gp2";
-	String availabilityZone = getInstance(configurationId).getPlacement()
+
+    private Volume createVolume(int size, int iiops, VolumeType type) {
+        String availabilityZone = getInstance(configurationId).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
@@ -100,18 +99,15 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public Volume createStandardVolume(int size) {
-        return createVolume(size, 0, "standard");
+    public Volume createVolume(int size, VolumeType type) {
+        return createVolume(size, 0, type);
     }
 
     @Override
-    public Volume createGP2Volume(int size) {
-        return createVolume(size, 0, "gp2");
-    }
-
-    @Override
-    public Volume createIO1Volume(int size, int iops) {
-        return createVolume(size, iops, "io1");
+    public Volume createIO1Volume(int size, int iopsPerGb) {
+        // io1 volume size can not be less than 4 Gb
+        size = size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size;
+        return createVolume(size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size, getIops(iopsPerGb, size), VolumeType.Io1);
     }
 
     @Override
@@ -243,8 +239,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         while (incorrectState) {
             try {
                 incorrectState = false;
-                DetachVolumeRequest detachVolumeRequest = new DetachVolumeRequest(volume.getVolumeId());
-                DetachVolumeResult detachVolumeResult = ec2client.detachVolume(detachVolumeRequest);
+                ec2client.detachVolume(new DetachVolumeRequest(volume.getVolumeId()));
             } catch (AmazonClientException incorrectStateException) {
                 LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
                 incorrectState = true;
@@ -255,37 +250,30 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
                 }
             }
         }
-        LOG.info(format("\nVolume %s unattached", volume.getVolumeId()));
+        LOG.info(format("Volume %s unattached", volume.getVolumeId()));
     }
 
-    @Override
-    public Volume createVolumeFromSnapshot(String snapshotId,
-                                           String availabilityZoneName) {
-        String type="gp2";
-	CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest()
-                .withVolumeType(type)
-		.withSnapshotId(snapshotId)
-                .withAvailabilityZone(availabilityZoneName);
-	//CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
-        //        snapshotId, availabilityZoneName);
-        CreateVolumeResult crVolumeResult = ec2client
-                .createVolume(crVolumeRequest);
-        return crVolumeResult.getVolume();
-    }
+    public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iopsPerGb) {
+        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId, availabilityZoneName);
+        crVolumeRequest.setVolumeType(type);
 
-    @Override
-    public Volume createVolumeFromSnapshot(Snapshot snapshot,
-                                           String availabilityZoneName) {
-        return createVolumeFromSnapshot(snapshot.getSnapshotId(),
-                availabilityZoneName);
+        if (type.equals(VolumeType.Io1)) {
+            Snapshot snapshot = getSnapshot(snapshotId);
+            // io1 volume size can not be less than 4 Gb
+            int size = snapshot.getVolumeSize() < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : snapshot.getVolumeSize();
+            crVolumeRequest.setSize(size);
+            // setting iops
+            if (iopsPerGb != 0) {
+                crVolumeRequest.setIops(getIops(iopsPerGb,  size));
+            }
+        }
+        return ec2client.createVolume(crVolumeRequest).getVolume();
     }
 
     @Override
     public Volume syncVolume(Volume volume) {
-        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest()
-                .withVolumeIds(volume.getVolumeId());
-        DescribeVolumesResult result = ec2client
-                .describeVolumes(describeVolumesRequest);
+        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest().withVolumeIds(volume.getVolumeId());
+        DescribeVolumesResult result = ec2client.describeVolumes(describeVolumesRequest);
         return result.getVolumes().get(0);
     }
 
@@ -337,6 +325,18 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         ec2client.createTags(r);
     }
 
+    @Override
+    public Snapshot getSnapshot(String snapshotId) {
+        DescribeSnapshotsResult describeSnapshotsResult = ec2client.describeSnapshots();
+        List<Snapshot> snapshots = describeSnapshotsResult.getSnapshots();
+        for(Snapshot snapshot: snapshots){
+            if(snapshot.getSnapshotId().equals(snapshotId)){
+                return snapshot;
+            }
+        }
+        return null;
+    }
+
 
     int getRetryRestoreAttempts() {
         return retryRestoreAttempts;
@@ -350,4 +350,14 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         this.retryRestoreTimeout = retryRestoreTimeout;
     }
 
+    // iops can not be less than 100 and more than 20 000
+    private int getIops(int iopsPerGb, int volumeSize) {
+        int iops = volumeSize * iopsPerGb;
+        if (iops < 100)
+            return 100;
+        if (iops > 20000)
+            return 20000;
+        return iops;
+    }
 }
+

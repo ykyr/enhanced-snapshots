@@ -1173,4 +1173,15 @@ div.tr.state-removed {
 
 /* end of forms*/
 
+/* view-specific styling*/
+.settings.form-control {
+    width: auto;
+    display: inline;
+}
+
+.settings.type-label {
+    padding-top: 7px;
+}
+
+/* end of view-specific styling*/
 /* end of Color scheme */

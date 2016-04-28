@@ -52,7 +52,7 @@ public class SpringSchedulerService implements SchedulerService {
     @PostConstruct
     private void init() {
         try {
-            instanceId = configurationService.getWorkerConfiguration().getConfigurationId();
+            instanceId = configurationService.getConfiguration().getConfigurationId();
             List<TaskEntry> tasks = taskRepository.findByRegularAndInstanceId(Boolean.TRUE.toString(), instanceId);
             for (TaskEntry taskEntry : tasks) {
                 try {

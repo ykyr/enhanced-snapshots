@@ -56,6 +56,18 @@ public class TaskEntry {
     @DynamoDBAttribute
     private String expirationDate;
 
+    @DynamoDBAttribute
+    private String tempVolumeType;
+
+    @DynamoDBAttribute
+    private String restoreVolumeType;
+
+    @DynamoDBAttribute
+    private int tempVolumeIopsPerGb;
+
+    @DynamoDBAttribute
+    private int restoreVolumeIopsPerGb;
+
     public TaskEntry() {
         super();
     }
@@ -102,7 +114,6 @@ public class TaskEntry {
         setOptions(jsonTask.optString("options"));
     }
 
-
     public String getId() {
         return id;
     }
@@ -114,6 +125,7 @@ public class TaskEntry {
     public int getPriority() {
         return priority;
     }
+
 
     public void setPriority(int priority) {
         this.priority = priority;
@@ -240,16 +252,48 @@ public class TaskEntry {
         return options.split(", ")[0];
     }
 
+    public int getTempVolumeIopsPerGb() {
+        return tempVolumeIopsPerGb;
+    }
+
+    public void setTempVolumeIopsPerGb(int tempVolumeIopsPerGb) {
+        this.tempVolumeIopsPerGb = tempVolumeIopsPerGb;
+    }
+
+    public String getTempVolumeType() {
+        return tempVolumeType;
+    }
+
+    public void setTempVolumeType(String tempVolumeType) {
+        this.tempVolumeType = tempVolumeType;
+    }
+
     @DynamoDBIgnore
     public String getAvailabilityZone() {
         return options.split(", ")[1];
     }
 
-
     @Deprecated
     @Override
     public String toString() {
         return Jackson.toJsonString(this);
+    }
+
+    public String getRestoreVolumeType() {
+        return restoreVolumeType;
+    }
+
+
+    public void setRestoreVolumeType(String restoreVolumeType) {
+        this.restoreVolumeType = restoreVolumeType;
+    }
+
+    public int getRestoreVolumeIopsPerGb() {
+        return restoreVolumeIopsPerGb;
+    }
+
+    public void setRestoreVolumeIopsPerGb(int restoreVolumeIopsPerGb) {
+        this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
     }
 
     public enum TaskEntryType {
