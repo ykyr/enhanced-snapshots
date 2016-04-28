@@ -9,11 +9,14 @@ sdfs_volume_size="$1"
 bucket_name="$2"
 is_restore="${3:-false}"
 location="${4:-US Standard}"
+localCacheSize="${5:-1GB}"
 echo 'Script parameters:'
 echo $1
 echo $2
 echo $3
 echo $4
+echo $5
+
 
 ### creating SDFS file system
 if [[ -e /etc/sdfs/awspool-volume-cfg.xml ]]; then
@@ -23,7 +26,7 @@ else
         echo 'SDFS configuration is not provided!'
         exit 1
     else
-        /sbin/mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --aws-aim --cloud-bucket-name=$bucket_name --aws-bucket-location=$location --local-cache-size=1GB --chunk-store-encrypt=true
+        /sbin/mkfs.sdfs  --volume-name=awspool --volume-capacity=$sdfs_volume_size --aws-enabled=true --aws-aim --cloud-bucket-name=$bucket_name --aws-bucket-location=$location --local-cache-size=$localCacheSize --chunk-store-encrypt=true
     fi
 fi
 

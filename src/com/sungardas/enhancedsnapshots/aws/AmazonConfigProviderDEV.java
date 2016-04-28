@@ -82,7 +82,8 @@ public class AmazonConfigProviderDEV {
         return proxyFactoryBean;
     }
 
-    private AmazonDynamoDB amazonDynamoDB() {
+    @Bean(name = "dynamoDB")
+    public AmazonDynamoDB amazonDynamoDB() {
         AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
 	amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
         return amazonDynamoDB;

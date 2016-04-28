@@ -8,7 +8,6 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.rest.RestAuthenticationFilter;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
-import com.sungardas.enhancedsnapshots.service.SharedDataService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -39,9 +38,6 @@ class InitController implements ApplicationContextAware {
     private CredentialsService credentialsService;
 
     @Autowired
-    private SharedDataService sharedDataService;
-
-    @Autowired
     private XmlWebApplicationContext applicationContext;
 
     private boolean CONTEXT_REFRESH_IN_PROCESS = false;
@@ -50,8 +46,9 @@ class InitController implements ApplicationContextAware {
     private void init() {
         // check that aws credentials are provided
         // try to authenticate as real admin user
-        if (credentialsService.isAwsPropertyFileExists()) {
-            LOG.info("Valid aws credentials were provided.");
+        if (credentialsService.propertyFileExists()) {
+            LOG.info("System is already configured.");
+            credentialsService.syncSettingsInDbAndConfigFile();
             refreshContext();
         } else {
             credentialsService.configureAWSLogAgent();
@@ -121,15 +118,15 @@ class InitController implements ApplicationContextAware {
                 if (config.getUser() == null) {
                     throw new ConfigurationException("Please create default user");
                 }
-                sharedDataService.setUser(config.getUser());
+                credentialsService.setUser(config.getUser());
             }
             if (config.getUser() != null) {
-                sharedDataService.setUser(config.getUser());
+                credentialsService.setUser(config.getUser());
             }
             initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(config.getBucketName(), false)));
-            sharedDataService.setInitConfigurationDto(initConfigurationDto);
-            credentialsService.storeCredentials();
-
+            credentialsService.setInitConfigurationDto(initConfigurationDto);
+            credentialsService.storePropertiesEditableFromConfigFile();
+            credentialsService.createDBAndStoreSettings();
             try {
                 refreshContext();
             } catch (Exception e) {

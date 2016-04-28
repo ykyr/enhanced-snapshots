@@ -23,59 +23,53 @@ import java.util.Map;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
-import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
-import com.sungardas.enhancedsnapshots.exception.SDFSException;
-import com.sungardas.enhancedsnapshots.service.NotificationService;
-import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.amazonaws.services.s3.model.*;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
+import com.sungardas.enhancedsnapshots.exception.*;
+import com.sungardas.enhancedsnapshots.service.*;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.support.XmlWebApplicationContext;
+
+import java.util.concurrent.TimeUnit;
+
 
 @Service
 @Profile("prod")
 public class SDFSStateServiceImpl implements SDFSStateService {
-    public static final String SDFS_STATE_BACKUP_FILE_NAME = "sdfsstate";
-    public static final String SDFS_STATE_BACKUP_FILE_EXT = ".zip";
+
     private static final Logger LOG = LogManager.getLogger(SDFSStateServiceImpl.class);
-    private static final String SDFS_MOUNT_POINT = "/mnt/awspool/";
-    private static final String KEY_NAME = "sdfsstate.zip";
     private static final String SDFS_STATE_DESTINATION = "/";
     private static final int VOLUME_ID_INDEX = 0;
     private static final int TIME_INDEX = 1;
     private static final int TYPE_INDEX = 2;
     private static final int IOPS_INDEX = 3;
     private static final long BYTES_IN_GIB = 1073741824l;
+
+    @Value("${enhancedsnapshots.default.sdfs.mount.time}")
+    private int sdfsMountTime;
+    @Value("${enhancedsnapshots.default.sdfs.script.path}")
+    private String sdfsScriptLocation;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
+
     @Autowired
     private AmazonS3 amazonS3;
     @Autowired
     private BackupRepository backupRepository;
     @Autowired
     private NotificationService notificationService;
-    @Value("${amazon.s3.bucket}")
-    private String s3Bucket;
-    @Value("${sdfs.volume.config.path}")
-    private String volumeConfigPath;
-    @Value("${amazon.sdfs.size}")
-    private String sdfsSize;
-    @Value("${sungardas.worker.configuration}")
-    private String instanceId;
 
     @Autowired
-    private XmlWebApplicationContext applicationContext;
+    private ConfigurationService configurationService;
 
     @Override
     public void backupState() {
@@ -87,16 +81,17 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Stopping SDFS...", 20);
         }
-        shutdownSDFS(sdfsSize, s3Bucket);
-        String[] paths = {volumeConfigPath};
+        shutdownSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket());
+        String[] paths = {configurationService.getSdfsConfigPath()};
         File tempFile = null;
         try {
             if (taskId != null) {
                 notificationService.notifyAboutTaskProgress(taskId, "Compressing SDFS files...", 40);
             }
-            tempFile = ZipUtils.zip(paths);
+            tempFile = ZipUtils.zip(FilenameUtils.removeExtension(configurationService.getSdfsBackupFileName()),
+                    getFileExtension(configurationService.getSdfsBackupFileName()), paths);
         } catch (Throwable e) {
-            startupSDFS(sdfsSize, s3Bucket, false);
+            startupSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(), false);
             if (tempFile != null && tempFile.exists()) {
                 tempFile.delete();
             }
@@ -105,11 +100,11 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Uploading SDFS files to S3...", 60);
         }
-        uploadToS3(KEY_NAME, tempFile);
+        uploadToS3(configurationService.getSdfsBackupFileName(), tempFile);
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Starting SDFS...", 80);
         }
-        startupSDFS(sdfsSize, s3Bucket, false);
+        startupSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(), false);
         tempFile.delete();
     }
 
@@ -118,13 +113,14 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         //shutdownSDFS(sdfsSize, s3Bucket);
         File file = null;
         try {
-            file = Files.createTempFile(SDFS_STATE_BACKUP_FILE_NAME, SDFS_STATE_BACKUP_FILE_EXT).toFile();
-            downloadFromS3(KEY_NAME, file);
+            file = Files.createTempFile(FilenameUtils.removeExtension(configurationService.getSdfsBackupFileName()),
+                    getFileExtension(configurationService.getSdfsBackupFileName())).toFile();
+            downloadFromS3(configurationService.getSdfsBackupFileName(), file);
             ZipUtils.unzip(file, SDFS_STATE_DESTINATION);
             file.delete();
-            startupSDFS(sdfsSize, s3Bucket, true);
+            startupSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(), true);
             //SDFS mount time
-            Thread.sleep(15000);
+            TimeUnit.SECONDS.sleep(sdfsMountTime);
             restoreBackups();
             LOG.info("SDFS state restored.");
         } catch (Exception e) {
@@ -136,7 +132,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     private void restoreBackups() {
-        File[] files = new File(SDFS_MOUNT_POINT).listFiles();
+        File[] files = new File(configurationService.getSdfsMountPoint()).listFiles();
         LOG.info("Found {} files in system backup", files.length);
         for (File file : files) {
             BackupEntry entry = getBackupFromFile(file);
@@ -157,7 +153,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             BackupEntry backupEntry = new BackupEntry();
 
             backupEntry.setFileName(fileName);
-            backupEntry.setInstanceId(instanceId);
+            backupEntry.setInstanceId(configurationService.getConfigurationId());
             backupEntry.setIops(props[IOPS_INDEX]);
             backupEntry.setSizeGiB(String.valueOf((int) (file.length() / BYTES_IN_GIB)));
             backupEntry.setTimeCreated(props[TIME_INDEX]);
@@ -173,7 +169,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public boolean containsSdfsMetadata(String sBucket) {
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(sBucket).withPrefix("sdfsstate");
+                .withBucketName(sBucket).withPrefix(configurationService.getSdfsBackupFileName());
         return amazonS3.listObjects(request).getObjectSummaries().size() > 0;
 
     }
@@ -181,7 +177,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public Long getBackupTime() {
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(s3Bucket).withPrefix(KEY_NAME);
+                .withBucketName(configurationService.getS3Bucket()).withPrefix(configurationService.getSdfsBackupFileName());
         List<S3ObjectSummary> list = amazonS3.listObjects(request).getObjectSummaries();
         if (list.size() > 0) {
             return list.get(0).getLastModified().getTime();
@@ -193,10 +189,8 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public void startupSDFS(String size, String bucketName,  Boolean isRestore) {
         try {
-            File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
-            file.setExecutable(true);
-            String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec,  size, bucketName, isRestore.toString(), getBucketLocation(bucketName) };
+            String[] parameters = {getSdfsScriptFile().getAbsolutePath(),  size, bucketName, isRestore.toString(),
+                    getBucketLocation(bucketName), configurationService.getSdfsLocalCacheSize()};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);
@@ -239,10 +233,8 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public void shutdownSDFS(String size, String bucketName) {
         try {
-            File file = applicationContext.getResource("classpath:sdfs1.sh").getFile();
-            file.setExecutable(true);
-            String pathToExec = file.getAbsolutePath();
-            String[] parameters = {pathToExec, size, bucketName , getBucketLocation(bucketName)};
+            String[] parameters = {getSdfsScriptFile().getAbsolutePath(), size, bucketName , getBucketLocation(bucketName),
+                    configurationService.getSdfsLocalCacheSize()};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);
@@ -284,12 +276,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
 
     private void uploadToS3(String keyName, File sdfsBackupFile) {
-        PutObjectRequest putObjectRequest = new PutObjectRequest(s3Bucket, keyName, sdfsBackupFile);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(configurationService.getS3Bucket(), keyName, sdfsBackupFile);
         amazonS3.putObject(putObjectRequest);
     }
 
     private void downloadFromS3(String keyName, File sdfsBackupFile) throws IOException {
-        GetObjectRequest getObjectRequest = new GetObjectRequest(s3Bucket, keyName);
+        GetObjectRequest getObjectRequest = new GetObjectRequest(configurationService.getS3Bucket(), keyName);
         S3Object s3object = amazonS3.getObject(getObjectRequest);
 
         BufferedOutputStream bout = new BufferedOutputStream(new FileOutputStream(sdfsBackupFile));
@@ -302,6 +294,16 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         }
         bout.flush();
         bout.close();
+    }
+
+    private File getSdfsScriptFile() throws IOException {
+        File sdfsScript = resourceLoader.getResource(sdfsScriptLocation).getFile();
+        sdfsScript.setExecutable(true);
+        return sdfsScript;
+    }
+
+    private String getFileExtension(String fileName) {
+        return "." + FilenameUtils.getExtension(fileName);
     }
 
     static class ZipUtils {
@@ -358,8 +360,8 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             }
         }
 
-        public static File zip(String... filenames) throws IOException {
-            File tempFile = Files.createTempFile(SDFS_STATE_BACKUP_FILE_NAME, SDFS_STATE_BACKUP_FILE_EXT).toFile();
+        public static File zip(String tempFileName, String tempFileExt, String... filenames) throws IOException {
+            File tempFile = Files.createTempFile(tempFileName, tempFileExt).toFile();
             tempFile.delete();
             try (FileSystem zipFileSystem = createZipFileSystem(tempFile, true)) {
                 final Path root = zipFileSystem.getPath("/");

@@ -9,10 +9,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -28,18 +28,11 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     private final static int MIN_IOPS_VALUE = 100;
     private final static int MAX_IOPS_VALUE = 20_000;
 
-
-    @Value("${enhancedsnapshots.amazon.wait.time.before.new.sync:15}")
-    private int WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS;
-
-    @Value("${enhancedsnapshots.amazon.max.wait.time.to.detach.volume:300}")
-    private int MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS;
-
     @Autowired
     private AmazonEC2 ec2client;
+    @Autowired
+    private ConfigurationService configurationService;
 
-    @Value("${sungardas.worker.configuration}")
-    private String configurationId;
 
    @Override
    public List<AvailabilityZone> describeAvailabilityZonesForCurrentRegion() {
@@ -48,7 +41,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public String getCurrentAvailabilityZone() {
-        return getInstance(configurationId).getPlacement()
+        return getInstance(configurationService.getConfigurationId()).getPlacement()
                 .getAvailabilityZone();    }
 
     @Override
@@ -84,7 +77,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
 
     private Volume createVolume(int size, int iiops, VolumeType type) {
-        String availabilityZone = getInstance(configurationId).getPlacement()
+        String availabilityZone = getInstance(configurationService.getConfigurationId()).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
@@ -148,11 +141,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     public Snapshot waitForCompleteState(Snapshot snapshot) {
         Snapshot syncSnapshot;
         do {
-            try {
-                TimeUnit.SECONDS.sleep(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            sleepTillNextSync();
             syncSnapshot = syncSnapshot(snapshot.getSnapshotId());
             LOG.debug("Snapshot state: {}, progress: {}", syncSnapshot.getState(), syncSnapshot.getProgress());
             if (syncSnapshot.getState().equals(SnapshotState.Error)) {
@@ -177,11 +166,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         String state;
         Volume result;
         do {
-            try {
-                TimeUnit.SECONDS.sleep(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            sleepTillNextSync();
             result = syncVolume(volume);
             state = result.getState();
             System.out.println("waitForAvailableState.current state: " + state);
@@ -331,15 +316,11 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     private void waitVolumeToDetach(Volume volume) {
         int waitTime = 0;
-        while (!volume.getState().equals(AVAILABLE_STATE) && waitTime < MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS) {
-            try {
-                LOG.debug("Volume {} is attached to {}", volume.getVolumeId(), volume.getAttachments().get(0).getInstanceId());
-                TimeUnit.SECONDS.sleep(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS);
-                volume = syncVolume(volume);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            waitTime += WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS;
+        while (!volume.getState().equals(AVAILABLE_STATE) && waitTime < configurationService.getMaxWaitTimeToDetachVolume()) {
+            LOG.debug("Volume {} is attached to {}", volume.getVolumeId(), volume.getAttachments().get(0).getInstanceId());
+            sleepTillNextSync();
+            volume = syncVolume(volume);
+            waitTime += configurationService.getMaxWaitTimeToDetachVolume();
         }
         if (syncVolume(volume).getState().equals(AVAILABLE_STATE)) {
             LOG.debug("Volume {} detached.", volume.getVolumeId());
@@ -365,6 +346,14 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
             return MAX_IOPS_VALUE;
         }
         return iops;
+    }
+
+    private void sleepTillNextSync(){
+        try {
+            TimeUnit.SECONDS.sleep(configurationService.getWaitTimeBeforeNewSyncWithAWS());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
 

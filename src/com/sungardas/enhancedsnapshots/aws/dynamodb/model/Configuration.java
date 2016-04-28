@@ -3,100 +3,198 @@ package com.sungardas.enhancedsnapshots.aws.dynamodb.model;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import com.amazonaws.services.ec2.model.VolumeType;
+
 
 @DynamoDBTable(tableName = "Configurations")
 public class Configuration {
 
-	private String sdfsVolumeName;
-	private String sdfsMountPoint;
-	private String region;
-	private String configurationId;
-	private String s3Bucket;
+    // enhancedsnapshot settings
+    private String configurationId;
+    private int amazonRetryCount;
+    private int amazonRetrySleep;
+    private int maxQueueSize;
+    private String retentionCronExpression;
+    private int workerDispatcherPollingRate;
+    private String tempVolumeType;
+    private int tempVolumeIopsPerGb;
+    private String restoreVolumeType;
+    private int restoreVolumeIopsPerGb;
+    private int waitTimeBeforeNewSyncWithAWS;
+    private int maxWaitTimeToDetachVolume;
 
-	@DynamoDBAttribute(attributeName = "tempVolumeType")
-	private String tempVolumeType;
-	@DynamoDBAttribute(attributeName = "tempVolumeIopsPerGb")
-	private int tempVolumeIopsPerGb;
-	@DynamoDBAttribute(attributeName = "restoreVolumeType")
-	private String restoreVolumeType;
-	@DynamoDBAttribute(attributeName = "restoreVolumeIopsPerGb")
-	private int restoreVolumeIopsPerGb;
-	@DynamoDBAttribute(attributeName = "sdfsVolumeName")
-	public String getSdfsVolumeName() {
-		return sdfsVolumeName;
-	}
+    // sdfs settings
+    private String sdfsVolumeName;
+    private String sdfsMountPoint;
+    private String sdfsLocalCacheSize;
+    private String sdfsSize;
+    private String sdfsConfigPath;
+    private String sdfsBackupFileName;
 
-	public void setSdfsVolumeName(String sdfsVolumeName) {
-		this.sdfsVolumeName = sdfsVolumeName;
-	}
+    // amazon settings
+    private String region;
+    private String s3Bucket;
 
-	@DynamoDBAttribute(attributeName = "sdfsMountPoint")
-	public String getSdfsMountPoint() {
-		return sdfsMountPoint;
-	}
+    public String getSdfsVolumeName() {
+        return sdfsVolumeName;
+    }
 
-	public void setSdfsMountPoint(String sdfsMountPoint) {
-		this.sdfsMountPoint = sdfsMountPoint;
-	}
+    public void setSdfsVolumeName(String sdfsVolumeName) {
+        this.sdfsVolumeName = sdfsVolumeName;
+    }
 
-	@DynamoDBAttribute(attributeName = "region")
-	public String getEc2Region() {
-		return region;
-	}
 
-	public void setEc2Region(String ec2Region) {
-		this.region = ec2Region;
-	}
+    public String getSdfsMountPoint() {
+        return sdfsMountPoint;
+    }
 
-	 @DynamoDBHashKey()
-	public String getConfigurationId() {
-		return configurationId;
-	}
+    public void setSdfsMountPoint(String sdfsMountPoint) {
+        this.sdfsMountPoint = sdfsMountPoint;
+    }
 
-	public void setConfigurationId(String configurationId) {
-		this.configurationId = configurationId;
-	}
+    @DynamoDBAttribute(attributeName = "region")
+    public String getEc2Region() {
+        return region;
+    }
 
-	@DynamoDBAttribute(attributeName = "s3Bucket")
-	public String getS3Bucket() {
-		return s3Bucket;
-	}
+    public void setEc2Region(String ec2Region) {
+        this.region = ec2Region;
+    }
 
-	public void setS3Bucket(String taskS3Bucket) {
-		this.s3Bucket = taskS3Bucket;
-	}
+    @DynamoDBHashKey()
+    public String getConfigurationId() {
+        return configurationId;
+    }
 
-	public String getTempVolumeType() {
-		return tempVolumeType;
-	}
+    public void setConfigurationId(String configurationId) {
+        this.configurationId = configurationId;
+    }
 
-	public void setTempVolumeType(String tempVolumeType) {
-		this.tempVolumeType = tempVolumeType;
-	}
+    public String getS3Bucket() {
+        return s3Bucket;
+    }
 
-	public int getTempVolumeIopsPerGb() {
-		return tempVolumeIopsPerGb;
-	}
+    public void setS3Bucket(String taskS3Bucket) {
+        this.s3Bucket = taskS3Bucket;
+    }
 
-	public void setTempVolumeIopsPerGb(int tempVolumeIopsPerGb) {
-		this.tempVolumeIopsPerGb = tempVolumeIopsPerGb;
-	}
+    public String getTempVolumeType() {
+        return tempVolumeType;
+    }
 
-	public String getRestoreVolumeType() {
-		return restoreVolumeType;
-	}
+    public void setTempVolumeType(String tempVolumeType) {
+        this.tempVolumeType = tempVolumeType;
+    }
 
-	public void setRestoreVolumeType(String restoreVolumeType) {
-		this.restoreVolumeType = restoreVolumeType;
-	}
+    public int getTempVolumeIopsPerGb() {
+        return tempVolumeIopsPerGb;
+    }
 
-	public int getRestoreVolumeIopsPerGb() {
-		return restoreVolumeIopsPerGb;
-	}
+    public void setTempVolumeIopsPerGb(int tempVolumeIopsPerGb) {
+        this.tempVolumeIopsPerGb = tempVolumeIopsPerGb;
+    }
 
-	public void setRestoreVolumeIopsPerGb(int restoreVolumeIopsPerGb) {
-		this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
-	}
+    public String getRestoreVolumeType() {
+        return restoreVolumeType;
+    }
+
+    public void setRestoreVolumeType(String restoreVolumeType) {
+        this.restoreVolumeType = restoreVolumeType;
+    }
+
+    public int getRestoreVolumeIopsPerGb() {
+        return restoreVolumeIopsPerGb;
+    }
+
+    public void setRestoreVolumeIopsPerGb(int restoreVolumeIopsPerGb) {
+        this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
+    }
+
+    public String getSdfsLocalCacheSize() {
+        return sdfsLocalCacheSize;
+    }
+
+    public void setSdfsLocalCacheSize(String sdfsLocalCacheSize) {
+        this.sdfsLocalCacheSize = sdfsLocalCacheSize;
+    }
+
+    public String getSdfsSize() {
+        return sdfsSize;
+    }
+
+    public void setSdfsSize(String sdfsSize) {
+        this.sdfsSize = sdfsSize;
+    }
+
+    public int getAmazonRetryCount() {
+        return amazonRetryCount;
+    }
+
+    public void setAmazonRetryCount(int amazonRetryCount) {
+        this.amazonRetryCount = amazonRetryCount;
+    }
+
+    public int getAmazonRetrySleep() {
+        return amazonRetrySleep;
+    }
+
+    public void setAmazonRetrySleep(int amazonRetrySleep) {
+        this.amazonRetrySleep = amazonRetrySleep;
+    }
+
+    public int getMaxQueueSize() {
+        return maxQueueSize;
+    }
+
+    public void setMaxQueueSize(int maxQueueSize) {
+        this.maxQueueSize = maxQueueSize;
+    }
+
+    public String getSdfsConfigPath() {
+        return sdfsConfigPath;
+    }
+
+    public void setSdfsConfigPath(String sdfsConfigPath) {
+        this.sdfsConfigPath = sdfsConfigPath;
+    }
+
+    public String getSdfsBackupFileName() {
+        return sdfsBackupFileName;
+    }
+
+    public void setSdfsBackupFileName(String sdfsBackupFileName) {
+        this.sdfsBackupFileName = sdfsBackupFileName;
+    }
+
+    public String getRetentionCronExpression() {
+        return retentionCronExpression;
+    }
+
+    public void setRetentionCronExpression(String retentionCronExpression) {
+        this.retentionCronExpression = retentionCronExpression;
+    }
+
+    public int getWorkerDispatcherPollingRate() {
+        return workerDispatcherPollingRate;
+    }
+
+    public void setWorkerDispatcherPollingRate(int workerDispatcherPollingRate) {
+        this.workerDispatcherPollingRate = workerDispatcherPollingRate;
+    }
+
+    public int getWaitTimeBeforeNewSyncWithAWS() {
+        return waitTimeBeforeNewSyncWithAWS;
+    }
+
+    public void setWaitTimeBeforeNewSyncWithAWS(int waitTimeBeforeNewSyncWithAWS) {
+        this.waitTimeBeforeNewSyncWithAWS = waitTimeBeforeNewSyncWithAWS;
+    }
+
+    public int getMaxWaitTimeToDetachVolume() {
+        return maxWaitTimeToDetachVolume;
+    }
+
+    public void setMaxWaitTimeToDetachVolume(int maxWaitTimeToDetachVolume) {
+        this.maxWaitTimeToDetachVolume = maxWaitTimeToDetachVolume;
+    }
 
 }

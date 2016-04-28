@@ -11,7 +11,7 @@
 
     <context:annotation-config/>
 
-    <context:property-placeholder location="classpath:/enhancedsnapshots.properties,file:${catalina.home}/conf/enhancedsnapshots.properties" ignore-resource-not-found="true"/>
+    <context:property-placeholder location="classpath:/defaultEnhancedSnapshots.properties,file:${catalina.home}/conf/EnhancedSnapshots.properties" ignore-resource-not-found="true"/>
 
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
 

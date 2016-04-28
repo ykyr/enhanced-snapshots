@@ -1,25 +1,16 @@
 package com.sungardas.init;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
-import org.apache.commons.io.FileUtils;
 
 import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.ListIterator;
 
 class CredentialsServiceDev implements CredentialsService {
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
-
-    }
-
-    @Override
-    public void storeCredentials() {
 
     }
 
@@ -65,8 +56,8 @@ class CredentialsServiceDev implements CredentialsService {
     }
 
     @Override
-    public boolean isAwsPropertyFileExists() {
-        return false;
+    public boolean propertyFileExists() {
+        return true;
     }
 
     @Override
@@ -83,5 +74,27 @@ class CredentialsServiceDev implements CredentialsService {
     public void configureAWSLogAgent() {
     }
 
+    @Override
+    public void storePropertiesEditableFromConfigFile() {
+    }
 
+    @Override
+    public void setUser(User user) {
+
+    }
+
+    @Override
+    public void setInitConfigurationDto(InitConfigurationDto initConfigurationDto) {
+
+    }
+
+    @Override
+    public void createDBAndStoreSettings() {
+
+    }
+
+    @Override
+    public void syncSettingsInDbAndConfigFile() {
+
+    }
 }
