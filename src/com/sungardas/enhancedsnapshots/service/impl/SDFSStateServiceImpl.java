@@ -23,7 +23,6 @@ import java.util.Map;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -74,8 +73,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private String sdfsSize;
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
-    @Value("${amazon.s3.default.region:us-east-1}")
-    private String defaultS3Region;
 
     @Autowired
     private XmlWebApplicationContext applicationContext;
@@ -183,17 +180,8 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Override
     public Long getBackupTime() {
-        try {
-            return getCreationTime(KEY_NAME);
-        } catch (AmazonS3Exception e) {
-            amazonS3.setRegion(com.amazonaws.regions.Region.getRegion(Regions.fromName(defaultS3Region)));
-            return getCreationTime(KEY_NAME);
-        }
-    }
-
-    private Long getCreationTime(String fileName) {
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(s3Bucket).withPrefix(fileName);
+                .withBucketName(s3Bucket).withPrefix(KEY_NAME);
         List<S3ObjectSummary> list = amazonS3.listObjects(request).getObjectSummaries();
         if (list.size() > 0) {
             return list.get(0).getLastModified().getTime();

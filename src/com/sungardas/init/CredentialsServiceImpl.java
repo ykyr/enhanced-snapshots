@@ -74,6 +74,9 @@ class CredentialsServiceImpl implements CredentialsService {
     @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
 
+    @Value("${amazon.s3.default.region}")
+    private String defaultS3Region;
+
     private InitConfigurationDto initConfigurationDto = null;
 
     @PostConstruct
@@ -166,7 +169,8 @@ class CredentialsServiceImpl implements CredentialsService {
                     if (bucket.getName().startsWith(ENHANCED_SNAPSHOT_BUCKET_PREFIX)) {
                         String location = client.getBucketLocation(bucket.getName());
 
-                        if (!location.equalsIgnoreCase(currentLocation)) {
+                        // Because client.getBucketLocation(bucket.getName()) returns US if bucket is in us-east-1
+                        if (!location.equalsIgnoreCase(currentLocation) && !location.equalsIgnoreCase("US")) {
                             continue;
                         }
 
