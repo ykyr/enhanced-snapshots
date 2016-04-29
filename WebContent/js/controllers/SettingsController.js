@@ -9,8 +9,8 @@ angular.module('web')
             $scope.settings = data;
             $scope.initialTempVolumeType = data.systemProperties.tempVolumeType;
             $scope.initialRestoreVolumeType = data.systemProperties.restoreVolumeType;
-            $scope.initialTempVolumeSize = data.systemProperties.tempVolumeType == "io1" ? data.systemProperties.tempVolumeIopsPerGb : null;
-            $scope.initialRestoreVolumeSize = data.systemProperties.restoreVolumeType == "io1" ? data.systemProperties.restoreVolumeIopsPerGb : null;
+            $scope.initialTempVolumeSize = data.systemProperties.tempVolumeIopsPerGb;
+            $scope.initialRestoreVolumeSize = data.systemProperties.restoreVolumeIopsPerGb;
         }, function (e) {
             console.log(e);
         });
