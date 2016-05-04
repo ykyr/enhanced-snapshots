@@ -26,16 +26,17 @@ public class RegionsController {
     @Value("${sungardas.worker.configuration}")
     private String configurationId;
 
-    @RequestMapping(value = "/regions", method = RequestMethod.GET)
+@RequestMapping(value = "/regions", method = RequestMethod.GET)
     public String getRegions() {
         JSONObject record;
         JSONArray regionsJson = new JSONArray();
-        for (Regions nextRegion : Regions.values()) {
+        System.out.println("Regions load");
+        for (Regions nextRegion : Regions.values()) {    
             record = new JSONObject();
             record.put("id", nextRegion.getName());
             record.put("name", nextRegion.getName());
             regionsJson.put(record);
-        }
+         }
         return regionsJson.toString();
     }
 

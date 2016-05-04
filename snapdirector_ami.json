@@ -14,7 +14,7 @@
       "instance_type": "t2.micro",
       "ssh_username": "ec2-user",
       "ssh_pty": true,
-      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2016.03.09",
+      "ami_name": "SungardAS-AMI-Amazon-Linux-x86_64-HVM-Enhanced-Snapshots-2016.04.29",
       "tags": {
         "Name": "Enhanced Snapshots",
         "Description": "Backup, recovery, disaster recovery, snapshot, schedule"
@@ -54,11 +54,11 @@
     {
       "type": "shell",
       "inline": [
-        "echo 'Starting deploynment process...'",
-        "sudo curl -O http://com.sungardas.releases.s3.amazonaws.com/travis-builds/enhancedsnapshots_latest.war",
+        "echo 'Starting deployment process...'",
+        "sudo curl -O https://s3.amazonaws.com/com.sungardas.test/enhancedsnapshots_latest.war",
         "sudo service tomcat8 stop",
         "sudo rm -rf /opt/tomcat-latest/webapps/*",
-        "sudo cp enhancedsnapshots_latest.war /opt/tomcat-latest/webapps/ROOT.war",
+       "sudo cp enhancedsnapshots_latest.war /opt/tomcat-latest/webapps/ROOT.war",
         "sudo service tomcat8 start",
         "sudo pip uninstall -y ansible",
         "sudo yum-config-manager --disable epel",

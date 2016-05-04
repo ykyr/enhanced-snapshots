@@ -45,6 +45,20 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.HashSet;
+import java.util.Set;
+
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
 @Service
@@ -105,6 +119,7 @@ class CredentialsServiceImpl implements CredentialsService {
             properties.setProperty(AMAZON_SDFS_SIZE, initConfigurationDto.getSdfs().getVolumeSize());
             properties.store(new FileOutputStream(file), "AWS Credentials");
         } catch (IOException ioException) {
+            LOG.error("Can not create amazon.properties file", ioException);
             throw new ConfigurationException("Can not create amazon.properties file\n" +
                     "Check path or permission: " + file.getAbsolutePath(), ioException);
         }
@@ -154,6 +169,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
+	
         try {
             AmazonS3Client client = new AmazonS3Client(credentials);
             List<Bucket> allBuckets = client.listBuckets();
@@ -185,13 +201,16 @@ class CredentialsServiceImpl implements CredentialsService {
                         }
                     }
                 } catch (Exception ignored) {
+                    // If any exception appears during working with bucket,
+                    // just skip this bucket and try to scan the next one
                 }
             }
         } catch (AmazonS3Exception e) {
             LOG.warn("Can't get access to S3");
             throw new DataAccessException(CANT_GET_ACCESS_S3, e);
         }
-        return result;
+       
+	return result;
 
     }
 

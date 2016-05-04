@@ -149,8 +149,8 @@ public class AWSRestoreVolumeTask implements RestoreTask {
         Volume tempVolume = null;
         switch (VolumeType.fromValue(volumeType)) {
             case Standard:
-                tempVolume = awsCommunication.createStandardVolume(Integer.parseInt(size));
-                LOG.info("Created standard volume:\n" + tempVolume.toString());
+                tempVolume = awsCommunication.createGP2Volume(Integer.parseInt(size));
+                LOG.info("Created GP2 volume:\n" + tempVolume.toString());
                 break;
             case Gp2:
                 tempVolume = awsCommunication.createGP2Volume(Integer.parseInt(size));
@@ -206,7 +206,7 @@ public class AWSRestoreVolumeTask implements RestoreTask {
             throw new EnhancedSnapshotsInterruptedException("Task interrupted");
         }
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Moving into target zone...", 90);
-        Snapshot tempSnapshot = awsCommunication.createSnapshot(tempVolume);
+        Snapshot tempSnapshot = awsCommunication.waitForCompleteState(awsCommunication.createSnapshot(tempVolume));
         if (Thread.interrupted()) {
             throw new EnhancedSnapshotsInterruptedException("Task interrupted");
         }

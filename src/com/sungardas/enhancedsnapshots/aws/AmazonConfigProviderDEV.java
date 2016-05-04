@@ -84,7 +84,7 @@ public class AmazonConfigProviderDEV {
 
     private AmazonDynamoDB amazonDynamoDB() {
         AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
-        amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
+	amazonDynamoDB.setRegion(Region.getRegion(Regions.fromName(region)));
         return amazonDynamoDB;
     }
 
