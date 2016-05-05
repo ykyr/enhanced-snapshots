@@ -1,5 +1,6 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -67,12 +68,23 @@ public class TaskServiceImpl implements TaskService {
                 taskRepository.delete(list);
             }
         }, "*/5 * * * *");
+
+        // In case of migration from one ES version to another there can be regular tasks
+        // without tempVolumeType and tempVolumeIops properties. Here we are going to set them with default values
+        // TODO: move this code to migration logic when implementing SNAP-338
+        List<TaskEntry> regularTasks = taskRepository.findByRegular(Boolean.TRUE.toString());
+        for (TaskEntry task : regularTasks) {
+            if (task.getTempVolumeType() == null) {
+                task.setTempVolumeType(configuration.getConfiguration().getTempVolumeType());
+                task.setTempVolumeIopsPerGb(configuration.getConfiguration().getTempVolumeIopsPerGb());
+            }
+        }
     }
 
     @Override
     public Map<String, String> createTask(TaskDto taskDto) {
         Map<String, String> messages = new HashMap<>();
-        String configurationId = configuration.getWorkerConfiguration().getConfigurationId();
+        String configurationId = configuration.getConfiguration().getConfigurationId();
         List<TaskEntry> validTasks = new ArrayList<>();
         int tasksInQueue = getTasksInQueue();
         boolean regular = Boolean.valueOf(taskDto.getRegular());
@@ -85,6 +97,10 @@ public class TaskServiceImpl implements TaskService {
             taskEntry.setInstanceId(configurationId);
             taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
             taskEntry.setId(UUID.randomUUID().toString());
+
+            // set tempVolumeType and iops if required
+            setTempVolumeAndIops(taskEntry);
+
             if (regular) {
                 try {
                     schedulerService.addTask(taskEntry);
@@ -101,6 +117,7 @@ public class TaskServiceImpl implements TaskService {
                     notificationService.notifyAboutError(new ExceptionDto("Restore task error", "Backup for volume: " + taskEntry.getVolume() + " not found!"));
                     messages.put(taskEntry.getVolume(), "Restore task error");
                 } else {
+                    setRestoreVolumeTypeAndIops(taskEntry);
                     messages.put(taskEntry.getVolume(), getMessage(taskEntry));
                     validTasks.add(taskEntry);
                     tasksInQueue++;
@@ -142,7 +159,7 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getAllTasks() {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
-                    configuration.getWorkerConfiguration().getConfigurationId()));
+                    configuration.getConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -154,7 +171,7 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getAllTasks(String volumeId) {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.FALSE.toString(),
-                    volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
+                    volumeId, configuration.getConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -179,7 +196,7 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getAllRegularTasks(String volumeId) {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.TRUE.toString(),
-                    volumeId, configuration.getWorkerConfiguration().getConfigurationId()));
+                    volumeId, configuration.getConfiguration().getConfigurationId()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -218,5 +235,25 @@ public class TaskServiceImpl implements TaskService {
     private int getTasksInQueue() {
         return (int) (taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationId, TaskEntry.TaskEntryType.BACKUP.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()) +
                 taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationId, TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()));
+    }
+
+    // for restore and backup tasks we should specify temp volume type
+    private void setTempVolumeAndIops(TaskEntry taskEntry){
+        if(taskEntry.getType().equals(TaskEntry.TaskEntryType.RESTORE.getType()) || taskEntry.getType().equals(TaskEntry.TaskEntryType.BACKUP.getType())){
+            taskEntry.setTempVolumeType(configuration.getSystemConfiguration().getSystemProperties().getTempVolumeType());
+            if(configuration.getSystemConfiguration().getSystemProperties().getTempVolumeType().equals(VolumeType.Io1.toString())){
+                taskEntry.setTempVolumeIopsPerGb(configuration.getSystemConfiguration().getSystemProperties().getTempVolumeIopsPerGb());
+            }
+        }
+    }
+
+    // for restore tasks we should specify restore volume type
+    private void setRestoreVolumeTypeAndIops(TaskEntry taskEntry){
+        if(taskEntry.getType().equals(TaskEntry.TaskEntryType.RESTORE.getType())){
+            taskEntry.setRestoreVolumeType(configuration.getSystemConfiguration().getSystemProperties().getRestoreVolumeType());
+            if(configuration.getSystemConfiguration().getSystemProperties().getRestoreVolumeType().equals(VolumeType.Io1.toString())){
+                taskEntry.setRestoreVolumeIopsPerGb(configuration.getSystemConfiguration().getSystemProperties().getRestoreVolumeIopsPerGb());
+            }
+        }
     }
 }

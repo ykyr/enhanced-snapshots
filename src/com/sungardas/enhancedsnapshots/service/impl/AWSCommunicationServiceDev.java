@@ -1,22 +1,49 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.*;
+import com.amazonaws.services.ec2.model.AttachVolumeRequest;
+import com.amazonaws.services.ec2.model.AttachVolumeResult;
+import com.amazonaws.services.ec2.model.AvailabilityZone;
+import com.amazonaws.services.ec2.model.CreateSnapshotRequest;
+import com.amazonaws.services.ec2.model.CreateSnapshotResult;
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeRequest;
+import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
+import com.amazonaws.services.ec2.model.DeleteTagsRequest;
+import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeSnapshotsRequest;
+import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
+import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesResult;
+import com.amazonaws.services.ec2.model.DetachVolumeRequest;
+import com.amazonaws.services.ec2.model.DetachVolumeResult;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceBlockDeviceMapping;
+import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.Snapshot;
+import com.amazonaws.services.ec2.model.SnapshotState;
+import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.Volume;
+import com.amazonaws.services.ec2.model.VolumeState;
+import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.SnapshotService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 
@@ -26,6 +53,9 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     private static final Logger LOG = LogManager
             .getLogger(AWSCommunicationServiceDev.class);
+    private final static int MIN_SIZE_OF_OI1_VOLUME = 4;
+    private final static int MIN_IOPS_VALUE = 100;
+    private final static int MAX_IOPS_VALUE = 20_000;
 
     @Autowired
     private SnapshotService snapshotService;
@@ -83,34 +113,28 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     }
 
-    @Override
-    public Volume createVolume(int size, int iiops, String type) {
+    private Volume createVolume(int size, int iiops, VolumeType type) {
         String availabilityZone = getInstance(configurationId).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
                 .withSize(size).withVolumeType("gp2")
                 .withAvailabilityZone(availabilityZone);
-        if (iiops > 0) {
+        if (iiops > 0 && type.equals(VolumeType.Io1)) {
             createVolumeRequest = createVolumeRequest.withIops(iiops);
         }
-        Volume result = ec2client.createVolume(createVolumeRequest).getVolume();
-        return result;
+        return ec2client.createVolume(createVolumeRequest).getVolume();
+    }
+
+    public Volume createVolume(int size, VolumeType type) {
+        return createVolume(size, 0, type);
     }
 
     @Override
-    public Volume createStandardVolume(int size) {
-        return createVolume(size, 0, "gp2");
-    }
-
-    @Override
-    public Volume createGP2Volume(int size) {
-        return createVolume(size, 0, "gp2");
-    }
-
-    @Override
-    public Volume createIO1Volume(int size, int iops) {
-        return createVolume(size, iops, "io1");
+    public Volume createIO1Volume(int size, int iopsPerGb) {
+        // io1 volume size can not be less than 4 Gb
+        size = size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size;
+        return createVolume(size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size, getIops(iopsPerGb, size), VolumeType.Io1);
     }
 
     @Override
@@ -257,20 +281,21 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
     }
 
     @Override
-    public Volume createVolumeFromSnapshot(String snapshotId,
-                                           String availabilityZoneName) {
-        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
-                snapshotId, availabilityZoneName);
-        CreateVolumeResult crVolumeResult = ec2client
-                .createVolume(crVolumeRequest);
-        return crVolumeResult.getVolume();
-    }
+    public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iopsPerGb) {
+        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId, availabilityZoneName);
+        crVolumeRequest.setVolumeType(type);
 
-    @Override
-    public Volume createVolumeFromSnapshot(Snapshot snapshot,
-                                           String availabilityZoneName) {
-        return createVolumeFromSnapshot(snapshot.getSnapshotId(),
-                availabilityZoneName);
+        if (type.equals(VolumeType.Io1)) {
+            Snapshot snapshot = getSnapshot(snapshotId);
+            // io1 volume size can not be less than 4 Gb
+            int size = snapshot.getVolumeSize() < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : snapshot.getVolumeSize();
+            crVolumeRequest.setSize(size);
+            // setting iops
+            if (iopsPerGb != 0) {
+                crVolumeRequest.setIops(getIops(iopsPerGb,  size));
+            }
+        }
+        return ec2client.createVolume(crVolumeRequest).getVolume();
     }
 
     @Override
@@ -281,6 +306,7 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
                 .describeVolumes(describeVolumesRequest);
         return result.getVolumes().get(0);
     }
+
 
     @Override
     public void deleteVolume(Volume volume) {
@@ -341,6 +367,31 @@ public class AWSCommunicationServiceDev implements AWSCommunicationService {
 
     void setRetryRestoreTimeout(int retryRestoreTimeout) {
         this.retryRestoreTimeout = retryRestoreTimeout;
+    }
+
+
+    @Override
+    public Snapshot getSnapshot(String snapshotId) {
+        DescribeSnapshotsResult describeSnapshotsResult = ec2client.describeSnapshots();
+        List<Snapshot> snapshots = describeSnapshotsResult.getSnapshots();
+        for(Snapshot snapshot: snapshots){
+            if(snapshot.getSnapshotId().equals(snapshotId)){
+                return snapshot;
+            }
+        }
+        return null;
+    }
+
+    // iops can not be less than 100 and more than 20 000
+    private int getIops(int iopsPerGb, int volumeSize) {
+        int iops = volumeSize * iopsPerGb;
+        if (iops < MIN_IOPS_VALUE) {
+            return MIN_IOPS_VALUE;
+        }
+        if (iops > MAX_IOPS_VALUE) {
+            return MAX_IOPS_VALUE;
+        }
+        return iops;
     }
 
 }
