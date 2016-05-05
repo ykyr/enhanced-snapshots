@@ -2,6 +2,7 @@
 
 ![Enhanced Snapshots Logo](https://cloud.githubusercontent.com/assets/1557544/10324458/c19466ca-6c57-11e5-8318-a2eb1cd9e99b.png)
 
+[![Version][github-image]][github-url]
 [![Build Status][travis-image]][travis-url]
 
 *Table of contents*
@@ -212,3 +213,5 @@ Blog:
 [labs-image]: https://raw.githubusercontent.com/SungardAS/repo-assets/master/images/logos/sungardas-labs-logo-small.png
 [travis-image]: https://travis-ci.org/SungardAS/enhanced-snapshots.svg?branch=master
 [travis-url]: https://travis-ci.org/SungardAS/enhanced-snapshot
+[github-image]: https://badge.fury.io/gh/sungardas%2Fenhanced-snapshots.svg
+[github-url]: https://badge.fury.io/gh/sungardas%2Fenhanced-snapshots
