@@ -1,5 +1,8 @@
 package com.sungardas.enhancedsnapshots.tasks;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
@@ -12,7 +15,13 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
-import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
+import com.sungardas.enhancedsnapshots.service.ConfigurationService;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.SnapshotService;
+import com.sungardas.enhancedsnapshots.service.StorageService;
+import com.sungardas.enhancedsnapshots.service.TaskService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +29,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 
@@ -152,8 +158,8 @@ public class AWSRestoreVolumeTask implements RestoreTask {
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume...", 15);
             switch (VolumeType.fromValue(volumeType)) {
                 case Standard:
-                    tempVolume = awsCommunication.createGP2Volume(Integer.parseInt(size));
-                    LOG.info("Created GP2 volume:\n" + tempVolume.toString());
+                    tempVolume = awsCommunication.createStandardVolume(Integer.parseInt(size));
+                    LOG.info("Created standard volume:\n" + tempVolume.toString());
                     break;
                 case Gp2:
                     tempVolume = awsCommunication.createGP2Volume(Integer.parseInt(size));
