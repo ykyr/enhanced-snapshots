@@ -9,7 +9,7 @@ jdk:
 branches:
   only:
   - master
-  - java
+  - develop
 
 sudo: required
 
