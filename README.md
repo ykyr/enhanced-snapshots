@@ -10,21 +10,24 @@
 * [Getting Started](#getting-started)
 * [Management Tasks](#management-tasks)
 * [Removing the Enhanced Snapshots system](#removing-the-enhanced-snapshots-system)
-* [IAM user creation (optional)](#iam-user-creation-optional)
+* [IAM Role creation (optional)](#iam-role-creation-optional)
 * [License](#license)
 
 # Product Description
-The Sungard AS Enhanced Snapshots software manages backups for servers located in the Amazon Web Services cloud. The product will be useful for customers who want to reduce:
-* the cost of storing backups
-* time spent by IT engineers on routine backup management tasks.
+Enhanced Snapshots, from Sungard Availability Services | Labs, manages EBS snapshots and performs data deduplication to S3 for greater cost savings. The product will be useful for AWS users who want to :
+* Reduce the cost of storing snapshots
+* Reduce the time IT engineers spend on routine snapshot management tasks
+* Schedule recurring snapshots
 
-Using an intuitive interface, you can easily automate routine tasks such as creation of backups and deletion of old backups. Since these tasks are automated, you will minimize the risks that are associated with human error.
+Deduplication is run across all enabled snapshots in a region, which decreases the amount of total data stored.  Furthermore, deduplicated blocks are stored in S3 at a much lower cost than AWS’ standard EBS snapshots.  This tool provides users with a great way to pay less for long-term retention of snapshot based data in AWS.
+
+Using an intuitive interface, users can easily automate routine tasks like the creation of snapshots and the deletion of old backups. Since these tasks are automated, risks associated with human error are minimized. 
 
 Technical support is not available for the first version of the product; however, please create a Github issue if you have any comments or suggestions. Customer support service may be added in a future release.
 
-Open source is another important feature of this solution and we plan to create a community that will support it. For the end user, Enhanced Snapshots will be free.
+Enhanced Snapshots is open sourced and licensed under Apache v 2.0. Use of Enhanced Snapshots software is free and you only pay for the underlying infrastructure required to support it.
 
-This tool will be available by launching the AMI by creating a role like es-admin-role using the cloud formation template mentioned in the [Quick start](https://github.com/sungardas/enhanced-snapshots#quick-start) section below. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. Refer to the [Removing the enhanced snapshots system](https://github.com/sungardas/enhanced-snapshots#removing-the-enhanced-snapshots-system) for more details.
+This tool will be available by launching the AMI from the [enhanced snapshots market place](https://aws.amazon.com/marketplace/pp/B01CIWY4UO) by choosing the "Enhanced Snapshots tool creation stack" option or by creating a role like es-admin-role while using the single AMI option. Cloud formation template mentioned in the [Quick start](https://github.com/sungardas/enhanced-snapshots#quick-start) section can be used to create the es-admin role. Similarly the EC2 instance created and the associated resources can be removed by using the "Uninstall" button under for the Settings tab, however this will not remove the customer from the AWS subscription for the SungardAS provided marketplace products. Refer to the [Removing the enhanced snapshots system](https://github.com/sungardas/enhanced-snapshots#removing-the-enhanced-snapshots-system) for more details.
 
 # Key Features
 ## Backup & Recovery 
@@ -50,9 +53,10 @@ This tool will be available by launching the AMI by creating a role like es-admi
 * EBS volumes using EBS encryption must be [pre-warmed](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-prewarm.html) to avoid significant storage overhead
 
 # Quick start
-Or, stop making me read stuff and let me try it out!
-- Create a es-admin role using the cloud formation template [es-admin-role](https://github.com/SungardAS/enhanced-snapshots/blob/master/sungardas_es_admin_role_perm_restricted.template) 
+- If the "Enhanced Snapshots tool creation stack" is used in marketplace , the es-admin role will be automatically created.
+But for the single AMI option from the market place Create a es-admin role using the cloud formation template as prerequisite [es-admin-role](https://github.com/SungardAS/particles-enhanced-snapshots/blob/master/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json) 
  To launch a CloudFormation stack based on the template, first decide which region you will deploy in. In that region you will need the following information:
+
 * An [EC2 keypair](https://us-east-1.console.aws.amazon.com/ec2/v2/home?#KeyPairs)
 * A [VPC id](https://console.aws.amazon.com/vpc/home?#vpcs:) (Not needed if you are using the Simple Stack option below.)
 * An IP prefix from which inbound http/https/ssh connections will be allowed. If you're not sure, use your current [public IP address](http://www.myipaddress.com/show-my-ip-address/) with "/32" tacked on the end (like "1.2.3.4/32").
@@ -65,12 +69,15 @@ Once you have collected that information, find your target region, note the AMI 
 
 | Region         | AMI ID        | Simple Stack (default VPC) | VPC Stack (your VPC) |
 | -------------- | ------------- | ------------ |---------- |
-| eu-west-1      | ami-31714646  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots_with_vpc.template.json)|
-| us-east-1      | ami-25064440  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-east-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-east-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots_with_vpc.template.json)|
-| us-west-1      | ami-572deb13  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-1.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots_with_vpc.template.json)|
-| us-west-2      | ami-dc56b3ef  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-2.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-2.s3.amazonaws.com/master/particles/cftemplates/enhanced_snapshots_with_vpc.template.json)|
-
-**Note** Due to feature differences between the AWS regions, the service is not yet available in the following regions: ap-northeast-1, ap-southeast-1, ap-southeast-2, eu-central-1, eu-west-1 and sa-east-1.
+| us-east-1      | ami-fd838b97  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-east-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-east-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
+| us-west-1      | ami-b0b5c8d0  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
+| us-west-2      | ami-e0fc1680  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-2.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.us-west-2.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
+| eu-west-1      | ami-75a32506  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-west-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-west-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
+| sa-east-1      | ami-0a2fa366  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.sa-east-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.sa-east-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
+| eu-central-1      | ami-7148ae1e  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-central-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.eu-central-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
+| ap-southeast-1 | ami-0c2ce66f  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
+| ap-southeast-2      | ami-ff01229c  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-2.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-southeast-2.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
+| ap-norhteast-1      | ami-e7aabd89  | [![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-northeast-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_default_vpc.template.json)|[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=enhanced-snapshots&templateURL=http://particles-enhanced-snapshots.ap-northeast-1.s3.amazonaws.com/master/particles/cftemplates/sungardas_enhanced_snapshots_with_vpc.template.json)|
 
 Once the CloudFormation stack has finished building, go to its Outputs tab at the bottom of the AWS Console. Copy the instance ID (you will need it in a later step) and click the URL, then proceed to [Getting Started](#getting-started).
 
@@ -81,7 +88,7 @@ User also should to:
 ![Role](https://cloud.githubusercontent.com/assets/13747035/11899135/bcaaee2c-a5a5-11e5-965b-78d60d64f3b8.png)
 
 # Getting Started
-**Note** If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually [create an IAM user](#iam-user-creation-optional) and then create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
+**Note** If you have not followed the [Quick start](#quick-start) section above, then you will first need to manually [create an IAM role](#iam-role-creation-optional) and then create an EC2 instance using the Enhanced Snapshots AMI, which can be found in the first table above.
 
 **Note** By default a new instance has a self-signed SSL certificate, so you will need to bypass your browser's security warning to start.
 
@@ -168,65 +175,11 @@ The following resources are deleted:
   
 **Note** It may take several minutes to delete all the resources, especially if backup data has been stored.
 
-# IAM user creation (optional)
-If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM user with the following policy.
-```
- {
-  "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "1",
-            "Effect": "Allow",
-            "Action": [
-                "iam:ListUserPolicies",
-                "iam:GetUser",
-                "iam:GetRole",
-                "iam:ListRoles",
-                "iam:PassRole",
-                "iam:ListInstanceProfiles",
-                "ec2:AttachVolume",
-                "ec2:CreateSnapshot",
-                "ec2:CreateTags",
-                "ec2:CreateVolume",
-                "ec2:DeleteSnapshot",
-                "ec2:DeleteTags",
-                "ec2:DeleteVolume",
-                "ec2:DescribeAvailabilityZones",
-                "ec2:DescribeInstanceAttribute",
-                "ec2:DescribeInstanceStatus",
-                "ec2:DescribeInstances",
-                "ec2:TerminateInstances",
-                "ec2:DescribeRegions",
-                "ec2:DescribeReservedInstances",
-                "ec2:DescribeReservedInstancesListings",
-                "ec2:DescribeSnapshotAttribute",
-                "ec2:DescribeSnapshots",
-                "ec2:DescribeTags",
-                "ec2:DescribeVolumeAttribute",
-                "ec2:DescribeVolumeStatus",
-                "ec2:DescribeVolumes",
-                "ec2:DetachVolume",
-                "ec2:EnableVolumeIO",
-                "ec2:ModifyInstanceAttribute",
-                "ec2:ModifySnapshotAttribute",
-                "ec2:ModifyVolumeAttribute",
-                "ec2:ResetSnapshotAttribute",
-                "sqs(kiss)",
-                "s3:*",
-                "dynamodb(kiss)",
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "logs:DescribeLogStreams"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
-Once the user is created, also create and save an API key, which will be needed to configure Enhanced Snapshots. 
+# IAM role creation (optional)
+If you are creating an instance from the AMI directly without using the provided CloudFormation template, you must first create an IAM role with the following policy as defined in this template. [es-admin role cloud formation template](https://github.com/SungardAS/particles-enhanced-snapshots/blob/master/particles/cftemplates/sungardas_enhanced_snapshots_admin_role_perm.template.json) 
+Once the role is created, also create and save an API key, which will be needed to configure Enhanced Snapshots. 
 
-Without a properly configured user, the following error message will appear during configuration:
+Without a properly configured role, the following error message will appear during configuration:
 ![DynamoDBAccessDenied](https://cloud.githubusercontent.com/assets/14750068/10131876/08b816c8-65dc-11e5-871e-0f8d5fcdd303.png)
 
 # Logging
