@@ -45,20 +45,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.HashSet;
-import java.util.Set;
-
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
 @Service
@@ -85,6 +71,9 @@ class CredentialsServiceImpl implements CredentialsService {
     @Value("${enhancedsnapshots.sdfs.default.size}")
     private String defaultVolumeSize;
 
+    @Value("${enhancedsnapshots.sdfs.min.size}")
+    private String minVolumeSize;
+
     @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
 
@@ -108,7 +97,7 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     @Override
-    public void storeCredentials() {
+    public void storeProperties() {
         validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
@@ -116,7 +105,7 @@ class CredentialsServiceImpl implements CredentialsService {
             properties.setProperty(AMAZON_AWS_REGION, region.getName());
             properties.setProperty(SUNGARGAS_WORKER_CONFIGURATION, instanceId);
             properties.setProperty(AMAZON_S3_BUCKET, initConfigurationDto.getS3().get(0).getBucketName());
-            properties.setProperty(AMAZON_SDFS_SIZE, initConfigurationDto.getSdfs().getVolumeSize());
+            properties.setProperty(AMAZON_SDFS_SIZE, initConfigurationDto.getSdfs().getVolumeSize() + "GB");
             properties.store(new FileOutputStream(file), "AWS Credentials");
         } catch (IOException ioException) {
             LOG.error("Can not create amazon.properties file", ioException);
@@ -126,7 +115,7 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     @Override
-    public void removeCredentials() {
+    public void removeProperties() {
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         if (file.exists()) {
             file.delete();
@@ -229,17 +218,14 @@ class CredentialsServiceImpl implements CredentialsService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        sdfs.setVolumeSize(volumeSize());
+        int maxVolumeSize = getMaxVolumeSize();
+        sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, Integer.parseInt(defaultVolumeSize))));
+        sdfs.setMinVolumeSize(minVolumeSize);
         sdfs.setCreated(sdfsAlreadyExists(volumeName, mountPoint));
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
         return initConfigurationDto;
-    }
-
-    private String volumeSize() {
-        freeMemCheck();
-        return defaultVolumeSize;
     }
 
     private void freeMemCheck() {
@@ -318,6 +304,16 @@ class CredentialsServiceImpl implements CredentialsService {
         }
     }
 
+    @Override
+    public void validateVolumeSize(final String volumeSize) {
+        int size = Integer.parseInt(volumeSize);
+        int min = Integer.parseInt(minVolumeSize);
+        int max = getMaxVolumeSize();
+        if (size < min || size > max) {
+            throw new ConfigurationException("Invalid volume size");
+        }
+    }
+
     private void replaceInFile(File file, String marker, String value) throws IOException {
         String lines[] = FileUtils.readLines(file).toArray(new String[1]);
         for (int i = 0; i < lines.length; i++) {
@@ -326,5 +322,10 @@ class CredentialsServiceImpl implements CredentialsService {
             }
         }
         FileUtils.writeLines(file, Arrays.asList(lines));
+    }
+
+    public int getMaxVolumeSize() {
+        //TODO add SNAP-325 impl
+        return 2000;
     }
 }
