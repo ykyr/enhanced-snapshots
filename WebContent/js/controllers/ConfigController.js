@@ -23,7 +23,8 @@ angular.module('web')
                     new: 'Will be created new volume:',
                     existing: 'Will be used existing volume:'
                 },
-                point:  'At mounting point:'
+                point:  'At mounting point:',
+                size: 'Would you like to update volume size?'
             }
         };
 
@@ -86,8 +87,11 @@ angular.module('web')
         };
 
         $scope.sendSettings = function () {
+            var volumeSize = $scope.isNewVolumeSize ? $scope.sdfsNewSize : $scope.settings.sdfs.volumeSize;
+
             var settings = {
-                bucketName: $scope.selectedBucket.bucketName
+                bucketName: $scope.selectedBucket.bucketName,
+                volumeSize: volumeSize
             };
 
             if (!$scope.settings.db.hasAdmin) {

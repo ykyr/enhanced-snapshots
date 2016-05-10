@@ -1173,7 +1173,12 @@ div.tr.state-removed {
 
 /* end of forms*/
 
-/* view-specific styling*/
+/* page specific stylings*/
+.configuration .sdfsVolume .form-control{
+    width: 35% !important;
+    display: inline;
+}
+
 .settings.form-control {
     width: auto;
     display: inline;
