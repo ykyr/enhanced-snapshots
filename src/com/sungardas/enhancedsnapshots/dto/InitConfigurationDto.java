@@ -1,9 +1,9 @@
 package com.sungardas.enhancedsnapshots.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Collections;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class InitConfigurationDto {
     private List<S3> s3 = Collections.EMPTY_LIST;
@@ -71,6 +71,8 @@ public class InitConfigurationDto {
         private String volumeName;
         private String volumeSize;
         private String mountPoint;
+        private String minVolumeSize;
+        private String maxVolumeSize;
 
         public boolean isCreated() {
             return created;
@@ -102,6 +104,22 @@ public class InitConfigurationDto {
 
         public void setMountPoint(String mountPoint) {
             this.mountPoint = mountPoint;
+        }
+
+        public String getMinVolumeSize() {
+            return minVolumeSize;
+        }
+
+        public void setMinVolumeSize(final String minVolumeSize) {
+            this.minVolumeSize = minVolumeSize;
+        }
+
+        public String getMaxVolumeSize() {
+            return maxVolumeSize;
+        }
+
+        public void setMaxVolumeSize(final String maxVolumeSize) {
+            this.maxVolumeSize = maxVolumeSize;
         }
     }
 

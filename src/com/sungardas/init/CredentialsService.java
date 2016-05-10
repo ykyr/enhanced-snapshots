@@ -1,15 +1,15 @@
 package com.sungardas.init;
 
-import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
-
 import javax.validation.constraints.NotNull;
+
+import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 
 interface CredentialsService {
     void setCredentialsIfValid(@NotNull CredentialsDto credentials);
 
-    void storeCredentials();
+    void storeProperties();
 
-    void removeCredentials();
+    void removeProperties();
 
     boolean areCredentialsValid();
 
@@ -24,4 +24,6 @@ interface CredentialsService {
     String getInstanceId();
 
     void configureAWSLogAgent();
+
+    void validateVolumeSize(String volumeSize);
 }

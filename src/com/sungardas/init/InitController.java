@@ -1,5 +1,9 @@
 package com.sungardas.init;
 
+import java.util.Arrays;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
@@ -9,6 +13,7 @@ import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.rest.RestAuthenticationFilter;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
 import com.sungardas.enhancedsnapshots.service.SharedDataService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -17,11 +22,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.support.XmlWebApplicationContext;
-
-import javax.annotation.PostConstruct;
-import java.util.Arrays;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.OK;
@@ -126,19 +134,20 @@ class InitController implements ApplicationContextAware {
             if (config.getUser() != null) {
                 sharedDataService.setUser(config.getUser());
             }
+            credentialsService.validateVolumeSize(initConfigurationDto.getSdfs().getVolumeSize());
             initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(config.getBucketName(), false)));
             sharedDataService.setInitConfigurationDto(initConfigurationDto);
-            credentialsService.storeCredentials();
+            credentialsService.storeProperties();
 
             try {
                 refreshContext();
             } catch (Exception e) {
-                credentialsService.removeCredentials();
+                credentialsService.removeProperties();
                 throw e;
             }
             return new ResponseEntity<>("", HttpStatus.OK);
         } else {
-	    throw new ConfigurationException("AWS credentials invalid");
+            throw new ConfigurationException("AWS configuration invalid");
         }
     }
 
