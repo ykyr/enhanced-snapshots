@@ -1,14 +1,7 @@
 package com.sungardas.enhancedsnapshots.tasks;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.Volume;
-import com.amazonaws.services.ec2.model.VolumeType;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
+import com.amazonaws.services.ec2.model.*;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.dto.CopyingTaskProgressDto;
@@ -76,6 +69,7 @@ public class AWSBackupVolumeTask implements BackupTask {
     }
 
     public void execute() {
+        Volume tempVolume = null;
         String volumeId = taskEntry.getVolume();
         try {
             checkThreadInterruption();
@@ -90,7 +84,7 @@ public class AWSBackupVolumeTask implements BackupTask {
             checkThreadInterruption();
 
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Preparing temp volume", 5);
-            Volume tempVolume = createAndAttachBackupVolume(volumeId, configuration.getConfigurationId());
+            tempVolume = createAndAttachBackupVolume(volumeId, configuration.getConfigurationId());
             try {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e1) {
@@ -183,11 +177,20 @@ public class AWSBackupVolumeTask implements BackupTask {
                 taskEntry.setStatus(ERROR.toString());
                 taskRepository.save(taskEntry);
             }
-        } catch (AmazonClientException e) {
-            LOG.error(format("Backup process for volume %s failed ", volumeId));
-            LOG.error(e);
+        } catch (Exception e) {
+            // TODO: add user notification about task failure
+            LOG.error("Backup process for volume {} failed ", volumeId, e);
             taskEntry.setStatus(ERROR.toString());
             taskRepository.save(taskEntry);
+
+            // clean up
+            if (tempVolume != null && awsCommunication.volumeExists(tempVolume.getVolumeId())) {
+                tempVolume = awsCommunication.syncVolume(tempVolume);
+                if (tempVolume.getAttachments().size() != 0) {
+                    awsCommunication.detachVolume(tempVolume);
+                }
+                awsCommunication.deleteVolume(tempVolume);
+            }
         }
     }
 
