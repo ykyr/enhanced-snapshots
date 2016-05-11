@@ -8,7 +8,7 @@
 
     <context:component-scan base-package="com.sungardas.enhancedsnapshots.aws"/>
 
-    <context:property-placeholder location="classpath:/enhancedsnapshots.properties,file:${canalina.home}/conf/enhancedsnapshots.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
+    <context:property-placeholder location="classpath:/enhancedsnapshots.properties,file:${catalina.home}/conf/enhancedsnapshots.properties,file:${catalina.home}/conf/amazon.properties" ignore-resource-not-found="true"/>
 
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
 

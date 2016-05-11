@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 @Profile("dev")
 public class AWSCommunicationServiceDev extends AWSCommunicationServiceImpl {
 
+
     @Override
     public String getCurrentAvailabilityZone() {
         return describeAvailabilityZonesForCurrentRegion().get(0).getZoneName();

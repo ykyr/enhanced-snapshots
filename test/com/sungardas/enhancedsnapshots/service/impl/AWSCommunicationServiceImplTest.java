@@ -1,11 +1,9 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
-import org.junit.Before;
+import com.amazonaws.services.ec2.model.VolumeType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -32,7 +30,7 @@ public class AWSCommunicationServiceImplTest {
 		CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId,
 				availableZone).withVolumeType("gp2");
 		when(ec2client.createVolume(crVolumeRequest)).thenReturn(new CreateVolumeResult());
-		awsCommunticationService.createVolumeFromSnapshot(snapshotId, availableZone);
+		awsCommunticationService.createVolumeFromSnapshot(snapshotId, availableZone, VolumeType.Gp2, 0);
 		verify(ec2client, times(1)).createVolume(crVolumeRequest);
 	}
 }

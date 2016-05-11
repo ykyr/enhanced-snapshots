@@ -1,8 +1,8 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.WorkerConfigurationRepository;
+import com.amazonaws.services.ec2.model.VolumeType;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
@@ -20,19 +20,21 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     private static final String LATEST_VERSION = "latest-version";
     private static final String INFO_URL = "http://com.sungardas.releases.s3.amazonaws.com/info";
     @Autowired
-    WorkerConfigurationRepository configurationRepository;
-    WorkerConfiguration currectConfiguration;
+    private ConfigurationRepository configurationRepository;
+    private Configuration currectConfiguration;
     @Autowired
-    SDFSStateService sdfsStateService;
+    private SDFSStateService sdfsStateService;
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
     @Value("${amazon.s3.bucket}")
     private String s3BucketName;
     @Value("${enhancedsnapshots.sdfs.default.size}")
     private String defaultVolumeSize;
+    private String[] volumeTypeOptions = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
+
 
     @Override
-    public WorkerConfiguration getWorkerConfiguration() {
+    public Configuration getConfiguration() {
         if (currectConfiguration == null) {
             currectConfiguration = configurationRepository.findOne(instanceId);
         }
@@ -58,7 +60,23 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.setCurrentVersion(CURRENT_VERSION);
         configuration.setLatestVersion(getLatestVersion());
 
+        SystemConfiguration.SystemProperties systemProperties = new SystemConfiguration.SystemProperties();
+        systemProperties.setRestoreVolumeIopsPerGb(currectConfiguration.getRestoreVolumeIopsPerGb());
+        systemProperties.setRestoreVolumeType(currectConfiguration.getRestoreVolumeType().toString());
+        systemProperties.setTempVolumeIopsPerGb(currectConfiguration.getTempVolumeIopsPerGb());
+        systemProperties.setTempVolumeType(currectConfiguration.getTempVolumeType().toString());
+        systemProperties.setVolumeTypeOptions(volumeTypeOptions);
+        configuration.setSystemProperties(systemProperties);
         return configuration;
+    }
+
+    @Override
+    public void setSystemProperties(SystemConfiguration.SystemProperties systemProperties) {
+        currectConfiguration.setRestoreVolumeIopsPerGb(systemProperties.getRestoreVolumeIopsPerGb());
+        currectConfiguration.setRestoreVolumeType(systemProperties.getRestoreVolumeType());
+        currectConfiguration.setTempVolumeIopsPerGb(systemProperties.getTempVolumeIopsPerGb());
+        currectConfiguration.setTempVolumeType(systemProperties.getTempVolumeType());
+        configurationRepository.save(currectConfiguration);
     }
 
     private String getLatestVersion() {
@@ -71,7 +89,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
                 return latestVersion;
             }
         } catch (Exception e) {
-
         }
         return CURRENT_VERSION;
     }
