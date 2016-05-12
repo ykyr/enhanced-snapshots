@@ -115,7 +115,8 @@
                                 <button type="button" class="btn btn-success" ng-click="sendSettings()"
                                         ng-disabled="configs.newVolumeSize.$error.required ||
                                         configs.newVolumeSize.$error.min ||
-                                        configs.newVolumeSize.$error.max">Setup</button>
+                                        configs.newVolumeSize.$error.max ||
+                                        configs.newVolumeSize.$error.number">Setup</button>
                                 <a ui-sref="login" href class="btn btn-default">Cancel</a>
                             </div>
                         </form>
