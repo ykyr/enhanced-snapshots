@@ -31,7 +31,8 @@
                     </form>
 
                     <div class="form-horizontal" ng-hide="isAWS || !isValidInstance">
-                        <form name="configs">
+                        <div ng-show="isBusy" class="loader"></div>
+                        <form name="configs" ng-hide="isBusy">
                             <div class="flex-container card">
                                 <div class="flex-2 flex-center">
                                     <span class="icon glyphicon glyphicon-{{iconClass[selectedBucket.isCreated]}} text-{{statusColorClass[selectedBucket.isCreated]}}"></span>
