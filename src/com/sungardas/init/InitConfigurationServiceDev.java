@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 
-class CredentialsServiceDev implements CredentialsService {
+class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {

@@ -39,12 +39,13 @@ import static org.springframework.http.HttpStatus.OK;
 class InitController implements ApplicationContextAware {
 
     private static final Logger LOG = LogManager.getLogger(InitController.class);
+    private static final String GB_UNIT = "GB";
 
     @Autowired
     private FilterProxy filterProxy;
 
     @Autowired
-    private CredentialsService credentialsService;
+    private InitConfigurationService initConfigurationService;
 
     @Autowired
     private SharedDataService sharedDataService;
@@ -58,11 +59,11 @@ class InitController implements ApplicationContextAware {
     private void init() {
         // check that aws credentials are provided
         // try to authenticate as real admin user
-        if (credentialsService.isAwsPropertyFileExists()) {
+        if (initConfigurationService.isAwsPropertyFileExists()) {
             LOG.info("Valid aws credentials were provided.");
             refreshContext();
         } else {
-            credentialsService.configureAWSLogAgent();
+            initConfigurationService.configureAWSLogAgent();
 
         }
     }
@@ -91,7 +92,7 @@ class InitController implements ApplicationContextAware {
         }
         // no aws credentials are provided
         // try to authenticate as default user admin@enhancedsnapshots:<instance-id>
-        else if (credentialsService.checkDefaultUser(user.getEmail(), user.getPassword())) {
+        else if (initConfigurationService.checkDefaultUser(user.getEmail(), user.getPassword())) {
             return new ResponseEntity<>("{ \"role\":\"configurator\" }", HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -100,14 +101,14 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.POST)
     public ResponseEntity<String> setAwsCredential(@RequestBody CredentialsDto credentials) {
-        credentialsService.setCredentialsIfValid(credentials);
+        initConfigurationService.setCredentialsIfValid(credentials);
         LOG.info("provided aws keys");
         return new ResponseEntity<>(OK);
     }
 
     @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.GET)
     public ResponseEntity<String> getAwsCredentialsInfo() {
-        if (credentialsService.credentialsAreProvided()) {
+        if (initConfigurationService.credentialsAreProvided()) {
             return new ResponseEntity<>("{\"contains\": true}", HttpStatus.OK);
         } else {
             return new ResponseEntity<>("{\"contains\": false}", HttpStatus.OK);
@@ -117,14 +118,14 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.GET)
     public ResponseEntity<InitConfigurationDto> getConfiguration() {
-	return new ResponseEntity<>(credentialsService.getInitConfigurationDto(), HttpStatus.OK);
+        return new ResponseEntity<>(initConfigurationService.getInitConfigurationDto(), HttpStatus.OK);
     }
 
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
-        if (credentialsService.areCredentialsValid()) {
-            InitConfigurationDto initConfigurationDto = credentialsService.getInitConfigurationDto();
+        if (initConfigurationService.areCredentialsValid()) {
+            InitConfigurationDto initConfigurationDto = initConfigurationService.getInitConfigurationDto();
             if (!initConfigurationDto.getDb().isValid()) {
                 if (config.getUser() == null) {
                     throw new ConfigurationException("Please create default user");
@@ -134,15 +135,16 @@ class InitController implements ApplicationContextAware {
             if (config.getUser() != null) {
                 sharedDataService.setUser(config.getUser());
             }
-            credentialsService.validateVolumeSize(initConfigurationDto.getSdfs().getVolumeSize());
+            initConfigurationService.validateVolumeSize(config.getVolumeSize());
+            initConfigurationDto.getSdfs().setVolumeSize(config.getVolumeSize() + GB_UNIT);
             initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(config.getBucketName(), false)));
             sharedDataService.setInitConfigurationDto(initConfigurationDto);
-            credentialsService.storeProperties();
+            initConfigurationService.storeProperties();
 
             try {
                 refreshContext();
             } catch (Exception e) {
-                credentialsService.removeProperties();
+                initConfigurationService.removeProperties();
                 throw e;
             }
             return new ResponseEntity<>("", HttpStatus.OK);
@@ -165,7 +167,7 @@ class InitController implements ApplicationContextAware {
         // enabling auth filter
         RestAuthenticationFilter filter = applicationContext.getBean(RestAuthenticationFilter.class);
         filter.setUserRepository(applicationContext.getBean(UserRepository.class));
-        filter.setInstanceId(credentialsService.getInstanceId());
+        filter.setInstanceId(initConfigurationService.getInstanceId());
         filterProxy.setFilter(filter);
 
         LOG.info("Context refreshed successfully.");
@@ -175,6 +177,15 @@ class InitController implements ApplicationContextAware {
     private static class ConfigDto {
         private User user;
         private String bucketName;
+        private String volumeSize;
+
+        public String getVolumeSize() {
+            return volumeSize;
+        }
+
+        public void setVolumeSize(final String volumeSize) {
+            this.volumeSize = volumeSize;
+        }
 
         public User getUser() {
             return user;

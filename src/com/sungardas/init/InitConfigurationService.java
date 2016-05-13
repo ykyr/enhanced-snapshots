@@ -4,7 +4,7 @@ import javax.validation.constraints.NotNull;
 
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 
-interface CredentialsService {
+interface InitConfigurationService {
     void setCredentialsIfValid(@NotNull CredentialsDto credentials);
 
     void storeProperties();
