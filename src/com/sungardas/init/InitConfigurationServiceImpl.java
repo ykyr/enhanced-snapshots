@@ -15,9 +15,10 @@ import javax.validation.constraints.NotNull;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
@@ -66,7 +67,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private final String confFolderName = "conf";
     private final String propFileName = "amazon.properties";
     private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
-    private AWSCredentials credentials;
+    private AWSCredentialsProvider credentialsProvider;
     private String instanceId;
     private Region region;
 
@@ -86,7 +87,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     @PostConstruct
     private void init() {
-        credentials = new InstanceProfileCredentialsProvider().getCredentials();
+        credentialsProvider = new InstanceProfileCredentialsProvider();
         instanceId = EC2MetadataUtils.getInstanceId();
         region = Regions.getCurrentRegion();
     }
@@ -95,12 +96,12 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
         validateCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
-        this.credentials = new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
+        credentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey()));
     }
 
     @Override
     public void storeProperties() {
-        validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+        validateCredentials(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
         Properties properties = new Properties();
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
@@ -126,7 +127,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     @Override
     public boolean areCredentialsValid() {
-        AmazonEC2Client ec2Client = new AmazonEC2Client(credentials);
+        AmazonEC2Client ec2Client = new AmazonEC2Client(credentialsProvider);
         ec2Client.setRegion(region);
         try {
             ec2Client.describeRegions();
@@ -139,8 +140,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     @Override
     public boolean credentialsAreProvided() {
-        if (credentials != null) {
-            validateCredentials(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+        if (credentialsProvider.getCredentials() != null) {
+            validateCredentials(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
             return true;
         } else {
             return false;
@@ -160,9 +161,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
-	
+
         try {
-            AmazonS3Client client = new AmazonS3Client(credentials);
+            AmazonS3Client client = new AmazonS3Client(credentialsProvider);
             List<Bucket> allBuckets = client.listBuckets();
             String bucketName = ENHANCED_SNAPSHOT_BUCKET_PREFIX + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
@@ -232,8 +233,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     private boolean requiredTablesExist() {
-        AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentials);
-        amazonDynamoDB.setRegion(region);
+        AmazonDynamoDBClient amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
+        amazonDynamoDB.setRegion(Regions.getCurrentRegion());
         try {
             ListTablesResult listResult = amazonDynamoDB.listTables();
             List<String> tableNames = listResult.getTableNames();
@@ -247,8 +248,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     private boolean adminExist() {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(credentials);
-        client.setRegion(region);
+        AmazonDynamoDBClient client = new AmazonDynamoDBClient(credentialsProvider);
+        client.setRegion(Regions.getCurrentRegion());
         DynamoDBMapper mapper = new DynamoDBMapper(client);
         DynamoDBScanExpression expression = new DynamoDBScanExpression()
                 .withFilterConditionEntry("role",

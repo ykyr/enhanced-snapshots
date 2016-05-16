@@ -3,7 +3,7 @@
 angular.module('web')
     .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state) {
         var DELAYTIME = 600*1000;
-        $scope.isBusy = false;
+            $scope.isBusy = false;
         $scope.STRINGS = {
             s3: {
                 new: 'Will be created new as',

@@ -1,8 +1,12 @@
 package com.sungardas.enhancedsnapshots.service;
 
-import com.amazonaws.services.ec2.model.*;
-
 import java.util.List;
+
+import com.amazonaws.services.ec2.model.AvailabilityZone;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Snapshot;
+import com.amazonaws.services.ec2.model.Volume;
+import com.amazonaws.services.ec2.model.VolumeType;
 
 public interface AWSCommunicationService {
 
