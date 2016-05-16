@@ -31,7 +31,8 @@
                     </form>
 
                     <div class="form-horizontal" ng-hide="isAWS || !isValidInstance">
-                        <form name="configs">
+                        <div ng-show="isBusy" class="loader"></div>
+                        <form name="configs" ng-hide="isBusy">
                             <div class="flex-container card">
                                 <div class="flex-2 flex-center">
                                     <span class="icon glyphicon glyphicon-{{iconClass[selectedBucket.isCreated]}} text-{{statusColorClass[selectedBucket.isCreated]}}"></span>
@@ -114,7 +115,8 @@
                                 <button type="button" class="btn btn-success" ng-click="sendSettings()"
                                         ng-disabled="configs.newVolumeSize.$error.required ||
                                         configs.newVolumeSize.$error.min ||
-                                        configs.newVolumeSize.$error.max">Setup</button>
+                                        configs.newVolumeSize.$error.max ||
+                                        configs.newVolumeSize.$error.number">Setup</button>
                                 <a ui-sref="login" href class="btn btn-default">Cancel</a>
                             </div>
                         </form>
