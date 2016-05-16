@@ -1,17 +1,18 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.net.URL;
+import java.util.Properties;
+
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.net.URL;
-import java.util.Properties;
 
 @Service
 public class ConfigurationServiceImpl implements ConfigurationService {
@@ -21,24 +22,24 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     private static final String INFO_URL = "http://com.sungardas.releases.s3.amazonaws.com/info";
     @Autowired
     private ConfigurationRepository configurationRepository;
-    private Configuration currectConfiguration;
+    private Configuration currentConfiguration;
     @Autowired
     private SDFSStateService sdfsStateService;
     @Value("${sungardas.worker.configuration}")
     private String instanceId;
     @Value("${amazon.s3.bucket}")
     private String s3BucketName;
-    @Value("${enhancedsnapshots.sdfs.default.size}")
-    private String defaultVolumeSize;
+    @Value("${amazon.sdfs.size}")
+    private String volumeSize;
     private String[] volumeTypeOptions = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
 
 
     @Override
     public Configuration getConfiguration() {
-        if (currectConfiguration == null) {
-            currectConfiguration = configurationRepository.findOne(instanceId);
+        if (currentConfiguration == null) {
+            currentConfiguration = configurationRepository.findOne(instanceId);
         }
-        return currectConfiguration;
+        return currentConfiguration;
     }
 
     @Override
@@ -49,9 +50,10 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.getS3().setBucketName(s3BucketName);
 
         configuration.setSdfs(new SystemConfiguration.SDFS());
-        configuration.getSdfs().setMountPoint(currectConfiguration.getSdfsMountPoint());
-        configuration.getSdfs().setVolumeName(currectConfiguration.getSdfsVolumeName());
-        configuration.getSdfs().setVolumeSize(defaultVolumeSize);
+        configuration.getSdfs().setMountPoint(currentConfiguration.getSdfsMountPoint());
+        configuration.getSdfs().setVolumeName(currentConfiguration.getSdfsVolumeName());
+        //TODO change to read from DB SNAP-357
+        configuration.getSdfs().setVolumeSize(volumeSize);
 
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
         configuration.getEc2Instance().setInstanceID(instanceId);
@@ -61,10 +63,10 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.setLatestVersion(getLatestVersion());
 
         SystemConfiguration.SystemProperties systemProperties = new SystemConfiguration.SystemProperties();
-        systemProperties.setRestoreVolumeIopsPerGb(currectConfiguration.getRestoreVolumeIopsPerGb());
-        systemProperties.setRestoreVolumeType(currectConfiguration.getRestoreVolumeType().toString());
-        systemProperties.setTempVolumeIopsPerGb(currectConfiguration.getTempVolumeIopsPerGb());
-        systemProperties.setTempVolumeType(currectConfiguration.getTempVolumeType().toString());
+        systemProperties.setRestoreVolumeIopsPerGb(currentConfiguration.getRestoreVolumeIopsPerGb());
+        systemProperties.setRestoreVolumeType(currentConfiguration.getRestoreVolumeType().toString());
+        systemProperties.setTempVolumeIopsPerGb(currentConfiguration.getTempVolumeIopsPerGb());
+        systemProperties.setTempVolumeType(currentConfiguration.getTempVolumeType().toString());
         systemProperties.setVolumeTypeOptions(volumeTypeOptions);
         configuration.setSystemProperties(systemProperties);
         return configuration;
@@ -72,11 +74,11 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
     @Override
     public void setSystemProperties(SystemConfiguration.SystemProperties systemProperties) {
-        currectConfiguration.setRestoreVolumeIopsPerGb(systemProperties.getRestoreVolumeIopsPerGb());
-        currectConfiguration.setRestoreVolumeType(systemProperties.getRestoreVolumeType());
-        currectConfiguration.setTempVolumeIopsPerGb(systemProperties.getTempVolumeIopsPerGb());
-        currectConfiguration.setTempVolumeType(systemProperties.getTempVolumeType());
-        configurationRepository.save(currectConfiguration);
+        currentConfiguration.setRestoreVolumeIopsPerGb(systemProperties.getRestoreVolumeIopsPerGb());
+        currentConfiguration.setRestoreVolumeType(systemProperties.getRestoreVolumeType());
+        currentConfiguration.setTempVolumeIopsPerGb(systemProperties.getTempVolumeIopsPerGb());
+        currentConfiguration.setTempVolumeType(systemProperties.getTempVolumeType());
+        configurationRepository.save(currentConfiguration);
     }
 
     private String getLatestVersion() {
@@ -95,6 +97,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
     @Override
     public void reload() {
-        currectConfiguration = null;
+        currentConfiguration = null;
     }
 }

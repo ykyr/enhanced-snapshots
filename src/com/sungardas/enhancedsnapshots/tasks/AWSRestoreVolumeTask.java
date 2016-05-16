@@ -119,10 +119,10 @@ public class AWSRestoreVolumeTask implements RestoreTask {
 		String snapshotId = snapshotService.getSnapshotId(volumeId, configurationId);
 		BackupEntry backupEntry = backupRepository.getLast(volumeId, configurationId);
         // check that snapshot exists
-		if (snapshotId == null || !awsCommunication.snapshotExists(snapshotId)) {
-			LOG.error("Failed to find snapshot for volume {} ", volumeId);
-			throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
-		}
+        if (snapshotId == null || !awsCommunication.snapshotExists(snapshotId)) {
+            LOG.error("Failed to find snapshot for volume {} ", volumeId);
+            throw new DataAccessException("Backup for volume: " + volumeId + " was not found");
+        }
 
         checkThreadInterruption();
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume from snapshot", 50);

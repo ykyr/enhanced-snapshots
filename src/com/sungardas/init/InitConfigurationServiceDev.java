@@ -1,17 +1,14 @@
 package com.sungardas.init;
 
-import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
-import org.apache.commons.io.FileUtils;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ListIterator;
 
-class CredentialsServiceDev implements CredentialsService {
+import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+
+class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
@@ -19,12 +16,12 @@ class CredentialsServiceDev implements CredentialsService {
     }
 
     @Override
-    public void storeCredentials() {
+    public void storeProperties() {
 
     }
 
     @Override
-    public void removeCredentials() {
+    public void removeProperties() {
 
     }
 
@@ -51,6 +48,8 @@ class CredentialsServiceDev implements CredentialsService {
         sdfs.setMountPoint("/mnt/awspool");
         sdfs.setVolumeName("awspool");
         sdfs.setVolumeSize("40");
+        sdfs.setMinVolumeSize("10");
+        sdfs.setMaxVolumeSize("2000");
 
         InitConfigurationDto.DB db = new InitConfigurationDto.DB();
         db.setValid(true);
@@ -81,6 +80,16 @@ class CredentialsServiceDev implements CredentialsService {
 
     @Override
     public void configureAWSLogAgent() {
+    }
+
+    @Override
+    public void validateVolumeSize(final String volumeSize) {
+        int size = Integer.parseInt(volumeSize);
+        int min = 10;
+        int max = 2000;
+        if (size < min || size > max) {
+            throw new ConfigurationException("Invalid volume size");
+        }
     }
 
 
