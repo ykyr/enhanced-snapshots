@@ -60,7 +60,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceImpl.class);
     private static final long BYTES_IN_GB = 1_073_741_824;
     private static final String ENHANCED_SNAPSHOT_BUCKET_PREFIX = "com.sungardas.enhancedsnapshots.";
-    private static final long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB / 4;
+    private static final long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
     private static final long SDFS_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
     private static final int SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM = 2000;
     private final String catalinaHomeEnvPropName = "catalina.home";
@@ -321,7 +321,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     public int getMaxVolumeSize() {
         UnixOperatingSystemMXBean osBean = (UnixOperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         //Total RAM - RAM available for Tomcat - reserved
-        long totalRAM = osBean.getTotalPhysicalMemorySize() - Runtime.getRuntime().maxMemory() - SYSTEM_RESERVED_RAM_IN_BYTES - SDFS_RESERVED_RAM_IN_BYTES;
+        long totalRAM = osBean.getFreePhysicalMemorySize() - Runtime.getRuntime().maxMemory() - SYSTEM_RESERVED_RAM_IN_BYTES - SDFS_RESERVED_RAM_IN_BYTES;
         int maxVolumeSize = (int) (totalRAM / BYTES_IN_GB) * SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM;
         return maxVolumeSize;
     }
