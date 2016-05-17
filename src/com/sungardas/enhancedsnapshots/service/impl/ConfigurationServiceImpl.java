@@ -36,8 +36,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     private AmazonDynamoDB dynamoDB;
     @Autowired
     private SDFSStateService sdfsStateService;
-    @Value("${amazon.sdfs.size}")
-    private String volumeSize;
     private String[] volumeTypeOptions = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
     private Configuration currentConfiguration;
 
@@ -179,7 +177,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
     @Override
     public String getSdfsVolumeSize() {
-        return currentConfiguration.getSdfsSize();
+        return currentConfiguration.getSdfsSize()+"GB";
     }
 
     @Override

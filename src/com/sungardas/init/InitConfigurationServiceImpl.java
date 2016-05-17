@@ -26,20 +26,10 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.Condition;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
-import com.amazonaws.services.dynamodbv2.model.KeyType;
-import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sun.management.UnixOperatingSystemMXBean;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
@@ -66,32 +56,26 @@ import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 @Service
 class InitConfigurationServiceImpl implements InitConfigurationService {
 
-    private static final String NOT_ENOUGH_MEMORY_ERROR = "Current instance doesn't  provide enough memory to start SDFS. At least 3.75GB  of total memory expected.";
+    private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceImpl.class);
+    private static final long BYTES_IN_GB = 1_073_741_824;
+    private static final int SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM = 2000;
+    private static final long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
+    private static final long SDFS_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
+
+    private static final String catalinaHomeEnvPropName = "catalina.home";
+    private static final String confFolderName = "conf";
+    private static final String propFileName = "EnhancedSnapshots.properties";
+    private static final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
+
+    private static final String ENHANCED_SNAPSHOT_BUCKET_PREFIX = "com.sungardas.enhancedsnapshots.";
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
     private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
 
     // properties to store in config file
-    private static final String AMAZON_S3_BUCKET = "amazon.s3.bucket";
-    private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
-    private static final String AMAZON_AWS_REGION = "amazon.aws.region";
-    private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
-    private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceImpl.class);
-    private static final long BYTES_IN_GB = 1_073_741_824;
-    private static final String ENHANCED_SNAPSHOT_BUCKET_PREFIX = "com.sungardas.enhancedsnapshots.";
     private static final String WORKER_POLLING_RATE = "enhancedsnapshots.polling.rate";
     private static final String RETENTION_CRON_SCHEDULE = "enhancedsnapshots.retention.cron";
     private static final String WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS = "enhancedsnapshots.wait.time.before.new.sync";
     private static final String MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS = "enhancedsnapshots.max.wait.time.to.detach.volume";
-
-    private static final long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
-    private static final long SDFS_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
-    private static final int SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM = 2000;
-    private final String catalinaHomeEnvPropName = "catalina.home";
-    private final String confFolderName = "conf";
-    private final String propFileName = "amazon.properties";
-    private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
-    private String instanceId;
-    private Region region;
 
     // properties from $catalina.home/conf/EnhancedSnapshots.properties config file
     @Value("${enhancedsnapshots.retention.cron: -1}")
@@ -151,6 +135,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private AmazonDynamoDB amazonDynamoDB;
     private DynamoDBMapper mapper;
     private InitConfigurationDto initConfigurationDto;
+    private String instanceId;
+    private Region region;
 
     private UserDto userDto;
     private String adminPassword;
@@ -545,6 +531,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     public String getInstanceId() {
         return instanceId;
     }
+
 
     @Override
     public void configureAWSLogAgent() {
