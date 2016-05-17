@@ -52,8 +52,8 @@ angular.module('web')
                 }
                 else{
                     $scope.isAWS = true;
+                    $scope.isBusy = false;
                 }
-                $scope.isBusy = false;
             }, function (data, status) {
                 $scope.isValidInstance = false;
                 $scope.invalidMessage = data.data.localizedMessage;
@@ -63,7 +63,6 @@ angular.module('web')
         getAwsStatus();
 
         var getCurrentConfig = function () {
-            $scope.isBusy = true;
             Configuration.get('current').then(function (result, status) {
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
