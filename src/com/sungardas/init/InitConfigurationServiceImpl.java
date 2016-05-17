@@ -602,7 +602,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private boolean cronExpressionIsValid(String cronExpression) {
         try {
-            new CronSequenceGenerator(cronExpression);
+            // Unix cron does not contain seconds but spring cron does
+            new CronSequenceGenerator("0 " + cronExpression);
             return true;
         } catch (Exception e) {
             LOG.warn("Provided cron expression {} is invalid. Changes will not be applied", cronExpression);
