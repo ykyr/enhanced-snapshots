@@ -39,7 +39,6 @@ import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
-import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -55,7 +54,7 @@ import org.springframework.stereotype.Service;
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
 @Service
-class CredentialsServiceImpl implements CredentialsService {
+class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
     private static final long BYTES_IN_GB = 1_073_741_824;
@@ -64,6 +63,12 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
 
     // properties to store in config file
+    private static final String AMAZON_S3_BUCKET = "amazon.s3.bucket";
+    private static final String AMAZON_SDFS_SIZE = "amazon.sdfs.size";
+    private static final String AMAZON_AWS_REGION = "amazon.aws.region";
+    private static final String SUNGARGAS_WORKER_CONFIGURATION = "sungardas.worker.configuration";
+    private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceImpl.class);
+    private static final long BYTES_IN_GB = 1_073_741_824;
     private static final String ENHANCED_SNAPSHOT_BUCKET_PREFIX = "com.sungardas.enhancedsnapshots.";
     private static final String WORKER_POLLING_RATE = "enhancedsnapshots.polling.rate";
     private static final String RETENTION_CRON_SCHEDULE = "enhancedsnapshots.retention.cron";
@@ -75,6 +80,14 @@ class CredentialsServiceImpl implements CredentialsService {
     private static final String propFileName = "EnhancedSnapshots.properties";
     private static final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
 
+    private static final long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
+    private static final long SDFS_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
+    private static final int SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM = 2000;
+    private final String catalinaHomeEnvPropName = "catalina.home";
+    private final String confFolderName = "conf";
+    private final String propFileName = "amazon.properties";
+    private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
+    private AWSCredentialsProvider credentialsProvider;
     private String instanceId;
     private Region region;
 
@@ -88,6 +101,9 @@ class CredentialsServiceImpl implements CredentialsService {
     @Value("${enhancedsnapshots.max.wait.time.to.detach.volume: -1}")
     private int maxWaitTimeToDetachVolume;
     private int propertyNotProvided = -1;
+
+    @Value("${enhancedsnapshots.sdfs.min.size}")
+    private String minVolumeSize;
 
     // default application properties
     @Value("${enhancedsnapshots.default.tempVolumeType}")
@@ -362,7 +378,7 @@ class CredentialsServiceImpl implements CredentialsService {
     }
 
     @Override
-    public void removeCredentials() {
+    public void removeProperties() {
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         if (file.exists()) {
             file.delete();
@@ -390,6 +406,7 @@ class CredentialsServiceImpl implements CredentialsService {
         } else {
             return false;
         }
+
     }
 
     @Override
@@ -404,7 +421,7 @@ class CredentialsServiceImpl implements CredentialsService {
 
     private List<InitConfigurationDto.S3> getBucketsWithSdfsMetadata() {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
-	
+
         try {
             AmazonS3Client client = new AmazonS3Client(credentialsProvider);
             List<Bucket> allBuckets = client.listBuckets();
@@ -461,27 +478,15 @@ class CredentialsServiceImpl implements CredentialsService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        sdfs.setVolumeSize(volumeSize());
+        int maxVolumeSize = getMaxVolumeSize();
+        sdfs.setMaxVolumeSize(String.valueOf(maxVolumeSize));
+        sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, Integer.parseInt(defaultVolumeSize))));
+        sdfs.setMinVolumeSize(minVolumeSize);
         sdfs.setCreated(sdfsAlreadyExists());
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
         return initConfigurationDto;
-    }
-
-    private String volumeSize() {
-        freeMemCheck();
-        return defaultVolumeSize;
-    }
-
-    private void freeMemCheck() {
-        UnixOperatingSystemMXBean osBean = (UnixOperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        long total = osBean.getTotalPhysicalMemorySize();
-        long required = (long) (3.5 * BYTES_IN_GB);
-        if (total < required) {
-            LOG.error("Total memory {}. Required memory {}", total, required);
-            throw new EnhancedSnapshotsException(NOT_ENOUGH_MEMORY_ERROR);
-        }
     }
 
     private boolean requiredTablesExist() {
@@ -549,6 +554,16 @@ class CredentialsServiceImpl implements CredentialsService {
         }
     }
 
+    @Override
+    public void validateVolumeSize(final String volumeSize) {
+        int size = Integer.parseInt(volumeSize);
+        int min = Integer.parseInt(minVolumeSize);
+        int max = getMaxVolumeSize();
+        if (size < min || size > max) {
+            throw new ConfigurationException("Invalid volume size");
+        }
+    }
+
     private void replaceInFile(File file, String marker, String value) throws IOException {
         String lines[] = FileUtils.readLines(file).toArray(new String[1]);
         for (int i = 0; i < lines.length; i++) {
@@ -557,6 +572,14 @@ class CredentialsServiceImpl implements CredentialsService {
             }
         }
         FileUtils.writeLines(file, Arrays.asList(lines));
+    }
+
+    public int getMaxVolumeSize() {
+        UnixOperatingSystemMXBean osBean = (UnixOperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        //Total RAM - RAM available for Tomcat - reserved
+        long totalRAM = osBean.getFreePhysicalMemorySize() - Runtime.getRuntime().maxMemory() - SYSTEM_RESERVED_RAM_IN_BYTES - SDFS_RESERVED_RAM_IN_BYTES;
+        int maxVolumeSize = (int) (totalRAM / BYTES_IN_GB) * SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM;
+        return maxVolumeSize;
     }
 
     private void dropDbTables() {

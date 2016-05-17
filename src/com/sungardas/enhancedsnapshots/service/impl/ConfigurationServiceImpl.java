@@ -1,5 +1,8 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.net.URL;
+import java.util.Properties;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
@@ -9,6 +12,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepo
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
@@ -28,15 +32,22 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
     @Autowired
     private ConfigurationRepository configurationRepository;
+    private Configuration currentConfiguration;
     @Autowired
     @Qualifier("dynamoDB")
     private AmazonDynamoDB dynamoDB;
     @Autowired
     private SDFSStateService sdfsStateService;
-
+    @Value("${sungardas.worker.configuration}")
+    private String instanceId;
+    @Value("${amazon.s3.bucket}")
+    private String s3BucketName;
+    @Value("${amazon.sdfs.size}")
+    private String volumeSize;
     private String[] volumeTypeOptions = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
     private Configuration currentConfiguration;
 
+    
     @PostConstruct
     private void init() {
         // we need to use dynamoDbClient without retry interceptor proxy at this step since there is a cycle dependency
@@ -56,6 +67,8 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.getSdfs().setMountPoint(getSdfsMountPoint());
         configuration.getSdfs().setVolumeName(getSdfsVolumeName());
         configuration.getSdfs().setVolumeSize(getSdfsVolumeSize());
+        //TODO change to read from DB SNAP-357
+        configuration.getSdfs().setVolumeSize(volumeSize);
 
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
         configuration.getEc2Instance().setInstanceID(EC2MetadataUtils.getInstanceId());

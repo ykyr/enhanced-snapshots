@@ -6,10 +6,14 @@ import com.sungardas.enhancedsnapshots.dto.UserDto;
 
 import javax.validation.constraints.NotNull;
 
-interface CredentialsService {
+import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+
+interface InitConfigurationService {
     void setCredentialsIfValid(@NotNull CredentialsDto credentials);
 
-    void removeCredentials();
+    void storeProperties();
+
+    void removeProperties();
 
     boolean areCredentialsValid();
 
@@ -34,4 +38,6 @@ interface CredentialsService {
     void createDBAndStoreSettings();
 
     void syncSettingsInDbAndConfigFile();
+
+    void validateVolumeSize(String volumeSize);
 }

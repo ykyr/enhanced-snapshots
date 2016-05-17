@@ -7,7 +7,12 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-class CredentialsServiceDev implements CredentialsService {
+import javax.validation.constraints.NotNull;
+
+import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+
+class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
@@ -15,7 +20,12 @@ class CredentialsServiceDev implements CredentialsService {
     }
 
     @Override
-    public void removeCredentials() {
+    public void storeProperties() {
+
+    }
+
+    @Override
+    public void removeProperties() {
 
     }
 
@@ -42,6 +52,8 @@ class CredentialsServiceDev implements CredentialsService {
         sdfs.setMountPoint("/mnt/awspool");
         sdfs.setVolumeName("awspool");
         sdfs.setVolumeSize("40");
+        sdfs.setMinVolumeSize("10");
+        sdfs.setMaxVolumeSize("2000");
 
         InitConfigurationDto.DB db = new InitConfigurationDto.DB();
         db.setValid(true);
@@ -72,6 +84,16 @@ class CredentialsServiceDev implements CredentialsService {
 
     @Override
     public void configureAWSLogAgent() {
+    }
+
+    @Override
+    public void validateVolumeSize(final String volumeSize) {
+        int size = Integer.parseInt(volumeSize);
+        int min = 10;
+        int max = 2000;
+        if (size < min || size > max) {
+            throw new ConfigurationException("Invalid volume size");
+        }
     }
 
     @Override

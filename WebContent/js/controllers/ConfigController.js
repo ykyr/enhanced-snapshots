@@ -3,7 +3,7 @@
 angular.module('web')
     .controller('ConfigController', function ($scope, Volumes, Configuration, $modal, $state) {
         var DELAYTIME = 600*1000;
-
+            $scope.isBusy = false;
         $scope.STRINGS = {
             s3: {
                 new: 'Will be created new as',
@@ -23,7 +23,8 @@ angular.module('web')
                     new: 'Will be created new volume:',
                     existing: 'Will be used existing volume:'
                 },
-                point:  'At mounting point:'
+                point:  'At mounting point:',
+                size: 'Would you like to update volume size?'
             }
         };
 
@@ -44,6 +45,7 @@ angular.module('web')
         };
 
         var getAwsStatus = function () {
+            $scope.isBusy = true;
             Configuration.get('awscreds').then(function (result, status) {
                 if (result.data.contains) {
                     getCurrentConfig();
@@ -51,21 +53,26 @@ angular.module('web')
                 else{
                     $scope.isAWS = true;
                 }
+                $scope.isBusy = false;
             }, function (data, status) {
                 $scope.isValidInstance = false;
                 $scope.invalidMessage = data.data.localizedMessage;
+                $scope.isBusy = false;
             });
         };
         getAwsStatus();
 
         var getCurrentConfig = function () {
+            $scope.isBusy = true;
             Configuration.get('current').then(function (result, status) {
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
                 $scope.isAWS = false;
+                $scope.isBusy = false;
             }, function (data, status) {
                 $scope.isValidInstance = false;
                 $scope.invalidMessage = data.data.localizedMessage;
+                $scope.isBusy = false;
             })
         };
 
@@ -86,8 +93,11 @@ angular.module('web')
         };
 
         $scope.sendSettings = function () {
+            var volumeSize = $scope.isNewVolumeSize ? $scope.sdfsNewSize : $scope.settings.sdfs.volumeSize;
+
             var settings = {
-                bucketName: $scope.selectedBucket.bucketName
+                bucketName: $scope.selectedBucket.bucketName,
+                volumeSize: volumeSize
             };
 
             if (!$scope.settings.db.hasAdmin) {
