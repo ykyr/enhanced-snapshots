@@ -1205,7 +1205,7 @@ div.tr.state-removed {
 }
 
 /* page specific stylings*/
-.configuration .sdfsVolume .form-control{
+.configuration .sdfsVolume .form-control {
     width: 35% !important;
     display: inline;
 }

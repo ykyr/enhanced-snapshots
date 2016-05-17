@@ -1,17 +1,12 @@
 package com.sungardas.init;
 
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
-import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
-import com.sungardas.enhancedsnapshots.dto.UserDto;
-
 import javax.validation.constraints.NotNull;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 
 interface InitConfigurationService {
     void setCredentialsIfValid(@NotNull CredentialsDto credentials);
-
-    void storeProperties();
 
     void removeProperties();
 
@@ -35,7 +30,7 @@ interface InitConfigurationService {
 
     void setInitConfigurationDto(InitConfigurationDto initConfigurationDto);
 
-    void createDBAndStoreSettings();
+    void createDBAndStoreSettings(final InitController.ConfigDto config);
 
     void syncSettingsInDbAndConfigFile();
 

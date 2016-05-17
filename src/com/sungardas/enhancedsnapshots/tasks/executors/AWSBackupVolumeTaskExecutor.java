@@ -1,13 +1,5 @@
 package com.sungardas.enhancedsnapshots.tasks.executors;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Snapshot;
-import com.amazonaws.services.ec2.model.Volume;
-import com.amazonaws.services.ec2.model.VolumeType;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -19,7 +11,6 @@ import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;

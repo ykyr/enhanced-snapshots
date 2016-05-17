@@ -1,6 +1,8 @@
 package com.sungardas.init;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -24,7 +26,15 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -56,8 +66,6 @@ import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 @Service
 class InitConfigurationServiceImpl implements InitConfigurationService {
 
-    private static final Logger LOG = LogManager.getLogger(CredentialsServiceImpl.class);
-    private static final long BYTES_IN_GB = 1_073_741_824;
     private static final String NOT_ENOUGH_MEMORY_ERROR = "Current instance doesn't  provide enough memory to start SDFS. At least 3.75GB  of total memory expected.";
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
     private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
@@ -75,11 +83,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private static final String WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS = "enhancedsnapshots.wait.time.before.new.sync";
     private static final String MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS = "enhancedsnapshots.max.wait.time.to.detach.volume";
 
-    private static final String catalinaHomeEnvPropName = "catalina.home";
-    private static final String confFolderName = "conf";
-    private static final String propFileName = "EnhancedSnapshots.properties";
-    private static final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
-
     private static final long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
     private static final long SDFS_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
     private static final int SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM = 2000;
@@ -87,7 +90,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private final String confFolderName = "conf";
     private final String propFileName = "amazon.properties";
     private final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
-    private AWSCredentialsProvider credentialsProvider;
     private String instanceId;
     private Region region;
 
@@ -222,15 +224,15 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
-    public void createDBAndStoreSettings() {
-        if (!requiredTablesExist()) {
+    public void createDBAndStoreSettings(final InitController.ConfigDto config) {
+        if (!requiredTablesExist()) { // check if tables corrupted
             LOG.info("Initialization DB");
             dropDbTables();
-            createDbAndStoreData();
+            createDbAndStoreData(config);
         } else {
             storeAdminUserIfProvided();
             if (!isConfigurationStored()) {
-                storeConfiguration();
+                storeConfiguration(config);
             }
         }
     }
@@ -240,10 +242,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         return loadedConf != null;
     }
 
-    private void createDbAndStoreData() {
+    private void createDbAndStoreData(final InitController.ConfigDto config) {
         createDbStructure();
         storeAdminUserIfProvided();
-        storeConfiguration();
+        storeConfiguration(config);
     }
 
     private void createDbStructure() throws ConfigurationException {
@@ -314,19 +316,19 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
-    private void storeConfiguration() {
-        Configuration configuration = convertToWorkerConfiguration(initConfigurationDto);
+    private void storeConfiguration(final InitController.ConfigDto config) {
+        Configuration configuration = convertToWorkerConfiguration(initConfigurationDto, config);
         mapper.save(configuration);
     }
 
-    private Configuration convertToWorkerConfiguration(InitConfigurationDto dto) {
+    private Configuration convertToWorkerConfiguration(InitConfigurationDto dto, final InitController.ConfigDto config) {
         Configuration configuration = new Configuration();
         configuration.setConfigurationId(EC2MetadataUtils.getInstanceId());
         configuration.setEc2Region(Regions.getCurrentRegion().getName());
         configuration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
         configuration.setSdfsVolumeName(dto.getSdfs().getVolumeName());
-        configuration.setS3Bucket(dto.getS3().get(0).getBucketName());
-        configuration.setSdfsSize(dto.getSdfs().getVolumeSize());
+        configuration.setS3Bucket(config.getBucketName());
+        configuration.setSdfsSize(config.getVolumeSize());
 
         // set default properties
         configuration.setRestoreVolumeIopsPerGb(restoreVolumeIopsPerGb);

@@ -23,7 +23,7 @@ angular.module('web')
                     new: 'Will be created new volume:',
                     existing: 'Will be used existing volume:'
                 },
-                point:  'At mounting point:',
+                point: 'At mounting point:',
                 size: 'Would you like to update volume size?'
             }
         };

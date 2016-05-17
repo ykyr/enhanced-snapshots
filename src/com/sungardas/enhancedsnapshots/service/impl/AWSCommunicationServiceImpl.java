@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.AttachVolumeResult;
@@ -34,6 +33,7 @@ import com.amazonaws.services.ec2.model.VolumeState;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
+import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
