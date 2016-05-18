@@ -76,6 +76,11 @@ public class CreateAppConfigurationDev {
         configuration.setWorkerDispatcherPollingRate(defaultPollingRate);
         configuration.setWaitTimeBeforeNewSyncWithAWS(defaultWaitTimeBeforeNewSyncWithAWS);
         configuration.setMaxWaitTimeToDetachVolume(defaultMaxWaitTimeToDetachVolume);
+        configuration.setS3Bucket("com.sungardas.enhancedsnapshots.dev");
+        configuration.setSdfsSize("500");
+        configuration.setSdfsVolumeName("awspool");
+        configuration.setSdfsMountPoint("/mnt/awspool");
+
         return configuration;
     }
 }
