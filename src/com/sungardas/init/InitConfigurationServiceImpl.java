@@ -130,6 +130,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private String mountPoint;
     @Value("${enhancedsnapshots.default.sdfs.volume.name}")
     private String volumeName;
+    @Value("${enhancedsnapshots.awscli.conf.path}")
+    private String awscliConfPath;
+    @Value("${enhancedsnapshots.awslogs.conf.path}")
+    private String awslogsConfPath;
 
     private AWSCredentialsProvider credentialsProvider;
     private AmazonDynamoDB amazonDynamoDB;
@@ -147,6 +151,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         instanceId = EC2MetadataUtils.getInstanceId();
         region = Regions.getCurrentRegion();
         amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
+        amazonDynamoDB.setRegion(region);
+
         mapper = new DynamoDBMapper(amazonDynamoDB);
     }
 
@@ -536,8 +542,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Override
     public void configureAWSLogAgent() {
         try {
-            replaceInFile(new File("/etc/awslogs/awscli.conf"), "<region>", region.toString());
-            replaceInFile(new File("/etc/awslogs/awslogs.conf"), "<instance-id>", instanceId);
+            replaceInFile(new File(awscliConfPath), "<region>", region.toString());
+            replaceInFile(new File(awslogsConfPath), "<instance-id>", instanceId);
         } catch (Exception e) {
             LOG.warn("Cant initialize AWS Log agent");
         }
