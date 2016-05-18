@@ -131,6 +131,10 @@ public class WorkersDispatcher {
                     LOGtw.error(e);
                 } catch (EnhancedSnapshotsInterruptedException e) {
                     return;
+                    // this is required to close thread when uninstalling system
+                } catch (IllegalStateException e) {
+                    LOGtw.warn("Stopping worker dispatcher ...");
+                    return;
                 } catch (Exception e) {
                     LOGtw.error(e);
                     if (entry != null) {

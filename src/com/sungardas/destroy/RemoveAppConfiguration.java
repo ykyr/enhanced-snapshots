@@ -10,8 +10,8 @@ import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.*;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.PostConstruct;
@@ -24,6 +24,7 @@ public class RemoveAppConfiguration {
     private String[] tables;
 
     @Autowired
+    @Qualifier("amazonDynamoDB")
     private AmazonDynamoDB db;
 
     @Autowired

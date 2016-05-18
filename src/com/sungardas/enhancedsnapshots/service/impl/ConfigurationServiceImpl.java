@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -8,16 +9,17 @@ import javax.annotation.PostConstruct;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
-import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +37,8 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     @Qualifier("dynamoDB")
     private AmazonDynamoDB dynamoDB;
     @Autowired
-    private SDFSStateService sdfsStateService;
+    private AmazonS3 amazonS3;
+
     private String[] volumeTypeOptions = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
     private Configuration currentConfiguration;
 
@@ -63,7 +66,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
         configuration.getEc2Instance().setInstanceID(EC2MetadataUtils.getInstanceId());
 
-        configuration.setLastBackup(sdfsStateService.getBackupTime());
+        configuration.setLastBackup(getBackupTime());
         configuration.setCurrentVersion(CURRENT_VERSION);
         configuration.setLatestVersion(getLatestVersion());
 
@@ -202,5 +205,17 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
     protected String getInstanceId() {
         return EC2MetadataUtils.getInstanceId();
+    }
+
+    //TODO: this should be stored in DB
+    private Long getBackupTime() {
+        ListObjectsRequest request = new ListObjectsRequest()
+                .withBucketName(getS3Bucket()).withPrefix(getSdfsBackupFileName());
+        List<S3ObjectSummary> list = amazonS3.listObjects(request).getObjectSummaries();
+        if (list.size() > 0) {
+            return list.get(0).getLastModified().getTime();
+        } else {
+            return null;
+        }
     }
 }

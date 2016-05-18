@@ -72,11 +72,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private ConfigurationService configurationService;
 
     @Override
-    public void backupState() {
-        backupState(null);
-    }
-
-    @Override
     public void backupState(String taskId) {
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Stopping SDFS...", 20);

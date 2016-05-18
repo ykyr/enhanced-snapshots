@@ -14,6 +14,7 @@
 
     <beans profile="prod">
         <bean class="com.sungardas.destroy.RemoveAppConfiguration"/>
+        <bean class="com.sungardas.enhancedsnapshots.service.impl.ConfigurationServiceImpl"/>
     </beans>
     <beans profile="dev">
         <bean class="com.sungardas.destroy.RemoveAppConfigurationDEV"/>
