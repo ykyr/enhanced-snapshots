@@ -1,4 +1,4 @@
-package com.sungardas.enhancedsnapshots.tasks;
+package com.sungardas.enhancedsnapshots.tasks.executors;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
@@ -14,18 +14,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
-@Component
-@Scope("prototype")
+@Service("awsBackupVolumeTaskExecutor")
 @Profile("dev")
-public class BackupFakeTask implements BackupTask {
-	private static final Logger LOG = LogManager.getLogger(BackupFakeTask.class);
+public class BackupFakeTaskExecutor implements TaskExecutor {
+	private static final Logger LOG = LogManager.getLogger(BackupFakeTaskExecutor.class);
     
     @Autowired
 	private TaskRepository taskRepository;
@@ -41,15 +40,8 @@ public class BackupFakeTask implements BackupTask {
     @Autowired
     private TaskService taskService;
 
-    private TaskEntry taskEntry;
-
-    
-    public void setTaskEntry(TaskEntry taskEntry) {
-    	this.taskEntry= taskEntry;
-    }
-
     @Override
-    public void execute() {
+    public void execute(TaskEntry taskEntry) {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting delete task", 0);
 

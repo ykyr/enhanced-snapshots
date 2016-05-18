@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 
@@ -12,11 +13,6 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
-
-    }
-
-    @Override
-    public void storeProperties() {
 
     }
 
@@ -64,8 +60,8 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     }
 
     @Override
-    public boolean isAwsPropertyFileExists() {
-        return false;
+    public boolean propertyFileExists() {
+        return true;
     }
 
     @Override
@@ -92,5 +88,27 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         }
     }
 
+    @Override
+    public void storePropertiesEditableFromConfigFile() {
+    }
 
+    @Override
+    public void setUser(User user) {
+
+    }
+
+    @Override
+    public void setInitConfigurationDto(InitConfigurationDto initConfigurationDto) {
+
+    }
+
+    @Override
+    public void createDBAndStoreSettings(final InitController.ConfigDto config) {
+
+    }
+
+    @Override
+    public void syncSettingsInDbAndConfigFile() {
+
+    }
 }

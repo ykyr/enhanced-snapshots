@@ -55,7 +55,7 @@ public class SystemController {
         if (!userService.isAdmin(currentUser)) {
             return new ResponseEntity<>("{\"msg\":\"Only admin can delete service\"}", HttpStatus.FORBIDDEN);
         }
-        if (!configurationService.getConfiguration().getConfigurationId().equals(instanceId.getInstanceId())) {
+        if (!configurationService.getConfigurationId().equals(instanceId.getInstanceId())) {
             return new ResponseEntity<>("{\"msg\":\"Provided instance ID is incorrect\"}", HttpStatus.FORBIDDEN);
         }
         refreshContext();

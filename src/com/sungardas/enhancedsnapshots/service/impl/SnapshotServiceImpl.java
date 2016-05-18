@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 
 @Service
 public class SnapshotServiceImpl implements SnapshotService {
@@ -18,15 +17,8 @@ public class SnapshotServiceImpl implements SnapshotService {
     @Autowired
     private SnapshotRepository snapshotRepository;
 
-    private String instanceId;
-
     @Autowired
     private ConfigurationService configurationService;
-
-    @PostConstruct
-    private void init() {
-        instanceId = configurationService.getConfiguration().getConfigurationId();
-    }
 
     @Override
     public String getSnapshotId(String volumeId, String instancreId) {

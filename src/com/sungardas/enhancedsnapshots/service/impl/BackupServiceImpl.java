@@ -41,7 +41,7 @@ public class BackupServiceImpl implements BackupService {
 
     @PostConstruct
     private void init() {
-        instanceId = configurationService.getConfiguration().getConfigurationId();
+        instanceId = configurationService.getConfigurationId();
     }
 
     @Override

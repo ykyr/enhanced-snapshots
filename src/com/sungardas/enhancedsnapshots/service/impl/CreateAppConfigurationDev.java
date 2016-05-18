@@ -21,6 +21,26 @@ public class CreateAppConfigurationDev {
     private String restoreVolumeType;
     @Value("${enhancedsnapshots.default.restoreVolumeIopsPerGb}")
     private int restoreVolumeIopsPerGb;
+    @Value("${enhancedsnapshots.default.amazon.retry.count}")
+    private int amazonRetryCount;
+    @Value("${enhancedsnapshots.default.amazon.retry.sleep}")
+    private int amazonRetrySleep;
+    @Value("${enhancedsnapshots.default.queue.size}")
+    private int queueSize;
+    @Value("${enhancedsnapshots.default.sdfs.volume.config.path}")
+    private String sdfsConfigPath;
+    @Value("${enhancedsnapshots.default.sdfs.backup.file.name}")
+    private String sdfsStateBackupFileName;
+    @Value("${enhancedsnapshots.default.retention.cron}")
+    private String defaultRetentionCronExpression;
+    @Value("${enhancedsnapshots.default.polling.rate}")
+    private int defaultPollingRate;
+    @Value("${enhancedsnapshots.default.sdfs.local.cache.size}")
+    private String sdfsLocalCacheSize;
+    @Value("${enhancedsnapshots.default.wait.time.before.new.sync}")
+    private int defaultWaitTimeBeforeNewSyncWithAWS;
+    @Value("${enhancedsnapshots.default.max.wait.time.to.detach.volume}")
+    private int defaultMaxWaitTimeToDetachVolume;
 
     @Autowired
     private AmazonDynamoDB amazonDynamoDB;
@@ -46,6 +66,16 @@ public class CreateAppConfigurationDev {
         configuration.setRestoreVolumeType(restoreVolumeType);
         configuration.setTempVolumeIopsPerGb(tempVolumeIopsPerGb);
         configuration.setTempVolumeType(tempVolumeType);
+        configuration.setSdfsLocalCacheSize(sdfsLocalCacheSize);
+        configuration.setAmazonRetryCount(amazonRetryCount);
+        configuration.setAmazonRetrySleep(amazonRetrySleep);
+        configuration.setMaxQueueSize(queueSize);
+        configuration.setSdfsConfigPath(sdfsConfigPath);
+        configuration.setSdfsBackupFileName(sdfsStateBackupFileName);
+        configuration.setRetentionCronExpression(defaultRetentionCronExpression);
+        configuration.setWorkerDispatcherPollingRate(defaultPollingRate);
+        configuration.setWaitTimeBeforeNewSyncWithAWS(defaultWaitTimeBeforeNewSyncWithAWS);
+        configuration.setMaxWaitTimeToDetachVolume(defaultMaxWaitTimeToDetachVolume);
         return configuration;
     }
 }

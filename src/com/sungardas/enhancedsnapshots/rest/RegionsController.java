@@ -3,6 +3,7 @@ package com.sungardas.enhancedsnapshots.rest;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.model.AvailabilityZone;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
+import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,7 @@ public class RegionsController {
     @Autowired
     AWSCommunicationService communicationService;
 
-    @Value("${sungardas.worker.configuration}")
-    private String configurationId;
-
-@RequestMapping(value = "/regions", method = RequestMethod.GET)
+    @RequestMapping(value = "/regions", method = RequestMethod.GET)
     public String getRegions() {
         JSONObject record;
         JSONArray regionsJson = new JSONArray();

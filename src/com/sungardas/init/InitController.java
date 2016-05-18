@@ -12,7 +12,6 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.rest.RestAuthenticationFilter;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
-import com.sungardas.enhancedsnapshots.service.SharedDataService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,9 +47,6 @@ class InitController implements ApplicationContextAware {
     private InitConfigurationService initConfigurationService;
 
     @Autowired
-    private SharedDataService sharedDataService;
-
-    @Autowired
     private XmlWebApplicationContext applicationContext;
 
     private boolean CONTEXT_REFRESH_IN_PROCESS = false;
@@ -59,8 +55,9 @@ class InitController implements ApplicationContextAware {
     private void init() {
         // check that aws credentials are provided
         // try to authenticate as real admin user
-        if (initConfigurationService.isAwsPropertyFileExists()) {
-            LOG.info("Valid aws credentials were provided.");
+        if (initConfigurationService.propertyFileExists()) {
+            LOG.info("System is already configured.");
+            initConfigurationService.syncSettingsInDbAndConfigFile();
             refreshContext();
         } else {
             initConfigurationService.configureAWSLogAgent();
@@ -130,17 +127,17 @@ class InitController implements ApplicationContextAware {
                 if (config.getUser() == null) {
                     throw new ConfigurationException("Please create default user");
                 }
-                sharedDataService.setUser(config.getUser());
+                initConfigurationService.setUser(config.getUser());
             }
             if (config.getUser() != null) {
-                sharedDataService.setUser(config.getUser());
+                initConfigurationService.setUser(config.getUser());
             }
             initConfigurationService.validateVolumeSize(config.getVolumeSize());
             initConfigurationDto.getSdfs().setVolumeSize(config.getVolumeSize() + GB_UNIT);
             initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(config.getBucketName(), false)));
-            sharedDataService.setInitConfigurationDto(initConfigurationDto);
-            initConfigurationService.storeProperties();
-
+            initConfigurationService.setInitConfigurationDto(initConfigurationDto);
+            initConfigurationService.storePropertiesEditableFromConfigFile();
+            initConfigurationService.createDBAndStoreSettings(config);
             try {
                 refreshContext();
             } catch (Exception e) {
@@ -174,7 +171,7 @@ class InitController implements ApplicationContextAware {
         CONTEXT_REFRESH_IN_PROCESS = false;
     }
 
-    private static class ConfigDto {
+    static class ConfigDto {
         private User user;
         private String bucketName;
         private String volumeSize;

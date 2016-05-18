@@ -53,7 +53,8 @@
                                         <ul class="dropdown-menu" role="menu"
                                             aria-labelledby="simple-btn-keyboard-nav">
                                             <li role="menuitem" ng-repeat="bucket in settings.s3">
-                                                <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}&nbsp; &nbsp; <span class="label label-success" ng-hide="bucket.isCreated">new</span>
+                                                <a href ng-click="selectBucket(bucket)">{{bucket.bucketName}}&nbsp; &nbsp;
+                                                    <span class="label label-success" ng-hide="bucket.isCreated">new</span>
                                                 </a>
                                             </li>
                                         </ul>
@@ -74,7 +75,9 @@
                                     <h3>SDFS Settings</h3>
 
                                     <p>{{ settings.sdfs.isCreated ? STRINGS.sdfs.name.existing : STRINGS.sdfs.name.new}}</p>
-                                    <p><span class="label label-success">{{settings.sdfs.volumeName}} ({{settings.sdfs.volumeSize}})</span></p>
+                                    <p>
+                                        <span class="label label-success">{{settings.sdfs.volumeName}} ({{settings.sdfs.volumeSize}})</span>
+                                    </p>
 
                                     <p>{{ STRINGS.sdfs.point }}</p>
                                     <p><span class="label label-success">{{settings.sdfs.mountPoint}}</span></p>
@@ -102,7 +105,9 @@
                                     <h3>DynamoDB</h3>
 
                                     <p>{{ settings.db.isValid ? STRINGS.db.isValid.true : STRINGS.db.isValid.false}}</p>
-                                    <strong><p ng-show="!settings.db.hasAdmin">  <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}</p></strong>
+                                    <strong><p ng-show="!settings.db.hasAdmin">
+                                        <span class="glyphicon glyphicon-warning-sign"></span> {{STRINGS.db.hasAdminUser.false}}
+                                    </p></strong>
 
                                 </div>
 

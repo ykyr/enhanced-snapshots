@@ -62,13 +62,10 @@ public class RetentionServiceImpl implements RetentionService {
 
     private String instanceId;
 
-    @Value("${enhancedsnapshots.retention.cron}")
-    private String cronExpression;
-
     @PostConstruct
     private void init() {
-        instanceId = configurationService.getConfiguration().getConfigurationId();
-        schedulerService.addTask(getJob(this), cronExpression);
+        instanceId = configurationService.getConfigurationId();
+        schedulerService.addTask(getJob(this), configurationService.getRetentionCronExpression());
         try {
             apply();
         } catch (AmazonClientException e) {

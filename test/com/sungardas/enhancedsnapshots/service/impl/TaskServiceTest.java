@@ -7,6 +7,7 @@ import com.sungardas.enhancedsnapshots.dto.*;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.file.Files;
 import java.util.*;
 
 import static org.mockito.Matchers.anyString;
@@ -27,8 +29,6 @@ public class TaskServiceTest {
     @InjectMocks
     private TaskServiceImpl taskService;
     private TaskDto taskDto;
-    private SystemConfiguration.SystemProperties systemProperties;
-    private SystemConfiguration systemConfiguration;
     private int iopsPerGb = 30;
 
     @Mock
@@ -47,20 +47,16 @@ public class TaskServiceTest {
 
     @Before
     public void setUp(){
-        ReflectionTestUtils.setField(taskService, "queueSize", 5);
 
         taskDto = new TaskDto();
         taskDto.setVolumes(Arrays.asList("volId-1"));
-        systemConfiguration = new SystemConfiguration();
-        systemProperties =  new SystemConfiguration.SystemProperties();
-        systemConfiguration.setSystemProperties(systemProperties);
-        systemProperties.setTempVolumeIopsPerGb(iopsPerGb);
-        systemProperties.setTempVolumeType(VolumeType.Gp2.toString());
-        systemProperties.setRestoreVolumeIopsPerGb(iopsPerGb);
-        systemProperties.setRestoreVolumeType(VolumeType.Gp2.toString());
 
-        when(configuration.getConfiguration()).thenReturn(new Configuration());
-        when(configuration.getSystemConfiguration()).thenReturn(systemConfiguration);
+        when(configuration.getTempVolumeIopsPerGb()).thenReturn(iopsPerGb);
+        when(configuration.getTempVolumeType()).thenReturn(VolumeType.Gp2.toString());
+        when(configuration.getRestoreVolumeIopsPerGb()).thenReturn(iopsPerGb);
+        when(configuration.getRestoreVolumeType()).thenReturn(VolumeType.Gp2.toString());
+        when(configuration.getMaxQueueSize()).thenReturn(5);
+
         when(backupRepository.getLast(anyString(), anyString())).thenReturn(new BackupEntry());
         when(snapshotRepository.findOne((anyString()))).thenReturn(new SnapshotEntry());
     }
@@ -68,8 +64,9 @@ public class TaskServiceTest {
     @Test
     public void shouldSetIO1TempVolumeTypeForBackupTask(){
         taskDto.setType("backup");
-        systemProperties.setTempVolumeIopsPerGb(iopsPerGb);
-        systemProperties.setTempVolumeType(VolumeType.Io1.toString());
+
+        when(configuration.getTempVolumeIopsPerGb()).thenReturn(iopsPerGb);
+        when(configuration.getTempVolumeType()).thenReturn(VolumeType.Io1.toString());
 
         taskService.createTask(taskDto);
 
@@ -85,8 +82,9 @@ public class TaskServiceTest {
     @Test
     public void shouldSetGP2TempVolumeTypeForBackupTask(){
         taskDto.setType("backup");
-        systemProperties.setTempVolumeIopsPerGb(iopsPerGb);
-        systemProperties.setTempVolumeType(VolumeType.Gp2.toString());
+
+        when(configuration.getTempVolumeIopsPerGb()).thenReturn(iopsPerGb);
+        when(configuration.getTempVolumeType()).thenReturn(VolumeType.Gp2.toString());
 
         taskService.createTask(taskDto);
 
@@ -102,8 +100,9 @@ public class TaskServiceTest {
     @Test
     public void shouldSetGP2TempVolumeTypeForRestoreTask(){
         taskDto.setType("restore");
-        systemProperties.setTempVolumeIopsPerGb(iopsPerGb);
-        systemProperties.setTempVolumeType(VolumeType.Gp2.toString());
+
+        when(configuration.getTempVolumeIopsPerGb()).thenReturn(iopsPerGb);
+        when(configuration.getTempVolumeType()).thenReturn(VolumeType.Gp2.toString());
 
         taskService.createTask(taskDto);
 
@@ -120,8 +119,9 @@ public class TaskServiceTest {
     @Test
     public void shouldSetOP1TempVolumeTypeForRestoreTask(){
         taskDto.setType("restore");
-        systemProperties.setTempVolumeIopsPerGb(iopsPerGb);
-        systemProperties.setTempVolumeType(VolumeType.Io1.toString());
+
+        when(configuration.getTempVolumeIopsPerGb()).thenReturn(iopsPerGb);
+        when(configuration.getTempVolumeType()).thenReturn(VolumeType.Io1.toString());
 
         taskService.createTask(taskDto);
 
@@ -138,8 +138,9 @@ public class TaskServiceTest {
     @Test
     public void shouldSetOP1RestoreVolumeTypeForRestoreTask(){
         taskDto.setType("restore");
-        systemProperties.setRestoreVolumeIopsPerGb(iopsPerGb);
-        systemProperties.setRestoreVolumeType(VolumeType.Io1.toString());
+
+        when(configuration.getRestoreVolumeIopsPerGb()).thenReturn(iopsPerGb);
+        when(configuration.getRestoreVolumeType()).thenReturn(VolumeType.Io1.toString());
 
         taskService.createTask(taskDto);
 
@@ -155,8 +156,9 @@ public class TaskServiceTest {
     @Test
     public void shouldSetGP2RestoreVolumeTypeForRestoreTask(){
         taskDto.setType("restore");
-        systemProperties.setRestoreVolumeIopsPerGb(iopsPerGb);
-        systemProperties.setRestoreVolumeType(VolumeType.Gp2.toString());
+
+        when(configuration.getRestoreVolumeIopsPerGb()).thenReturn(iopsPerGb);
+        when(configuration.getRestoreVolumeType()).thenReturn(VolumeType.Gp2.toString());
 
         taskService.createTask(taskDto);
 
