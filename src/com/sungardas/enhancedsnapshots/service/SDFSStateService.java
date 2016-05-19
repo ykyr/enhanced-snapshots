@@ -4,13 +4,17 @@ public interface SDFSStateService {
 
     void backupState(String taskId);
 
-    void restoreState();
-
     boolean containsSdfsMetadata(String sBucket);
 
     Long getBackupTime();
 
-    void shutdownSDFS(String size, String bucketName);
+    void reconfigureAndRestartSDFS();
 
-    void startupSDFS(String size, String bucketName, Boolean isRestore);
+    void restoreSDFS();
+
+    void startSDFS();
+
+    void stopSDFS();
+
+    boolean sdfsIsRunning();
 }

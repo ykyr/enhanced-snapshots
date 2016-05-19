@@ -25,8 +25,8 @@ public class Configuration {
     // sdfs settings
     private String sdfsVolumeName;
     private String sdfsMountPoint;
-    private String sdfsLocalCacheSize;
-    private String sdfsSize;
+    private int sdfsLocalCacheSize;
+    private int sdfsSize;
     private String sdfsConfigPath;
     private String sdfsBackupFileName;
 
@@ -109,19 +109,19 @@ public class Configuration {
         this.restoreVolumeIopsPerGb = restoreVolumeIopsPerGb;
     }
 
-    public String getSdfsLocalCacheSize() {
+    public int getSdfsLocalCacheSize() {
         return sdfsLocalCacheSize;
     }
 
-    public void setSdfsLocalCacheSize(String sdfsLocalCacheSize) {
+    public void setSdfsLocalCacheSize(int sdfsLocalCacheSize) {
         this.sdfsLocalCacheSize = sdfsLocalCacheSize;
     }
 
-    public String getSdfsSize() {
+    public int getSdfsSize() {
         return sdfsSize;
     }
 
-    public void setSdfsSize(String sdfsSize) {
+    public void setSdfsSize(int sdfsSize) {
         this.sdfsSize = sdfsSize;
     }
 

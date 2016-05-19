@@ -11,24 +11,10 @@ import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 
 class InitConfigurationServiceDev implements InitConfigurationService {
 
-    @Override
-    public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
-
-    }
 
     @Override
     public void removeProperties() {
 
-    }
-
-    @Override
-    public boolean areCredentialsValid() {
-        return true;
-    }
-
-    @Override
-    public boolean credentialsAreProvided() {
-        return false;
     }
 
     @Override
@@ -61,7 +47,7 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public boolean propertyFileExists() {
-        return true;
+        return false;
     }
 
     @Override
@@ -94,11 +80,6 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public void setUser(User user) {
-
-    }
-
-    @Override
-    public void setInitConfigurationDto(InitConfigurationDto initConfigurationDto) {
 
     }
 

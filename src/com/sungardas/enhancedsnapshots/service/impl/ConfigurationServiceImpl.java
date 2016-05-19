@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -10,6 +11,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.EC2MetadataUtils;
@@ -18,8 +20,10 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepo
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 
+import com.sungardas.utils.SdfsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +34,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     private static final String CURRENT_VERSION = "0.0.1";
     private static final String LATEST_VERSION = "latest-version";
     private static final String INFO_URL = "http://com.sungardas.releases.s3.amazonaws.com/info";
+    private static final String VOLUME_SIZE_UNIT = "GB";
 
     @Autowired
     private ConfigurationRepository configurationRepository;
@@ -38,6 +43,8 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     private AmazonDynamoDB dynamoDB;
     @Autowired
     private AmazonS3 amazonS3;
+    @Value("${enhancedsnapshots.bucket.name.prefix}")
+    private String bucketNamePrefix;
 
     private String[] volumeTypeOptions = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
     private Configuration currentConfiguration;
@@ -57,11 +64,21 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
         configuration.setS3(new SystemConfiguration.S3());
         configuration.getS3().setBucketName(getS3Bucket());
+        configuration.getS3().setImmutablePrefix(bucketNamePrefix);
+        configuration.getS3().setSuffixesInUse(getSuffixesInUse());
 
         configuration.setSdfs(new SystemConfiguration.SDFS());
         configuration.getSdfs().setMountPoint(getSdfsMountPoint());
         configuration.getSdfs().setVolumeName(getSdfsVolumeName());
-        configuration.getSdfs().setVolumeSize(getSdfsVolumeSize());
+        configuration.getSdfs().setVolumeSize(currentConfiguration.getSdfsSize());
+        // user can only expand volume size
+        configuration.getSdfs().setMinVolumeSize(currentConfiguration.getSdfsSize());
+        configuration.getSdfs().setMaxVolumeSize(SdfsUtils.getMaxVolumeSize());
+
+        configuration.getSdfs().setSdfsLocalCacheSize(currentConfiguration.getSdfsLocalCacheSize());
+        configuration.getSdfs().setMaxSdfsLocalCacheSize(SdfsUtils.getMaxLocalCacheSize());
+
+
 
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
         configuration.getEc2Instance().setInstanceID(getInstanceId());
@@ -76,16 +93,31 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         systemProperties.setTempVolumeIopsPerGb(getTempVolumeIopsPerGb());
         systemProperties.setTempVolumeType(getTempVolumeType().toString());
         systemProperties.setVolumeTypeOptions(volumeTypeOptions);
+        systemProperties.setAmazonRetryCount(getAmazonRetryCount());
+        systemProperties.setAmazonRetrySleep(getAmazonRetrySleep());
         configuration.setSystemProperties(systemProperties);
         return configuration;
     }
 
     @Override
-    public void setSystemProperties(SystemConfiguration.SystemProperties systemProperties) {
-        currentConfiguration.setRestoreVolumeIopsPerGb(systemProperties.getRestoreVolumeIopsPerGb());
-        currentConfiguration.setRestoreVolumeType(systemProperties.getRestoreVolumeType());
-        currentConfiguration.setTempVolumeIopsPerGb(systemProperties.getTempVolumeIopsPerGb());
-        currentConfiguration.setTempVolumeType(systemProperties.getTempVolumeType());
+    public void setSystemConfiguration(SystemConfiguration configuration) {
+
+        // update system properties
+        currentConfiguration.setRestoreVolumeIopsPerGb(configuration.getSystemProperties().getRestoreVolumeIopsPerGb());
+        currentConfiguration.setRestoreVolumeType(configuration.getSystemProperties().getRestoreVolumeType());
+        currentConfiguration.setTempVolumeIopsPerGb(configuration.getSystemProperties().getTempVolumeIopsPerGb());
+        currentConfiguration.setTempVolumeType(configuration.getSystemProperties().getTempVolumeType());
+        currentConfiguration.setAmazonRetryCount(configuration.getSystemProperties().getAmazonRetryCount());
+        currentConfiguration.setAmazonRetrySleep(configuration.getSystemProperties().getAmazonRetrySleep());
+        currentConfiguration.setMaxQueueSize(configuration.getSystemProperties().getMaxQueueSize());
+
+        // update sdfs setting
+        currentConfiguration.setSdfsSize(configuration.getSdfs().getVolumeSize());
+        currentConfiguration.setSdfsLocalCacheSize(configuration.getSdfs().getSdfsLocalCacheSize());
+
+        // update bucket
+        currentConfiguration.setS3Bucket(configuration.getS3().getBucketName());
+
         configurationRepository.save(currentConfiguration);
     }
 
@@ -175,12 +207,22 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
     @Override
     public String getSdfsLocalCacheSize() {
+        return currentConfiguration.getSdfsLocalCacheSize() + VOLUME_SIZE_UNIT;
+    }
+
+    @Override
+    public int getSdfsLocalCacheSizeWithoutMeasureUnit() {
         return currentConfiguration.getSdfsLocalCacheSize();
     }
 
     @Override
     public String getSdfsVolumeSize() {
-        return currentConfiguration.getSdfsSize()+"GB";
+        return currentConfiguration.getSdfsSize() + VOLUME_SIZE_UNIT;
+    }
+
+    @Override
+    public int getSdfsVolumeSizeWithoutMeasureUnit() {
+        return currentConfiguration.getSdfsSize();
     }
 
     @Override
@@ -217,5 +259,20 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         } else {
             return null;
         }
+    }
+
+    private String[] getSuffixesInUse() {
+        ArrayList<String> result = new ArrayList<>();
+        List<Bucket> allBuckets = amazonS3.listBuckets();
+        for (Bucket bucket : allBuckets) {
+            if(bucket.getName().startsWith(bucketNamePrefix)){
+                result.add(bucket.getName().substring(bucketNamePrefix.length()));
+            }
+        }
+        return result.toArray(new String [result.size()]);
+    }
+
+    protected Configuration getCurrentConfiguration(){
+        return currentConfiguration;
     }
 }

@@ -31,6 +31,8 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeState;
 import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
@@ -54,7 +56,11 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     private final static int MAX_IOPS_VALUE = 20_000;
 
     @Autowired
+    private AmazonS3 amazonS3;
+
+    @Autowired
     private AmazonEC2 ec2client;
+
     @Autowired
     private ConfigurationService configurationService;
 
@@ -328,6 +334,17 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
             }
         }
         return null;
+    }
+
+    @Override
+    public void copyDataToNewBucket(String src, String dest) {
+        amazonS3.createBucket(new CreateBucketRequest(dest));
+        ObjectListing objectListing = amazonS3.listObjects(new ListObjectsRequest()
+                .withBucketName(src));
+
+        for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+            amazonS3.copyObject(src, objectSummary.getKey(),
+                    dest, objectSummary.getKey());}
     }
 
 

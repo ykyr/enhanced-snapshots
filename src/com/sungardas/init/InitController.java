@@ -38,7 +38,6 @@ import static org.springframework.http.HttpStatus.OK;
 class InitController implements ApplicationContextAware {
 
     private static final Logger LOG = LogManager.getLogger(InitController.class);
-    private static final String GB_UNIT = "GB";
 
     @Autowired
     private FilterProxy filterProxy;
@@ -73,6 +72,12 @@ class InitController implements ApplicationContextAware {
         return exception;
     }
 
+    //TODO: This should be removed, for dev mode only
+    @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.GET)
+    public ResponseEntity<String> getAwsCredentialsInfo() {
+        return new ResponseEntity<>("{\"contains\": true}", HttpStatus.OK);
+
+    }
 
     @ExceptionHandler(value = {Exception.class, AmazonClientException.class})
     @ResponseBody
@@ -96,23 +101,6 @@ class InitController implements ApplicationContextAware {
         }
     }
 
-    @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.POST)
-    public ResponseEntity<String> setAwsCredential(@RequestBody CredentialsDto credentials) {
-        initConfigurationService.setCredentialsIfValid(credentials);
-        LOG.info("provided aws keys");
-        return new ResponseEntity<>(OK);
-    }
-
-    @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.GET)
-    public ResponseEntity<String> getAwsCredentialsInfo() {
-        if (initConfigurationService.credentialsAreProvided()) {
-            return new ResponseEntity<>("{\"contains\": true}", HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("{\"contains\": false}", HttpStatus.OK);
-        }
-    }
-
-
     @RequestMapping(value = "/configuration/current", method = RequestMethod.GET)
     public ResponseEntity<InitConfigurationDto> getConfiguration() {
         return new ResponseEntity<>(initConfigurationService.getInitConfigurationDto(), HttpStatus.OK);
@@ -121,33 +109,26 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
-        if (initConfigurationService.areCredentialsValid()) {
-            InitConfigurationDto initConfigurationDto = initConfigurationService.getInitConfigurationDto();
-            if (!initConfigurationDto.getDb().isValid()) {
-                if (config.getUser() == null) {
-                    throw new ConfigurationException("Please create default user");
-                }
-                initConfigurationService.setUser(config.getUser());
+        InitConfigurationDto initConfigurationDto = initConfigurationService.getInitConfigurationDto();
+        if (!initConfigurationDto.getDb().isValid()) {
+            if (config.getUser() == null) {
+                throw new ConfigurationException("Please create default user");
             }
-            if (config.getUser() != null) {
-                initConfigurationService.setUser(config.getUser());
-            }
-            initConfigurationService.validateVolumeSize(config.getVolumeSize());
-            initConfigurationDto.getSdfs().setVolumeSize(config.getVolumeSize() + GB_UNIT);
-            initConfigurationDto.setS3(Arrays.asList(new InitConfigurationDto.S3(config.getBucketName(), false)));
-            initConfigurationService.setInitConfigurationDto(initConfigurationDto);
-            initConfigurationService.storePropertiesEditableFromConfigFile();
-            initConfigurationService.createDBAndStoreSettings(config);
-            try {
-                refreshContext();
-            } catch (Exception e) {
-                initConfigurationService.removeProperties();
-                throw e;
-            }
-            return new ResponseEntity<>("", HttpStatus.OK);
-        } else {
-            throw new ConfigurationException("AWS configuration invalid");
+            initConfigurationService.setUser(config.getUser());
         }
+        if (config.getUser() != null) {
+            initConfigurationService.setUser(config.getUser());
+        }
+        initConfigurationService.validateVolumeSize(config.getVolumeSize());
+        initConfigurationService.storePropertiesEditableFromConfigFile();
+        initConfigurationService.createDBAndStoreSettings(config);
+        try {
+            refreshContext();
+        } catch (Exception e) {
+            initConfigurationService.removeProperties();
+            throw e;
+        }
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     @Override

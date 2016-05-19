@@ -55,8 +55,14 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
     private int sdfsMountTime;
-    @Value("${enhancedsnapshots.default.sdfs.script.path}")
-    private String sdfsScriptLocation;
+    @Value("${enhancedsnapshots.configure.sdfs.script.path}")
+    private String configureSdfsScript;
+    @Value("${enhancedsnapshots.mount.sdfs.script.path}")
+    private String mountSdfsScript;
+    @Value("${enhancedsnapshots.unmount.sdfs.script.path}")
+    private String unmountSdfsScript;
+    @Value("${enhancedsnapshots.getstate.sdfs.script.path}")
+    private String getSdfsState;
 
     @Autowired
     private ResourceLoader resourceLoader;
@@ -71,12 +77,14 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Autowired
     private ConfigurationService configurationService;
 
+    //TODO: maybe we can avoid stopping and starting sdfs while backup if we use sdfscli --cloud-sync-fs command
+    //TODO: in sdfs 3.1.9 this command does not work but according to documentation it should be supported
     @Override
     public void backupState(String taskId) {
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Stopping SDFS...", 20);
         }
-        shutdownSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket());
+        stopSDFS();
         String[] paths = {configurationService.getSdfsConfigPath()};
         File tempFile = null;
         try {
@@ -86,7 +94,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             tempFile = ZipUtils.zip(FilenameUtils.removeExtension(configurationService.getSdfsBackupFileName()),
                     getFileExtension(configurationService.getSdfsBackupFileName()), paths);
         } catch (Throwable e) {
-            startupSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(), false);
+            startSDFS();
             if (tempFile != null && tempFile.exists()) {
                 tempFile.delete();
             }
@@ -99,21 +107,22 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Starting SDFS...", 80);
         }
-        startupSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(), false);
+        startSDFS();
         tempFile.delete();
     }
 
     @Override
-    public void restoreState() throws AmazonClientException {
-        //shutdownSDFS(sdfsSize, s3Bucket);
+    public void restoreSDFS() {
         File file = null;
         try {
+            removeSdfsConfFile();
+            // copy sdfs config file from S3
             file = Files.createTempFile(FilenameUtils.removeExtension(configurationService.getSdfsBackupFileName()),
                     getFileExtension(configurationService.getSdfsBackupFileName())).toFile();
             downloadFromS3(configurationService.getSdfsBackupFileName(), file);
             ZipUtils.unzip(file, SDFS_STATE_DESTINATION);
             file.delete();
-            startupSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(), true);
+            startSDFS(true);
             //SDFS mount time
             TimeUnit.SECONDS.sleep(sdfsMountTime);
             restoreBackups();
@@ -122,7 +131,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             if (file != null && file.exists()) {
                 file.delete();
             }
-            throw new SDFSException("Cant restore sdfs state", e);
+            throw new SDFSException("Can't restore sdfs state", e);
         }
     }
 
@@ -182,36 +191,103 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
-    public void startupSDFS(String size, String bucketName,  Boolean isRestore) {
+    public void reconfigureAndRestartSDFS() {
         try {
-            String[] parameters = {getSdfsScriptFile().getAbsolutePath(),  size, bucketName, isRestore.toString(),
-                    getBucketLocation(bucketName), configurationService.getSdfsLocalCacheSize()};
+            stopSDFS();
+            removeSdfsConfFile();
+            configureSDFS();
+            startSDFS(false);
+        } catch (Exception e){
+            LOG.error("Failed to reconfigure and restart SDFS", e);
+            throw new ConfigurationException("Failed to reconfigure and restart SDFS");
+        }
+    }
+
+    private void startSDFS(Boolean restore) {
+        try {
+            if (sdfsIsRunning()){
+                LOG.info("SDFS is already running");
+                return;
+            }
+            if (!new File(configurationService.getSdfsConfigPath()).exists()) {
+                configureSDFS();
+            }
+            String[] parameters = {getSdfsScriptFile(mountSdfsScript).getAbsolutePath(),  restore.toString()};
             Process p = Runtime.getRuntime().exec(parameters);
             p.waitFor();
             print(p);
             switch (p.exitValue()) {
                 case 0:
-                    LOG.info("SDFS mounted");
-                    break;
-                case 1:
-                    LOG.info("SDFS unmounted");
-                    p = Runtime.getRuntime().exec(parameters);
-                    p.waitFor();
-                    print(p);
-                    if (p.exitValue() != 0) {
-                        throw new ConfigurationException("Error creating sdfs");
-                    }
-                    LOG.info("SDFS mounted");
+                    LOG.info("SDFS is running");
                     break;
                 default:
-                    print(p);
-                    throw new ConfigurationException("Error creating sdfs");
+                    throw new ConfigurationException("Failed to start SDFS");
             }
         } catch (Exception e) {
             LOG.error(e);
-            throw new ConfigurationException("Error creating sdfs");
+            throw new ConfigurationException("Failed to start SDFS");
         }
     }
+
+    @Override
+    public void startSDFS (){
+        startSDFS(false);
+    }
+
+
+
+    private void configureSDFS() throws IOException, InterruptedException {
+        String[] parameters = {getSdfsScriptFile(configureSdfsScript).getAbsolutePath(), configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(),
+                getBucketLocation(configurationService.getS3Bucket()), configurationService.getSdfsLocalCacheSize()};
+        Process p = Runtime.getRuntime().exec(parameters);
+        p.waitFor();
+        print(p);
+        switch (p.exitValue()) {
+            case 0:
+                LOG.info("SDFS is configured");
+                break;
+            default:
+                throw new ConfigurationException("Failed to configure SDFS");
+        }
+    }
+
+    @Override
+    public void stopSDFS() {
+        try {
+            if (!sdfsIsRunning()){
+                LOG.info("SDFS is already stopped");
+                return;
+            }
+            String[] parameters = {getSdfsScriptFile(unmountSdfsScript).getAbsolutePath()};
+            Process p = Runtime.getRuntime().exec(parameters);
+            p.waitFor();
+            print(p);
+            switch (p.exitValue()) {
+                case 0:
+                    LOG.info("SDFS is currently stopped");
+                    break;
+                default:
+                    throw new ConfigurationException("Failed to stop SDFS");
+            }
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new ConfigurationException("Failed to stop SDFS");
+        }
+    }
+
+    @Override
+    public boolean sdfsIsRunning() {
+        return false;
+    }
+
+    private void removeSdfsConfFile() {
+        File sdfsConf = new File(configurationService.getSdfsConfigPath());
+        if (sdfsConf.exists()) {
+            sdfsConf.delete();
+            LOG.info("SDFS conf file was successfully removed.");
+        }
+    }
+
 
     private String getBucketLocation(String bucket) {
         String location;
@@ -223,38 +299,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         }
 
         return location;
-    }
-
-    @Override
-    public void shutdownSDFS(String size, String bucketName) {
-        try {
-            String[] parameters = {getSdfsScriptFile().getAbsolutePath(), size, bucketName , getBucketLocation(bucketName),
-                    configurationService.getSdfsLocalCacheSize()};
-            Process p = Runtime.getRuntime().exec(parameters);
-            p.waitFor();
-            print(p);
-            switch (p.exitValue()) {
-                case 0:
-                    LOG.info("SDFS mounted");
-                    p = Runtime.getRuntime().exec(parameters);
-                    p.waitFor();
-                    print(p);
-                    if (p.exitValue() != 1) {
-                        throw new ConfigurationException("Error unable to stop sdfs");
-                    }
-                    LOG.info("SDFS unmounted");
-                    break;
-                case 1:
-                    LOG.info("SDFS unmounted");
-                    break;
-                default:
-                    print(p);
-                    throw new ConfigurationException("Error creating sdfs");
-            }
-        } catch (Exception e) {
-            LOG.error(e);
-            throw new ConfigurationException("Error creating sdfs");
-        }
     }
 
     private void print(Process p) throws IOException {
@@ -291,8 +335,8 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         bout.close();
     }
 
-    private File getSdfsScriptFile() throws IOException {
-        File sdfsScript = resourceLoader.getResource(sdfsScriptLocation).getFile();
+    private File getSdfsScriptFile(String scriptName) throws IOException {
+        File sdfsScript = resourceLoader.getResource(scriptName).getFile();
         sdfsScript.setExecutable(true);
         return sdfsScript;
     }

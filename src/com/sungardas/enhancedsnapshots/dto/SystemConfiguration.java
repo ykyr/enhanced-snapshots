@@ -74,6 +74,25 @@ public class SystemConfiguration {
 
     public static class S3 {
         private String bucketName;
+        private String immutablePrefix;
+        private String [] suffixesInUse;
+
+
+        public String[] getSuffixesInUse() {
+            return suffixesInUse;
+        }
+
+        public void setSuffixesInUse(String[] suffixesInUse) {
+            this.suffixesInUse = suffixesInUse;
+        }
+
+        public String getImmutablePrefix() {
+            return immutablePrefix;
+        }
+
+        public void setImmutablePrefix(String immutablePrefix) {
+            this.immutablePrefix = immutablePrefix;
+        }
 
         public String getBucketName() {
             return bucketName;
@@ -85,9 +104,58 @@ public class SystemConfiguration {
     }
 
     public static class SDFS {
-        private String volumeName;
-        private String volumeSize;
+
         private String mountPoint;
+        private String volumeName;
+
+        private int volumeSize;
+        private int minVolumeSize;
+        private int maxVolumeSize;
+
+        private int sdfsLocalCacheSize;
+        private int maxSdfsLocalCacheSize;
+        private int minSdfsLocalCacheSize;
+
+
+        public int getSdfsLocalCacheSize() {
+            return sdfsLocalCacheSize;
+        }
+
+        public void setSdfsLocalCacheSize(int sdfsLocalCacheSize) {
+            this.sdfsLocalCacheSize = sdfsLocalCacheSize;
+        }
+
+        public int getMaxSdfsLocalCacheSize() {
+            return maxSdfsLocalCacheSize;
+        }
+
+        public void setMaxSdfsLocalCacheSize(int maxSdfsLocalCacheSize) {
+            this.maxSdfsLocalCacheSize = maxSdfsLocalCacheSize;
+        }
+
+        public int getMinSdfsLocalCacheSize() {
+            return minSdfsLocalCacheSize;
+        }
+
+        public void setMinSdfsLocalCacheSize(int minSdfsLocalCacheSize) {
+            this.minSdfsLocalCacheSize = minSdfsLocalCacheSize;
+        }
+
+        public int getMinVolumeSize() {
+            return minVolumeSize;
+        }
+
+        public void setMinVolumeSize(int minVolumeSize) {
+            this.minVolumeSize = minVolumeSize;
+        }
+
+        public int getMaxVolumeSize() {
+            return maxVolumeSize;
+        }
+
+        public void setMaxVolumeSize(int maxVolumeSize) {
+            this.maxVolumeSize = maxVolumeSize;
+        }
 
         public String getVolumeName() {
             return volumeName;
@@ -97,11 +165,11 @@ public class SystemConfiguration {
             this.volumeName = volumeName;
         }
 
-        public String getVolumeSize() {
+        public int getVolumeSize() {
             return volumeSize;
         }
 
-        public void setVolumeSize(String volumeSize) {
+        public void setVolumeSize(int volumeSize) {
             this.volumeSize = volumeSize;
         }
 
@@ -133,6 +201,33 @@ public class SystemConfiguration {
         private String restoreVolumeType;
         private int restoreVolumeIopsPerGb;
         private String[] volumeTypeOptions;
+        private int amazonRetryCount;
+        private int amazonRetrySleep;
+        private int maxQueueSize;
+
+        public int getAmazonRetryCount() {
+            return amazonRetryCount;
+        }
+
+        public void setAmazonRetryCount(int amazonRetryCount) {
+            this.amazonRetryCount = amazonRetryCount;
+        }
+
+        public int getAmazonRetrySleep() {
+            return amazonRetrySleep;
+        }
+
+        public void setAmazonRetrySleep(int amazonRetrySleep) {
+            this.amazonRetrySleep = amazonRetrySleep;
+        }
+
+        public int getMaxQueueSize() {
+            return maxQueueSize;
+        }
+
+        public void setMaxQueueSize(int maxQueueSize) {
+            this.maxQueueSize = maxQueueSize;
+        }
 
         public String getTempVolumeType() {
             return tempVolumeType;

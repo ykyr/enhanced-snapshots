@@ -4,6 +4,7 @@ import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
 import com.sungardas.enhancedsnapshots.rest.utils.Constants;
+import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.UserService;
@@ -43,6 +44,9 @@ public class SystemController {
     private UserService userService;
 
     @Autowired
+    private AWSCommunicationService awsCommunicationService;
+
+    @Autowired
     private XmlWebApplicationContext applicationContext;
 
     @Autowired
@@ -68,11 +72,25 @@ public class SystemController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<String> setSystemProperties(@RequestBody SystemConfiguration.SystemProperties systemProperties) {
-        if (!checkIopsAreValid(systemProperties)) {
+    public ResponseEntity<String> updateSystemProperties(@RequestBody SystemConfiguration systemConfiguration) {
+        if (!checkIopsAreValid(systemConfiguration.getSystemProperties())) {
             return new ResponseEntity<>("iops per GB can not be less than 1 and more than 30", HttpStatus.BAD_REQUEST);
         }
-        configurationService.setSystemProperties(systemProperties);
+        boolean needToReconfigureSdfs = false;
+        if (!configurationService.getS3Bucket().equals(systemConfiguration.getS3().getBucketName())) {
+            awsCommunicationService.copyDataToNewBucket(configurationService.getS3Bucket(), systemConfiguration.getS3().getBucketName());
+            needToReconfigureSdfs = true;
+        }
+        if (configurationService.getSdfsVolumeSizeWithoutMeasureUnit() != systemConfiguration.getSdfs().getVolumeSize()) {
+            needToReconfigureSdfs = true;
+        }
+        if (configurationService.getSdfsLocalCacheSizeWithoutMeasureUnit() != systemConfiguration.getSdfs().getSdfsLocalCacheSize()) {
+            needToReconfigureSdfs = true;
+        }
+        configurationService.setSystemConfiguration(systemConfiguration);
+        if (needToReconfigureSdfs) {
+            sdfsStateService.reconfigureAndRestartSDFS();
+        }
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 
