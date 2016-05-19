@@ -10,10 +10,6 @@ public class SDFSStateServiceDev implements SDFSStateService {
     private static final org.apache.log4j.Logger LOG = org.apache.log4j.LogManager.getLogger(SDFSStateServiceDev.class);
 
     @Override
-    public void backupState() throws AmazonClientException {
-    }
-
-    @Override
     public void backupState(String taskId) {
 
     }

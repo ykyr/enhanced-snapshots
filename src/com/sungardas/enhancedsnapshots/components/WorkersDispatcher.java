@@ -2,37 +2,23 @@ package com.sungardas.enhancedsnapshots.components;
 
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.WorkerConfiguration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
-import com.sungardas.enhancedsnapshots.tasks.BackupTask;
-import com.sungardas.enhancedsnapshots.tasks.DeleteTask;
-import com.sungardas.enhancedsnapshots.tasks.RestoreTask;
-import com.sungardas.enhancedsnapshots.tasks.Task;
+import com.sungardas.enhancedsnapshots.tasks.executors.TaskExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.ObjectFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
+import javax.annotation.*;
+import java.util.*;
+import java.util.concurrent.*;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
 
 @Service
 @DependsOn("CreateAppConfiguration")
@@ -50,29 +36,27 @@ public class WorkersDispatcher {
     @Autowired
     private ConfigurationService configurationService;
     @Autowired
-    private ObjectFactory<BackupTask> backupTaskObjectFactory;
+    @Qualifier("awsBackupVolumeTaskExecutor")
+    private TaskExecutor awsBackupVolumeTaskExecutor;
     @Autowired
-    private ObjectFactory<DeleteTask> deleteTaskObjectFactory;
+    @Qualifier("awsDeleteTaskExecutor")
+    private TaskExecutor awsDeleteTaskExecutor;
     @Autowired
-    private ObjectFactory<RestoreTask> restoreTaskObjectFactory;
+    @Qualifier("awsRestoreVolumeTaskExecutor")
+    private TaskExecutor awsRestoreVolumeTaskExecutor;
     @Autowired
     private TaskService taskService;
     @Autowired
     private SDFSStateService sdfsStateService;
     @Autowired
     private TaskRepository taskRepository;
-
     @Autowired
     private NotificationService notificationService;
 
-    @Value("${enhancedsnapshots.polling.rate}")
-    private int pollingRate;
-    private WorkerConfiguration configuration;
     private ExecutorService executor;
 
     @PostConstruct
     private void init() {
-        configuration = configurationService.getWorkerConfiguration();
         executor = Executors.newSingleThreadExecutor();
         executor.execute(new TaskWorker());
     }
@@ -95,7 +79,7 @@ public class WorkersDispatcher {
 
         @Override
         public void run() {
-            String instanceId = configuration.getConfigurationId();
+            String instanceId = configurationService.getConfigurationId();
 
             LOGtw.info("Starting worker dispatcher");
             while (true) {
@@ -108,24 +92,20 @@ public class WorkersDispatcher {
                     while (!taskEntrySet.isEmpty()) {
                         entry = taskEntrySet.iterator().next();
 
-                        Task task = null;
                         if (!taskService.isCanceled(entry.getId())) {
                             switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
                                 case BACKUP:
                                     LOGtw.info("Task was identified as backup");
-                                    task = backupTaskObjectFactory.getObject();
-                                    task.setTaskEntry(entry);
+                                    awsBackupVolumeTaskExecutor.execute(entry);
                                     break;
                                 case DELETE: {
                                     LOGtw.info("Task was identified as delete backup");
-                                    task = deleteTaskObjectFactory.getObject();
-                                    task.setTaskEntry(entry);
+                                    awsDeleteTaskExecutor.execute(entry);
                                     break;
                                 }
                                 case RESTORE:
                                     LOGtw.info("Task was identified as restore");
-                                    task = restoreTaskObjectFactory.getObject();
-                                    task.setTaskEntry(entry);
+                                    awsRestoreVolumeTaskExecutor.execute(entry);
                                     break;
                                 case SYSTEM_BACKUP: {
                                     LOGtw.info("Task was identified as system backup");
@@ -144,15 +124,16 @@ public class WorkersDispatcher {
                         } else {
                             LOGtw.debug("Task canceled: {}", entry);
                         }
-                        if (task != null) {
-                            task.execute();
-                        }
                         taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), instanceId, Boolean.FALSE.toString()));
                     }
                     sleep();
                 } catch (AmazonClientException e) {
                     LOGtw.error(e);
                 } catch (EnhancedSnapshotsInterruptedException e) {
+                    return;
+                    // this is required to close thread when uninstalling system
+                } catch (IllegalStateException e) {
+                    LOGtw.warn("Stopping worker dispatcher ...");
                     return;
                 } catch (Exception e) {
                     LOGtw.error(e);
@@ -166,7 +147,7 @@ public class WorkersDispatcher {
 
         private void sleep() {
             try {
-                TimeUnit.MILLISECONDS.sleep(pollingRate);
+                TimeUnit.MILLISECONDS.sleep(configurationService.getWorkerDispatcherPollingRate());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

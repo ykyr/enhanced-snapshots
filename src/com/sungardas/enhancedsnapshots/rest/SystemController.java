@@ -55,7 +55,7 @@ public class SystemController {
         if (!userService.isAdmin(currentUser)) {
             return new ResponseEntity<>("{\"msg\":\"Only admin can delete service\"}", HttpStatus.FORBIDDEN);
         }
-        if (!configurationService.getWorkerConfiguration().getConfigurationId().equals(instanceId.getInstanceId())) {
+        if (!configurationService.getConfigurationId().equals(instanceId.getInstanceId())) {
             return new ResponseEntity<>("{\"msg\":\"Provided instance ID is incorrect\"}", HttpStatus.FORBIDDEN);
         }
         refreshContext();
@@ -67,6 +67,14 @@ public class SystemController {
         return new ResponseEntity<>(configurationService.getSystemConfiguration(), HttpStatus.OK);
     }
 
+    @RequestMapping(method = RequestMethod.POST)
+    public ResponseEntity<String> setSystemProperties(@RequestBody SystemConfiguration.SystemProperties systemProperties) {
+        if (!checkIopsAreValid(systemProperties)) {
+            return new ResponseEntity<>("iops per GB can not be less than 1 and more than 30", HttpStatus.BAD_REQUEST);
+        }
+        configurationService.setSystemProperties(systemProperties);
+        return new ResponseEntity<>("", HttpStatus.OK);
+    }
 
     @RequestMapping(value = "/backup", method = RequestMethod.GET)
     public ResponseEntity<SystemBackupDto> getConfiguration() {
@@ -112,5 +120,17 @@ public class SystemController {
         public void setInstanceId(String instanceId) {
             this.instanceId = instanceId;
         }
+    }
+
+    // iops per GB can not be less than 1 and more than 30
+    private boolean checkIopsAreValid(SystemConfiguration.SystemProperties systemProperties) {
+        boolean result = true;
+        if (systemProperties.getRestoreVolumeIopsPerGb() > 30 || systemProperties.getTempVolumeIopsPerGb() > 30) {
+            result = false;
+        }
+        if (systemProperties.getRestoreVolumeIopsPerGb() < 1 || systemProperties.getTempVolumeIopsPerGb() < 1) {
+            result = false;
+        }
+        return result;
     }
 }

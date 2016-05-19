@@ -1,4 +1,4 @@
-package com.sungardas.enhancedsnapshots.tasks;
+package com.sungardas.enhancedsnapshots.tasks.executors;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
@@ -8,16 +8,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
-@Component
-@Scope("prototype")
+@Service ("awsRestoreVolumeTaskExecutor")
 @Profile("dev")
-public class RestoreFakeTask implements RestoreTask {
-	private static final Logger LOG = LogManager.getLogger(RestoreFakeTask.class);
+public class RestoreFakeTaskExecutor implements TaskExecutor {
+	private static final Logger LOG = LogManager.getLogger(RestoreFakeTaskExecutor.class);
 
 	@Autowired
 	private TaskRepository taskRepository;
@@ -28,16 +27,9 @@ public class RestoreFakeTask implements RestoreTask {
 	@Autowired
 	private TaskService taskService;
 
-	private TaskEntry taskEntry;
 
 	@Override
-	public void setTaskEntry(TaskEntry taskEntry) {
-		this.taskEntry = taskEntry;
-
-	}
-
-	@Override
-	public void execute() {
+	public void execute(TaskEntry taskEntry) {
 		notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting restore...", 0);
 		LOG.info("Task " + taskEntry.getId() + ": Change task state to 'inprogress'");
 		taskEntry.setStatus("running");

@@ -2,8 +2,6 @@ package com.sungardas.enhancedsnapshots.service;
 
 public interface SDFSStateService {
 
-    void backupState();
-
     void backupState(String taskId);
 
     void restoreState();

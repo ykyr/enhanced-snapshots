@@ -1,4 +1,4 @@
-package com.sungardas.enhancedsnapshots.tasks;
+package com.sungardas.enhancedsnapshots.tasks.executors;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
@@ -13,43 +13,29 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
-import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
+import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
 
-@Component
-@Scope("prototype")
+@Service("awsDeleteTaskExecutor")
 @Profile("prod")
-public class AWSDeleteTask implements DeleteTask {
+public class AWSDeleteTaskExecutor implements TaskExecutor {
 
-    private static final Logger LOG = LogManager.getLogger(DeleteFakeTask.class);
-
-    private TaskEntry taskEntry;
+    private static final Logger LOG = LogManager.getLogger(DeleteFakeTaskExecutor.class);
 
     @Autowired
     private NotificationService notificationService;
-
     @Autowired
     private TaskRepository taskRepository;
-
     @Autowired
     private BackupRepository backupRepository;
-
     @Autowired
     private StorageService storageService;
-
     @Autowired
     private TaskService taskService;
 
     @Override
-    public void setTaskEntry(TaskEntry taskEntry) {
-        this.taskEntry = taskEntry;
-    }
-
-    @Override
-    public void execute() {
+    public void execute(TaskEntry taskEntry) {
         LOG.info("Task " + taskEntry.getId() + ": Change task state to 'running'");
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Starting delete task", 0);
 

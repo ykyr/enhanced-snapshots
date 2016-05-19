@@ -1,22 +1,45 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
-import com.amazonaws.AmazonClientException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.*;
+import com.amazonaws.services.ec2.model.AttachVolumeRequest;
+import com.amazonaws.services.ec2.model.AttachVolumeResult;
+import com.amazonaws.services.ec2.model.AvailabilityZone;
+import com.amazonaws.services.ec2.model.CreateSnapshotRequest;
+import com.amazonaws.services.ec2.model.CreateSnapshotResult;
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeRequest;
+import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
+import com.amazonaws.services.ec2.model.DeleteTagsRequest;
+import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
+import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesResult;
+import com.amazonaws.services.ec2.model.DetachVolumeRequest;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceBlockDeviceMapping;
+import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.Snapshot;
+import com.amazonaws.services.ec2.model.SnapshotState;
+import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.Volume;
+import com.amazonaws.services.ec2.model.VolumeState;
+import com.amazonaws.services.ec2.model.VolumeType;
+import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.SnapshotService;
+import com.sungardas.enhancedsnapshots.service.ConfigurationService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 
@@ -24,23 +47,17 @@ import static java.lang.String.format;
 @Profile("prod")
 public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
-    private static final Logger LOG = LogManager
-            .getLogger(AWSCommunicationServiceImpl.class);
-
-    @Autowired
-    private SnapshotService snapshotService;
+    private static final Logger LOG = LogManager.getLogger(AWSCommunicationServiceImpl.class);
+    private static final String AVAILABLE_STATE = VolumeState.Available.toString();
+    private final static int MIN_SIZE_OF_OI1_VOLUME = 4;
+    private final static int MIN_IOPS_VALUE = 100;
+    private final static int MAX_IOPS_VALUE = 20_000;
 
     @Autowired
     private AmazonEC2 ec2client;
+    @Autowired
+    private ConfigurationService configurationService;
 
-    @Value("${sungardas.worker.configuration}")
-    private String configurationId;
-
-    @Value("${sungardas.restore.snapshot.attempts:30}")
-    private int retryRestoreAttempts;
-
-    @Value("${sungardas.restore.snapshot.timeout:30}")
-    private int retryRestoreTimeout;
 
    @Override
    public List<AvailabilityZone> describeAvailabilityZonesForCurrentRegion() {
@@ -49,7 +66,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public String getCurrentAvailabilityZone() {
-        return getInstance(configurationId).getPlacement()
+        return getInstance(configurationService.getConfigurationId()).getPlacement()
                 .getAvailabilityZone();    }
 
     @Override
@@ -83,10 +100,9 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     }
 
-    @Override
-    public Volume createVolume(int size, int iiops, String type) {
-        if (type.equals("standard")) type="gp2";
-	String availabilityZone = getInstance(configurationId).getPlacement()
+
+    private Volume createVolume(int size, int iiops, VolumeType type) {
+        String availabilityZone = getInstance(configurationService.getConfigurationId()).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
@@ -100,18 +116,15 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public Volume createStandardVolume(int size) {
-        return createVolume(size, 0, "standard");
+    public Volume createVolume(int size, VolumeType type) {
+        return createVolume(size, 0, type);
     }
 
     @Override
-    public Volume createGP2Volume(int size) {
-        return createVolume(size, 0, "gp2");
-    }
-
-    @Override
-    public Volume createIO1Volume(int size, int iops) {
-        return createVolume(size, iops, "io1");
+    public Volume createIO1Volume(int size, int iopsPerGb) {
+        // io1 volume size can not be less than 4 Gb
+        size = size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size;
+        return createVolume(size < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : size, getIops(iopsPerGb, size), VolumeType.Io1);
     }
 
     @Override
@@ -151,41 +164,26 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public Snapshot waitForCompleteState(Snapshot snapshot) {
-        String state="";
-	String progress="";
-        Snapshot result;
+        Snapshot syncSnapshot;
         do {
-            try {
-                TimeUnit.SECONDS.sleep(20);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            sleepTillNextSync();
+            syncSnapshot = syncSnapshot(snapshot.getSnapshotId());
+            LOG.debug("Snapshot state: {}, progress: {}", syncSnapshot.getState(), syncSnapshot.getProgress());
+            if (syncSnapshot.getState().equals(SnapshotState.Error)) {
+                new AWSCommunicationServiceException("Snapshot " + snapshot.getSnapshotId() + " is in error state");
             }
-	
-	DescribeSnapshotsResult describeSnapRes 
-        = ec2client.describeSnapshots(new DescribeSnapshotsRequest().withSnapshotIds(snapshot.getSnapshotId()));
-        state = describeSnapRes.getSnapshots().get(0).getState();	
-        progress = describeSnapRes.getSnapshots().get(0).getProgress();
-	result = describeSnapRes.getSnapshots().get(0);
-	System.out.println("Snapshot status is"+ state + "progress:"+progress);
-            //result = syncSnapshot(snapshot);
-            //state = result.getState();
-            if (state.equals(SnapshotState.Error)) {
-                // TODO:exception
-            }
-        } while (state.equals(SnapshotState.Pending)|| (!progress.equals("100%")) );
-        
-        return result;
+        } while (syncSnapshot.getState().equals(SnapshotState.Pending) || !syncSnapshot.getProgress().equals("100%"));
+        return syncSnapshot;
     }
 
     @Override
-    public Snapshot syncSnapshot(Snapshot snapshot) {
-        DescribeSnapshotsRequest describeSnapshotsRequest = new DescribeSnapshotsRequest();
-        LinkedList<String> ids = new LinkedList<String>();
-        ids.add(snapshot.getSnapshotId());
-        describeSnapshotsRequest.setSnapshotIds(ids);
-        DescribeSnapshotsResult describeSnapshotsResult = ec2client
-                .describeSnapshots(describeSnapshotsRequest);
-        return describeSnapshotsResult.getSnapshots().get(0);
+    public Snapshot syncSnapshot(String snapshotId) {
+        Snapshot syncSnapshot = getSnapshot(snapshotId);
+        if (syncSnapshot != null) {
+            return syncSnapshot;
+        }
+        LOG.error("Failed to sync snapshot {}. Snapshot does not exist.", snapshotId);
+        throw new AWSCommunicationServiceException("Can not sync snapshot. Snapshot " + snapshotId + " does not exist.");
     }
 
     @Override
@@ -193,11 +191,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         String state;
         Volume result;
         do {
-            try {
-                TimeUnit.SECONDS.sleep(25);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            sleepTillNextSync();
             result = syncVolume(volume);
             state = result.getState();
             System.out.println("waitForAvailableState.current state: " + state);
@@ -211,13 +205,12 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public Volume getVolume(String volumeId) {
-        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest();
-        LinkedList<String> ids = new LinkedList<>();
-        ids.add(volumeId);
-        describeVolumesRequest.setVolumeIds(ids);
-        DescribeVolumesResult describeVolumesResult = ec2client
-                .describeVolumes(describeVolumesRequest);
-        return describeVolumesResult.getVolumes().get(0);
+        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest().withVolumeIds(volumeId);
+        DescribeVolumesResult result = ec2client.describeVolumes(describeVolumesRequest);
+        if (result.getVolumes().size() == 1) {
+            return result.getVolumes().get(0);
+        }
+        return null;
     }
 
     @Override
@@ -238,55 +231,36 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public void detachVolume(Volume volume) {
-        boolean incorrectState = true;
-        long timeout = 10L;
-        while (incorrectState) {
-            try {
-                incorrectState = false;
-                DetachVolumeRequest detachVolumeRequest = new DetachVolumeRequest(volume.getVolumeId());
-                DetachVolumeResult detachVolumeResult = ec2client.detachVolume(detachVolumeRequest);
-            } catch (AmazonClientException incorrectStateException) {
-                LOG.info(incorrectStateException.getMessage() + "\n Waiting for new try");
-                incorrectState = true;
-                timeout += timeout < 120 ? timeout * 2 : 0;
-                try {
-                    TimeUnit.SECONDS.sleep(timeout);
-                } catch (InterruptedException e) {
-                }
+        DetachVolumeRequest detachVolumeRequest = new DetachVolumeRequest(volume.getVolumeId());
+        ec2client.detachVolume(detachVolumeRequest);
+        waitVolumeToDetach(volume);
+    }
+
+    public Volume createVolumeFromSnapshot(String snapshotId, String availabilityZoneName, VolumeType type, int iopsPerGb) {
+        CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(snapshotId, availabilityZoneName);
+        crVolumeRequest.setVolumeType(type);
+
+        if (type.equals(VolumeType.Io1)) {
+            Snapshot snapshot = getSnapshot(snapshotId);
+            // io1 volume size can not be less than 4 Gb
+            int size = snapshot.getVolumeSize() < MIN_SIZE_OF_OI1_VOLUME ? MIN_SIZE_OF_OI1_VOLUME : snapshot.getVolumeSize();
+            crVolumeRequest.setSize(size);
+            // setting iops
+            if (iopsPerGb != 0) {
+                crVolumeRequest.setIops(getIops(iopsPerGb,  size));
             }
         }
-        LOG.info(format("\nVolume %s unattached", volume.getVolumeId()));
-    }
-
-    @Override
-    public Volume createVolumeFromSnapshot(String snapshotId,
-                                           String availabilityZoneName) {
-        String type="gp2";
-	CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest()
-                .withVolumeType(type)
-		.withSnapshotId(snapshotId)
-                .withAvailabilityZone(availabilityZoneName);
-	//CreateVolumeRequest crVolumeRequest = new CreateVolumeRequest(
-        //        snapshotId, availabilityZoneName);
-        CreateVolumeResult crVolumeResult = ec2client
-                .createVolume(crVolumeRequest);
-        return crVolumeResult.getVolume();
-    }
-
-    @Override
-    public Volume createVolumeFromSnapshot(Snapshot snapshot,
-                                           String availabilityZoneName) {
-        return createVolumeFromSnapshot(snapshot.getSnapshotId(),
-                availabilityZoneName);
+        return ec2client.createVolume(crVolumeRequest).getVolume();
     }
 
     @Override
     public Volume syncVolume(Volume volume) {
-        DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest()
-                .withVolumeIds(volume.getVolumeId());
-        DescribeVolumesResult result = ec2client
-                .describeVolumes(describeVolumesRequest);
-        return result.getVolumes().get(0);
+        Volume syncVolume = getVolume(volume.getVolumeId());
+        if (syncVolume != null) {
+            return syncVolume;
+        }
+        LOG.error("Failed to sync volume {}. Volume does not exist.", volume.getVolumeId());
+        throw new AWSCommunicationServiceException("Can not sync volume. Volume " + volume.getVolumeId() + " does not exist.");
     }
 
     @Override
@@ -324,7 +298,6 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         return "/dev/sdf";
     }
 
-
     @Override
     public void setResourceName(String resourceId, String value) {
         addTag(resourceId, "Name", value);
@@ -337,17 +310,75 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
         ec2client.createTags(r);
     }
 
-
-    int getRetryRestoreAttempts() {
-        return retryRestoreAttempts;
+    @Override
+    public boolean snapshotExists(String snapshotId) {
+        Snapshot snapshot = getSnapshot(snapshotId);
+        if (snapshot != null) {
+            return true;
+        }
+        return false;
     }
 
-    void setRetryRestoreAttempts(int retryRestoreAttempts) {
-        this.retryRestoreAttempts = retryRestoreAttempts;
+    public Snapshot getSnapshot(String snapshotId) {
+        DescribeSnapshotsResult describeSnapshotsResult = ec2client.describeSnapshots();
+        List<Snapshot> snapshots = describeSnapshotsResult.getSnapshots();
+        for(Snapshot snapshot: snapshots){
+            if(snapshot.getSnapshotId().equals(snapshotId)){
+                return snapshot;
+            }
+        }
+        return null;
     }
 
-    void setRetryRestoreTimeout(int retryRestoreTimeout) {
-        this.retryRestoreTimeout = retryRestoreTimeout;
+
+    @Override
+    public boolean volumeExists(String volumeId) {
+        if (getVolume(volumeId) != null) {
+            return true;
+        }
+        return false;
     }
 
+    private void waitVolumeToDetach(Volume volume) {
+        int waitTime = 0;
+        while (!volume.getState().equals(AVAILABLE_STATE) && waitTime < configurationService.getMaxWaitTimeToDetachVolume()) {
+            LOG.debug("Volume {} is attached to {}", volume.getVolumeId(), volume.getAttachments().get(0).getInstanceId());
+            sleepTillNextSync();
+            volume = syncVolume(volume);
+            waitTime += configurationService.getMaxWaitTimeToDetachVolume();
+        }
+        if (syncVolume(volume).getState().equals(AVAILABLE_STATE)) {
+            LOG.debug("Volume {} detached.", volume.getVolumeId());
+            return;
+        }
+        LOG.error("Failed to detach volume {}.", volume.getVolumeId());
+        throw new AWSCommunicationServiceException("Failed to detach volume " + volume.getVolumeId());
+    }
+
+    public static class AWSCommunicationServiceException extends EnhancedSnapshotsException {
+        public AWSCommunicationServiceException(String message) {
+            super(message);
+        }
+    }
+
+    // iops can not be less than 100 and more than 20 000
+    private int getIops(int iopsPerGb, int volumeSize) {
+        int iops = volumeSize * iopsPerGb;
+        if (iops < MIN_IOPS_VALUE) {
+            return MIN_IOPS_VALUE;
+        }
+        if (iops > MAX_IOPS_VALUE) {
+            return MAX_IOPS_VALUE;
+        }
+        return iops;
+    }
+
+    private void sleepTillNextSync(){
+        try {
+            TimeUnit.SECONDS.sleep(configurationService.getWaitTimeBeforeNewSyncWithAWS());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }
+

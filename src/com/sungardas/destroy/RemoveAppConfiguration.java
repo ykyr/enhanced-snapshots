@@ -7,9 +7,11 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.PostConstruct;
@@ -22,6 +24,7 @@ public class RemoveAppConfiguration {
     private String[] tables;
 
     @Autowired
+    @Qualifier("amazonDynamoDB")
     private AmazonDynamoDB db;
 
     @Autowired
@@ -29,9 +32,6 @@ public class RemoveAppConfiguration {
 
     @Autowired
     private AmazonEC2 ec2;
-
-    @Value("${sungardas.worker.configuration}")
-    private String configurationId;
 
     @Autowired
     private UserRepository userRepository;
@@ -49,15 +49,15 @@ public class RemoveAppConfiguration {
     private SnapshotRepository snapshotRepository;
 
     @Autowired
-    private WorkerConfigurationRepository configurationRepository;
+    private ConfigurationRepository configurationRepository;
 
     private DynamoDB dynamoDB;
 
-    private WorkerConfiguration configuration;
+    private String configurationId;
 
     @PostConstruct
     private void init() {
-        configuration = configurationRepository.findOne(configurationId);
+        configurationId = EC2MetadataUtils.getInstanceId();
         dynamoDB = new DynamoDB(db);
         dropConfiguration();
     }
@@ -70,7 +70,7 @@ public class RemoveAppConfiguration {
     }
 
     private void dropS3Bucket() {
-        String bucketName = configuration.getS3Bucket();
+        String bucketName = getConfiguration().getS3Bucket();
         ObjectListing objectListing = s3.listObjects(bucketName);
 
         while (true) {
@@ -91,7 +91,7 @@ public class RemoveAppConfiguration {
             s3.deleteVersion(bucketName, s.getKey(), s.getVersionId());
         }
 
-        s3.deleteBucket(configuration.getS3Bucket());
+        s3.deleteBucket(getConfiguration().getS3Bucket());
     }
 
     private void terminateInstance() {
@@ -163,5 +163,9 @@ public class RemoveAppConfiguration {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private Configuration getConfiguration(){
+        return configurationRepository.findOne(configurationId);
     }
 }

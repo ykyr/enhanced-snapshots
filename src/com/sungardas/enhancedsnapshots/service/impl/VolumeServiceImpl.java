@@ -8,6 +8,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.dto.VolumeDto;
 import com.sungardas.enhancedsnapshots.dto.converter.VolumeDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
+import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
 import com.sungardas.enhancedsnapshots.service.VolumeService;
@@ -34,10 +35,8 @@ public class VolumeServiceImpl implements VolumeService {
     private BackupRepository backupRepository;
     @Autowired
     private SchedulerService schedulerService;
-    @Value("${amazon.aws.region}")
-    private String region;
-    @Value("${sungardas.worker.configuration}")
-    private String instanceId;
+    @Autowired
+    private ConfigurationService configurationService;
     private Set<VolumeDto> cache;
 
     @PostConstruct
@@ -58,7 +57,7 @@ public class VolumeServiceImpl implements VolumeService {
     @Override
     public Set<VolumeDto> getVolumes() {
         LOG.debug("Getting volume list ...");
-        amazonEC2.setRegion(Region.getRegion(Regions.fromName(region)));
+        amazonEC2.setRegion(Region.getRegion(Regions.fromName(configurationService.getRegion())));
         return getVolumes(amazonEC2);
     }
 
@@ -115,7 +114,7 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     private Set<VolumeDto> getHistoryVolumes() {
-        return convert(backupRepository.findAll(instanceId));
+        return convert(backupRepository.findAll(configurationService.getConfigurationId()));
     }
 
     private Set<VolumeDto> convert(Iterable<BackupEntry> entries) {
