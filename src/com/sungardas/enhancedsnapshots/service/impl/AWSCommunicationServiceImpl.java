@@ -2,6 +2,7 @@ package com.sungardas.enhancedsnapshots.service.impl;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -337,14 +338,41 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public void copyDataToNewBucket(String src, String dest) {
+    public void moveDataToNewBucket(String src, String dest) {
+        LOG.info("Copying data from {} to {} bucket", src, dest);
         amazonS3.createBucket(new CreateBucketRequest(dest));
         ObjectListing objectListing = amazonS3.listObjects(new ListObjectsRequest()
                 .withBucketName(src));
 
         for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
             amazonS3.copyObject(src, objectSummary.getKey(),
-                    dest, objectSummary.getKey());}
+                    dest, objectSummary.getKey());
+        }
+    }
+
+    @Override
+    public void dropS3Bucket(String bucketName) {
+        LOG.info("Removing bucket {}.", bucketName);
+        ObjectListing objectListing = amazonS3.listObjects(bucketName);
+
+        while (true) {
+            for (Iterator<?> iterator = objectListing.getObjectSummaries().iterator(); iterator.hasNext(); ) {
+                S3ObjectSummary objectSummary = (S3ObjectSummary) iterator.next();
+                amazonS3.deleteObject(bucketName, objectSummary.getKey());
+            }
+
+            if (objectListing.isTruncated()) {
+                objectListing = amazonS3.listNextBatchOfObjects(objectListing);
+            } else {
+                break;
+            }
+        }
+        VersionListing list = amazonS3.listVersions(new ListVersionsRequest().withBucketName(bucketName));
+        for (Iterator<?> iterator = list.getVersionSummaries().iterator(); iterator.hasNext(); ) {
+            S3VersionSummary s = (S3VersionSummary) iterator.next();
+            amazonS3.deleteVersion(bucketName, s.getKey(), s.getVersionId());
+        }
+        amazonS3.deleteBucket(bucketName);
     }
 
 

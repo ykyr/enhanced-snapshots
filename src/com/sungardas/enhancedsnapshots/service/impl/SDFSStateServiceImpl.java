@@ -16,11 +16,11 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 
@@ -52,6 +52,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final int TYPE_INDEX = 2;
     private static final int IOPS_INDEX = 3;
     private static final long BYTES_IN_GIB = 1073741824l;
+    private boolean reconfigurationInProgressFlag = false;
 
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
     private int sdfsMountTime;
@@ -191,21 +192,24 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
-    public void reconfigureAndRestartSDFS() {
+    public synchronized void reconfigureAndRestartSDFS() {
         try {
+            reconfigurationInProgressFlag = true;
             stopSDFS();
             removeSdfsConfFile();
             configureSDFS();
             startSDFS(false);
-        } catch (Exception e){
+        } catch (Exception e) {
             LOG.error("Failed to reconfigure and restart SDFS", e);
             throw new ConfigurationException("Failed to reconfigure and restart SDFS");
+        } finally {
+            reconfigurationInProgressFlag = false;
         }
     }
 
     private void startSDFS(Boolean restore) {
         try {
-            if (sdfsIsRunning()){
+            if (sdfsIsAvailable()){
                 LOG.info("SDFS is already running");
                 return;
             }
@@ -213,9 +217,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                 configureSDFS();
             }
             String[] parameters = {getSdfsScriptFile(mountSdfsScript).getAbsolutePath(),  restore.toString()};
-            Process p = Runtime.getRuntime().exec(parameters);
-            p.waitFor();
-            print(p);
+            Process p = executeScript(parameters);
             switch (p.exitValue()) {
                 case 0:
                     LOG.info("SDFS is running");
@@ -239,9 +241,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private void configureSDFS() throws IOException, InterruptedException {
         String[] parameters = {getSdfsScriptFile(configureSdfsScript).getAbsolutePath(), configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(),
                 getBucketLocation(configurationService.getS3Bucket()), configurationService.getSdfsLocalCacheSize()};
-        Process p = Runtime.getRuntime().exec(parameters);
-        p.waitFor();
-        print(p);
+        Process p = executeScript(parameters);
         switch (p.exitValue()) {
             case 0:
                 LOG.info("SDFS is configured");
@@ -254,14 +254,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public void stopSDFS() {
         try {
-            if (!sdfsIsRunning()){
+            if (!sdfsIsAvailable()){
                 LOG.info("SDFS is already stopped");
                 return;
             }
             String[] parameters = {getSdfsScriptFile(unmountSdfsScript).getAbsolutePath()};
-            Process p = Runtime.getRuntime().exec(parameters);
-            p.waitFor();
-            print(p);
+            Process p = executeScript(parameters);
             switch (p.exitValue()) {
                 case 0:
                     LOG.info("SDFS is currently stopped");
@@ -276,8 +274,28 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     @Override
-    public boolean sdfsIsRunning() {
-        return false;
+    public boolean sdfsIsAvailable() {
+        try {
+            if (reconfigurationInProgressFlag) {
+                LOG.debug("SDFS is unavailable. Reconfiguration is in progress ... ");
+                return false;
+            }
+            String[] parameters = {getSdfsScriptFile(getSdfsState).getAbsolutePath()};
+            Process p = executeScript(parameters);
+            switch (p.exitValue()) {
+                case 0:
+                    LOG.debug("SDFS is currently running");
+                    return true;
+                case 1:
+                    LOG.debug("SDFS is currently stopped");
+                    return false;
+                default:
+                    throw new ConfigurationException("Failed to stop SDFS");
+            }
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new ConfigurationException("Failed to determine SDFS state");
+        }
     }
 
     private void removeSdfsConfFile() {
@@ -288,6 +306,13 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         }
     }
 
+    private Process executeScript(String[] parameters) throws IOException, InterruptedException {
+        LOG.info("Executing script: {}", Arrays.toString(parameters));
+        Process p = Runtime.getRuntime().exec(parameters);
+        p.waitFor();
+        print(p);
+        return p;
+    }
 
     private String getBucketLocation(String bucket) {
         String location;

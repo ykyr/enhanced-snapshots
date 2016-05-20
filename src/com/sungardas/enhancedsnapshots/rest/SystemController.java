@@ -72,22 +72,31 @@ public class SystemController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<String> updateSystemProperties(@RequestBody SystemConfiguration systemConfiguration) {
-        if (!checkIopsAreValid(systemConfiguration.getSystemProperties())) {
+    public ResponseEntity<String> updateSystemProperties(@RequestBody SystemConfiguration newConfiguration) {
+        SystemConfiguration currentConfiguration = configurationService.getSystemConfiguration();
+        if (!checkIopsAreValid(newConfiguration.getSystemProperties())) {
             return new ResponseEntity<>("iops per GB can not be less than 1 and more than 30", HttpStatus.BAD_REQUEST);
         }
+        if (newConfiguration.getSdfs().getVolumeSize() > currentConfiguration.getSdfs().getMaxVolumeSize()) {
+            return new ResponseEntity<>("Volume size can not be more than " + currentConfiguration.getSdfs().getMaxVolumeSize(), HttpStatus.BAD_REQUEST);
+        }
+        if (newConfiguration.getSdfs().getSdfsLocalCacheSize() > currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize()) {
+            return new ResponseEntity<>("Local cache size can not be more than " + currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize(), HttpStatus.BAD_REQUEST);
+        }
         boolean needToReconfigureSdfs = false;
-        if (!configurationService.getS3Bucket().equals(systemConfiguration.getS3().getBucketName())) {
-            awsCommunicationService.copyDataToNewBucket(configurationService.getS3Bucket(), systemConfiguration.getS3().getBucketName());
+        //TODO: move this logic to future SystemService
+        if (!configurationService.getS3Bucket().equals(newConfiguration.getS3().getBucketName())) {
+            awsCommunicationService.moveDataToNewBucket(configurationService.getS3Bucket(), newConfiguration.getS3().getBucketName());
+            awsCommunicationService.dropS3Bucket(configurationService.getS3Bucket());
             needToReconfigureSdfs = true;
         }
-        if (configurationService.getSdfsVolumeSizeWithoutMeasureUnit() != systemConfiguration.getSdfs().getVolumeSize()) {
+        if (configurationService.getSdfsVolumeSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getVolumeSize()) {
             needToReconfigureSdfs = true;
         }
-        if (configurationService.getSdfsLocalCacheSizeWithoutMeasureUnit() != systemConfiguration.getSdfs().getSdfsLocalCacheSize()) {
+        if (configurationService.getSdfsLocalCacheSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getSdfsLocalCacheSize()) {
             needToReconfigureSdfs = true;
         }
-        configurationService.setSystemConfiguration(systemConfiguration);
+        configurationService.setSystemConfiguration(newConfiguration);
         if (needToReconfigureSdfs) {
             sdfsStateService.reconfigureAndRestartSDFS();
         }

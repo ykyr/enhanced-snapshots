@@ -1,9 +1,6 @@
 package com.sungardas.enhancedsnapshots.dto;
 
 
-import com.amazonaws.services.ec2.model.VolumeType;
-
-
 public class SystemConfiguration {
 
     private S3 s3;

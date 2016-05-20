@@ -26,5 +26,5 @@ interface InitConfigurationService {
 
     void syncSettingsInDbAndConfigFile();
 
-    void validateVolumeSize(String volumeSize);
+    void validateVolumeSize(int volumeSize);
 }
