@@ -5,8 +5,61 @@ angular.module('web')
         var currentUser = Users.getCurrent();
         $scope.isAdmin = currentUser.role === "admin";
 
+        $scope.STRINGS = {
+            s3: {
+                new: 'Will be created new as',
+                existing: 'Will be used existing bucket:'
+            },
+            db: {
+                isValid: {
+                    true: 'Database exists',
+                    false: 'No database found'
+                },
+                hasAdminUser: {
+                    false: 'You will need to create a new user on the next step'
+                }
+            },
+            sdfs: {
+                name: {
+                    new: 'Will be created new volume:',
+                    existing: 'Will be used existing volume:'
+                },
+                point: 'At mounting point:',
+                size: 'Would you like to update SDFS Settings?'
+            }
+        };
+
+        var deleteIt = {
+            sdfs: {
+                volumeName: "awspool",
+                volumeSize: 500,
+                mountPoint: "/mnt/awspool/",
+                minVolumeSize: 500,
+                maxVolumeSize: 500,
+                sdfsLocalCacheSize: 1,
+                maxSdfsLocalCacheSize: 10,
+                minSdfsLocalCacheSize: 1
+            }
+        };
+
+        var deleteIt2 = {
+            systemProperties: {
+                restoreVolumeIopsPerGb: 30,
+                restoreVolumeType: "gp2",
+                tempVolumeIopsPerGb: 30,
+                tempVolumeType: "gp2",
+                volumeTypeOptions: ["gp2", "io1", "standard"],
+                taskQueueSize: 20,
+                amazonRetryCount: 20,
+                amazonRetrySleep: 10
+            }
+        };
+
+
         System.get().then(function (data) {
             $scope.settings = data;
+            $scope.initialSettings = data;
+            //TODO remove it as we now have obj with all settings
             $scope.initialTempVolumeType = data.systemProperties.tempVolumeType;
             $scope.initialRestoreVolumeType = data.systemProperties.restoreVolumeType;
             $scope.initialTempVolumeSize = data.systemProperties.tempVolumeIopsPerGb;

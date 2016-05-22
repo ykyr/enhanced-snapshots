@@ -44,35 +44,56 @@ angular.module('web')
             $scope.selectedBucket = bucket;
         };
 
+        var wizardCreationProgress = function () {
+            var modalInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.wizard-progress.html',
+                backdrop: false,
+                scope: $scope
+            });
+
+            modalInstance.result.then(function () {
+                $state.go('login')
+            }, function () {
+            });
+
+            return modalInstance
+        };
+
         var getAwsStatus = function () {
-            $scope.isBusy = true;
+            $scope.progressState = 'loading';
+            var loader = wizardCreationProgress();
             Configuration.get('awscreds').then(function (result, status) {
                 if (result.data.contains) {
                     getCurrentConfig();
+                    loader.dismiss();
                 }
-                else{
+                else {
                     $scope.isAWS = true;
-                    $scope.isBusy = false;
+                    loader.dismiss();
                 }
             }, function (data, status) {
                 $scope.isValidInstance = false;
                 $scope.invalidMessage = data.data.localizedMessage;
-                $scope.isBusy = false;
+                loader.dismiss();
             });
         };
         getAwsStatus();
 
         var getCurrentConfig = function () {
+            $scope.progressState = 'loading';
+            var loader = wizardCreationProgress();
+
             Configuration.get('current').then(function (result, status) {
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
                 $scope.isAWS = false;
-                $scope.isBusy = false;
+                loader.dismiss();
             }, function (data, status) {
                 $scope.isValidInstance = false;
                 $scope.invalidMessage = data.data.localizedMessage;
-                $scope.isBusy = false;
-            })
+                loader.dismiss();
+            });
         };
 
         $scope.awsPublicKey = '';
@@ -138,16 +159,5 @@ angular.module('web')
             }
         };
 
-        var wizardCreationProgress = function () {
-            var modalInstance = $modal.open({
-                animation: true,
-                templateUrl: './partials/modal.wizard-progress.html',
-                scope: $scope
-            });
-
-            modalInstance.result.then(function () {
-                $state.go('login')
-            })
-        };
 
     });

@@ -53,10 +53,16 @@
                     <h3>SDFS</h3>
                     <div class="col-sm-5 text-right">Volume Name:</div>
                     <div class="col-sm-7 text-left">{{settings.sdfs.volumeName || 'unknown'}}</div>
+
                     <div class="col-sm-5 text-right">Volume Size:</div>
-                    <div class="col-sm-7 text-left">{{settings.sdfs.volumeSize || 'unknown'}}</div>
+                    <input class="settings form-control col-sm-6 text-left" type="text" ng-model="settings.sdfs.volumeSize" name="volumeSize"  min="{{settings.sdfs.minVolumeSize}}" max="{{settings.sdfs.maxVolumeSize}}"> <span class="col-sm-1">GB</span>
+
                     <div class="col-sm-5 text-right">Mount Point:</div>
                     <div class="col-sm-7 text-left">{{settings.sdfs.mountPoint || 'unknown'}}</div>
+
+                    <div class="col-sm-5 text-right">Local Cache Size:</div>
+                    <input class="settings form-control col-sm-6 text-left" type="number" ng-model="sdfsLocalCacheSize" name="sdfsLocalCacheSize"  min="{{settings.sdfs.minSdfsLocalCacheSize}}" max="{{settings.sdfs.maxSdfsLocalCacheSize}}"> <span class="col-sm-1">GB</span>
+
                 </div>
                 <hr/>
                 <form name="volumeTypes" class="full-width">
@@ -120,6 +126,18 @@
                         </div>
                     </div>
 
+                    <hr/>
+                    <div class="full-width">
+                        <h3>Other settings</h3>
+                        <div class="col-sm-5 text-right">Task Queue Size:</div>
+                        <input class="settings form-control col-sm-7 text-left" type="number" ng-model="newTaskQueueSize" name="newTaskQueueSize">
+
+                        <div class="col-sm-5 text-right">Amazon Retry Count:</div>
+                        <input class="settings form-control col-sm-7 text-left" type="number" ng-model="newAmazonRetryCount" name="newAmazonRetryCount">
+
+                        <div class="col-sm-5 text-right">Amazon Retry Sleep:</div>
+                        <input class="settings form-control col-sm-7 text-left" type="number" ng-model="newAmazonRetrySleep" name="newAmazonRetrySleep">
+                    </div>
 
                     <div class="col-sm-offset-5 col-sm-7 text-left">
                         <button ng-show="
