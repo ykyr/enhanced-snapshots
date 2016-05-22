@@ -1,25 +1,35 @@
 'use strict';
 
 angular.module('web')
-    .controller('modalVolumeTypeChangeCtrl', function ($scope, $modalInstance, System, TasksController) {
+    .controller('modalVolumeTypeChangeCtrl', function ($scope, $modalInstance, System, Tasks) {
         $scope.state = 'ask';
 
         var newSettings = $scope.settings;
-        //deletion of Arrays from model as per request of backend
+        //deletion of Arrays from model per request of backend
         delete newSettings.s3.suffixesInUse;
         delete newSettings.systemProperties.volumeTypeOptions;
 
-        var abc = TasksController.tasks;
+        $scope.updateSettings = function () {
+            var isNoRunning = true;
+            Tasks.get().then(function (data) {
+                isNoRunning = data.every(function (task) {
+                    return task.status !== "running"
+                });
 
-
-        $scope.changeVolumeType = function () {
-            var data = JSON.stringify(newSettings);
-
-            System.send(data).then(function () {
-                $scope.state = "done";
+                if(isNoRunning) {
+                    var data = JSON.stringify(newSettings);
+                    System.send(data).then(function () {
+                        $scope.state = "done";
+                    }, function (e) {
+                        $scope.state = "failed";
+                    });
+                } else {
+                    $scope.state = "busy"
+                }
             }, function (e) {
                 $scope.state = "failed";
             });
+
 
         }
     });

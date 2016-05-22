@@ -7,65 +7,49 @@ angular.module('web')
 
         $scope.STRINGS = {
             s3: {
-                new: 'Will be created new as',
-                existing: 'Will be used existing bucket:'
+                empty: 'Bucket name field cannot be empty',
+                existing: ' name is already in use. Please choose another one.'
             },
-            db: {
-                isValid: {
-                    true: 'Database exists',
-                    false: 'No database found'
-                },
-                hasAdminUser: {
-                    false: 'You will need to create a new user on the next step'
+            sdfs: {
+                sdfsLocalCacheSize: {
+                  empty: 'Local Cache Size field cannot be empty.'
+                } ,
+                volumeSize: {
+                 empty: 'Volume Size field cannot be empty.'
                 }
             },
-            sdfs: {
-                name: {
-                    new: 'Will be created new volume:',
-                    existing: 'Will be used existing volume:'
-                },
-                point: 'At mounting point:',
-                size: 'Would you like to update SDFS Settings?'
+            volumeType: {
+               empty: 'Volume size for io1 volume type cannot be empty.',
+               range: 'Volume size for io1 volume type must be in between 1 and 30.'
+            },
+            otherSettings: {
+                empty: 'All fields are required. Please fill in empty fields.'
             }
         };
 
-        var deleteIt = {
-            sdfs: {
-                volumeName: "awspool",
-                volumeSize: 500,
-                mountPoint: "/mnt/awspool/",
-                minVolumeSize: 500,
-                maxVolumeSize: 500,
-                sdfsLocalCacheSize: 1,
-                maxSdfsLocalCacheSize: 10,
-                minSdfsLocalCacheSize: 1
-            }
+        var progressLoader = function () {
+            var modalInstance = $modal.open({
+                animation: true,
+                templateUrl: './partials/modal.wizard-progress.html',
+                backdrop: false,
+                scope: $scope
+            });
+
+            return modalInstance
         };
 
-        var deleteIt2 = {
-            systemProperties: {
-                restoreVolumeIopsPerGb: 30,
-                restoreVolumeType: "gp2",
-                tempVolumeIopsPerGb: 30,
-                tempVolumeType: "gp2",
-                volumeTypeOptions: ["gp2", "io1", "standard"],
-                taskQueueSize: 20,
-                amazonRetryCount: 20,
-                amazonRetrySleep: 10
-            }
-        };
-
-
+        $scope.progressState = 'loading';
+        var loader = progressLoader();
         System.get().then(function (data) {
             $scope.settings = data;
-            $scope.initialSettings = data;
-            //TODO remove it as we now have obj with all settings
-            $scope.initialTempVolumeType = data.systemProperties.tempVolumeType;
-            $scope.initialRestoreVolumeType = data.systemProperties.restoreVolumeType;
-            $scope.initialTempVolumeSize = data.systemProperties.tempVolumeIopsPerGb;
-            $scope.initialRestoreVolumeSize = data.systemProperties.restoreVolumeIopsPerGb;
+            $scope.initialSettings = angular.copy(data);
+            $scope.s3MutableSuffix = $scope.initialSettings.s3.bucketName.slice($scope.initialSettings.s3.immutablePrefix.length);
+            $scope.progressState = '';
+            loader.dismiss();
         }, function (e) {
             console.log(e);
+            $scope.progressState = 'failed';
+            loader.dismiss();
         });
 
         $scope.backup = function () {
@@ -87,19 +71,38 @@ angular.module('web')
 
         };
 
-        $scope.changeType = function () {
-            var typeChangeConfirmationModal = $modal.open({
+        $scope.updateSettings = function () {
+
+            var settingsUpdateModal = $modal.open({
                 animation: true,
                 scope: $scope,
-                templateUrl: './partials/modal.volume-type.html',
+                templateUrl: './partials/modal.settings-update.html',
                 controller: 'modalVolumeTypeChangeCtrl'
             });
 
-            typeChangeConfirmationModal.result.then(function () {
-                $scope.initialTempVolumeType = $scope.settings.systemProperties.tempVolumeType;
-                $scope.initialRestoreVolumeType = $scope.settings.systemProperties.restoreVolumeType;
-                $scope.initialTempVolumeSize = $scope.settings.systemProperties.tempVolumeIopsPerGb;
-                $scope.initialRestoreVolumeSize = $scope.settings.systemProperties.restoreVolumeIopsPerGb;
+            settingsUpdateModal.result.then(function () {
+                $scope.initialSettings = angular.copy($scope.settings);
             });
         };
+
+        $scope.isNameExist = function (name) {
+            var initialName = $scope.initialSettings.s3.bucketName.slice($scope.initialSettings.s3.immutablePrefix.length);
+            $scope.nameExists = $scope.initialSettings.s3.suffixesInUse.filter(function (suffix) {
+              return suffix === name && name !== initialName;
+          }).length;
+            $scope.s3.$setValidity("bucketName", false);
+        };
+
+        $scope.isNewValues = function () {
+            if ($scope.settings) {
+                $scope.settings.s3.bucketName = $scope.settings.s3.immutablePrefix + $scope.s3MutableSuffix;
+
+                if($scope.nameExists){
+                    $scope.settings.s3.bucketName = $scope.initialSettings.s3.bucketName;
+                }
+            }
+           return JSON.stringify($scope.settings) !== JSON.stringify($scope.initialSettings);
+        };
+
+
     });
