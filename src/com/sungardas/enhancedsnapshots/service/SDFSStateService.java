@@ -1,6 +1,6 @@
 package com.sungardas.enhancedsnapshots.service;
 
-import com.sun.management.UnixOperatingSystemMXBean;
+import com.sun.management.OperatingSystemMXBean;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -20,7 +20,7 @@ public interface SDFSStateService {
      * @return
      */
     static int getMaxVolumeSize() {
-        UnixOperatingSystemMXBean osBean = (UnixOperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         //Total RAM - RAM available for Tomcat - reserved
         long totalRAM = osBean.getFreePhysicalMemorySize() - Runtime.getRuntime().freeMemory() - SYSTEM_RESERVED_RAM_IN_BYTES - SDFS_RESERVED_RAM_IN_BYTES;
         int maxVolumeSize = (int) (totalRAM / BYTES_IN_GB) * SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM;
