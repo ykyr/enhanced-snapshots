@@ -4,6 +4,7 @@ import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
 import com.sungardas.enhancedsnapshots.rest.utils.Constants;
+import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.UserService;
@@ -43,6 +44,9 @@ public class SystemController {
     private UserService userService;
 
     @Autowired
+    private AWSCommunicationService awsCommunicationService;
+
+    @Autowired
     private XmlWebApplicationContext applicationContext;
 
     @Autowired
@@ -68,11 +72,34 @@ public class SystemController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<String> setSystemProperties(@RequestBody SystemConfiguration.SystemProperties systemProperties) {
-        if (!checkIopsAreValid(systemProperties)) {
+    public ResponseEntity<String> updateSystemProperties(@RequestBody SystemConfiguration newConfiguration) {
+        SystemConfiguration currentConfiguration = configurationService.getSystemConfiguration();
+        if (!checkIopsAreValid(newConfiguration.getSystemProperties())) {
             return new ResponseEntity<>("iops per GB can not be less than 1 and more than 30", HttpStatus.BAD_REQUEST);
         }
-        configurationService.setSystemProperties(systemProperties);
+        if (newConfiguration.getSdfs().getVolumeSize() > currentConfiguration.getSdfs().getMaxVolumeSize()) {
+            return new ResponseEntity<>("Volume size can not be more than " + currentConfiguration.getSdfs().getMaxVolumeSize(), HttpStatus.BAD_REQUEST);
+        }
+        if (newConfiguration.getSdfs().getSdfsLocalCacheSize() > currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize()) {
+            return new ResponseEntity<>("Local cache size can not be more than " + currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize(), HttpStatus.BAD_REQUEST);
+        }
+        boolean needToReconfigureSdfs = false;
+        //TODO: move this logic to future SystemService
+        if (!configurationService.getS3Bucket().equals(newConfiguration.getS3().getBucketName())) {
+            awsCommunicationService.moveDataToNewBucket(configurationService.getS3Bucket(), newConfiguration.getS3().getBucketName());
+            awsCommunicationService.dropS3Bucket(configurationService.getS3Bucket());
+            needToReconfigureSdfs = true;
+        }
+        if (configurationService.getSdfsVolumeSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getVolumeSize()) {
+            needToReconfigureSdfs = true;
+        }
+        if (configurationService.getSdfsLocalCacheSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getSdfsLocalCacheSize()) {
+            needToReconfigureSdfs = true;
+        }
+        configurationService.setSystemConfiguration(newConfiguration);
+        if (needToReconfigureSdfs) {
+            sdfsStateService.reconfigureAndRestartSDFS();
+        }
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 

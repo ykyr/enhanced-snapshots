@@ -36,7 +36,7 @@ public class CreateAppConfigurationDev {
     @Value("${enhancedsnapshots.default.polling.rate}")
     private int defaultPollingRate;
     @Value("${enhancedsnapshots.default.sdfs.local.cache.size}")
-    private String sdfsLocalCacheSize;
+    private int sdfsLocalCacheSize;
     @Value("${enhancedsnapshots.default.wait.time.before.new.sync}")
     private int defaultWaitTimeBeforeNewSyncWithAWS;
     @Value("${enhancedsnapshots.default.max.wait.time.to.detach.volume}")
@@ -77,7 +77,7 @@ public class CreateAppConfigurationDev {
         configuration.setWaitTimeBeforeNewSyncWithAWS(defaultWaitTimeBeforeNewSyncWithAWS);
         configuration.setMaxWaitTimeToDetachVolume(defaultMaxWaitTimeToDetachVolume);
         configuration.setS3Bucket("com.sungardas.enhancedsnapshots.dev");
-        configuration.setSdfsSize("500");
+        configuration.setSdfsSize(500);
         configuration.setSdfsVolumeName("awspool");
         configuration.setSdfsMountPoint("/mnt/awspool");
 

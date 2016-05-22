@@ -37,7 +37,7 @@ class CreateAppConfigurationImpl {
             LOG.info("Initialization SDFS");
             if (isBucketContainsSDFSMetadata) {
                 LOG.info("Restoring SDFS from backup");
-                sdfsService.restoreState();
+                sdfsService.restoreSDFS();
             } else {
                 File sdfsConfig = new File(configurationService.getSdfsConfigPath());
                 LOG.info("SDFS config: {}", sdfsConfig.getPath());
@@ -45,7 +45,7 @@ class CreateAppConfigurationImpl {
                     sdfsConfig.delete();
                 }
                 LOG.info("Starting SDFS");
-                sdfsService.startupSDFS(configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(),false);
+                sdfsService.startSDFS();
             }
             LOG.info("Initialization finished");
         }

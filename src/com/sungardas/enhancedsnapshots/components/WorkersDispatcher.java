@@ -95,6 +95,9 @@ public class WorkersDispatcher {
                         if (!taskService.isCanceled(entry.getId())) {
                             switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
                                 case BACKUP:
+                                    if (!sdfsStateService.sdfsIsAvailable()) {
+                                        return;
+                                    }
                                     LOGtw.info("Task was identified as backup");
                                     awsBackupVolumeTaskExecutor.execute(entry);
                                     break;
@@ -104,6 +107,9 @@ public class WorkersDispatcher {
                                     break;
                                 }
                                 case RESTORE:
+                                    if (!sdfsStateService.sdfsIsAvailable()) {
+                                        return;
+                                    }
                                     LOGtw.info("Task was identified as restore");
                                     awsRestoreVolumeTaskExecutor.execute(entry);
                                     break;

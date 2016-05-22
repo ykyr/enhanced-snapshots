@@ -40,6 +40,8 @@ import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 
+import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.utils.SdfsUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
@@ -57,17 +59,12 @@ import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceImpl.class);
-    private static final long BYTES_IN_GB = 1_073_741_824;
-    private static final int SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM = 2000;
-    private static final long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
-    private static final long SDFS_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
 
     private static final String catalinaHomeEnvPropName = "catalina.home";
     private static final String confFolderName = "conf";
     private static final String propFileName = "EnhancedSnapshots.properties";
     private static final String DEFAULT_LOGIN = "admin@enhancedsnapshots";
 
-    private static final String ENHANCED_SNAPSHOT_BUCKET_PREFIX = "com.sungardas.enhancedsnapshots.";
     private static final String CANT_GET_ACCESS_DYNAMODB = "Can't get access to DynamoDB. Check policy list used for AWS user";
     private static final String CANT_GET_ACCESS_S3 = "Can't get access to S3. Check policy list used for AWS user";
 
@@ -81,12 +78,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Value("${enhancedsnapshots.retention.cron: -1}")
     private String retentionCronExpression;
     @Value("${enhancedsnapshots.polling.rate: -1}")
-    private int pollingRate;
+    private String pollingRate;
     @Value("${enhancedsnapshots.wait.time.before.new.sync: -1}")
-    private int waitTimeBeforeNewSync;
+    private String waitTimeBeforeNewSync;
     @Value("${enhancedsnapshots.max.wait.time.to.detach.volume: -1}")
-    private int maxWaitTimeToDetachVolume;
-    private int propertyNotProvided = -1;
+    private String maxWaitTimeToDetachVolume;
 
     @Value("${enhancedsnapshots.sdfs.min.size}")
     private String minVolumeSize;
@@ -115,13 +111,13 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Value("${enhancedsnapshots.default.polling.rate}")
     private int defaultPollingRate;
     @Value("${enhancedsnapshots.default.sdfs.local.cache.size}")
-    private String sdfsLocalCacheSize;
+    private int sdfsLocalCacheSize;
     @Value("${enhancedsnapshots.default.wait.time.before.new.sync}")
     private int defaultWaitTimeBeforeNewSyncWithAWS;
     @Value("${enhancedsnapshots.default.max.wait.time.to.detach.volume}")
     private int defaultMaxWaitTimeToDetachVolume;
     @Value("${enhancedsnapshots.default.sdfs.size}")
-    private String defaultVolumeSize;
+    private int defaultVolumeSize;
     @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
     @Value("${amazon.s3.default.region}")
@@ -130,6 +126,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private String mountPoint;
     @Value("${enhancedsnapshots.default.sdfs.volume.name}")
     private String volumeName;
+    @Value("${enhancedsnapshots.bucket.name.prefix}")
+    private String enhancedSnapshotBucketPrefix;
     @Value("${enhancedsnapshots.awscli.conf.path}")
     private String awscliConfPath;
     @Value("${enhancedsnapshots.awslogs.conf.path}")
@@ -138,7 +136,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private AWSCredentialsProvider credentialsProvider;
     private AmazonDynamoDB amazonDynamoDB;
     private DynamoDBMapper mapper;
-    private InitConfigurationDto initConfigurationDto;
     private String instanceId;
     private Region region;
 
@@ -165,23 +162,16 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
-    @Override
-    public void setInitConfigurationDto(InitConfigurationDto initConfigurationDto) {
-        this.initConfigurationDto = initConfigurationDto;
-    }
-
-    @Override
-    public void setCredentialsIfValid(@NotNull CredentialsDto credentials) {
-        validateCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey());
-        credentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(credentials.getAwsPublicKey(), credentials.getAwsSecretKey()));
-    }
-
 
     /**
      *  Stores properties which can not be modified from UI to config file,
      *  changes in config file will be applied after system restart
      */
     public void storePropertiesEditableFromConfigFile() {
+        storePropertiesEditableFromConfigFile(defaultRetentionCronExpression, defaultPollingRate, defaultWaitTimeBeforeNewSyncWithAWS, defaultMaxWaitTimeToDetachVolume);
+    }
+
+    private void storePropertiesEditableFromConfigFile(String retentionCronExpression, int pollingRate, int waitTimeBeforeNewSync, int maxWaitTimeToDetachVolume) {
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
             PropertiesConfiguration propertiesConfiguration = new PropertiesConfiguration();
@@ -193,19 +183,19 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
             layout.setBlancLinesBefore(RETENTION_CRON_SCHEDULE, 1);
             layout.setComment(RETENTION_CRON_SCHEDULE, "Cron schedule for retention policy");
-            propertiesConfiguration.setProperty(RETENTION_CRON_SCHEDULE, defaultRetentionCronExpression);
+            propertiesConfiguration.setProperty(RETENTION_CRON_SCHEDULE, retentionCronExpression);
 
             layout.setBlancLinesBefore(WORKER_POLLING_RATE, 1);
             layout.setComment(WORKER_POLLING_RATE, "Polling rate to check whether there is some new task, in ms");
-            propertiesConfiguration.setProperty(WORKER_POLLING_RATE, Integer.toString(defaultPollingRate));
+            propertiesConfiguration.setProperty(WORKER_POLLING_RATE, Integer.toString(pollingRate));
 
             layout.setBlancLinesBefore(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS, 1);
             layout.setComment(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS, "Wait time before new sync of Snapshot/Volume with AWS data, in seconds");
-            propertiesConfiguration.setProperty(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS, Integer.toString(defaultWaitTimeBeforeNewSyncWithAWS));
+            propertiesConfiguration.setProperty(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS, Integer.toString(waitTimeBeforeNewSync));
 
             layout.setBlancLinesBefore(MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS, 1);
             layout.setComment(MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS, "Max wait time for volume to be detached, in seconds");
-            propertiesConfiguration.setProperty(MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS, Integer.toString(defaultMaxWaitTimeToDetachVolume));
+            propertiesConfiguration.setProperty(MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS, Integer.toString(maxWaitTimeToDetachVolume));
 
             propertiesConfiguration.write(new FileWriter(file));
             LOG.debug("Config file {} stored successfully.", file.getPath());
@@ -216,86 +206,68 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
+    /**
+     * Create DB structure if required
+     * Store admin user if required
+     * Store configuration if required
+     * @param config
+     */
     public void createDBAndStoreSettings(final InitController.ConfigDto config) {
-        if (!requiredTablesExist()) { // check if tables corrupted
-            LOG.info("Initialization DB");
-            dropDbTables();
-            createDbAndStoreData(config);
-        } else {
-            storeAdminUserIfProvided();
-            if (!isConfigurationStored()) {
-                storeConfiguration(config);
-            }
-        }
-    }
-
-    private boolean isConfigurationStored() {
-        Configuration loadedConf = mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId());
-        return loadedConf != null;
-    }
-
-    private void createDbAndStoreData(final InitController.ConfigDto config) {
+        // create tables if they do not exist
         createDbStructure();
         storeAdminUserIfProvided();
-        storeConfiguration(config);
+        // store configuration if it does not exist
+        if (mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId()) == null) {
+            storeConfiguration(config);
+        }
     }
 
     private void createDbStructure() throws ConfigurationException {
         createTable("BackupList", 50L, 20L, "volumeId", "S", "fileName", "S");
-        createTable("Configurations", 10L, 10L, "configurationId", "S");
-        createTable("Retention", 50L, 20L, "volumeInstanceId", "S");
-        createTable("Tasks", 50L, 20L, "id", "S");
-        createTable("Snapshots", 50L, 20L, "volumeInstanceId", "S");
-        createTable("Users", 50L, 20L, "id", "S");
+        createTable("Configurations", 10L, 10L, "configurationId", "S", null, null);
+        createTable("Retention", 50L, 20L, "volumeInstanceId", "S", null, null);
+        createTable("Tasks", 50L, 20L, "id", "S", null, null);
+        createTable("Snapshots", 50L, 20L, "volumeInstanceId", "S", null, null);
+        createTable("Users", 50L, 20L, "id", "S", null, null);
     }
 
     private void createTable(String tableName, long readCapacityUnits, long writeCapacityUnits,
-            String hashKeyName, String hashKeyType) {
-        createTable(tableName, readCapacityUnits, writeCapacityUnits,
-                hashKeyName, hashKeyType, null, null);
-    }
-
-    private void createTable(
-            String tableName, long readCapacityUnits, long writeCapacityUnits,
-            String hashKeyName, String hashKeyType,
-            String rangeKeyName, String rangeKeyType) {
+                             String hashKeyName, String hashKeyType, String rangeKeyName, String rangeKeyType) {
         DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
+        if (tableExists(tableName)) {
+            LOG.info("Table {} already exists");
+            return;
+        }
         try {
             ArrayList<KeySchemaElement> keySchema = new ArrayList<>();
-            keySchema.add(new KeySchemaElement()
-                    .withAttributeName(hashKeyName)
-                    .withKeyType(KeyType.HASH));
+            keySchema.add(new KeySchemaElement().withAttributeName(hashKeyName).withKeyType(KeyType.HASH));
 
             ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
-            attributeDefinitions.add(new AttributeDefinition()
-                    .withAttributeName(hashKeyName)
-                    .withAttributeType(hashKeyType));
+            attributeDefinitions.add(new AttributeDefinition().withAttributeName(hashKeyName).withAttributeType(hashKeyType));
 
+            // adding range attribute if required
             if (rangeKeyName != null) {
-                keySchema.add(new KeySchemaElement()
-                        .withAttributeName(rangeKeyName)
-                        .withKeyType(KeyType.RANGE));
-                attributeDefinitions.add(new AttributeDefinition()
-                        .withAttributeName(rangeKeyName)
-                        .withAttributeType(rangeKeyType));
+                keySchema.add(new KeySchemaElement().withAttributeName(rangeKeyName).withKeyType(KeyType.RANGE));
+                attributeDefinitions.add(new AttributeDefinition().withAttributeName(rangeKeyName).withAttributeType(rangeKeyType));
             }
             CreateTableRequest request = new CreateTableRequest()
-                    .withTableName(tableName)
-                    .withKeySchema(keySchema)
+                    .withTableName(tableName).withKeySchema(keySchema)
                     .withProvisionedThroughput(new ProvisionedThroughput()
                             .withReadCapacityUnits(readCapacityUnits)
                             .withWriteCapacityUnits(writeCapacityUnits));
+
             request.setAttributeDefinitions(attributeDefinitions);
-            LOG.info("Issuing CreateTable request for " + tableName);
             Table table = dynamoDB.createTable(request);
-            LOG.info("Waiting for " + tableName
-                    + " to be created...this may take a while...");
+            LOG.info("Creating table {} ... ", tableName);
             table.waitForActive();
+            LOG.info("Table {} was created successfully.", tableName);
         } catch (Exception e) {
-            LOG.error("CreateTable request failed for " + tableName, e);
-            throw new ConfigurationException("CreateTable request failed for " + tableName, e);
+            LOG.error("Failed to create table {}. ", tableName);
+            LOG.error(e);
+            throw new ConfigurationException("Failed to create table" + tableName, e);
         }
     }
+
 
     private void storeAdminUserIfProvided() {
         if (userDto != null && adminPassword != null) {
@@ -309,25 +281,20 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     private void storeConfiguration(final InitController.ConfigDto config) {
-        Configuration configuration = convertToWorkerConfiguration(initConfigurationDto, config);
-        mapper.save(configuration);
-    }
-
-    private Configuration convertToWorkerConfiguration(InitConfigurationDto dto, final InitController.ConfigDto config) {
         Configuration configuration = new Configuration();
         configuration.setConfigurationId(EC2MetadataUtils.getInstanceId());
         configuration.setEc2Region(Regions.getCurrentRegion().getName());
-        configuration.setSdfsMountPoint(dto.getSdfs().getMountPoint());
-        configuration.setSdfsVolumeName(dto.getSdfs().getVolumeName());
+        configuration.setSdfsMountPoint(mountPoint);
+        configuration.setSdfsVolumeName(volumeName);
         configuration.setS3Bucket(config.getBucketName());
         configuration.setSdfsSize(config.getVolumeSize());
+        configuration.setSdfsLocalCacheSize(config.getSdfsLocalCacheSize());
 
         // set default properties
         configuration.setRestoreVolumeIopsPerGb(restoreVolumeIopsPerGb);
         configuration.setRestoreVolumeType(restoreVolumeType);
         configuration.setTempVolumeIopsPerGb(tempVolumeIopsPerGb);
         configuration.setTempVolumeType(tempVolumeType);
-        configuration.setSdfsLocalCacheSize(sdfsLocalCacheSize);
         configuration.setAmazonRetryCount(amazonRetryCount);
         configuration.setAmazonRetrySleep(amazonRetrySleep);
         configuration.setMaxQueueSize(queueSize);
@@ -337,9 +304,13 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setWorkerDispatcherPollingRate(defaultPollingRate);
         configuration.setWaitTimeBeforeNewSyncWithAWS(defaultWaitTimeBeforeNewSyncWithAWS);
         configuration.setMaxWaitTimeToDetachVolume(defaultMaxWaitTimeToDetachVolume);
-        return configuration;
+        // saving configuration to DB
+        mapper.save(configuration);
     }
 
+    /**
+     * Store properties changed in config file to DB
+     */
     public void syncSettingsInDbAndConfigFile() {
         // sync properties in DB with conf file
         boolean configurationChanged = false;
@@ -350,57 +321,42 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             loadedConf.setRetentionCronExpression(retentionCronExpression);
             configurationChanged = true;
         }
-        if (propertyProvided(pollingRate) && pollingRate != loadedConf.getWorkerDispatcherPollingRate()) {
+        if (correctPropertyProvided(pollingRate, WORKER_POLLING_RATE) && Integer.parseInt(pollingRate) != loadedConf.getWorkerDispatcherPollingRate()) {
             LOG.debug("Applying new polling rate to pick up new task {} ms.", pollingRate);
-            loadedConf.setWorkerDispatcherPollingRate(pollingRate);
+            loadedConf.setWorkerDispatcherPollingRate(Integer.parseInt(pollingRate));
             configurationChanged = true;
         }
-        if (propertyProvided(waitTimeBeforeNewSync) && waitTimeBeforeNewSync != loadedConf.getWaitTimeBeforeNewSyncWithAWS()) {
+        if (correctPropertyProvided(waitTimeBeforeNewSync, WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS)
+                && Integer.parseInt(waitTimeBeforeNewSync) != loadedConf.getWaitTimeBeforeNewSyncWithAWS()) {
             LOG.debug("Applying new wait time before new sync of Snapshot/Volume with AWS data {} seconds.", waitTimeBeforeNewSync);
-            loadedConf.setWaitTimeBeforeNewSyncWithAWS(waitTimeBeforeNewSync);
+            loadedConf.setWaitTimeBeforeNewSyncWithAWS(Integer.parseInt(waitTimeBeforeNewSync));
             configurationChanged = true;
         }
-        if (propertyProvided(maxWaitTimeToDetachVolume) && maxWaitTimeToDetachVolume != loadedConf.getMaxWaitTimeToDetachVolume()) {
+        if (correctPropertyProvided(maxWaitTimeToDetachVolume, MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS)
+                && Integer.parseInt(maxWaitTimeToDetachVolume) != loadedConf.getMaxWaitTimeToDetachVolume()) {
             LOG.debug("Applying new max wait time for volume to be detach {} seconds.", maxWaitTimeToDetachVolume);
-            loadedConf.setMaxWaitTimeToDetachVolume(maxWaitTimeToDetachVolume);
+            loadedConf.setMaxWaitTimeToDetachVolume(Integer.parseInt(maxWaitTimeToDetachVolume));
             configurationChanged = true;
         }
         if (configurationChanged) {
             LOG.debug("Storing updated settings from config file to DB.");
             mapper.save(loadedConf);
         }
+        // this is required to ensure that properties with invalid values in config file will be replaced with correct values
+        removeProperties();
+        storePropertiesEditableFromConfigFile(loadedConf.getRetentionCronExpression(), loadedConf.getWorkerDispatcherPollingRate(),
+                loadedConf.getWaitTimeBeforeNewSyncWithAWS(), loadedConf.getMaxWaitTimeToDetachVolume());
     }
 
+    /**
+     * Remove config file with properties
+     */
     @Override
     public void removeProperties() {
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         if (file.exists()) {
             file.delete();
         }
-    }
-
-    @Override
-    public boolean areCredentialsValid() {
-        AmazonEC2Client ec2Client = new AmazonEC2Client(credentialsProvider);
-        ec2Client.setRegion(region);
-        try {
-            ec2Client.describeRegions();
-            return true;
-        } catch (AmazonClientException e) {
-            LOG.warn("Provided AWS credentials are invalid.");
-            return false;
-        }
-    }
-
-    @Override
-    public boolean credentialsAreProvided() {
-        if (credentialsProvider.getCredentials() != null) {
-            validateCredentials(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
-            return true;
-        } else {
-            return false;
-        }
-
     }
 
     @Override
@@ -419,7 +375,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         try {
             AmazonS3Client client = new AmazonS3Client(credentialsProvider);
             List<Bucket> allBuckets = client.listBuckets();
-            String bucketName = ENHANCED_SNAPSHOT_BUCKET_PREFIX + instanceId;
+            String bucketName = enhancedSnapshotBucketPrefix + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
 
             String currentLocation = region.toString();
@@ -428,7 +384,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             }
             for (Bucket bucket : allBuckets) {
                 try {
-                    if (bucket.getName().startsWith(ENHANCED_SNAPSHOT_BUCKET_PREFIX)) {
+                    if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix)) {
                         String location = client.getBucketLocation(bucket.getName());
 
                         // Because client.getBucketLocation(bucket.getName()) returns US if bucket is in us-east-1
@@ -462,7 +418,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
-        initConfigurationDto = new InitConfigurationDto();
+        InitConfigurationDto initConfigurationDto = new InitConfigurationDto();
         initConfigurationDto.setDb(new InitConfigurationDto.DB());
         boolean isDbValid = requiredTablesExist();
         initConfigurationDto.getDb().setValid(isDbValid);
@@ -472,14 +428,18 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        int maxVolumeSize = getMaxVolumeSize();
+        int maxVolumeSize = SDFSStateService.getMaxVolumeSize();
         sdfs.setMaxVolumeSize(String.valueOf(maxVolumeSize));
-        sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, Integer.parseInt(defaultVolumeSize))));
+        sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, defaultVolumeSize)));
         sdfs.setMinVolumeSize(minVolumeSize);
         sdfs.setCreated(sdfsAlreadyExists());
+        sdfs.setSdfsLocalCacheSize(sdfsLocalCacheSize);
+        sdfs.setMinSdfsLocalCacheSize(1);
+        sdfs.setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace());
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
+        initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
         return initConfigurationDto;
     }
 
@@ -520,15 +480,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         return configf.exists() && mountPointf.exists();
     }
 
-    private void validateCredentials(String accessKey, String secretKey) {
-        if (accessKey == null || accessKey.isEmpty()) {
-            throw new ConfigurationException("Empty AWS AccessKey");
-        }
-        if (secretKey == null || secretKey.isEmpty()) {
-            throw new ConfigurationException("Empty AWS SecretKey");
-        }
-    }
-
     private File getPropertyFile() {
         return Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
     }
@@ -550,11 +501,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     @Override
-    public void validateVolumeSize(final String volumeSize) {
-        int size = Integer.parseInt(volumeSize);
+    public void validateVolumeSize(final int volumeSize) {
         int min = Integer.parseInt(minVolumeSize);
-        int max = getMaxVolumeSize();
-        if (size < min || size > max) {
+        int max = SDFSStateService.getMaxVolumeSize();
+        if (volumeSize < min || volumeSize > max) {
             throw new ConfigurationException("Invalid volume size");
         }
     }
@@ -569,41 +519,23 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         FileUtils.writeLines(file, Arrays.asList(lines));
     }
 
-    public int getMaxVolumeSize() {
-        UnixOperatingSystemMXBean osBean = (UnixOperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        //Total RAM - RAM available for Tomcat - reserved
-        long totalRAM = osBean.getFreePhysicalMemorySize() - Runtime.getRuntime().maxMemory() - SYSTEM_RESERVED_RAM_IN_BYTES - SDFS_RESERVED_RAM_IN_BYTES;
-        int maxVolumeSize = (int) (totalRAM / BYTES_IN_GB) * SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM;
-        return maxVolumeSize;
-    }
-
-    private void dropDbTables() {
-        DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
+    private boolean tableExists(String tableName) {
         ListTablesResult listResult = amazonDynamoDB.listTables();
         List<String> tableNames = listResult.getTableNames();
-        for (String tableToDelete : tables) {
-            if (tableNames.contains(tableToDelete)) {
-                try {
-                    Table table = dynamoDB.getTable(tableToDelete);
-                    table.delete();
-                    table.waitForDelete();
-                    LOG.info("Table {} was removed successfully.", table);
-                } catch (ResourceNotFoundException e) {
-                    // Skip exception if resource not found
-                } catch (AmazonServiceException tableNotFoundOrCredError) {
-                    LOG.warn("Failed to remove table {}", tableToDelete);
-                    throw new ConfigurationException("Can't delete tables. check AWS credentials");
-                } catch (InterruptedException e) {
-                    throw new ConfigurationException(e);
-                }
-            }
-        }
+        return tableNames.contains(tableName);
     }
 
-    // when applications starts for the first time property file in conf directory does not exist yet
-    // in case user removes some properties from file this check will help to avoid unwanted exceptions
-    private boolean propertyProvided(int property) {
-        return property != propertyNotProvided;
+    // in case user removes some properties from file or provided incorrect int values this check will help to avoid unwanted exceptions
+    private boolean correctPropertyProvided(String propertyValue, String propertyName) {
+        try {
+            int newProperty = Integer.parseInt(propertyValue);
+            if (newProperty > 0) {
+                return true;
+            }
+        } catch (Exception igrone) {
+        }
+        LOG.warn("Incorrect value {} for property {}. Changes will not bve applied.", propertyValue, propertyName);
+        return false;
     }
 
     private boolean cronExpressionIsValid(String cronExpression) {
@@ -617,5 +549,4 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
 
     }
-
 }

@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.*;
+import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +52,9 @@ public class RemoveAppConfiguration {
     @Autowired
     private ConfigurationRepository configurationRepository;
 
+    @Autowired
+    private AWSCommunicationService awsCommunicationService;
+
     private DynamoDB dynamoDB;
 
     private String configurationId;
@@ -63,36 +67,12 @@ public class RemoveAppConfiguration {
     }
 
     private void dropConfiguration() {
-        dropS3Bucket();
+        awsCommunicationService.dropS3Bucket(getConfiguration().getS3Bucket());
         dropDbData();
-
         terminateInstance();
     }
 
-    private void dropS3Bucket() {
-        String bucketName = getConfiguration().getS3Bucket();
-        ObjectListing objectListing = s3.listObjects(bucketName);
 
-        while (true) {
-            for (Iterator<?> iterator = objectListing.getObjectSummaries().iterator(); iterator.hasNext(); ) {
-                S3ObjectSummary objectSummary = (S3ObjectSummary) iterator.next();
-                s3.deleteObject(bucketName, objectSummary.getKey());
-            }
-
-            if (objectListing.isTruncated()) {
-                objectListing = s3.listNextBatchOfObjects(objectListing);
-            } else {
-                break;
-            }
-        }
-        VersionListing list = s3.listVersions(new ListVersionsRequest().withBucketName(bucketName));
-        for (Iterator<?> iterator = list.getVersionSummaries().iterator(); iterator.hasNext(); ) {
-            S3VersionSummary s = (S3VersionSummary) iterator.next();
-            s3.deleteVersion(bucketName, s.getKey(), s.getVersionId());
-        }
-
-        s3.deleteBucket(getConfiguration().getS3Bucket());
-    }
 
     private void terminateInstance() {
         ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(configurationId));

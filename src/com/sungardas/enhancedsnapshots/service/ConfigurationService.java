@@ -6,7 +6,7 @@ public interface ConfigurationService {
 
 	SystemConfiguration getSystemConfiguration();
 
-	void setSystemProperties (SystemConfiguration.SystemProperties systemProperties);
+	void setSystemConfiguration (SystemConfiguration systemConfiguration);
 
 	String getRegion();
 
@@ -39,6 +39,10 @@ public interface ConfigurationService {
 	String getSdfsLocalCacheSize();
 
 	String getSdfsVolumeSize();
+
+	int getSdfsVolumeSizeWithoutMeasureUnit();
+
+	int getSdfsLocalCacheSizeWithoutMeasureUnit();
 
 	String getSdfsConfigPath();
 

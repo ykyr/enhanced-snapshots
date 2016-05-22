@@ -2,6 +2,7 @@ package com.sungardas.enhancedsnapshots.service.impl;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +32,8 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeState;
 import com.amazonaws.services.ec2.model.VolumeType;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
@@ -54,7 +57,11 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     private final static int MAX_IOPS_VALUE = 20_000;
 
     @Autowired
+    private AmazonS3 amazonS3;
+
+    @Autowired
     private AmazonEC2 ec2client;
+
     @Autowired
     private ConfigurationService configurationService;
 
@@ -328,6 +335,44 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
             }
         }
         return null;
+    }
+
+    @Override
+    public void moveDataToNewBucket(String src, String dest) {
+        LOG.info("Copying data from {} to {} bucket", src, dest);
+        amazonS3.createBucket(new CreateBucketRequest(dest));
+        ObjectListing objectListing = amazonS3.listObjects(new ListObjectsRequest()
+                .withBucketName(src));
+
+        for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+            amazonS3.copyObject(src, objectSummary.getKey(),
+                    dest, objectSummary.getKey());
+        }
+    }
+
+    @Override
+    public void dropS3Bucket(String bucketName) {
+        LOG.info("Removing bucket {}.", bucketName);
+        ObjectListing objectListing = amazonS3.listObjects(bucketName);
+
+        while (true) {
+            for (Iterator<?> iterator = objectListing.getObjectSummaries().iterator(); iterator.hasNext(); ) {
+                S3ObjectSummary objectSummary = (S3ObjectSummary) iterator.next();
+                amazonS3.deleteObject(bucketName, objectSummary.getKey());
+            }
+
+            if (objectListing.isTruncated()) {
+                objectListing = amazonS3.listNextBatchOfObjects(objectListing);
+            } else {
+                break;
+            }
+        }
+        VersionListing list = amazonS3.listVersions(new ListVersionsRequest().withBucketName(bucketName));
+        for (Iterator<?> iterator = list.getVersionSummaries().iterator(); iterator.hasNext(); ) {
+            S3VersionSummary s = (S3VersionSummary) iterator.next();
+            amazonS3.deleteVersion(bucketName, s.getKey(), s.getVersionId());
+        }
+        amazonS3.deleteBucket(bucketName);
     }
 
 

@@ -14,9 +14,7 @@ public class SDFSStateServiceDev implements SDFSStateService {
 
     }
 
-    @Override
-    public void restoreState() throws AmazonClientException {
-    }
+
 
     @Override
     public boolean containsSdfsMetadata(String sBucket) {
@@ -30,13 +28,28 @@ public class SDFSStateServiceDev implements SDFSStateService {
     }
 
     @Override
-    public void shutdownSDFS(String size, String bucketName) {
+    public void reconfigureAndRestartSDFS() {
 
     }
 
     @Override
-    public void startupSDFS(String size, String bucketName,  Boolean isRestore) {
+    public void restoreSDFS() {
 
+    }
+
+    @Override
+    public void startSDFS() {
+
+    }
+
+    @Override
+    public void stopSDFS() {
+
+    }
+
+    @Override
+    public boolean sdfsIsAvailable() {
+        return false;
     }
 
 }

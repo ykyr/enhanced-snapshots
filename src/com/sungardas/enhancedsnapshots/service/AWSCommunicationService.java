@@ -60,4 +60,8 @@ public interface AWSCommunicationService {
     boolean volumeExists(String volumeId);
 
     Snapshot getSnapshot(String snapshotId);
+
+    void moveDataToNewBucket(String src, String dest);
+
+    void dropS3Bucket(String bucketName);
 }
