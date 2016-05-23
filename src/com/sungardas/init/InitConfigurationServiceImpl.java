@@ -40,7 +40,7 @@ import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 
-import com.sungardas.utils.SdfsUtils;
+import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
@@ -77,12 +77,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Value("${enhancedsnapshots.retention.cron: -1}")
     private String retentionCronExpression;
     @Value("${enhancedsnapshots.polling.rate: -1}")
-    private int pollingRate;
+    private String pollingRate;
     @Value("${enhancedsnapshots.wait.time.before.new.sync: -1}")
-    private int waitTimeBeforeNewSync;
+    private String waitTimeBeforeNewSync;
     @Value("${enhancedsnapshots.max.wait.time.to.detach.volume: -1}")
-    private int maxWaitTimeToDetachVolume;
-    private int propertyNotProvided = -1;
+    private String maxWaitTimeToDetachVolume;
 
     @Value("${enhancedsnapshots.sdfs.min.size}")
     private String minVolumeSize;
@@ -117,7 +116,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Value("${enhancedsnapshots.default.max.wait.time.to.detach.volume}")
     private int defaultMaxWaitTimeToDetachVolume;
     @Value("${enhancedsnapshots.default.sdfs.size}")
-    private String defaultVolumeSize;
+    private int defaultVolumeSize;
     @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
     @Value("${amazon.s3.default.region}")
@@ -168,6 +167,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
      *  changes in config file will be applied after system restart
      */
     public void storePropertiesEditableFromConfigFile() {
+        storePropertiesEditableFromConfigFile(defaultRetentionCronExpression, defaultPollingRate, defaultWaitTimeBeforeNewSyncWithAWS, defaultMaxWaitTimeToDetachVolume);
+    }
+
+    private void storePropertiesEditableFromConfigFile(String retentionCronExpression, int pollingRate, int waitTimeBeforeNewSync, int maxWaitTimeToDetachVolume) {
         File file = Paths.get(System.getProperty(catalinaHomeEnvPropName), confFolderName, propFileName).toFile();
         try {
             PropertiesConfiguration propertiesConfiguration = new PropertiesConfiguration();
@@ -179,19 +182,19 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
             layout.setBlancLinesBefore(RETENTION_CRON_SCHEDULE, 1);
             layout.setComment(RETENTION_CRON_SCHEDULE, "Cron schedule for retention policy");
-            propertiesConfiguration.setProperty(RETENTION_CRON_SCHEDULE, defaultRetentionCronExpression);
+            propertiesConfiguration.setProperty(RETENTION_CRON_SCHEDULE, retentionCronExpression);
 
             layout.setBlancLinesBefore(WORKER_POLLING_RATE, 1);
             layout.setComment(WORKER_POLLING_RATE, "Polling rate to check whether there is some new task, in ms");
-            propertiesConfiguration.setProperty(WORKER_POLLING_RATE, Integer.toString(defaultPollingRate));
+            propertiesConfiguration.setProperty(WORKER_POLLING_RATE, Integer.toString(pollingRate));
 
             layout.setBlancLinesBefore(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS, 1);
             layout.setComment(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS, "Wait time before new sync of Snapshot/Volume with AWS data, in seconds");
-            propertiesConfiguration.setProperty(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS, Integer.toString(defaultWaitTimeBeforeNewSyncWithAWS));
+            propertiesConfiguration.setProperty(WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS, Integer.toString(waitTimeBeforeNewSync));
 
             layout.setBlancLinesBefore(MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS, 1);
             layout.setComment(MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS, "Max wait time for volume to be detached, in seconds");
-            propertiesConfiguration.setProperty(MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS, Integer.toString(defaultMaxWaitTimeToDetachVolume));
+            propertiesConfiguration.setProperty(MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS, Integer.toString(maxWaitTimeToDetachVolume));
 
             propertiesConfiguration.write(new FileWriter(file));
             LOG.debug("Config file {} stored successfully.", file.getPath());
@@ -283,18 +286,18 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setSdfsMountPoint(mountPoint);
         configuration.setSdfsVolumeName(volumeName);
         configuration.setS3Bucket(config.getBucketName());
-        configuration.setSdfsSize(Integer.parseInt(config.getVolumeSize()));
+        configuration.setSdfsSize(config.getVolumeSize());
 
         // set default properties
         configuration.setRestoreVolumeIopsPerGb(restoreVolumeIopsPerGb);
         configuration.setRestoreVolumeType(restoreVolumeType);
         configuration.setTempVolumeIopsPerGb(tempVolumeIopsPerGb);
         configuration.setTempVolumeType(tempVolumeType);
-        configuration.setSdfsLocalCacheSize(sdfsLocalCacheSize);
         configuration.setAmazonRetryCount(amazonRetryCount);
         configuration.setAmazonRetrySleep(amazonRetrySleep);
         configuration.setMaxQueueSize(queueSize);
         configuration.setSdfsConfigPath(sdfsConfigPath);
+        configuration.setSdfsLocalCacheSize(sdfsLocalCacheSize);
         configuration.setSdfsBackupFileName(sdfsStateBackupFileName);
         configuration.setRetentionCronExpression(defaultRetentionCronExpression);
         configuration.setWorkerDispatcherPollingRate(defaultPollingRate);
@@ -317,25 +320,31 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             loadedConf.setRetentionCronExpression(retentionCronExpression);
             configurationChanged = true;
         }
-        if (propertyProvided(pollingRate) && pollingRate != loadedConf.getWorkerDispatcherPollingRate()) {
+        if (correctPropertyProvided(pollingRate, WORKER_POLLING_RATE) && Integer.parseInt(pollingRate) != loadedConf.getWorkerDispatcherPollingRate()) {
             LOG.debug("Applying new polling rate to pick up new task {} ms.", pollingRate);
-            loadedConf.setWorkerDispatcherPollingRate(pollingRate);
+            loadedConf.setWorkerDispatcherPollingRate(Integer.parseInt(pollingRate));
             configurationChanged = true;
         }
-        if (propertyProvided(waitTimeBeforeNewSync) && waitTimeBeforeNewSync != loadedConf.getWaitTimeBeforeNewSyncWithAWS()) {
+        if (correctPropertyProvided(waitTimeBeforeNewSync, WAIT_TIME_BEFORE_NEXT_CHECK_IN_SECONDS)
+                && Integer.parseInt(waitTimeBeforeNewSync) != loadedConf.getWaitTimeBeforeNewSyncWithAWS()) {
             LOG.debug("Applying new wait time before new sync of Snapshot/Volume with AWS data {} seconds.", waitTimeBeforeNewSync);
-            loadedConf.setWaitTimeBeforeNewSyncWithAWS(waitTimeBeforeNewSync);
+            loadedConf.setWaitTimeBeforeNewSyncWithAWS(Integer.parseInt(waitTimeBeforeNewSync));
             configurationChanged = true;
         }
-        if (propertyProvided(maxWaitTimeToDetachVolume) && maxWaitTimeToDetachVolume != loadedConf.getMaxWaitTimeToDetachVolume()) {
+        if (correctPropertyProvided(maxWaitTimeToDetachVolume, MAX_WAIT_TIME_VOLUME_TO_DETACH_IN_SECONDS)
+                && Integer.parseInt(maxWaitTimeToDetachVolume) != loadedConf.getMaxWaitTimeToDetachVolume()) {
             LOG.debug("Applying new max wait time for volume to be detach {} seconds.", maxWaitTimeToDetachVolume);
-            loadedConf.setMaxWaitTimeToDetachVolume(maxWaitTimeToDetachVolume);
+            loadedConf.setMaxWaitTimeToDetachVolume(Integer.parseInt(maxWaitTimeToDetachVolume));
             configurationChanged = true;
         }
         if (configurationChanged) {
             LOG.debug("Storing updated settings from config file to DB.");
             mapper.save(loadedConf);
         }
+        // this is required to ensure that properties with invalid values in config file will be replaced with correct values
+        removeProperties();
+        storePropertiesEditableFromConfigFile(loadedConf.getRetentionCronExpression(), loadedConf.getWorkerDispatcherPollingRate(),
+                loadedConf.getWaitTimeBeforeNewSyncWithAWS(), loadedConf.getMaxWaitTimeToDetachVolume());
     }
 
     /**
@@ -418,14 +427,18 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        int maxVolumeSize = SdfsUtils.getMaxVolumeSize();
+        int maxVolumeSize = SDFSStateService.getMaxVolumeSize();
         sdfs.setMaxVolumeSize(String.valueOf(maxVolumeSize));
-        sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, Integer.parseInt(defaultVolumeSize))));
+        sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, defaultVolumeSize)));
         sdfs.setMinVolumeSize(minVolumeSize);
         sdfs.setCreated(sdfsAlreadyExists());
+        sdfs.setSdfsLocalCacheSize(sdfsLocalCacheSize);
+        sdfs.setMinSdfsLocalCacheSize(1);
+        sdfs.setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace());
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
+        initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
         return initConfigurationDto;
     }
 
@@ -487,11 +500,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     @Override
-    public void validateVolumeSize(final String volumeSize) {
-        int size = Integer.parseInt(volumeSize);
+    public void validateVolumeSize(final int volumeSize) {
         int min = Integer.parseInt(minVolumeSize);
-        int max = SdfsUtils.getMaxVolumeSize();
-        if (size < min || size > max) {
+        int max = SDFSStateService.getMaxVolumeSize();
+        if (volumeSize < min || volumeSize > max) {
             throw new ConfigurationException("Invalid volume size");
         }
     }
@@ -512,10 +524,17 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         return tableNames.contains(tableName);
     }
 
-    // when applications starts for the first time property file in conf directory does not exist yet
-    // in case user removes some properties from file this check will help to avoid unwanted exceptions
-    private boolean propertyProvided(int property) {
-        return property != propertyNotProvided;
+    // in case user removes some properties from file or provided incorrect int values this check will help to avoid unwanted exceptions
+    private boolean correctPropertyProvided(String propertyValue, String propertyName) {
+        try {
+            int newProperty = Integer.parseInt(propertyValue);
+            if (newProperty > 0) {
+                return true;
+            }
+        } catch (Exception igrone) {
+        }
+        LOG.warn("Incorrect value {} for property {}. Changes will not bve applied.", propertyValue, propertyName);
+        return false;
     }
 
     private boolean cronExpressionIsValid(String cronExpression) {
@@ -529,5 +548,4 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
 
     }
-
 }

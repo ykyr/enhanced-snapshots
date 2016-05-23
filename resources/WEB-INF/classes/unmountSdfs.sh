@@ -1,10 +1,5 @@
 ############################################################################
-######################## script for SDFS mount #############################
-
-### usage: sudo ./mount_sdfs.sh <SDFS volume size> <cloud bucket name> <cloud bucket location>
-# all arguments except <cloud bucket location> is required for SDFS to be mounted
-
-### passing variables from command line arguments
+######################## script for SDFS unmount #############################
 
 
 ### mounting SDFS file system to /mnt/awspool
@@ -22,6 +17,3 @@ else
     echo 'SDFS is already unmounted'
     exit 0
 fi
-
-### restart awslogs service
-service awslogs restart

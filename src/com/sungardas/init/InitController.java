@@ -155,13 +155,22 @@ class InitController implements ApplicationContextAware {
     static class ConfigDto {
         private User user;
         private String bucketName;
-        private String volumeSize;
+        private int volumeSize;
+        private int sdfsLocalCacheSize;
 
-        public String getVolumeSize() {
+        public int getSdfsLocalCacheSize() {
+            return sdfsLocalCacheSize;
+        }
+
+        public void setSdfsLocalCacheSize(int sdfsLocalCacheSize) {
+            this.sdfsLocalCacheSize = sdfsLocalCacheSize;
+        }
+
+        public int getVolumeSize() {
             return volumeSize;
         }
 
-        public void setVolumeSize(final String volumeSize) {
+        public void setVolumeSize(final int volumeSize) {
             this.volumeSize = volumeSize;
         }
 

@@ -48,7 +48,7 @@ public class SDFSStateServiceDev implements SDFSStateService {
     }
 
     @Override
-    public boolean sdfsIsRunning() {
+    public boolean sdfsIsAvailable() {
         return false;
     }
 

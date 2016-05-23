@@ -20,7 +20,9 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepo
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 
-import com.sungardas.utils.SdfsUtils;
+import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,10 +33,11 @@ import org.springframework.stereotype.Service;
 @Profile("prod")
 public class ConfigurationServiceImpl implements ConfigurationService {
 
-    private static final String CURRENT_VERSION = "0.0.1";
+    private static final Logger LOG = LogManager.getLogger(ConfigurationServiceImpl.class);
     private static final String LATEST_VERSION = "latest-version";
     private static final String INFO_URL = "http://com.sungardas.releases.s3.amazonaws.com/info";
     private static final String VOLUME_SIZE_UNIT = "GB";
+    private static final String[] VOLUME_TYPE_OPTIONS = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
 
     @Autowired
     private ConfigurationRepository configurationRepository;
@@ -43,11 +46,13 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     private AmazonDynamoDB dynamoDB;
     @Autowired
     private AmazonS3 amazonS3;
+
     @Value("${enhancedsnapshots.bucket.name.prefix}")
     private String bucketNamePrefix;
-
-    private String[] volumeTypeOptions = new String[]{VolumeType.Gp2.toString(), VolumeType.Io1.toString(), VolumeType.Standard.toString()};
+    @Value("${enhancedsnapshots.app.version}")
+    private String appVersion;
     private Configuration currentConfiguration;
+
 
 
     @PostConstruct
@@ -73,18 +78,18 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.getSdfs().setVolumeSize(currentConfiguration.getSdfsSize());
         // user can only expand volume size
         configuration.getSdfs().setMinVolumeSize(currentConfiguration.getSdfsSize());
-        configuration.getSdfs().setMaxVolumeSize(SdfsUtils.getMaxVolumeSize());
+        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize());
 
         configuration.getSdfs().setSdfsLocalCacheSize(currentConfiguration.getSdfsLocalCacheSize());
-        configuration.getSdfs().setMaxSdfsLocalCacheSize(SdfsUtils.getMaxLocalCacheSize());
-
+        configuration.getSdfs().setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace() + getSdfsLocalCacheSizeWithoutMeasureUnit());
+        configuration.getSdfs().setMinSdfsLocalCacheSize(getSdfsLocalCacheSizeWithoutMeasureUnit());
 
 
         configuration.setEc2Instance(new SystemConfiguration.EC2Instance());
         configuration.getEc2Instance().setInstanceID(getInstanceId());
 
         configuration.setLastBackup(getBackupTime());
-        configuration.setCurrentVersion(CURRENT_VERSION);
+        configuration.setCurrentVersion(appVersion);
         configuration.setLatestVersion(getLatestVersion());
 
         SystemConfiguration.SystemProperties systemProperties = new SystemConfiguration.SystemProperties();
@@ -92,16 +97,17 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         systemProperties.setRestoreVolumeType(getRestoreVolumeType().toString());
         systemProperties.setTempVolumeIopsPerGb(getTempVolumeIopsPerGb());
         systemProperties.setTempVolumeType(getTempVolumeType().toString());
-        systemProperties.setVolumeTypeOptions(volumeTypeOptions);
+        systemProperties.setVolumeTypeOptions(VOLUME_TYPE_OPTIONS);
         systemProperties.setAmazonRetryCount(getAmazonRetryCount());
         systemProperties.setAmazonRetrySleep(getAmazonRetrySleep());
+        systemProperties.setMaxQueueSize(getMaxQueueSize());
         configuration.setSystemProperties(systemProperties);
         return configuration;
     }
 
     @Override
     public void setSystemConfiguration(SystemConfiguration configuration) {
-
+        LOG.info("Updating system properties.");
         // update system properties
         currentConfiguration.setRestoreVolumeIopsPerGb(configuration.getSystemProperties().getRestoreVolumeIopsPerGb());
         currentConfiguration.setRestoreVolumeType(configuration.getSystemProperties().getRestoreVolumeType());
@@ -132,7 +138,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
             }
         } catch (Exception e) {
         }
-        return CURRENT_VERSION;
+        return appVersion;
     }
 
     @Override

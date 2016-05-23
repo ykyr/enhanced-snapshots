@@ -61,5 +61,7 @@ public interface AWSCommunicationService {
 
     Snapshot getSnapshot(String snapshotId);
 
-    void copyDataToNewBucket(String src, String dest);
+    void moveDataToNewBucket(String src, String dest);
+
+    void dropS3Bucket(String bucketName);
 }
