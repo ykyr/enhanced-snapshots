@@ -62,6 +62,11 @@ public interface SDFSStateService {
     void restoreSDFS();
 
     /**
+     * Restore SDFS from specific archive at S3 bucket
+     */
+    void restoreSDFS(String archiveName);
+
+    /**
      * Start SDFS if it is not running
      */
     void startSDFS();

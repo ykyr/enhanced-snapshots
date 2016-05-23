@@ -24,6 +24,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.SystemService;
 
+import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,9 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private AmazonDynamoDB amazonDynamoDB;
+
+    @Autowired
+    private SystemUpgrade systemUpgrade;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

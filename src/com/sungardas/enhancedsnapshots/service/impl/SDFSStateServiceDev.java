@@ -38,6 +38,11 @@ public class SDFSStateServiceDev implements SDFSStateService {
     }
 
     @Override
+    public void restoreSDFS(String archiveName) {
+
+    }
+
+    @Override
     public void startSDFS() {
 
     }

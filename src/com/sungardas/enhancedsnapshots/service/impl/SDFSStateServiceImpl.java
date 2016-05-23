@@ -47,11 +47,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     private static final Logger LOG = LogManager.getLogger(SDFSStateServiceImpl.class);
     private static final String SDFS_STATE_DESTINATION = "/";
-    private static final int VOLUME_ID_INDEX = 0;
-    private static final int TIME_INDEX = 1;
-    private static final int TYPE_INDEX = 2;
-    private static final int IOPS_INDEX = 3;
-    private static final long BYTES_IN_GIB = 1073741824l;
+
     private boolean reconfigurationInProgressFlag = false;
 
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
@@ -70,8 +66,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Autowired
     private AmazonS3 amazonS3;
-    @Autowired
-    private BackupRepository backupRepository;
+
     @Autowired
     private NotificationService notificationService;
 
@@ -114,19 +109,23 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Override
     public void restoreSDFS() {
+        restoreSDFS(configurationService.getSdfsBackupFileName());
+    }
+
+    @Override
+    public void restoreSDFS(String fromArchive) {
         File file = null;
         try {
             removeSdfsConfFile();
             // copy sdfs config file from S3
-            file = Files.createTempFile(FilenameUtils.removeExtension(configurationService.getSdfsBackupFileName()),
-                    getFileExtension(configurationService.getSdfsBackupFileName())).toFile();
-            downloadFromS3(configurationService.getSdfsBackupFileName(), file);
+            file = Files.createTempFile(FilenameUtils.removeExtension(fromArchive),
+                    getFileExtension(fromArchive)).toFile();
+            downloadFromS3(fromArchive, file);
             ZipUtils.unzip(file, SDFS_STATE_DESTINATION);
             file.delete();
             startSDFS(true);
             //SDFS mount time
             TimeUnit.SECONDS.sleep(sdfsMountTime);
-            restoreBackups();
             LOG.info("SDFS state restored.");
         } catch (Exception e) {
             if (file != null && file.exists()) {
@@ -136,40 +135,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         }
     }
 
-    private void restoreBackups() {
-        File[] files = new File(configurationService.getSdfsMountPoint()).listFiles();
-        LOG.info("Found {} files in system backup", files.length);
-        for (File file : files) {
-            BackupEntry entry = getBackupFromFile(file);
-            if (entry != null) {
-                backupRepository.save(entry);
-            }
-        }
-        LOG.info("All backups restored.");
 
-    }
-
-    private BackupEntry getBackupFromFile(File file) {
-        String fileName = file.getName();
-        String[] props = fileName.split("\\.");
-        if (props.length != 5) {
-            return null;
-        } else {
-            BackupEntry backupEntry = new BackupEntry();
-
-            backupEntry.setFileName(fileName);
-            backupEntry.setInstanceId(configurationService.getConfigurationId());
-            backupEntry.setIops(props[IOPS_INDEX]);
-            backupEntry.setSizeGiB(String.valueOf((int) (file.length() / BYTES_IN_GIB)));
-            backupEntry.setTimeCreated(props[TIME_INDEX]);
-            backupEntry.setVolumeType(props[TYPE_INDEX]);
-            backupEntry.setState(BackupState.COMPLETED.getState());
-            backupEntry.setVolumeId(props[VOLUME_ID_INDEX]);
-            backupEntry.setSize(String.valueOf(file.length()));
-
-            return backupEntry;
-        }
-    }
 
     @Override
     public boolean containsSdfsMetadata(String sBucket) {
