@@ -100,6 +100,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         systemProperties.setVolumeTypeOptions(VOLUME_TYPE_OPTIONS);
         systemProperties.setAmazonRetryCount(getAmazonRetryCount());
         systemProperties.setAmazonRetrySleep(getAmazonRetrySleep());
+        systemProperties.setMaxQueueSize(getMaxQueueSize());
         configuration.setSystemProperties(systemProperties);
         return configuration;
     }

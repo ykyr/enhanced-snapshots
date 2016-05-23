@@ -287,7 +287,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setSdfsVolumeName(volumeName);
         configuration.setS3Bucket(config.getBucketName());
         configuration.setSdfsSize(config.getVolumeSize());
-        configuration.setSdfsLocalCacheSize(config.getSdfsLocalCacheSize());
 
         // set default properties
         configuration.setRestoreVolumeIopsPerGb(restoreVolumeIopsPerGb);
@@ -298,6 +297,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         configuration.setAmazonRetrySleep(amazonRetrySleep);
         configuration.setMaxQueueSize(queueSize);
         configuration.setSdfsConfigPath(sdfsConfigPath);
+        configuration.setSdfsLocalCacheSize(sdfsLocalCacheSize);
         configuration.setSdfsBackupFileName(sdfsStateBackupFileName);
         configuration.setRetentionCronExpression(defaultRetentionCronExpression);
         configuration.setWorkerDispatcherPollingRate(defaultPollingRate);

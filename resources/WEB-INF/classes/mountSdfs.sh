@@ -1,11 +1,10 @@
 ############################################################################
 ######################## script for SDFS mount #############################
 
-### usage: sudo ./mount_sdfs.sh <SDFS volume size> <cloud bucket name> <cloud bucket location>
-# all arguments except <cloud bucket location> is required for SDFS to be mounted
+### usage: sudo ./mountSdfs.sh <Restore>
 
 ### passing variables from command line arguments
-is_restore="${3:-false}"
+is_restore="${1:-false}"
 echo 'Script parameters:'
 echo $1
 

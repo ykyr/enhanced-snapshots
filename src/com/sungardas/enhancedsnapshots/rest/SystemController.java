@@ -85,15 +85,18 @@ public class SystemController {
         }
         boolean needToReconfigureSdfs = false;
         //TODO: move this logic to future SystemService
-        if (!configurationService.getS3Bucket().equals(newConfiguration.getS3().getBucketName())) {
+        if (!configurationService.getS3Bucket().equals(newConfiguration.getS3().getBucketName())
+                && newConfiguration.getS3().getBucketName() != null) {
             awsCommunicationService.moveDataToNewBucket(configurationService.getS3Bucket(), newConfiguration.getS3().getBucketName());
             awsCommunicationService.dropS3Bucket(configurationService.getS3Bucket());
             needToReconfigureSdfs = true;
         }
-        if (configurationService.getSdfsVolumeSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getVolumeSize()) {
+        if (configurationService.getSdfsVolumeSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getVolumeSize()
+                && newConfiguration.getSdfs().getVolumeSize() > 0) {
             needToReconfigureSdfs = true;
         }
-        if (configurationService.getSdfsLocalCacheSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getSdfsLocalCacheSize()) {
+        if (configurationService.getSdfsLocalCacheSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getSdfsLocalCacheSize()
+                && newConfiguration.getSdfs().getSdfsLocalCacheSize() > 0) {
             needToReconfigureSdfs = true;
         }
         configurationService.setSystemConfiguration(newConfiguration);

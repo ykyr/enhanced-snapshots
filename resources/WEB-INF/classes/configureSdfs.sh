@@ -1,7 +1,7 @@
 ############################################################################
-######################## script for SDFS mount #############################
+######################## script for SDFS configuration #############################
 
-### usage: sudo ./mount_sdfs.sh <SDFS volume size> <cloud bucket name> <cloud bucket location>
+### usage: sudo ./configureSdfs.sh <SDFS volume size> <cloud bucket name> <cloud bucket location> <local cache size>
 # all arguments except <cloud bucket location> is required for SDFS to be mounted
 
 ### passing variables from command line arguments
