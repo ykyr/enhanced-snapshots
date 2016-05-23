@@ -1,22 +1,39 @@
 package com.sungardas.destroy;
 
+import java.util.Iterator;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
 import com.amazonaws.util.EC2MetadataUtils;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.*;
+import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.RetentionRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.SnapshotRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-
-import javax.annotation.PostConstruct;
-import java.util.Iterator;
-import java.util.List;
 
 public class RemoveAppConfiguration {
 
@@ -156,7 +173,7 @@ public class RemoveAppConfiguration {
     }
 
     private void dropTable(String tableName) {
-        Table tableToDelete = dynamoDB.getTable(tableName);
+        Table tableToDelete = dynamoDB.getTable(AmazonConfigProvider.getDynamoDbPrefix() + tableName);
         tableToDelete.delete();
         try {
             tableToDelete.waitForDelete();

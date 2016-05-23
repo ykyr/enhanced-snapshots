@@ -48,8 +48,8 @@ public interface ConfigurationService {
 
 	String getSdfsBackupFileName();
 
-	public int getWaitTimeBeforeNewSyncWithAWS();
+	int getWaitTimeBeforeNewSyncWithAWS();
 
-	public int getMaxWaitTimeToDetachVolume();
+	int getMaxWaitTimeToDetachVolume();
 
 }
