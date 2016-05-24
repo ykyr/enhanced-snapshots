@@ -1,14 +1,17 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.io.File;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.services.s3.AmazonS3;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.service.SystemService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.PostConstruct;
-import java.io.File;
 
 
 class CreateAppConfigurationImpl {
@@ -18,7 +21,10 @@ class CreateAppConfigurationImpl {
     private SDFSStateService sdfsService;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
+
+    @Autowired
+    private SystemService systemService;
 
     @Autowired
     private AmazonS3 amazonS3;
@@ -31,15 +37,15 @@ class CreateAppConfigurationImpl {
             LOG.info("Initialization started");
             init = true;
             boolean isBucketContainsSDFSMetadata = false;
-            if (isBucketExits(configurationService.getS3Bucket())) {
-                isBucketContainsSDFSMetadata = sdfsService.containsSdfsMetadata(configurationService.getS3Bucket());
+            if (isBucketExits(configurationMediator.getS3Bucket())) {
+                isBucketContainsSDFSMetadata = sdfsService.containsSdfsMetadata(configurationMediator.getS3Bucket());
             }
-            LOG.info("Initialization SDFS");
+            LOG.info("Initialization restore");
             if (isBucketContainsSDFSMetadata) {
-                LOG.info("Restoring SDFS from backup");
-                sdfsService.restoreSDFS();
+                LOG.info("Restoring from backup");
+                systemService.restore();
             } else {
-                File sdfsConfig = new File(configurationService.getSdfsConfigPath());
+                File sdfsConfig = new File(configurationMediator.getSdfsConfigPath());
                 LOG.info("SDFS config: {}", sdfsConfig.getPath());
                 if (sdfsConfig.exists()) {
                     sdfsConfig.delete();

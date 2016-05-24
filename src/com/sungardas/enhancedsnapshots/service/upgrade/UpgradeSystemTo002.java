@@ -1,21 +1,22 @@
 package com.sungardas.enhancedsnapshots.service.upgrade;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class UpgradeSystemTo002 implements SystemUpgrade {
@@ -40,10 +41,10 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
 
 
     @Override
-    public void upgrade(String tempFolder, String initVersion) {
+    public void upgrade(Path tempFolder, String initVersion) {
         try {
             LOG.info("Upgrading system to version 0.0.2");
-            File destForBackups = Paths.get(Files.createTempDirectory(tempFolder).toString(), BackupEntry.class.getName()).toFile();
+            File destForBackups = Paths.get(tempFolder.toString(), BackupEntry.class.getName()).toFile();
             sdfsStateService.restoreSDFS(sdfsSystemBackupArchive);
             objectMapper.writeValue(destForBackups, restoreBackups());
         } catch (Exception e) {

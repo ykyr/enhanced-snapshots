@@ -1,5 +1,13 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
@@ -7,21 +15,22 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.SnapshotRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.ExceptionDto;
 import com.sungardas.enhancedsnapshots.dto.TaskDto;
 import com.sungardas.enhancedsnapshots.dto.converter.TaskDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
-import com.sungardas.enhancedsnapshots.service.*;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.SchedulerService;
+import com.sungardas.enhancedsnapshots.service.Task;
+import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.AWSRestoreVolumeTaskExecutor;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.*;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -39,7 +48,7 @@ public class TaskServiceImpl implements TaskService {
     private SnapshotRepository snapshotRepository;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
 
     @Autowired
     private SchedulerService schedulerService;
@@ -58,7 +67,7 @@ public class TaskServiceImpl implements TaskService {
             @Override
             public void run() {
                 long currentTime = System.currentTimeMillis();
-                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqualAndInstanceId(currentTime + "", configurationService.getConfigurationId());
+                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqualAndInstanceId(currentTime + "", configurationMediator.getConfigurationId());
                 taskRepository.delete(list);
             }
         }, "*/5 * * * *");
@@ -69,8 +78,8 @@ public class TaskServiceImpl implements TaskService {
         List<TaskEntry> regularTasks = taskRepository.findByRegular(Boolean.TRUE.toString());
         for (TaskEntry task : regularTasks) {
             if (task.getTempVolumeType() == null) {
-                task.setTempVolumeType(configurationService.getTempVolumeType());
-                task.setTempVolumeIopsPerGb(configurationService.getTempVolumeIopsPerGb());
+                task.setTempVolumeType(configurationMediator.getTempVolumeType());
+                task.setTempVolumeIopsPerGb(configurationMediator.getTempVolumeIopsPerGb());
             }
         }
     }
@@ -78,12 +87,12 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Map<String, String> createTask(TaskDto taskDto) {
         Map<String, String> messages = new HashMap<>();
-        String configurationId = configurationService.getConfigurationId();
+        String configurationId = configurationMediator.getConfigurationId();
         List<TaskEntry> validTasks = new ArrayList<>();
         int tasksInQueue = getTasksInQueue();
         boolean regular = Boolean.valueOf(taskDto.getRegular());
         for (TaskEntry taskEntry : TaskDtoConverter.convert(taskDto)) {
-            if (!regular && tasksInQueue >= configurationService.getMaxQueueSize()) {
+            if (!regular && tasksInQueue >= configurationMediator.getMaxQueueSize()) {
                 notificationService.notifyAboutError(new ExceptionDto("Task creation error", "Task queue is full"));
                 break;
             }
@@ -133,7 +142,7 @@ public class TaskServiceImpl implements TaskService {
                 BackupEntry backupEntry;
                 String sourceFile = taskEntry.getSourceFileName();
                 if (sourceFile == null || sourceFile.isEmpty()) {
-                    backupEntry = backupRepository.getLast(taskEntry.getVolume(), configurationService.getConfigurationId());
+                    backupEntry = backupRepository.getLast(taskEntry.getVolume(), configurationMediator.getConfigurationId());
 
                 } else {
                     backupEntry = backupRepository.getByBackupFileName(sourceFile);
@@ -153,7 +162,7 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getAllTasks() {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
-                    configurationService.getConfigurationId()));
+                    configurationMediator.getConfigurationId()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -165,7 +174,7 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getAllTasks(String volumeId) {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.FALSE.toString(),
-                    volumeId, configurationService.getConfigurationId()));
+                    volumeId, configurationMediator.getConfigurationId()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -183,14 +192,14 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public boolean isQueueFull() {
-        return getTasksInQueue() > configurationService.getMaxQueueSize();
+        return getTasksInQueue() > configurationMediator.getMaxQueueSize();
     }
 
     @Override
     public List<TaskDto> getAllRegularTasks(String volumeId) {
         try {
             return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.TRUE.toString(),
-                    volumeId, configurationService.getConfigurationId()));
+                    volumeId, configurationMediator.getConfigurationId()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -227,16 +236,16 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private int getTasksInQueue() {
-        return (int) (taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationService.getConfigurationId(), TaskEntry.TaskEntryType.BACKUP.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()) +
-                taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationService.getConfigurationId(), TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()));
+        return (int) (taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationMediator.getConfigurationId(), TaskEntry.TaskEntryType.BACKUP.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()) +
+                taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationMediator.getConfigurationId(), TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()));
     }
 
     // for restore and backup tasks we should specify temp volume type
     private void setTempVolumeAndIops(TaskEntry taskEntry){
         if(taskEntry.getType().equals(TaskEntry.TaskEntryType.RESTORE.getType()) || taskEntry.getType().equals(TaskEntry.TaskEntryType.BACKUP.getType())){
-            taskEntry.setTempVolumeType(configurationService.getTempVolumeType());
-            if(configurationService.getTempVolumeType().equals(VolumeType.Io1.toString())){
-                taskEntry.setTempVolumeIopsPerGb(configurationService.getTempVolumeIopsPerGb());
+            taskEntry.setTempVolumeType(configurationMediator.getTempVolumeType());
+            if (configurationMediator.getTempVolumeType().equals(VolumeType.Io1.toString())) {
+                taskEntry.setTempVolumeIopsPerGb(configurationMediator.getTempVolumeIopsPerGb());
             }
         }
     }
@@ -244,9 +253,9 @@ public class TaskServiceImpl implements TaskService {
     // for restore tasks we should specify restore volume type
     private void setRestoreVolumeTypeAndIops(TaskEntry taskEntry){
         if(taskEntry.getType().equals(TaskEntry.TaskEntryType.RESTORE.getType())){
-            taskEntry.setRestoreVolumeType(configurationService.getRestoreVolumeType());
-            if(configurationService.getRestoreVolumeType().equals(VolumeType.Io1.toString())){
-                taskEntry.setRestoreVolumeIopsPerGb(configurationService.getRestoreVolumeIopsPerGb());
+            taskEntry.setRestoreVolumeType(configurationMediator.getRestoreVolumeType());
+            if (configurationMediator.getRestoreVolumeType().equals(VolumeType.Io1.toString())) {
+                taskEntry.setRestoreVolumeIopsPerGb(configurationMediator.getRestoreVolumeIopsPerGb());
             }
         }
     }

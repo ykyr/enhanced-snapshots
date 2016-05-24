@@ -33,10 +33,16 @@ import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeState;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,7 +69,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     private AmazonEC2 ec2client;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
 
 
    @Override
@@ -73,7 +79,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     @Override
     public String getCurrentAvailabilityZone() {
-        return getInstance(configurationService.getConfigurationId()).getPlacement()
+        return getInstance(configurationMediator.getConfigurationId()).getPlacement()
                 .getAvailabilityZone();    }
 
     @Override
@@ -109,7 +115,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
 
     private Volume createVolume(int size, int iiops, VolumeType type) {
-        String availabilityZone = getInstance(configurationService.getConfigurationId()).getPlacement()
+        String availabilityZone = getInstance(configurationMediator.getConfigurationId()).getPlacement()
                 .getAvailabilityZone();
 
         CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
@@ -386,11 +392,11 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     private void waitVolumeToDetach(Volume volume) {
         int waitTime = 0;
-        while (!volume.getState().equals(AVAILABLE_STATE) && waitTime < configurationService.getMaxWaitTimeToDetachVolume()) {
+        while (!volume.getState().equals(AVAILABLE_STATE) && waitTime < configurationMediator.getMaxWaitTimeToDetachVolume()) {
             LOG.debug("Volume {} is attached to {}", volume.getVolumeId(), volume.getAttachments().get(0).getInstanceId());
             sleepTillNextSync();
             volume = syncVolume(volume);
-            waitTime += configurationService.getMaxWaitTimeToDetachVolume();
+            waitTime += configurationMediator.getMaxWaitTimeToDetachVolume();
         }
         if (syncVolume(volume).getState().equals(AVAILABLE_STATE)) {
             LOG.debug("Volume {} detached.", volume.getVolumeId());
@@ -420,7 +426,7 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
 
     private void sleepTillNextSync(){
         try {
-            TimeUnit.SECONDS.sleep(configurationService.getWaitTimeBeforeNewSyncWithAWS());
+            TimeUnit.SECONDS.sleep(configurationMediator.getWaitTimeBeforeNewSyncWithAWS());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

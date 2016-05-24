@@ -1,8 +1,9 @@
 package com.sungardas.enhancedsnapshots.service;
 
+import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
+
 /**
- * Enhancedsnapshots system service interface main responsibilities: System backup & restore TODO move all logic from
- * {@link ConfigurationService}
+ * Enhancedsnapshots system service interface main responsibilities: System backup & restore and configuration
  */
 public interface SystemService {
 
@@ -13,8 +14,12 @@ public interface SystemService {
 
     /**
      * Restore system state from backup {@link #backup()}
-     *
-     * @param bucketName Amazon S3 bucket name with backup
      */
-    void restore(String bucketName);
+    void restore();
+
+    SystemConfiguration getSystemConfiguration();
+
+    void setSystemConfiguration(SystemConfiguration systemConfiguration);
+
+    String VOLUME_SIZE_UNIT = "GB";
 }

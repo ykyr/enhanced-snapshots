@@ -34,6 +34,10 @@ public class Configuration {
     private String region;
     private String s3Bucket;
 
+    // Nginx
+    private String nginxCertPath;
+    private String nginxKeyPath;
+
     public String getSdfsVolumeName() {
         return sdfsVolumeName;
     }
@@ -197,4 +201,19 @@ public class Configuration {
         this.maxWaitTimeToDetachVolume = maxWaitTimeToDetachVolume;
     }
 
+    public String getNginxCertPath() {
+        return nginxCertPath;
+    }
+
+    public void setNginxCertPath(final String nginxCertPath) {
+        this.nginxCertPath = nginxCertPath;
+    }
+
+    public String getNginxKeyPath() {
+        return nginxKeyPath;
+    }
+
+    public void setNginxKeyPath(final String nginxKeyPath) {
+        this.nginxKeyPath = nginxKeyPath;
+    }
 }

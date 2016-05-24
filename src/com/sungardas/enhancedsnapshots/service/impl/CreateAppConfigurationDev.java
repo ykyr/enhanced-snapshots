@@ -1,15 +1,16 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import javax.annotation.PostConstruct;
 
 public class CreateAppConfigurationDev {
 

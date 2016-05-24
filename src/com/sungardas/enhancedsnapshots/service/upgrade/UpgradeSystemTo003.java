@@ -1,7 +1,7 @@
 package com.sungardas.enhancedsnapshots.service.upgrade;
 
 
-
+import java.nio.file.Path;
 
 public class UpgradeSystemTo003 extends UpgradeSystemTo002 {
 
@@ -11,7 +11,7 @@ public class UpgradeSystemTo003 extends UpgradeSystemTo002 {
      * This is an example for future update logic
      */
     @Override
-    public void upgrade(String tempFolder, String initVersion) {
+    public void upgrade(Path tempFolder, String initVersion) {
         if (stringVersionToInt(initVersion) < stringVersionToInt(currentInitVersion)) {
             super.upgrade(tempFolder, initVersion);
         }

@@ -14,10 +14,10 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.RetentionRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.RetentionDto;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.service.BackupService;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.RetentionService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
 import com.sungardas.enhancedsnapshots.service.Task;
@@ -27,7 +27,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import static com.sungardas.enhancedsnapshots.dto.converter.RetentionConverter.toDto;
@@ -58,14 +57,14 @@ public class RetentionServiceImpl implements RetentionService {
     private SchedulerService schedulerService;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
 
     private String instanceId;
 
     @PostConstruct
     private void init() {
-        instanceId = configurationService.getConfigurationId();
-        schedulerService.addTask(getJob(this), configurationService.getRetentionCronExpression());
+        instanceId = configurationMediator.getConfigurationId();
+        schedulerService.addTask(getJob(this), configurationMediator.getRetentionCronExpression());
         try {
             apply();
         } catch (AmazonClientException e) {

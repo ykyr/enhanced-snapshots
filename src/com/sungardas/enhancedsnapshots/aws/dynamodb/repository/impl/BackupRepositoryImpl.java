@@ -1,5 +1,11 @@
 package com.sungardas.enhancedsnapshots.aws.dynamodb.repository.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
@@ -10,13 +16,9 @@ import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
-import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.amazonaws.services.dynamodbv2.model.ComparisonOperator.EQ;
 
@@ -26,7 +28,15 @@ public class BackupRepositoryImpl implements BackupRepository {
     @Autowired
     private AmazonDynamoDB amazonDynamoDB;
 
+    @Autowired
+    private DynamoDBMapperConfig config;
+
     private DynamoDBMapper mapper;
+
+    @PostConstruct
+    private void init() {
+        mapper = new DynamoDBMapper(amazonDynamoDB, config);
+    }
 
     @Override
     public void save(BackupEntry backup) {
@@ -85,11 +95,6 @@ public class BackupRepositoryImpl implements BackupRepository {
         } else {
             return backupEntries.get(0);
         }
-    }
-
-    @PostConstruct
-    private void init() {
-        mapper = new DynamoDBMapper(amazonDynamoDB);
     }
 
     @Override

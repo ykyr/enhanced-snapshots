@@ -2,8 +2,8 @@ package com.sungardas.enhancedsnapshots.service.impl;
 
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.SnapshotRepository;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SnapshotService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +16,6 @@ public class SnapshotServiceImpl implements SnapshotService {
 
     @Autowired
     private SnapshotRepository snapshotRepository;
-
-    @Autowired
-    private ConfigurationService configurationService;
 
     @Override
     public String getSnapshotId(String volumeId, String instancreId) {

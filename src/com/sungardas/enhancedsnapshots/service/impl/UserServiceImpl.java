@@ -1,15 +1,20 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
 import com.sungardas.enhancedsnapshots.aws.dynamodb.Roles;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
 import com.sungardas.enhancedsnapshots.exception.OperationNotAllowedException;
 import com.sungardas.enhancedsnapshots.exception.UniqueConstraintViolationException;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.UserService;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,11 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.util.List;
-
 @Service
-@DependsOn("CreateAppConfiguration")
+@DependsOn("SystemService")
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOG = LogManager.getLogger(UserServiceImpl.class);
@@ -32,11 +34,11 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
 
     @PostConstruct
     private void init() {
-        instanceId = configurationService.getConfigurationId();
+        instanceId = configurationMediator.getConfigurationId();
     }
 
     @Override

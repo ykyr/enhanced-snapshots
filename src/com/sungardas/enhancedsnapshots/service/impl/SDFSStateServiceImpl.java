@@ -20,25 +20,30 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
+import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
+import com.sungardas.enhancedsnapshots.exception.SDFSException;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
+import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 
-import com.amazonaws.services.s3.model.*;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
-import com.sungardas.enhancedsnapshots.exception.*;
-import com.sungardas.enhancedsnapshots.service.*;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.logging.log4j.*;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -71,7 +76,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private NotificationService notificationService;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private ConfigurationMediator configurationMediator;
 
     //TODO: maybe we can avoid stopping and starting sdfs while backup if we use sdfscli --cloud-sync-fs command
     //TODO: in sdfs 3.1.9 this command does not work but according to documentation it should be supported
@@ -81,14 +86,14 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             notificationService.notifyAboutTaskProgress(taskId, "Stopping SDFS...", 20);
         }
         stopSDFS();
-        String[] paths = {configurationService.getSdfsConfigPath()};
+        String[] paths = {configurationMediator.getSdfsConfigPath()};
         File tempFile = null;
         try {
             if (taskId != null) {
                 notificationService.notifyAboutTaskProgress(taskId, "Compressing SDFS files...", 40);
             }
-            tempFile = ZipUtils.zip(FilenameUtils.removeExtension(configurationService.getSdfsBackupFileName()),
-                    getFileExtension(configurationService.getSdfsBackupFileName()), paths);
+            tempFile = ZipUtils.zip(FilenameUtils.removeExtension(configurationMediator.getSdfsBackupFileName()),
+                    getFileExtension(configurationMediator.getSdfsBackupFileName()), paths);
         } catch (Throwable e) {
             startSDFS();
             if (tempFile != null && tempFile.exists()) {
@@ -99,7 +104,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Uploading SDFS files to S3...", 60);
         }
-        uploadToS3(configurationService.getSdfsBackupFileName(), tempFile);
+        uploadToS3(configurationMediator.getSdfsBackupFileName(), tempFile);
         if (taskId != null) {
             notificationService.notifyAboutTaskProgress(taskId, "Starting SDFS...", 80);
         }
@@ -109,7 +114,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     @Override
     public void restoreSDFS() {
-        restoreSDFS(configurationService.getSdfsBackupFileName());
+        restoreSDFS(configurationMediator.getSdfsBackupFileName());
     }
 
     @Override
@@ -140,7 +145,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public boolean containsSdfsMetadata(String sBucket) {
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(sBucket).withPrefix(configurationService.getSdfsBackupFileName());
+                .withBucketName(sBucket).withPrefix(configurationMediator.getSdfsBackupFileName());
         return amazonS3.listObjects(request).getObjectSummaries().size() > 0;
 
     }
@@ -148,7 +153,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public Long getBackupTime() {
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(configurationService.getS3Bucket()).withPrefix(configurationService.getSdfsBackupFileName());
+                .withBucketName(configurationMediator.getS3Bucket()).withPrefix(configurationMediator.getSdfsBackupFileName());
         List<S3ObjectSummary> list = amazonS3.listObjects(request).getObjectSummaries();
         if (list.size() > 0) {
             return list.get(0).getLastModified().getTime();
@@ -179,7 +184,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                 LOG.info("SDFS is already running");
                 return;
             }
-            if (!new File(configurationService.getSdfsConfigPath()).exists()) {
+            if (!new File(configurationMediator.getSdfsConfigPath()).exists()) {
                 configureSDFS();
             }
             String[] parameters = {getSdfsScriptFile(mountSdfsScript).getAbsolutePath(),  restore.toString()};
@@ -205,8 +210,8 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
 
     private void configureSDFS() throws IOException, InterruptedException {
-        String[] parameters = {getSdfsScriptFile(configureSdfsScript).getAbsolutePath(), configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(),
-                getBucketLocation(configurationService.getS3Bucket()), configurationService.getSdfsLocalCacheSize()};
+        String[] parameters = {getSdfsScriptFile(configureSdfsScript).getAbsolutePath(), configurationMediator.getSdfsVolumeSize(), configurationMediator.getS3Bucket(),
+                getBucketLocation(configurationMediator.getS3Bucket()), configurationMediator.getSdfsLocalCacheSize()};
         Process p = executeScript(parameters);
         switch (p.exitValue()) {
             case 0:
@@ -265,7 +270,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     private void removeSdfsConfFile() {
-        File sdfsConf = new File(configurationService.getSdfsConfigPath());
+        File sdfsConf = new File(configurationMediator.getSdfsConfigPath());
         if (sdfsConf.exists()) {
             sdfsConf.delete();
             LOG.info("SDFS conf file was successfully removed.");
@@ -306,12 +311,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
 
     private void uploadToS3(String keyName, File sdfsBackupFile) {
-        PutObjectRequest putObjectRequest = new PutObjectRequest(configurationService.getS3Bucket(), keyName, sdfsBackupFile);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(configurationMediator.getS3Bucket(), keyName, sdfsBackupFile);
         amazonS3.putObject(putObjectRequest);
     }
 
     private void downloadFromS3(String keyName, File sdfsBackupFile) throws IOException {
-        GetObjectRequest getObjectRequest = new GetObjectRequest(configurationService.getS3Bucket(), keyName);
+        GetObjectRequest getObjectRequest = new GetObjectRequest(configurationMediator.getS3Bucket(), keyName);
         S3Object s3object = amazonS3.getObject(getObjectRequest);
 
         BufferedOutputStream bout = new BufferedOutputStream(new FileOutputStream(sdfsBackupFile));

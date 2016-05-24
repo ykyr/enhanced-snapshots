@@ -1,13 +1,20 @@
 package com.sungardas.enhancedsnapshots.rest;
 
+import java.util.Map;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.components.WorkersDispatcher;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.rest.filters.FilterProxy;
 import com.sungardas.enhancedsnapshots.rest.utils.Constants;
 import com.sungardas.enhancedsnapshots.service.AWSCommunicationService;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.service.SystemService;
 import com.sungardas.enhancedsnapshots.service.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.support.XmlWebApplicationContext;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
 
 
 @RestController
@@ -38,7 +41,7 @@ public class SystemController {
     private SDFSStateService sdfsStateService;
 
     @Autowired
-    private ConfigurationService configurationService;
+    private SystemService systemService;
 
     @Autowired
     private UserService userService;
@@ -52,6 +55,9 @@ public class SystemController {
     @Autowired
     private WorkersDispatcher workersDispatcher;
 
+    @Autowired
+    private ConfigurationMediator configurationMediator;
+
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<String> deleteService(@RequestBody InstanceId instanceId) {
         String session = servletRequest.getSession().getId();
@@ -59,7 +65,7 @@ public class SystemController {
         if (!userService.isAdmin(currentUser)) {
             return new ResponseEntity<>("{\"msg\":\"Only admin can delete service\"}", HttpStatus.FORBIDDEN);
         }
-        if (!configurationService.getConfigurationId().equals(instanceId.getInstanceId())) {
+        if (!configurationMediator.getConfigurationId().equals(instanceId.getInstanceId())) {
             return new ResponseEntity<>("{\"msg\":\"Provided instance ID is incorrect\"}", HttpStatus.FORBIDDEN);
         }
         refreshContext();
@@ -68,12 +74,12 @@ public class SystemController {
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<SystemConfiguration> getSystem() {
-        return new ResponseEntity<>(configurationService.getSystemConfiguration(), HttpStatus.OK);
+        return new ResponseEntity<>(systemService.getSystemConfiguration(), HttpStatus.OK);
     }
 
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<String> updateSystemProperties(@RequestBody SystemConfiguration newConfiguration) {
-        SystemConfiguration currentConfiguration = configurationService.getSystemConfiguration();
+        SystemConfiguration currentConfiguration = systemService.getSystemConfiguration();
         if (!checkIopsAreValid(newConfiguration.getSystemProperties())) {
             return new ResponseEntity<>("iops per GB can not be less than 1 and more than 30", HttpStatus.BAD_REQUEST);
         }
@@ -85,21 +91,21 @@ public class SystemController {
         }
         boolean needToReconfigureSdfs = false;
         //TODO: move this logic to future SystemService
-        if (!configurationService.getS3Bucket().equals(newConfiguration.getS3().getBucketName())
+        if (!configurationMediator.getS3Bucket().equals(newConfiguration.getS3().getBucketName())
                 && newConfiguration.getS3().getBucketName() != null) {
-            awsCommunicationService.moveDataToNewBucket(configurationService.getS3Bucket(), newConfiguration.getS3().getBucketName());
-            awsCommunicationService.dropS3Bucket(configurationService.getS3Bucket());
+            awsCommunicationService.moveDataToNewBucket(configurationMediator.getS3Bucket(), newConfiguration.getS3().getBucketName());
+            awsCommunicationService.dropS3Bucket(configurationMediator.getS3Bucket());
             needToReconfigureSdfs = true;
         }
-        if (configurationService.getSdfsVolumeSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getVolumeSize()
+        if (configurationMediator.getSdfsVolumeSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getVolumeSize()
                 && newConfiguration.getSdfs().getVolumeSize() > 0) {
             needToReconfigureSdfs = true;
         }
-        if (configurationService.getSdfsLocalCacheSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getSdfsLocalCacheSize()
+        if (configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getSdfsLocalCacheSize()
                 && newConfiguration.getSdfs().getSdfsLocalCacheSize() > 0) {
             needToReconfigureSdfs = true;
         }
-        configurationService.setSystemConfiguration(newConfiguration);
+        systemService.setSystemConfiguration(newConfiguration);
         if (needToReconfigureSdfs) {
             sdfsStateService.reconfigureAndRestartSDFS();
         }
