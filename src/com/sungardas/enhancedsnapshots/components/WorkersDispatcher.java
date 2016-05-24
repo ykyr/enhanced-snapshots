@@ -17,6 +17,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsInterruptedException;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.service.SystemService;
 import com.sungardas.enhancedsnapshots.service.TaskService;
 import com.sungardas.enhancedsnapshots.tasks.executors.TaskExecutor;
 
@@ -57,6 +58,8 @@ public class WorkersDispatcher {
     private TaskService taskService;
     @Autowired
     private SDFSStateService sdfsStateService;
+    @Autowired
+    private SystemService systemService;
     @Autowired
     private TaskRepository taskRepository;
     @Autowired
@@ -129,7 +132,8 @@ public class WorkersDispatcher {
                                     notificationService.notifyAboutTaskProgress(entry.getId(), "System backup started", 0);
                                     entry.setStatus(RUNNING.getStatus());
                                     taskRepository.save(entry);
-                                    sdfsStateService.backupState(entry.getId());
+                                    //TODO add ws notification
+                                    systemService.backup();
                                     taskRepository.delete(entry);
                                     notificationService.notifyAboutTaskProgress(entry.getId(), "System backup finished", 100);
                                     break;
