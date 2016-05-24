@@ -24,6 +24,7 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
     private static final Logger LOG = LogManager.getLogger(UpgradeSystemTo002.class);
     @Value("${enhancedsnapshots.default.sdfs.mount.point}")
     private String mountPoint;
+    private static final String upgradeVersion = "0.0.2";
 
     // do not move to property file
     private static final String sdfsSystemBackupArchive = "sdfsstate.zip";
@@ -43,7 +44,11 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
     @Override
     public void upgrade(Path tempFolder, String initVersion) {
         try {
-            LOG.info("Upgrading system to version 0.0.2");
+            if (stringVersionToInt(initVersion) >= stringVersionToInt(upgradeVersion)) {
+                LOG.info("No need to upgrade to {}", upgradeVersion);
+                return;
+            }
+            LOG.info("Upgrading system to version {}", upgradeVersion);
             File destForBackups = Paths.get(tempFolder.toString(), BackupEntry.class.getName()).toFile();
             sdfsStateService.restoreSDFS(sdfsSystemBackupArchive);
             objectMapper.writeValue(destForBackups, restoreBackups());

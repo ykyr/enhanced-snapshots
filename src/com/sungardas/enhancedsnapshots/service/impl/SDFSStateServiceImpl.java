@@ -51,7 +51,6 @@ import org.springframework.stereotype.Service;
 public class SDFSStateServiceImpl implements SDFSStateService {
 
     private static final Logger LOG = LogManager.getLogger(SDFSStateServiceImpl.class);
-    private static final String SDFS_STATE_DESTINATION = "/";
 
     private boolean reconfigurationInProgressFlag = false;
 
@@ -126,7 +125,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             file = Files.createTempFile(FilenameUtils.removeExtension(fromArchive),
                     getFileExtension(fromArchive)).toFile();
             downloadFromS3(fromArchive, file);
-            ZipUtils.unzip(file, SDFS_STATE_DESTINATION);
+            ZipUtils.unzip(file, new File(configurationMediator.getSdfsConfigPath()).getParentFile().getAbsolutePath());
             file.delete();
             startSDFS(true);
             //SDFS mount time

@@ -61,7 +61,7 @@ import org.springframework.context.annotation.DependsOn;
 public class SystemServiceImpl implements SystemService {
     private static final Logger LOG = LogManager.getLogger(SystemServiceImpl.class);
 
-    private static final String CURRENT_VERSION = "0.0.1";
+    private static final String CURRENT_VERSION = "0.0.2";
     private static final String LATEST_VERSION = "latest-version";
     private static final String INFO_URL = "http://com.sungardas.releases.s3.amazonaws.com/info";
 
@@ -407,7 +407,7 @@ public class SystemServiceImpl implements SystemService {
 
     private void restoreFile(Path tempDirectory, Path destPath) throws IOException {
         Path fileName = destPath.getFileName();
-        Files.copy(Paths.get(tempDirectory.toString(), fileName.toString()), destPath);
+        Files.copy(Paths.get(tempDirectory.toString(), fileName.toString()), destPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     private void copyToDirectory(Path src, Path dest) throws IOException {
