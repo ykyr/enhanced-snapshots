@@ -199,7 +199,7 @@ public class SystemServiceImpl implements SystemService {
 
 
     private void backupSDFS(final Path tempDirectory) throws IOException {
-        Files.copy(Paths.get(currentConfiguration.getSdfsConfigPath()), tempDirectory);
+        copyToDirectory(Paths.get(currentConfiguration.getSdfsConfigPath()), tempDirectory);
         //TODO sdfscli --cloud-sync-fs
         sdfsStateService.stopSDFS();
         sdfsStateService.startSDFS();
@@ -208,8 +208,7 @@ public class SystemServiceImpl implements SystemService {
     private void restoreSDFS(final Path tempDirectory) throws IOException {
         sdfsStateService.stopSDFS();
 
-        Path config = Paths.get(currentConfiguration.getSdfsConfigPath());
-        Files.copy(Paths.get(tempDirectory.toString(), config.getFileName().toString()), config, StandardCopyOption.REPLACE_EXISTING);
+        restoreFile(tempDirectory, Paths.get(currentConfiguration.getSdfsConfigPath()));
         //TODO sdfscli --cloud-sync-fs
 
         sdfsStateService.startSDFS();
@@ -218,8 +217,8 @@ public class SystemServiceImpl implements SystemService {
     private void storeFiles(Path tempDirectory) {
         //nginx certificates
         try {
-            Files.copy(Paths.get(currentConfiguration.getNginxCertPath()), tempDirectory);
-            Files.copy(Paths.get(currentConfiguration.getNginxKeyPath()), tempDirectory);
+            copyToDirectory(Paths.get(currentConfiguration.getNginxCertPath()), tempDirectory);
+            copyToDirectory(Paths.get(currentConfiguration.getNginxKeyPath()), tempDirectory);
         } catch (IOException e) {
             LOG.warn("Nginx certificate not found");
         }
@@ -228,11 +227,8 @@ public class SystemServiceImpl implements SystemService {
     private void restoreFiles(Path tempDirectory) {
         //nginx certificates
         try {
-            Path cert = Paths.get(currentConfiguration.getNginxCertPath());
-            Files.copy(Paths.get(tempDirectory.toString(), cert.getFileName().toString()), cert);
-
-            Path key = Paths.get(currentConfiguration.getNginxKeyPath());
-            Files.copy(Paths.get(tempDirectory.toString(), key.getFileName().toString()), key);
+            restoreFile(tempDirectory, Paths.get(currentConfiguration.getNginxCertPath()));
+            restoreFile(tempDirectory, Paths.get(currentConfiguration.getNginxKeyPath()));
         } catch (IOException e) {
             LOG.warn("Nginx certificate not found");
         }
@@ -268,7 +264,7 @@ public class SystemServiceImpl implements SystemService {
         S3Object s3object = amazonS3.getObject(getObjectRequest);
 
         Path tempFile = Files.createTempFile(TEMP_DIRECTORY_PREFIX, TEMP_FILE_SUFFIX);
-        Files.copy(s3object.getObjectContent(), tempFile);
+        Files.copy(s3object.getObjectContent(), tempFile, StandardCopyOption.REPLACE_EXISTING);
 
         //unzip
         try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile());
@@ -276,7 +272,7 @@ public class SystemServiceImpl implements SystemService {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
                 Path dest = Paths.get(tempDirectory.toString(), entry.getName());
-                Files.copy(zipInputStream, dest);
+                Files.copy(zipInputStream, dest, StandardCopyOption.REPLACE_EXISTING);
             }
         }
 
@@ -407,5 +403,15 @@ public class SystemServiceImpl implements SystemService {
             }
         }
         return result.toArray(new String[result.size()]);
+    }
+
+    private void restoreFile(Path tempDirectory, Path destPath) throws IOException {
+        Path fileName = destPath.getFileName();
+        Files.copy(Paths.get(tempDirectory.toString(), fileName.toString()), destPath);
+    }
+
+    private void copyToDirectory(Path src, Path dest) throws IOException {
+        Path srcFileName = src.getFileName();
+        Files.copy(src, Paths.get(dest.toString(), srcFileName.toString()), StandardCopyOption.REPLACE_EXISTING);
     }
 }
