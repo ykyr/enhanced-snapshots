@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -18,6 +19,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
@@ -34,6 +36,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.util.EC2MetadataUtils;
+import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
@@ -147,6 +150,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private UserDto userDto;
     private String adminPassword;
 
+    private List<String> tablesWithPrefix;
+    private String dbPrefix;
+
     @PostConstruct
     private void init() {
         credentialsProvider = new InstanceProfileCredentialsProvider();
@@ -154,8 +160,11 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         region = Regions.getCurrentRegion();
         amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
         amazonDynamoDB.setRegion(region);
-
-        mapper = new DynamoDBMapper(amazonDynamoDB);
+        dbPrefix = AmazonConfigProvider.getDynamoDbPrefix();
+        DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder().withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.
+                withTableNamePrefix(dbPrefix)).build();
+        mapper = new DynamoDBMapper(amazonDynamoDB, config);
+        tablesWithPrefix = Arrays.stream(tables).map(s -> dbPrefix.concat(s)).collect(Collectors.toList());
     }
 
     @Override
@@ -238,6 +247,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     private void createTable(String tableName, long readCapacityUnits, long writeCapacityUnits,
                              String hashKeyName, String hashKeyType, String rangeKeyName, String rangeKeyType) {
+        tableName = dbPrefix + tableName;
         DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
         if (tableExists(tableName)) {
             LOG.info("Table {} already exists");
@@ -456,9 +466,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         try {
             ListTablesResult listResult = amazonDynamoDB.listTables();
             List<String> tableNames = listResult.getTableNames();
+            boolean present = tableNames.containsAll(tablesWithPrefix);
             LOG.info("List db structure: {}", tableNames.toArray());
-            LOG.info("Check db structure is present: {}", tableNames.containsAll(Arrays.asList(tables)));
-            return tableNames.containsAll(Arrays.asList(tables));
+            LOG.info("Check db structure is present: {}", present);
+            return present;
         } catch (AmazonServiceException e) {
             LOG.warn("Can't get a list of existed tables", e);
             throw new DataAccessException(CANT_GET_ACCESS_DYNAMODB, e);

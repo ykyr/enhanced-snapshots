@@ -115,13 +115,20 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public void backup() {
         try {
+            LOG.info("System backup started");
             Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
+            LOG.info("Add info file");
             addInfo(tempDirectory);
+            LOG.info("Backup SDFS state");
             backupSDFS(tempDirectory);
+            LOG.info("Backup files");
             storeFiles(tempDirectory);
+            LOG.info("Backup db");
             backupDB(tempDirectory);
+            LOG.info("Upload to S3");
             uploadToS3(tempDirectory);
             tempDirectory.toFile().delete();
+            LOG.info("System backup finished");
         } catch (IOException e) {
             LOG.error("System backup failed");
             LOG.error(e);
@@ -233,6 +240,7 @@ public class SystemServiceImpl implements SystemService {
 
     private void uploadToS3(final Path tempDirectory) throws IOException {
         // Compress to zip
+        LOG.info("  -Compress files");
         File[] files = tempDirectory.toFile().listFiles();
         Path zipFile = Files.createTempFile(TEMP_DIRECTORY_PREFIX, TEMP_FILE_SUFFIX);
         try (FileOutputStream fos = new FileOutputStream(zipFile.toFile());
@@ -245,6 +253,7 @@ public class SystemServiceImpl implements SystemService {
         }
 
         //Upload
+        LOG.info("  -Upload");
         PutObjectRequest putObjectRequest = new PutObjectRequest(configurationMediator.getS3Bucket(),
                 configurationMediator.getSdfsBackupFileName(), zipFile.toFile());
         amazonS3.putObject(putObjectRequest);
@@ -276,6 +285,7 @@ public class SystemServiceImpl implements SystemService {
     }
 
     private void storeTable(Class tableClass, Path tempDirectory) throws IOException {
+        LOG.info("Backup DB table: {}", tableClass.getSimpleName());
         File dest = Paths.get(tempDirectory.toString(), tableClass.getName()).toFile();
         List result = dynamoDBMapper.scan(tableClass, new DynamoDBScanExpression());
         objectMapper.writeValue(dest, result);
