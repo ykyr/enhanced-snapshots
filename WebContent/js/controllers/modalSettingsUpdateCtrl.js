@@ -4,9 +4,9 @@ angular.module('web')
     .controller('modalVolumeTypeChangeCtrl', function ($scope, $modalInstance, System, Tasks) {
         $scope.state = 'ask';
 
-        var newSettings = $scope.settings;
+        var newSettings = angular.copy($scope.settings);
         //deletion of Arrays from model per request of backend
-        delete newSettings.s3.suffixesInUse;
+        // delete newSettings.s3.suffixesInUse;
         delete newSettings.systemProperties.volumeTypeOptions;
 
         $scope.updateSettings = function () {

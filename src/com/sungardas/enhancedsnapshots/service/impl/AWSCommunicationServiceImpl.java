@@ -344,19 +344,6 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
     }
 
     @Override
-    public void moveDataToNewBucket(String src, String dest) {
-        LOG.info("Copying data from {} to {} bucket", src, dest);
-        amazonS3.createBucket(new CreateBucketRequest(dest));
-        ObjectListing objectListing = amazonS3.listObjects(new ListObjectsRequest()
-                .withBucketName(src));
-
-        for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
-            amazonS3.copyObject(src, objectSummary.getKey(),
-                    dest, objectSummary.getKey());
-        }
-    }
-
-    @Override
     public void dropS3Bucket(String bucketName) {
         LOG.info("Removing bucket {}.", bucketName);
         ObjectListing objectListing = amazonS3.listObjects(bucketName);
@@ -379,6 +366,26 @@ public class AWSCommunicationServiceImpl implements AWSCommunicationService {
             amazonS3.deleteVersion(bucketName, s.getKey(), s.getVersionId());
         }
         amazonS3.deleteBucket(bucketName);
+    }
+
+    @Override
+    public void restartAWSLogService() {
+        Process p;
+        try {
+            p = Runtime.getRuntime().exec("service awslogs restart");
+            p.waitFor();
+            switch (p.exitValue()) {
+                case 0:
+                    LOG.info("awslogs restarted successfully");
+                    break;
+                default:
+                    throw new AWSCommunicationServiceException("Failed to restart awslogs");
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to restart awslogs");
+            throw new AWSCommunicationServiceException("Failed to restart awslogs");
+        }
+
     }
 
 

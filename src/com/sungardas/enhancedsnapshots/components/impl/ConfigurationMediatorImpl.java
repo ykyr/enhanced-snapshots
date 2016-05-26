@@ -136,4 +136,9 @@ public class ConfigurationMediatorImpl implements ConfigurationMediator {
     public void setCurrentConfiguration(final Configuration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
     }
+
+    @Override
+    public String getVolumeSizeUnit() {
+        return VOLUME_SIZE_UNIT;
+    }
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Profile("dev")
-public class SDFSStateServiceDev implements SDFSStateService {
+public class SDFSStateServiceDev extends SDFSStateServiceImpl {
     private static final org.apache.log4j.Logger LOG = org.apache.log4j.LogManager.getLogger(SDFSStateServiceDev.class);
 
     @Override

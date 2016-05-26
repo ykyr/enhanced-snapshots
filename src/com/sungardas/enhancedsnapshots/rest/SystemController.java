@@ -90,16 +90,10 @@ public class SystemController {
             return new ResponseEntity<>("Local cache size can not be more than " + currentConfiguration.getSdfs().getMaxSdfsLocalCacheSize(), HttpStatus.BAD_REQUEST);
         }
         boolean needToReconfigureSdfs = false;
-        //TODO: move this logic to future SystemService
-        if (!configurationMediator.getS3Bucket().equals(newConfiguration.getS3().getBucketName())
-                && newConfiguration.getS3().getBucketName() != null) {
-            awsCommunicationService.moveDataToNewBucket(configurationMediator.getS3Bucket(), newConfiguration.getS3().getBucketName());
-            awsCommunicationService.dropS3Bucket(configurationMediator.getS3Bucket());
-            needToReconfigureSdfs = true;
-        }
+
         if (configurationMediator.getSdfsVolumeSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getVolumeSize()
                 && newConfiguration.getSdfs().getVolumeSize() > 0) {
-            needToReconfigureSdfs = true;
+            sdfsStateService.expandSdfsVolume(newConfiguration.getSdfs().getVolumeSize() + configurationMediator.getVolumeSizeUnit());
         }
         if (configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit() != newConfiguration.getSdfs().getSdfsLocalCacheSize()
                 && newConfiguration.getSdfs().getSdfsLocalCacheSize() > 0) {

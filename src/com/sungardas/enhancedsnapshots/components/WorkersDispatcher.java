@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.ERROR;
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.RUNNING;
 
+
 @Service
 @DependsOn("SystemService")
 public class WorkersDispatcher {
@@ -121,7 +122,6 @@ public class WorkersDispatcher {
                                 }
                                 case RESTORE:
                                     if (!sdfsStateService.sdfsIsAvailable()) {
-                                        //TODO remove when sdfscli --expand volume will be fixed
                                         break;
                                     }
                                     LOGtw.info("Task was identified as restore");

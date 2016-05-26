@@ -3,20 +3,17 @@ package com.sungardas.enhancedsnapshots.service.impl;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.*;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.*;
+import com.sungardas.enhancedsnapshots.components.ConfigurationMediator;
 import com.sungardas.enhancedsnapshots.dto.*;
-import com.sungardas.enhancedsnapshots.service.ConfigurationService;
 import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SchedulerService;
-import org.apache.commons.io.FilenameUtils;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.nio.file.Files;
 import java.util.*;
 
 import static org.mockito.Matchers.anyString;
@@ -38,7 +35,7 @@ public class TaskServiceTest {
     @Mock
     private SnapshotRepository snapshotRepository;
     @Mock
-    private ConfigurationService configuration;
+    private ConfigurationMediator configuration;
     @Mock
     private SchedulerService schedulerService;
     @Mock

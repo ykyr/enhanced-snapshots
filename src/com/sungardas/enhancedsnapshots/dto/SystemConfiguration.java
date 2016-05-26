@@ -71,25 +71,6 @@ public class SystemConfiguration {
 
     public static class S3 {
         private String bucketName;
-        private String immutablePrefix;
-        private String [] suffixesInUse;
-
-
-        public String[] getSuffixesInUse() {
-            return suffixesInUse;
-        }
-
-        public void setSuffixesInUse(String[] suffixesInUse) {
-            this.suffixesInUse = suffixesInUse;
-        }
-
-        public String getImmutablePrefix() {
-            return immutablePrefix;
-        }
-
-        public void setImmutablePrefix(String immutablePrefix) {
-            this.immutablePrefix = immutablePrefix;
-        }
 
         public String getBucketName() {
             return bucketName;

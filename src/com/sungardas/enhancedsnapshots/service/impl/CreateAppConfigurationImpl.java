@@ -45,11 +45,6 @@ class CreateAppConfigurationImpl {
                 LOG.info("Restoring from backup");
                 systemService.restore();
             } else {
-                File sdfsConfig = new File(configurationMediator.getSdfsConfigPath());
-                LOG.info("SDFS config: {}", sdfsConfig.getPath());
-                if (sdfsConfig.exists()) {
-                    sdfsConfig.delete();
-                }
                 LOG.info("Starting SDFS");
                 sdfsService.startSDFS();
             }

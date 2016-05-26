@@ -47,22 +47,25 @@
                     <hr/>
 
                 <div class="full-width">
-                    <form name="s3">
-                        <h3>S3</h3>
-                        <div class="settings field-label col-sm-5 text-right">Bucket:</div>
-                        <div class="col-sm-7 text-left"> {{settings.s3.immutablePrefix || 'unknown'}}
-                            <input class="settings bucket-name"
-                                   name="bucketName"
-                                   type="text"
-                                   ng-model="s3MutableSuffix"
-                                   ng-model-options="{updateOn: 'blur'}"
-                                   ng-change="isNameExist(s3MutableSuffix)"
-                                   ng-pattern="/^[a-zA-Z0-9_-]*$/"
-                                   required>
-                        </div>
-                        <div class="col-sm-12 text-danger small" ng-show="nameExists">"{{s3MutableSuffix}}" {{STRINGS.s3.existing}} </div>
-                        <div class="col-sm-12 text-danger small" ng-show="s3.bucketName.$error.required"> {{STRINGS.s3.empty}} </div>
-                    </form>
+                    <h3>S3</h3>
+                    <div class="col-sm-5 text-right">Bucket:</div>
+                    <div class="col-sm-7 text-left">{{settings.s3.bucketName || 'unknown'}}</div>
+                    <!--<form name="s3">-->
+                        <!--<h3>S3</h3>-->
+                        <!--<div class="settings field-label col-sm-5 text-right">Bucket:</div>-->
+                        <!--<div class="col-sm-7 text-left"> {{settings.s3.immutablePrefix || 'unknown'}}-->
+                            <!--<input class="settings bucket-name"-->
+                                   <!--name="bucketName"-->
+                                   <!--type="text"-->
+                                   <!--ng-model="s3MutableSuffix"-->
+                                   <!--ng-model-options="{updateOn: 'blur'}"-->
+                                   <!--ng-change="isNameExist(s3MutableSuffix)"-->
+                                   <!--ng-pattern="/^[a-zA-Z0-9_-]*$/"-->
+                                   <!--required>-->
+                        <!--</div>-->
+                        <!--<div class="col-sm-12 text-danger small" ng-show="nameExists">"{{s3MutableSuffix}}" {{STRINGS.s3.existing}} </div>-->
+                        <!--<div class="col-sm-12 text-danger small" ng-show="s3.bucketName.$error.required"> {{STRINGS.s3.empty}} </div>-->
+                    <!--</form>-->
                 </div>
                     <hr/>
 
