@@ -54,16 +54,17 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final long BYTES_IN_GIB = 1073741824l;
     private boolean reconfigurationInProgressFlag = false;
 
+    private static final String MOUNT_CMD = "--mount";
+    private static final String UNMOUNT_CMD = "--unmount";
+    private static final String GET_SATE_CMD = "--state";
+    private static final String CONFIGURE_CMD = "--configure";
+    private static final String EXPAND_VOLUME_CMD = "--expandvolume";
+
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
     private int sdfsMountTime;
-    @Value("${enhancedsnapshots.configure.sdfs.script.path}")
-    private String configureSdfsScript;
-    @Value("${enhancedsnapshots.mount.sdfs.script.path}")
-    private String mountSdfsScript;
-    @Value("${enhancedsnapshots.unmount.sdfs.script.path}")
-    private String unmountSdfsScript;
-    @Value("${enhancedsnapshots.getstate.sdfs.script.path}")
-    private String getSdfsState;
+    @Value("${enhancedsnapshots.sdfs.script.path}")
+    private String sdfsScript;
+
 
     @Autowired
     private ResourceLoader resourceLoader;
@@ -146,7 +147,6 @@ public class SDFSStateServiceImpl implements SDFSStateService {
             }
         }
         LOG.info("All backups restored.");
-
     }
 
     private BackupEntry getBackupFromFile(File file) {
@@ -209,14 +209,14 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
     private void startSDFS(Boolean restore) {
         try {
-            if (sdfsIsAvailable()){
+            if (sdfsIsRunnig()){
                 LOG.info("SDFS is already running");
                 return;
             }
             if (!new File(configurationService.getSdfsConfigPath()).exists()) {
                 configureSDFS();
             }
-            String[] parameters = {getSdfsScriptFile(mountSdfsScript).getAbsolutePath(),  restore.toString()};
+            String[] parameters = {getSdfsScriptFile(sdfsScript).getAbsolutePath(), MOUNT_CMD, restore.toString()};
             Process p = executeScript(parameters);
             switch (p.exitValue()) {
                 case 0:
@@ -239,7 +239,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
 
 
     private void configureSDFS() throws IOException, InterruptedException {
-        String[] parameters = {getSdfsScriptFile(configureSdfsScript).getAbsolutePath(), configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(),
+        String[] parameters = {getSdfsScriptFile(sdfsScript).getAbsolutePath(), CONFIGURE_CMD, configurationService.getSdfsVolumeSize(), configurationService.getS3Bucket(),
                 getBucketLocation(configurationService.getS3Bucket()), configurationService.getSdfsLocalCacheSize()};
         Process p = executeScript(parameters);
         switch (p.exitValue()) {
@@ -254,11 +254,11 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     @Override
     public void stopSDFS() {
         try {
-            if (!sdfsIsAvailable()){
+            if (!sdfsIsRunnig()){
                 LOG.info("SDFS is already stopped");
                 return;
             }
-            String[] parameters = {getSdfsScriptFile(unmountSdfsScript).getAbsolutePath()};
+            String[] parameters = {getSdfsScriptFile(sdfsScript).getAbsolutePath(), UNMOUNT_CMD};
             Process p = executeScript(parameters);
             switch (p.exitValue()) {
                 case 0:
@@ -273,14 +273,9 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         }
     }
 
-    @Override
-    public boolean sdfsIsAvailable() {
+    private boolean sdfsIsRunnig() {
         try {
-            if (reconfigurationInProgressFlag) {
-                LOG.debug("SDFS is unavailable. Reconfiguration is in progress ... ");
-                return false;
-            }
-            String[] parameters = {getSdfsScriptFile(getSdfsState).getAbsolutePath()};
+            String[] parameters = {getSdfsScriptFile(sdfsScript).getAbsolutePath(), GET_SATE_CMD};
             Process p = executeScript(parameters);
             switch (p.exitValue()) {
                 case 0:
@@ -295,6 +290,40 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         } catch (Exception e) {
             LOG.error(e);
             throw new ConfigurationException("Failed to determine SDFS state");
+        }
+    }
+
+    public boolean sdfsIsAvailable() {
+        try {
+            if (reconfigurationInProgressFlag) {
+                LOG.debug("SDFS is unavailable. Reconfiguration is in progress ... ");
+                return false;
+            }
+            return sdfsIsRunnig();
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new ConfigurationException("Failed to determine SDFS state");
+        }
+    }
+
+    @Override
+    public void expandSdfsVolume(String newVolumeSize) {
+        String[] parameters;
+        try {
+            parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), EXPAND_VOLUME_CMD, configurationService.getSdfsMountPoint(), newVolumeSize};
+            Process p = executeScript(parameters);
+            switch (p.exitValue()) {
+                case 0:
+                    LOG.debug("SDFS volume was expanded successfully");
+                    break;
+                case 1:
+                    LOG.debug("Failed to expand SDFS volume");
+                default:
+                    throw new ConfigurationException("Failed to stop SDFS");
+            }
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new ConfigurationException("Failed to expand SDFS volume");
         }
     }
 

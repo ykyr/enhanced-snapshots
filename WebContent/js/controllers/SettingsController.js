@@ -43,7 +43,7 @@ angular.module('web')
         System.get().then(function (data) {
             $scope.settings = data;
             $scope.initialSettings = angular.copy(data);
-            $scope.s3MutableSuffix = $scope.initialSettings.s3.bucketName.slice($scope.initialSettings.s3.immutablePrefix.length);
+            // $scope.s3MutableSuffix = $scope.initialSettings.s3.bucketName.slice($scope.initialSettings.s3.immutablePrefix.length);
             $scope.progressState = '';
             loader.dismiss();
         }, function (e) {
@@ -86,16 +86,16 @@ angular.module('web')
         };
 
         $scope.isNameExist = function (name) {
-            var initialName = $scope.initialSettings.s3.bucketName.slice($scope.initialSettings.s3.immutablePrefix.length);
-            $scope.nameExists = $scope.initialSettings.s3.suffixesInUse.filter(function (suffix) {
-              return suffix === name && name !== initialName;
-          }).length;
-            $scope.s3.$setValidity("bucketName", false);
+            // var initialName = $scope.initialSettings.s3.bucketName.slice($scope.initialSettings.s3.immutablePrefix.length);
+          //   $scope.nameExists = $scope.initialSettings.s3.suffixesInUse.filter(function (suffix) {
+          //     return suffix === name && name !== initialName;
+          // }).length;
+          //   $scope.s3.$setValidity("bucketName", false);
         };
 
         $scope.isNewValues = function () {
             if ($scope.settings) {
-                $scope.settings.s3.bucketName = $scope.settings.s3.immutablePrefix + $scope.s3MutableSuffix;
+                // $scope.settings.s3.bucketName = $scope.settings.s3.immutablePrefix + $scope.s3MutableSuffix;
 
                 if($scope.nameExists){
                     $scope.settings.s3.bucketName = $scope.initialSettings.s3.bucketName;

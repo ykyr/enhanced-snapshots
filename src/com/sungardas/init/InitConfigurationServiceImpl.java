@@ -216,9 +216,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         createDbStructure();
         storeAdminUserIfProvided();
         // store configuration if it does not exist
-        if (mapper.load(Configuration.class, EC2MetadataUtils.getInstanceId()) == null) {
-            storeConfiguration(config);
-        }
+        storeConfiguration(config);
     }
 
     private void createDbStructure() throws ConfigurationException {
@@ -427,7 +425,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        int maxVolumeSize = SDFSStateService.getMaxVolumeSize();
+        int maxVolumeSize = SDFSStateService.getMaxVolumeSize(false);
         sdfs.setMaxVolumeSize(String.valueOf(maxVolumeSize));
         sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, defaultVolumeSize)));
         sdfs.setMinVolumeSize(minVolumeSize);
@@ -438,7 +436,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
-        initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
         return initConfigurationDto;
     }
 
@@ -502,7 +499,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Override
     public void validateVolumeSize(final int volumeSize) {
         int min = Integer.parseInt(minVolumeSize);
-        int max = SDFSStateService.getMaxVolumeSize();
+        int max = SDFSStateService.getMaxVolumeSize(false);
         if (volumeSize < min || volumeSize > max) {
             throw new ConfigurationException("Invalid volume size");
         }

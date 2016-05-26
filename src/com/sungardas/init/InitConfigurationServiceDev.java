@@ -49,8 +49,6 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         config.setS3(names);
         config.setSdfs(sdfs);
         config.setDb(db);
-        config.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
-        config.setSuffixesInUse(new String[]{"i-1111", "i-2222", "i-4444"});
 
         return config;
     }

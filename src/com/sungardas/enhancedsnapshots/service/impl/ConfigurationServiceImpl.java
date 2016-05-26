@@ -69,8 +69,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
         configuration.setS3(new SystemConfiguration.S3());
         configuration.getS3().setBucketName(getS3Bucket());
-        configuration.getS3().setImmutablePrefix(bucketNamePrefix);
-        configuration.getS3().setSuffixesInUse(getSuffixesInUse());
 
         configuration.setSdfs(new SystemConfiguration.SDFS());
         configuration.getSdfs().setMountPoint(getSdfsMountPoint());
@@ -78,7 +76,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         configuration.getSdfs().setVolumeSize(currentConfiguration.getSdfsSize());
         // user can only expand volume size
         configuration.getSdfs().setMinVolumeSize(currentConfiguration.getSdfsSize());
-        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize());
+        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize(true));
 
         configuration.getSdfs().setSdfsLocalCacheSize(currentConfiguration.getSdfsLocalCacheSize());
         configuration.getSdfs().setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace() + getSdfsLocalCacheSizeWithoutMeasureUnit());
@@ -120,9 +118,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         // update sdfs setting
         currentConfiguration.setSdfsSize(configuration.getSdfs().getVolumeSize());
         currentConfiguration.setSdfsLocalCacheSize(configuration.getSdfs().getSdfsLocalCacheSize());
-
-        // update bucket
-        currentConfiguration.setS3Bucket(configuration.getS3().getBucketName());
 
         configurationRepository.save(currentConfiguration);
     }
@@ -251,6 +246,11 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         return currentConfiguration.getMaxWaitTimeToDetachVolume();
     }
 
+    @Override
+    public String getVolumeSizeUnit() {
+        return VOLUME_SIZE_UNIT;
+    }
+
     protected String getInstanceId() {
         return EC2MetadataUtils.getInstanceId();
     }
@@ -265,17 +265,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         } else {
             return null;
         }
-    }
-
-    private String[] getSuffixesInUse() {
-        ArrayList<String> result = new ArrayList<>();
-        List<Bucket> allBuckets = amazonS3.listBuckets();
-        for (Bucket bucket : allBuckets) {
-            if(bucket.getName().startsWith(bucketNamePrefix)){
-                result.add(bucket.getName().substring(bucketNamePrefix.length()));
-            }
-        }
-        return result.toArray(new String [result.size()]);
     }
 
     protected Configuration getCurrentConfiguration(){

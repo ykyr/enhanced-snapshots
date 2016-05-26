@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import static com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry.TaskEntryStatus.*;
 
+
 @Service
 @DependsOn("CreateAppConfiguration")
 public class WorkersDispatcher {
@@ -96,7 +97,7 @@ public class WorkersDispatcher {
                             switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
                                 case BACKUP:
                                     if (!sdfsStateService.sdfsIsAvailable()) {
-                                        return;
+                                        break;
                                     }
                                     LOGtw.info("Task was identified as backup");
                                     awsBackupVolumeTaskExecutor.execute(entry);
@@ -108,7 +109,7 @@ public class WorkersDispatcher {
                                 }
                                 case RESTORE:
                                     if (!sdfsStateService.sdfsIsAvailable()) {
-                                        return;
+                                        break;
                                     }
                                     LOGtw.info("Task was identified as restore");
                                     awsRestoreVolumeTaskExecutor.execute(entry);
