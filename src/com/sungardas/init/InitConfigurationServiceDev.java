@@ -3,23 +3,57 @@ package com.sungardas.init;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.internal.StaticCredentialsProvider;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.internal.BucketNameUtils;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.DeleteBucketRequest;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
-import com.sungardas.enhancedsnapshots.service.SDFSStateService;
+import com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+
+import javax.annotation.PostConstruct;
 
 class InitConfigurationServiceDev implements InitConfigurationService {
 
 
+    private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceDev.class);
     @Value("${enhancedsnapshots.bucket.name.prefix}")
     private String enhancedSnapshotBucketPrefix;
+
+    @Value("${amazon.aws.accesskey}")
+    private String amazonAWSAccessKey;
+
+    @Value("${amazon.aws.secretkey}")
+    private String amazonAWSSecretKey;
+
+    @Value("${sungardas.worker.configuration}")
+    private String instanceId;
+
+    @Value("${amazon.aws.region}")
+    private String region;
+
+    private AWSCredentialsProvider credentialsProvider;
+    private AmazonS3Client amazonS3Client;
 
     @Override
     public void removeProperties() {
 
+    }
+
+    @PostConstruct
+    private void init() {
+        String accessKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSAccessKey);
+        String secretKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSSecretKey);
+        credentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey));
     }
 
     @Override
@@ -98,5 +132,36 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     @Override
     public void syncSettingsInDbAndConfigFile() {
 
+    }
+
+    public BucketNameValidationDTO validateBucketName(String bucketName) {
+        AmazonS3Client amazonS3Client = getS3Client();
+        if (amazonS3Client.doesBucketExist(bucketName)) {
+            return new BucketNameValidationDTO(false, "Bucket already exists!");
+        }
+        try {
+            BucketNameUtils.validateBucketName(bucketName);
+            return new BucketNameValidationDTO(true, "");
+        } catch (IllegalArgumentException e) {
+            return new BucketNameValidationDTO(false, e.getMessage());
+        }
+    }
+
+    @Override
+    public void createBucket(String bucketName) {
+        if (!getS3Client().doesBucketExist(bucketName)) {
+            LOG.info("Creating bucket {} in {}", bucketName, "us-west-2");
+            getS3Client().createBucket(bucketName, "us-west-2");
+            // delete created bucket in dev mode, we do not need it
+            LOG.info("Removing bucket {} in {}", bucketName, "us-west-2");
+            getS3Client().deleteBucket(bucketName);
+        }
+    }
+
+    private AmazonS3Client getS3Client() {
+        if (amazonS3Client == null) {
+            amazonS3Client = new AmazonS3Client(credentialsProvider);
+        }
+        return amazonS3Client;
     }
 }

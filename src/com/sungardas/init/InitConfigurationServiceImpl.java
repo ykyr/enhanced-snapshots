@@ -3,21 +3,15 @@ package com.sungardas.init;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
-
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
-import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -27,15 +21,15 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.EC2MetadataUtils;
-import com.sun.management.UnixOperatingSystemMXBean;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
+import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
@@ -49,6 +43,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.support.CronSequenceGenerator;
 import org.springframework.stereotype.Service;
 
@@ -135,6 +130,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private AWSCredentialsProvider credentialsProvider;
     private AmazonDynamoDB amazonDynamoDB;
     private DynamoDBMapper mapper;
+    private AmazonS3Client amazonS3Client;
     private String instanceId;
     private Region region;
 
@@ -370,7 +366,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
 
         try {
-            AmazonS3Client client = new AmazonS3Client(credentialsProvider);
+            AmazonS3Client client = getS3Client();
             List<Bucket> allBuckets = client.listBuckets();
             String bucketName = enhancedSnapshotBucketPrefix + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
@@ -543,6 +539,32 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             LOG.warn("Provided cron expression {} is invalid. Changes will not be applied", cronExpression);
             return false;
         }
+    }
 
+    private AmazonS3Client getS3Client() {
+        if (amazonS3Client == null) {
+            amazonS3Client = new AmazonS3Client(credentialsProvider);
+        }
+        return amazonS3Client;
+    }
+
+    public BucketNameValidationDTO validateBucketName(String bucketName) {
+        if (getS3Client().doesBucketExist(bucketName)) {
+            return new BucketNameValidationDTO(false, "Bucket already exists!");
+        }
+        try {
+            BucketNameUtils.validateBucketName(bucketName);
+            return new BucketNameValidationDTO(true, "");
+        } catch (IllegalArgumentException e) {
+            return new BucketNameValidationDTO(false, e.getMessage());
+        }
+    }
+
+    @Override
+    public void createBucket(String bucketName) {
+        if (!getS3Client().doesBucketExist(bucketName)) {
+            LOG.info("Creating bucket {} in {} region", bucketName, region);
+            getS3Client().createBucket(bucketName, region.getName());
+        }
     }
 }
