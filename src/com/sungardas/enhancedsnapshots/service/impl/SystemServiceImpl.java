@@ -20,10 +20,8 @@ import java.util.zip.ZipOutputStream;
 
 import javax.annotation.PostConstruct;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
@@ -43,6 +41,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.ConfigurationRepo
 import com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl;
 import com.sungardas.enhancedsnapshots.dto.SystemConfiguration;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
+import com.sungardas.enhancedsnapshots.service.NotificationService;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 import com.sungardas.enhancedsnapshots.service.SystemService;
 import com.sungardas.enhancedsnapshots.service.upgrade.SystemUpgrade;
@@ -74,10 +73,7 @@ public class SystemServiceImpl implements SystemService {
 
 
     @Autowired
-    private DynamoDBMapperConfig config;
-
-    @Autowired
-    private AmazonDynamoDB amazonDynamoDB;
+    private IDynamoDBMapper dynamoDBMapper;
 
     @Autowired
     private SystemUpgrade systemUpgrade;
@@ -94,38 +90,44 @@ public class SystemServiceImpl implements SystemService {
     @Autowired
     private SDFSStateService sdfsStateService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Value("${enhancedsnapshots.bucket.name.prefix}")
     private String bucketNamePrefix;
 
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private DynamoDBMapper dynamoDBMapper;
-
     private Configuration currentConfiguration;
 
     @PostConstruct
     private void init() {
-        dynamoDBMapper = new DynamoDBMapper(amazonDynamoDB, config);
         currentConfiguration = dynamoDBMapper.load(Configuration.class, getInstanceId());
         configurationMediator.setCurrentConfiguration(currentConfiguration);
     }
 
 
     @Override
-    public void backup() {
+    public void backup(final String taskId) {
         try {
             LOG.info("System backup started");
+            notificationService.notifyAboutTaskProgress(taskId, "System backup started", 0);
             Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
             LOG.info("Add info file");
+            notificationService.notifyAboutTaskProgress(taskId, "System information backup", 5);
             addInfo(tempDirectory);
             LOG.info("Backup SDFS state");
-            backupSDFS(tempDirectory);
+            notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 10);
+            backupSDFS(tempDirectory, taskId);
+            notificationService.notifyAboutTaskProgress(taskId, "Backup system files", 55);
             LOG.info("Backup files");
             storeFiles(tempDirectory);
             LOG.info("Backup db");
-            backupDB(tempDirectory);
+            notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 60);
+            backupDB(tempDirectory, taskId);
             LOG.info("Upload to S3");
+            notificationService.notifyAboutTaskProgress(taskId, "Upload to S3", 95);
             uploadToS3(tempDirectory);
             tempDirectory.toFile().delete();
             LOG.info("System backup finished");
@@ -139,11 +141,17 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public void restore() {
         try {
+            LOG.info("System restore started");
             Path tempDirectory = Files.createTempDirectory(TEMP_DIRECTORY_PREFIX);
+            LOG.info("Download from S3");
             downloadFromS3(tempDirectory);
+            LOG.info("Upgrade");
             systemUpgrade.upgrade(tempDirectory, getBackupVersion(tempDirectory));
+            LOG.info("Restore SDFS state");
             restoreSDFS(tempDirectory);
+            LOG.info("Restore files");
             restoreFiles(tempDirectory);
+            LOG.info("Restore DB");
             restoreDB(tempDirectory);
         } catch (IOException e) {
             LOG.error("System restore failed");
@@ -179,30 +187,42 @@ public class SystemServiceImpl implements SystemService {
         objectMapper.writeValue(dest, info);
     }
 
-    private void backupDB(Path tempDirectory) throws IOException {
+    private void backupDB(final Path tempDirectory, final String taskId) throws IOException {
+        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 65);
         storeTable(BackupEntry.class, tempDirectory);
+        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 70);
         storeTable(Configuration.class, tempDirectory);
+        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 75);
         storeTable(RetentionEntry.class, tempDirectory);
+        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 80);
         storeTable(SnapshotEntry.class, tempDirectory);
-        storeTable(TaskEntry.class, tempDirectory);
+        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 85);
         storeTable(User.class, tempDirectory);
+        notificationService.notifyAboutTaskProgress(taskId, "Backup DB", 90);
     }
 
     private void restoreDB(Path tempDirectory) throws IOException {
+        restoreConfiguration(tempDirectory);
         restoreTable(BackupEntry.class, tempDirectory);
-        restoreTable(Configuration.class, tempDirectory);
+        truncateTable(BackupEntry.class);
         restoreTable(RetentionEntry.class, tempDirectory);
+        truncateTable(BackupEntry.class);
         restoreTable(SnapshotEntry.class, tempDirectory);
-        restoreTable(TaskEntry.class, tempDirectory);
         restoreTable(User.class, tempDirectory);
+        truncateTable(TaskEntry.class);
+        currentConfiguration = dynamoDBMapper.load(Configuration.class, getInstanceId());
+        configurationMediator.setCurrentConfiguration(currentConfiguration);
     }
 
-
-    private void backupSDFS(final Path tempDirectory) throws IOException {
+    private void backupSDFS(final Path tempDirectory, final String taskId) throws IOException {
+        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 15);
         copyToDirectory(Paths.get(currentConfiguration.getSdfsConfigPath()), tempDirectory);
         //TODO sdfscli --cloud-sync-fs
+        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 20);
         sdfsStateService.stopSDFS();
+        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 35);
         sdfsStateService.startSDFS();
+        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 45);
     }
 
     private void restoreSDFS(final Path tempDirectory) throws IOException {
@@ -213,6 +233,7 @@ public class SystemServiceImpl implements SystemService {
 
         sdfsStateService.startSDFS();
     }
+
 
     private void storeFiles(Path tempDirectory) {
         //nginx certificates
@@ -259,6 +280,7 @@ public class SystemServiceImpl implements SystemService {
 
     private void downloadFromS3(Path tempDirectory) throws IOException {
         // download
+        LOG.info("-Download");
         GetObjectRequest getObjectRequest = new GetObjectRequest(configurationMediator.getS3Bucket(),
                 configurationMediator.getSdfsBackupFileName());
         S3Object s3object = amazonS3.getObject(getObjectRequest);
@@ -266,6 +288,7 @@ public class SystemServiceImpl implements SystemService {
         Path tempFile = Files.createTempFile(TEMP_DIRECTORY_PREFIX, TEMP_FILE_SUFFIX);
         Files.copy(s3object.getObjectContent(), tempFile, StandardCopyOption.REPLACE_EXISTING);
 
+        LOG.info("  -Unzip");
         //unzip
         try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile());
              ZipInputStream zipInputStream = new ZipInputStream(fileInputStream)) {
@@ -287,10 +310,33 @@ public class SystemServiceImpl implements SystemService {
         objectMapper.writeValue(dest, result);
     }
 
+    private void truncateTable(final Class tableClass) {
+        LOG.info("  -Truncate table: {}", tableClass.getSimpleName());
+        List result = dynamoDBMapper.scan(tableClass, new DynamoDBScanExpression());
+        dynamoDBMapper.batchDelete(result);
+    }
+
     private void restoreTable(Class tableClass, Path tempDirectory) throws IOException {
+        LOG.info("  -Restore table: {}", tableClass.getSimpleName());
         File src = Paths.get(tempDirectory.toString(), tableClass.getName()).toFile();
         try (FileInputStream fileInputStream = new FileInputStream(src)) {
-            ArrayList data = objectMapper.readValue(fileInputStream, ArrayList.class);
+            ArrayList data = objectMapper.readValue(fileInputStream,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, tableClass));
+            dynamoDBMapper.batchSave(data);
+        } catch (IOException e) {
+            LOG.warn("Table restore failed: {}", e.getLocalizedMessage());
+        }
+    }
+
+    private void restoreConfiguration(final Path tempDirectory) {
+        File src = Paths.get(tempDirectory.toString(), Configuration.class.getName()).toFile();
+        try (FileInputStream fileInputStream = new FileInputStream(src)) {
+            ArrayList<Configuration> data = objectMapper.readValue(fileInputStream,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Configuration.class));
+            if (!data.isEmpty()) {
+                Configuration configuration = data.get(0);
+                configuration.setConfigurationId(getInstanceId());
+            }
             dynamoDBMapper.batchSave(data);
         } catch (IOException e) {
             LOG.warn("Table restore failed: {}", e.getLocalizedMessage());

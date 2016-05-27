@@ -10,10 +10,10 @@ public interface SystemService {
     /**
      * Backup current system state to S3 bucket Backup data are: -DynamoDB tables -Property file -nginx certificates
      */
-    void backup();
+    void backup(String taskId);
 
     /**
-     * Restore system state from backup {@link #backup()}
+     * Restore system state from backup {@link #backup(String)}
      */
     void restore();
 

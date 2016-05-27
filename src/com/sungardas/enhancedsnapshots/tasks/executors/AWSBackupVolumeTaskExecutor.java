@@ -49,7 +49,6 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
     @Autowired
     private BackupRepository backupRepository;
 
-
     @Autowired
     private SnapshotService snapshotService;
 
@@ -106,8 +105,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
 	    if (volumeType.equals("standard")) volumeType = "gp2";
             String backupFileName = volumeId + "." + backupDate + "." + volumeType + "." + iops + ".backup";
 
-            BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS,
-                    configurationMediator.getConfigurationId(), snapshotId, volumeType, iops, sizeGib);
+            BackupEntry backup = new BackupEntry(volumeId, backupFileName, backupDate, "", BackupState.INPROGRESS, snapshotId, volumeType, iops, sizeGib);
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Copying...", 15);
             boolean backupStatus = false;
@@ -156,7 +154,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                 LOG.info("Cleaning up previously created snapshots");
                 LOG.info("Storing snapshot data: [{},{},{}]", volumeId, snapshotId, configurationMediator.getConfigurationId());
 
-                String previousSnapshot = snapshotService.getSnapshotId(volumeId, configurationMediator.getConfigurationId());
+                String previousSnapshot = snapshotService.getSnapshotId(volumeId);
                 if (previousSnapshot != null) {
                     checkThreadInterruption(taskEntry);
                     notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Deleting previous snapshot", 95);
@@ -164,7 +162,7 @@ public class AWSBackupVolumeTaskExecutor implements TaskExecutor {
                     awsCommunication.deleteSnapshot(previousSnapshot);
                 }
 
-                snapshotService.saveSnapshot(volumeId, configurationMediator.getConfigurationId(), snapshotId);
+                snapshotService.saveSnapshot(volumeId, snapshotId);
 
 
                 taskService.complete(taskEntry);

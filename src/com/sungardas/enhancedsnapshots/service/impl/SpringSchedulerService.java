@@ -1,12 +1,12 @@
 package com.sungardas.enhancedsnapshots.service.impl;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -65,7 +65,7 @@ public class SpringSchedulerService implements SchedulerService {
     private void init() {
         try {
             instanceId = configurationMediator.getConfigurationId();
-            List<TaskEntry> tasks = taskRepository.findByRegularAndInstanceId(Boolean.TRUE.toString(), instanceId);
+            List<TaskEntry> tasks = taskRepository.findByRegular(Boolean.TRUE.toString());
             for (TaskEntry taskEntry : tasks) {
                 try {
                     addTask(taskEntry);
@@ -109,10 +109,7 @@ public class SpringSchedulerService implements SchedulerService {
 
     @Override
     public Set<String> getVolumeIdsWithSchedule() {
-        Set<String> result = new HashSet<>();
-        for (TaskEntry taskEntry : taskRepository.findByRegularAndInstanceIdAndEnabled(Boolean.TRUE.toString(), instanceId, Boolean.TRUE.toString())) {
-            result.add(taskEntry.getVolume());
-        }
+        Set<String> result = taskRepository.findByRegularAndEnabled(Boolean.TRUE.toString(), Boolean.TRUE.toString()).stream().map(TaskEntry::getVolume).collect(Collectors.toSet());
         return result;
     }
 

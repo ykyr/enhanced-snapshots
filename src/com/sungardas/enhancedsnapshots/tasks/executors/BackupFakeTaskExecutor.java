@@ -54,8 +54,8 @@ public class BackupFakeTaskExecutor implements TaskExecutor {
         String volumeId = taskEntry.getVolume();
         String filename = volumeId + "." + timestamp + ".backup";
         notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Checking volume", 60);
-        BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED, taskEntry.getInstanceId(),
-        		"snap-00100110","gp2","3000", "10");
+        BackupEntry backup = new BackupEntry(taskEntry.getVolume(), filename, timestamp, "123456789", BackupState.COMPLETED,
+                "snap-00100110","gp2","3000", "10");
         LOG.info("Task " + taskEntry.getId() + ":put backup info'");
         backupRepository.save(backup);
 

@@ -91,8 +91,6 @@ public class WorkersDispatcher {
 
         @Override
         public void run() {
-            String instanceId = configurationMediator.getConfigurationId();
-
             LOGtw.info("Starting worker dispatcher");
             while (true) {
                 if (Thread.interrupted()) {
@@ -100,7 +98,7 @@ public class WorkersDispatcher {
                 }
                 TaskEntry entry = null;
                 try {
-                    Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), instanceId, Boolean.FALSE.toString()));
+                    Set<TaskEntry> taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString()));
                     while (!taskEntrySet.isEmpty()) {
                         entry = taskEntrySet.iterator().next();
 
@@ -132,8 +130,7 @@ public class WorkersDispatcher {
                                     notificationService.notifyAboutTaskProgress(entry.getId(), "System backup started", 0);
                                     entry.setStatus(RUNNING.getStatus());
                                     taskRepository.save(entry);
-                                    //TODO add ws notification
-                                    systemService.backup();
+                                    systemService.backup(entry.getId());
                                     taskRepository.delete(entry);
                                     notificationService.notifyAboutTaskProgress(entry.getId(), "System backup finished", 100);
                                     break;
@@ -145,7 +142,7 @@ public class WorkersDispatcher {
                         } else {
                             LOGtw.debug("Task canceled: {}", entry);
                         }
-                        taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndInstanceIdAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), instanceId, Boolean.FALSE.toString()));
+                        taskEntrySet = sortByTimeAndPriority(taskRepository.findByStatusAndRegular(TaskEntry.TaskEntryStatus.QUEUED.getStatus(), Boolean.FALSE.toString()));
                     }
                     sleep();
                 } catch (AmazonClientException e) {

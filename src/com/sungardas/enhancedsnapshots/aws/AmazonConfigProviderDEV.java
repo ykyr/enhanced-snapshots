@@ -6,6 +6,7 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
@@ -92,6 +93,20 @@ public class AmazonConfigProviderDEV {
         builder.withTableNameOverride(DynamoDBMapperConfig.TableNameOverride
                 .withTableNamePrefix(AmazonConfigProvider.getDynamoDbPrefix("DEV")));
         return builder.build();
+    }
+
+    @Bean
+    public ProxyFactoryBean amazonDynamoDbMapperProxy() {
+        ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+
+        proxyFactoryBean.setTarget(dynamoDBMapper());
+        proxyFactoryBean.setInterceptorNames("retryInterceptor");
+
+        return proxyFactoryBean;
+    }
+
+    private DynamoDBMapper dynamoDBMapper() {
+        return new DynamoDBMapper(amazonDynamoDB(), dynamoDBMapperConfig());
     }
 
 

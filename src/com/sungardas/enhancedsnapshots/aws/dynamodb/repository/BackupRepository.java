@@ -1,22 +1,18 @@
 package com.sungardas.enhancedsnapshots.aws.dynamodb.repository;
 
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-
 import java.util.List;
 
-public interface BackupRepository {
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntryId;
 
-    void save(BackupEntry backup);
+import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
+import org.socialsignin.spring.data.dynamodb.repository.EnableScanCount;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
-    void delete(BackupEntry backupEntry);
+@EnableScan
+@EnableScanCount
+public interface BackupRepository extends PagingAndSortingRepository<BackupEntry, BackupEntryId> {
+    List<BackupEntry> findByVolumeId(String volumeId);
 
-    List<BackupEntry> get(String volumeId, String instanceId);
-
-    BackupEntry getLast(String volumeId, String instanceId);
-
-    BackupEntry getByBackupFileName(String backupName);
-
-    List<BackupEntry> findAll(String instanceId);
-
-    int count();
+    List<BackupEntry> findByFileName(String fileName);
 }

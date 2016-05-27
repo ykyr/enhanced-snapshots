@@ -75,11 +75,7 @@ public class RetentionServiceImpl implements RetentionService {
     @Override
     public void putRetention(RetentionDto retentionDto) {
         if (volumeService.volumeExists(retentionDto.getVolumeId())) {
-            RetentionEntry entry = toEntry(retentionDto);
-
-            entry.setInstanceId(instanceId);
-
-            retentionRepository.save(entry);
+            retentionRepository.save(toEntry(retentionDto));
             apply();
         } else {
             LOG.error("Volume with id: {} not found", retentionDto.getVolumeId());
@@ -90,7 +86,7 @@ public class RetentionServiceImpl implements RetentionService {
     @Override
     public RetentionDto getRetentionDto(String volumeId) {
         try {
-            return toDto(retentionRepository.findOne(RetentionEntry.getId(volumeId, instanceId)));
+            return toDto(retentionRepository.findOne(volumeId));
         } catch (Exception e) {
             if (volumeService.volumeExists(volumeId)) {
                 return new RetentionDto(volumeId);
@@ -112,7 +108,7 @@ public class RetentionServiceImpl implements RetentionService {
             RetentionEntry retentionEntry = retentions.get(entry.getKey());
             if (retentionEntry != null) {
                 if (isEmpty(retentionEntry)) {
-                    retentionRepository.delete(RetentionEntry.getId(retentionEntry.getVolumeId(), retentionEntry.getInstanceId()));
+                    retentionRepository.delete(retentionEntry.getVolumeId());
                 } else {
                     BackupEntry[] values = entry.getValue().toArray(new BackupEntry[entry.getValue().size()]);
                     applySizeRetention(backupsToRemove, values, retentionEntry);
@@ -124,7 +120,7 @@ public class RetentionServiceImpl implements RetentionService {
 
         for (Map.Entry<String, RetentionEntry> entry : retentions.entrySet()) {
             if (!backups.containsKey(entry.getKey())) {
-                retentionRepository.delete(RetentionEntry.getId(entry.getValue().getVolumeId(), entry.getValue().getInstanceId()));
+                retentionRepository.delete(entry.getValue().getVolumeId());
             }
         }
         if (!backupsToRemove.isEmpty()) {
@@ -180,7 +176,7 @@ public class RetentionServiceImpl implements RetentionService {
     private Map<String, Set<BackupEntry>> getBackups() {
         Map<String, Set<BackupEntry>> backupsSortedByCreationTime = new HashMap<>();
 
-        for (BackupEntry backupEntry : backupRepository.findAll(instanceId)) {
+        for (BackupEntry backupEntry : backupRepository.findAll()) {
             Set<BackupEntry> backups = backupsSortedByCreationTime.get(backupEntry.getVolumeId());
             if (backups == null) {
                 backups = new TreeSet<>(backupComparatorByCreationTime);
@@ -195,7 +191,7 @@ public class RetentionServiceImpl implements RetentionService {
     private Map<String, RetentionEntry> getRetentions() {
         Map<String, RetentionEntry> retentionEntryMap = new HashMap<>();
 
-        for (RetentionEntry entry : retentionRepository.findByInstanceId(instanceId)) {
+        for (RetentionEntry entry : retentionRepository.findAll()) {
             retentionEntryMap.put(entry.getVolumeId(), entry);
         }
 

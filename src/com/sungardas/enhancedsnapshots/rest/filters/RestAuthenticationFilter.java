@@ -60,7 +60,7 @@ public class RestAuthenticationFilter implements com.sungardas.enhancedsnapshots
                         JSONObject authCredentials = JsonFromStream.newJSONObject(requestStream);
                         String email = authCredentials.getString(JSON_AUTHENTIFICATION_EMAIL).toLowerCase();
                         String password = authCredentials.getString(JSON_AUTHENTIFICATION_PASSWORD);
-                        allowed = !userRepository.findByEmailAndPasswordAndInstanceId(email, DigestUtils.sha512Hex(password), instanceId).isEmpty();
+                        allowed = !userRepository.findByEmailAndPassword(email, DigestUtils.sha512Hex(password)).isEmpty();
                         if (allowed) {
                             allowedSessions.put(session.getId(), email);
                             LOG.info("Add session to allowed list: [{}] [{}]", session.getId(), email);

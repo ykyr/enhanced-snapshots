@@ -39,7 +39,6 @@ public class RestoreFakeTaskExecutor implements TaskExecutor {
 
 		String sourceFile = options[0];
 		LOG.info("restore from: {}; restore to az: {}", sourceFile, targetZone);
-		String instanceId = taskEntry.getInstanceId();
 		notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restoring...", 50);
 
 		try {

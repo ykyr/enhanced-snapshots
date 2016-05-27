@@ -10,7 +10,6 @@ import javax.annotation.PostConstruct;
 
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
-import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.SnapshotRepository;
@@ -67,7 +66,7 @@ public class TaskServiceImpl implements TaskService {
             @Override
             public void run() {
                 long currentTime = System.currentTimeMillis();
-                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqualAndInstanceId(currentTime + "", configurationMediator.getConfigurationId());
+                List<TaskEntry> list = taskRepository.findByExpirationDateLessThanEqual(currentTime + "");
                 taskRepository.delete(list);
             }
         }, "*/5 * * * *");
@@ -97,7 +96,6 @@ public class TaskServiceImpl implements TaskService {
                 break;
             }
             taskEntry.setWorker(configurationId);
-            taskEntry.setInstanceId(configurationId);
             taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
             taskEntry.setId(UUID.randomUUID().toString());
 
@@ -116,7 +114,7 @@ public class TaskServiceImpl implements TaskService {
                     messages.put(taskEntry.getVolume(), e.getLocalizedMessage());
                 }
             } else if (TaskEntry.TaskEntryType.RESTORE.getType().equals(taskEntry.getType())) {
-                if (backupRepository.getLast(taskEntry.getVolume(), configurationId) == null || snapshotRepository.findOne(SnapshotEntry.getId(taskEntry.getVolume(), configurationId)) == null) {
+                if (backupRepository.findByVolumeId(taskEntry.getVolume()).isEmpty() || snapshotRepository.findOne(taskEntry.getVolume()) == null) {
                     notificationService.notifyAboutError(new ExceptionDto("Restore task error", "Backup for volume: " + taskEntry.getVolume() + " not found!"));
                     messages.put(taskEntry.getVolume(), "Restore task error");
                 } else {
@@ -139,19 +137,18 @@ public class TaskServiceImpl implements TaskService {
     private String getMessage(TaskEntry taskEntry) {
         switch (taskEntry.getType()) {
             case "restore": {
-                BackupEntry backupEntry;
+                List<BackupEntry> backupEntry;
                 String sourceFile = taskEntry.getSourceFileName();
                 if (sourceFile == null || sourceFile.isEmpty()) {
-                    backupEntry = backupRepository.getLast(taskEntry.getVolume(), configurationMediator.getConfigurationId());
-
+                    backupEntry = backupRepository.findByVolumeId(taskEntry.getVolume());
                 } else {
-                    backupEntry = backupRepository.getByBackupFileName(sourceFile);
+                    backupEntry = backupRepository.findByFileName(sourceFile);
                 }
-                if (backupEntry == null) {
+                if (backupEntry == null || backupEntry.isEmpty()) {
                     //TODO: add more messages
                     return "Unable to execute: backup history is empty";
                 } else {
-                    return AWSRestoreVolumeTaskExecutor.RESTORED_NAME_PREFIX + backupEntry.getFileName();
+                    return AWSRestoreVolumeTaskExecutor.RESTORED_NAME_PREFIX + backupEntry.get(backupEntry.size() - 1).getFileName();
                 }
             }
         }
@@ -161,8 +158,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDto> getAllTasks() {
         try {
-            return TaskDtoConverter.convert(taskRepository.findByRegularAndInstanceId(Boolean.FALSE.toString(),
-                    configurationMediator.getConfigurationId()));
+            return TaskDtoConverter.convert(taskRepository.findByRegular(Boolean.FALSE.toString()));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -173,8 +169,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDto> getAllTasks(String volumeId) {
         try {
-            return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.FALSE.toString(),
-                    volumeId, configurationMediator.getConfigurationId()));
+            return TaskDtoConverter.convert(taskRepository.findByRegularAndVolume(Boolean.FALSE.toString(),
+                    volumeId));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -198,8 +194,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDto> getAllRegularTasks(String volumeId) {
         try {
-            return TaskDtoConverter.convert(taskRepository.findByRegularAndVolumeAndInstanceId(Boolean.TRUE.toString(),
-                    volumeId, configurationMediator.getConfigurationId()));
+            return TaskDtoConverter.convert(taskRepository.findByRegularAndVolume(Boolean.TRUE.toString(),
+                    volumeId));
         } catch (RuntimeException e) {
             notificationService.notifyAboutError(new ExceptionDto("Getting tasks have failed", "Failed to get tasks."));
             LOG.error("Failed to get tasks.", e);
@@ -236,8 +232,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private int getTasksInQueue() {
-        return (int) (taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationMediator.getConfigurationId(), TaskEntry.TaskEntryType.BACKUP.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()) +
-                taskRepository.countByRegularAndInstanceIdAndTypeAndStatus(Boolean.FALSE.toString(), configurationMediator.getConfigurationId(), TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()));
+        return (int) (taskRepository.countByRegularAndTypeAndStatus(Boolean.FALSE.toString(), TaskEntry.TaskEntryType.BACKUP.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()) +
+                taskRepository.countByRegularAndTypeAndStatus(Boolean.FALSE.toString(), TaskEntry.TaskEntryType.RESTORE.getType(), TaskEntry.TaskEntryStatus.QUEUED.getStatus()));
     }
 
     // for restore and backup tasks we should specify temp volume type

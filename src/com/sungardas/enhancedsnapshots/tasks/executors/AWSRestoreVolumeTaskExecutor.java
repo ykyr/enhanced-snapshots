@@ -8,6 +8,7 @@ import com.amazonaws.services.ec2.model.Snapshot;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntryId;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.BackupRepository;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.TaskRepository;
@@ -99,8 +100,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
         String targetZone = taskEntry.getAvailabilityZone();
 
         String volumeId = taskEntry.getVolume();
-        String snapshotId = snapshotService.getSnapshotId(volumeId, configurationMediator.getConfigurationId());
-        BackupEntry backupEntry = backupRepository.getLast(volumeId, configurationMediator.getConfigurationId());
+        String snapshotId = snapshotService.getSnapshotId(volumeId);
         // check that snapshot exists
         if (snapshotId == null || !awsCommunication.snapshotExists(snapshotId)) {
             LOG.error("Failed to find snapshot for volume {} ", volumeId);
@@ -112,7 +112,7 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
 
         Volume volume = awsCommunication.createVolumeFromSnapshot(snapshotId, targetZone, VolumeType.fromValue(taskEntry.getRestoreVolumeType()),
                 taskEntry.getRestoreVolumeIopsPerGb());
-        awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + backupEntry.getVolumeId());
+        awsCommunication.setResourceName(volume.getVolumeId(), RESTORED_NAME_PREFIX + taskEntry.getVolume());
         awsCommunication.addTag(volume.getVolumeId(), "Created by", "Enhanced Snapshots");
     }
 
@@ -125,9 +125,9 @@ public class AWSRestoreVolumeTaskExecutor implements TaskExecutor {
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Restore from file", 10);
 
-            BackupEntry backupentry = backupRepository.getByBackupFileName(taskEntry.getSourceFileName());
+            BackupEntry backupentry = backupRepository.findOne(new BackupEntryId(taskEntry.getVolume(), taskEntry.getSourceFileName()));
             LOG.info("Used backup record: {}", backupentry.toString());
-            Instance instance = awsCommunication.getInstance(taskEntry.getInstanceId());
+            Instance instance = awsCommunication.getInstance(configurationMediator.getConfigurationId());
             int size = Integer.parseInt(backupentry.getSizeGiB());
             checkThreadInterruption(taskEntry);
             notificationService.notifyAboutTaskProgress(taskEntry.getId(), "Creating volume...", 15);

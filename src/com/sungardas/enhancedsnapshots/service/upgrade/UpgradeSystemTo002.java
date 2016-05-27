@@ -88,7 +88,6 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
             BackupEntry backupEntry = new BackupEntry();
 
             backupEntry.setFileName(fileName);
-            backupEntry.setInstanceId(getInstanceId());
             backupEntry.setIops(props[IOPS_INDEX]);
             backupEntry.setSizeGiB(String.valueOf((int) (file.length() / BYTES_IN_GIB)));
             backupEntry.setTimeCreated(props[TIME_INDEX]);

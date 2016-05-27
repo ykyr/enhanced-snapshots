@@ -23,12 +23,9 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
-import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -37,7 +34,11 @@ import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
+import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
@@ -140,6 +141,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private String nginxCertPath;
     @Value("${enhancedsnapshots.nginx.key.path}")
     private String nginxKeyPath;
+    @Value("${enhancedsnapshots.db.read.capacity}")
+    private Long dbReadCapacity;
+    @Value("${enhancedsnapshots.db.write.capacity}")
+    private Long dbWriteCapacity;
 
     private AWSCredentialsProvider credentialsProvider;
     private AmazonDynamoDB amazonDynamoDB;
@@ -237,49 +242,32 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     private void createDbStructure() throws ConfigurationException {
-        createTable("BackupList", 50L, 20L, "volumeId", "S", "fileName", "S");
-        createTable("Configurations", 10L, 10L, "configurationId", "S", null, null);
-        createTable("Retention", 50L, 20L, "volumeInstanceId", "S", null, null);
-        createTable("Tasks", 50L, 20L, "id", "S", null, null);
-        createTable("Snapshots", 50L, 20L, "volumeInstanceId", "S", null, null);
-        createTable("Users", 50L, 20L, "id", "S", null, null);
+        createTable(BackupEntry.class);
+        createTable(Configuration.class);
+        createTable(RetentionEntry.class);
+        createTable(TaskEntry.class);
+        createTable(SnapshotEntry.class);
+        createTable(User.class);
     }
 
-    private void createTable(String tableName, long readCapacityUnits, long writeCapacityUnits,
-                             String hashKeyName, String hashKeyType, String rangeKeyName, String rangeKeyType) {
-        tableName = dbPrefix + tableName;
-        DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
-        if (tableExists(tableName)) {
+    private void createTable(Class tableClass) {
+        CreateTableRequest createTableRequest = mapper.generateCreateTableRequest(tableClass);
+
+        createTableRequest.setProvisionedThroughput(new ProvisionedThroughput(dbReadCapacity, dbWriteCapacity));
+        if (tableExists(createTableRequest.getTableName())) {
             LOG.info("Table {} already exists");
             return;
         }
         try {
-            ArrayList<KeySchemaElement> keySchema = new ArrayList<>();
-            keySchema.add(new KeySchemaElement().withAttributeName(hashKeyName).withKeyType(KeyType.HASH));
-
-            ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
-            attributeDefinitions.add(new AttributeDefinition().withAttributeName(hashKeyName).withAttributeType(hashKeyType));
-
-            // adding range attribute if required
-            if (rangeKeyName != null) {
-                keySchema.add(new KeySchemaElement().withAttributeName(rangeKeyName).withKeyType(KeyType.RANGE));
-                attributeDefinitions.add(new AttributeDefinition().withAttributeName(rangeKeyName).withAttributeType(rangeKeyType));
-            }
-            CreateTableRequest request = new CreateTableRequest()
-                    .withTableName(tableName).withKeySchema(keySchema)
-                    .withProvisionedThroughput(new ProvisionedThroughput()
-                            .withReadCapacityUnits(readCapacityUnits)
-                            .withWriteCapacityUnits(writeCapacityUnits));
-
-            request.setAttributeDefinitions(attributeDefinitions);
-            Table table = dynamoDB.createTable(request);
-            LOG.info("Creating table {} ... ", tableName);
+            DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
+            Table table = dynamoDB.createTable(createTableRequest);
+            LOG.info("Creating table {} ... ", createTableRequest.getTableName());
             table.waitForActive();
-            LOG.info("Table {} was created successfully.", tableName);
+            LOG.info("Table {} was created successfully.", createTableRequest.getTableName());
         } catch (Exception e) {
-            LOG.error("Failed to create table {}. ", tableName);
+            LOG.error("Failed to create table {}. ", createTableRequest.getTableName());
             LOG.error(e);
-            throw new ConfigurationException("Failed to create table" + tableName, e);
+            throw new ConfigurationException("Failed to create table" + createTableRequest.getTableName(), e);
         }
     }
 
@@ -289,7 +277,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             userDto.setEmail(userDto.getEmail().toLowerCase());
             User userToCreate = UserDtoConverter.convert(userDto);
             userToCreate.setPassword(DigestUtils.sha512Hex(adminPassword));
-            userToCreate.setInstanceId(EC2MetadataUtils.getInstanceId());
             userToCreate.setRole("admin");
             mapper.save(userToCreate);
         }

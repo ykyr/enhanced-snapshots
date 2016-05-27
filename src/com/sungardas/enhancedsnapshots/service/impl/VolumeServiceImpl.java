@@ -119,7 +119,7 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     private Set<VolumeDto> getHistoryVolumes() {
-        return convert(backupRepository.findAll(configurationMediator.getConfigurationId()));
+        return convert(backupRepository.findAll());
     }
 
     private Set<VolumeDto> convert(Iterable<BackupEntry> entries) {

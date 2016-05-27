@@ -49,8 +49,8 @@ public class BackupServiceImpl implements BackupService {
     @Override
     public void deleteBackup(String backupName, String user) {
         TaskEntry taskEntry = getDeleteTask(backupName + BACKUP_FILE_EXT, user, true);
-        if (taskRepository.findByVolumeAndTypeAndInstanceIdAndOptions(taskEntry.getVolume(),
-                taskEntry.getType(), instanceId, taskEntry.getOptions()).isEmpty()) {
+        if (taskRepository.findByVolumeAndTypeAndOptions(taskEntry.getVolume(),
+                taskEntry.getType(), taskEntry.getOptions()).isEmpty()) {
             taskRepository.save(taskEntry);
         } else {
             LOG.error("Task already exist: {}", taskEntry);
@@ -60,7 +60,7 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public List<BackupEntry> getBackupList(String volumeId) {
-        return backupRepository.get(volumeId, instanceId);
+        return backupRepository.findByVolumeId(volumeId);
     }
 
     @Override
@@ -70,8 +70,8 @@ public class BackupServiceImpl implements BackupService {
 
         for (BackupEntry entry : backupEntries) {
             TaskEntry taskEntry = getDeleteTask(entry.getFileName(), user, false);
-            if (taskRepository.findByVolumeAndTypeAndInstanceIdAndOptions(taskEntry.getVolume(),
-                    taskEntry.getType(), instanceId, taskEntry.getOptions()).isEmpty()) {
+            if (taskRepository.findByVolumeAndTypeAndOptions(taskEntry.getVolume(),
+                    taskEntry.getType(), taskEntry.getOptions()).isEmpty()) {
 
                 tasks.add(getDeleteTask(entry.getFileName(), user, false));
             } else {
@@ -94,15 +94,14 @@ public class BackupServiceImpl implements BackupService {
         taskEntry.setId(UUID.randomUUID().toString());
         taskEntry.setVolume(volumeId);
         taskEntry.setType(DELETE.getType());
-        taskEntry.setInstanceId(instanceId);
         taskEntry.setStatus(TaskEntry.TaskEntryStatus.QUEUED.getStatus());
         taskEntry.setOptions(backupFile);
         taskEntry.setSchedulerName(user);
         taskEntry.setSchedulerTime(String.valueOf(DateTime.now().getMillis()));
         taskEntry.setPriority(1);
+        taskEntry.setWorker(configurationMediator.getConfigurationId());
 
         //TODO Remove hardcode
-        taskEntry.setWorker(taskEntry.getInstanceId());
         taskEntry.setSchedulerManual(schedulerManual);
         taskEntry.setRegular(false);
 
