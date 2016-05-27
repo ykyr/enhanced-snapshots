@@ -44,4 +44,6 @@ public interface ConfigurationMediator {
     int getWaitTimeBeforeNewSyncWithAWS();
 
     int getMaxWaitTimeToDetachVolume();
+
+    String getVolumeSizeUnit();
 }

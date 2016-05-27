@@ -19,10 +19,13 @@ public interface SDFSStateService {
      * Returns max sdfs volume size for current system in GB
      * @return
      */
-    static int getMaxVolumeSize() {
+    static int getMaxVolumeSize(boolean sdfsRunning) {
         OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         //Total RAM - RAM available for Tomcat - reserved
-        long totalRAM = osBean.getFreePhysicalMemorySize() - Runtime.getRuntime().freeMemory() - SYSTEM_RESERVED_RAM_IN_BYTES - SDFS_RESERVED_RAM_IN_BYTES;
+        long totalRAM = osBean.getFreePhysicalMemorySize() - Runtime.getRuntime().freeMemory() - SYSTEM_RESERVED_RAM_IN_BYTES;
+        if (!sdfsRunning) {
+            totalRAM = totalRAM - SDFS_RESERVED_RAM_IN_BYTES;
+        }
         int maxVolumeSize = (int) (totalRAM / BYTES_IN_GB) * SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM;
         return maxVolumeSize;
     }
@@ -80,6 +83,11 @@ public interface SDFSStateService {
      * Return true if SDFS is currently runnings, false otherwise
      */
     boolean sdfsIsAvailable();
+
+    /**
+     * Expand sdfs volume
+     */
+    void expandSdfsVolume(String newVolumeSize);
 
 
 }

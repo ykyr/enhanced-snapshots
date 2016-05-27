@@ -24,6 +24,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.*;
+
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.verify;

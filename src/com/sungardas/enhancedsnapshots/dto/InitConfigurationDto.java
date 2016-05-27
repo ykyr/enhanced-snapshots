@@ -9,30 +9,10 @@ public class InitConfigurationDto {
     private List<S3> s3 = Collections.EMPTY_LIST;
     private SDFS sdfs;
     private DB db;
-    private String immutableBucketNamePrefix;
-    private String [] suffixesInUse;
-
-
-    public String[] getSuffixesInUse() {
-        return suffixesInUse;
-    }
-
-    public void setSuffixesInUse(String[] suffixesInUse) {
-        this.suffixesInUse = suffixesInUse;
-    }
 
     public List<S3> getS3() {
         return s3;
     }
-
-    public String getImmutableBucketNamePrefix() {
-        return immutableBucketNamePrefix;
-    }
-
-    public void setImmutableBucketNamePrefix(String immutableBucketNamePrefix) {
-        this.immutableBucketNamePrefix = immutableBucketNamePrefix;
-    }
-
 
     public void setS3(List<S3> s3) {
         this.s3 = s3;

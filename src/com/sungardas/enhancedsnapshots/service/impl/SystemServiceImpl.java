@@ -349,8 +349,6 @@ public class SystemServiceImpl implements SystemService {
 
         configuration.setS3(new SystemConfiguration.S3());
         configuration.getS3().setBucketName(configurationMediator.getS3Bucket());
-        configuration.getS3().setImmutablePrefix(bucketNamePrefix);
-        configuration.getS3().setSuffixesInUse(getSuffixesInUse());
 
         configuration.setSdfs(new SystemConfiguration.SDFS());
         configuration.getSdfs().setMountPoint(configurationMediator.getSdfsMountPoint());
@@ -358,7 +356,7 @@ public class SystemServiceImpl implements SystemService {
         configuration.getSdfs().setVolumeSize(currentConfiguration.getSdfsSize());
         // user can only expand volume size
         configuration.getSdfs().setMinVolumeSize(currentConfiguration.getSdfsSize());
-        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize());
+        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize(true));
 
         configuration.getSdfs().setSdfsLocalCacheSize(currentConfiguration.getSdfsLocalCacheSize());
         configuration.getSdfs().setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace() + configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());
