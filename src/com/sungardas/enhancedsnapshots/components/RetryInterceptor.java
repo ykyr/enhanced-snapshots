@@ -33,7 +33,6 @@ public class RetryInterceptor implements MethodInterceptor {
                 return methodInvocation.proceed();
             } catch (AmazonS3Exception e) {
                 amazonS3.setRegion(com.amazonaws.regions.Region.getRegion(Regions.fromName(defaultS3Region)));
-                methodInvocation.proceed();
             } catch (AmazonServiceException e) {
                 if (e.getErrorType() == AmazonServiceException.ErrorType.Client) {
                     throw e;

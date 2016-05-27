@@ -1179,9 +1179,23 @@ div.tr.state-removed {
     display: inline;
 }
 
+.configuration .bucket .btn-group,
+.configuration .bucket button,
+.configuration .bucket .form-control {
+    width: 300px;
+}
+
+.configuration .bucket .form-control {
+    display: inline-block;
+}
+
+.configuration .bucket .glyphicon {
+    margin: 0 10px;
+}
+
 .settings.form-control {
     width: 100%;
-    display: inline;
+    display: inline-block;
 }
 
 .settings.field-label {

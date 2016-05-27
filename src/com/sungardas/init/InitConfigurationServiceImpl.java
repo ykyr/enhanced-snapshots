@@ -4,12 +4,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import java.util.*;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
@@ -23,18 +21,22 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
+
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.AmazonConfigProvider;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
+
+
+import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.Configuration;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.RetentionEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.SnapshotEntry;
@@ -42,6 +44,7 @@ import com.sungardas.enhancedsnapshots.aws.dynamodb.model.TaskEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.UserDto;
+import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.dto.converter.UserDtoConverter;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.DataAccessException;
@@ -54,6 +57,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.support.CronSequenceGenerator;
 import org.springframework.stereotype.Service;
@@ -125,8 +129,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private int defaultVolumeSize;
     @Value("${enhancedsnapshots.db.tables}")
     private String[] tables;
-    @Value("${amazon.s3.default.region}")
-    private String defaultS3Region;
     @Value("${enhancedsnapshots.default.sdfs.mount.point}")
     private String mountPoint;
     @Value("${enhancedsnapshots.default.sdfs.volume.name}")
@@ -145,6 +147,9 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private Long dbReadCapacity;
     @Value("${enhancedsnapshots.db.write.capacity}")
     private Long dbWriteCapacity;
+
+    @Autowired
+    private AmazonS3 amazonS3;
 
     private AWSCredentialsProvider credentialsProvider;
     private AmazonDynamoDB amazonDynamoDB;
@@ -165,11 +170,14 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         region = Regions.getCurrentRegion();
         amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
         amazonDynamoDB.setRegion(region);
+
         dbPrefix = AmazonConfigProvider.getDynamoDbPrefix();
         DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder().withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.
                 withTableNamePrefix(dbPrefix)).build();
         mapper = new DynamoDBMapper(amazonDynamoDB, config);
         tablesWithPrefix = Arrays.stream(tables).map(s -> dbPrefix.concat(s)).collect(Collectors.toList());
+
+        mapper = new DynamoDBMapper(amazonDynamoDB);
     }
 
     @Override
@@ -253,7 +261,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
         createTableRequest.setProvisionedThroughput(new ProvisionedThroughput(dbReadCapacity, dbWriteCapacity));
         if (tableExists(createTableRequest.getTableName())) {
-            LOG.info("Table {} already exists");
+            LOG.info("Table {} already exists", createTableRequest.getTableName());
             return;
         }
         try {
@@ -375,8 +383,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
 
         try {
-            AmazonS3Client client = new AmazonS3Client(credentialsProvider);
-            List<Bucket> allBuckets = client.listBuckets();
+            List<Bucket> allBuckets = amazonS3.listBuckets();
             String bucketName = enhancedSnapshotBucketPrefix + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
 
@@ -387,7 +394,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             for (Bucket bucket : allBuckets) {
                 try {
                     if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix)) {
-                        String location = client.getBucketLocation(bucket.getName());
+                        String location = amazonS3.getBucketLocation(bucket.getName());
 
                         // Because client.getBucketLocation(bucket.getName()) returns US if bucket is in us-east-1
                         if (!location.equalsIgnoreCase(currentLocation) && !location.equalsIgnoreCase("US")) {
@@ -396,7 +403,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
                         ListObjectsRequest request = new ListObjectsRequest()
                                 .withBucketName(bucket.getName()).withPrefix(FilenameUtils.removeExtension(sdfsStateBackupFileName));
-                        if (client.listObjects(request).getObjectSummaries().size() > 0) {
+                        if (amazonS3.listObjects(request).getObjectSummaries().size() > 0) {
                             if (bucketName.equals(bucket.getName())) {
                                 result.get(0).setCreated(true);
                             } else {
@@ -413,9 +420,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             LOG.warn("Can't get access to S3");
             throw new DataAccessException(CANT_GET_ACCESS_S3, e);
         }
-       
 	return result;
-
     }
 
     @Override
@@ -549,6 +554,39 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             LOG.warn("Provided cron expression {} is invalid. Changes will not be applied", cronExpression);
             return false;
         }
+    }
 
+    public BucketNameValidationDTO validateBucketName(String bucketName) {
+        if (!bucketName.startsWith(enhancedSnapshotBucketPrefix)) {
+            return new BucketNameValidationDTO(false, "Bucket name should starts with " + enhancedSnapshotBucketPrefix);
+        }
+        if (amazonS3.doesBucketExist(bucketName)) {
+            // check whether we own this bucket
+            List<Bucket> buckets = amazonS3.listBuckets();
+            for (Bucket bucket : buckets) {
+                if (bucket.getName().equals(bucketName)) {
+                    return new BucketNameValidationDTO(true, "");
+                }
+            }
+            return new BucketNameValidationDTO(false, "The requested bucket name is not available.Please select a different name.");
+        }
+        try {
+            BucketNameUtils.validateBucketName(bucketName);
+            return new BucketNameValidationDTO(true, "");
+        } catch (IllegalArgumentException e) {
+            return new BucketNameValidationDTO(false, e.getMessage());
+        }
+    }
+
+    @Override
+    public void createBucket(String bucketName) {
+        BucketNameValidationDTO validationDTO = validateBucketName(bucketName);
+        if (!validationDTO.isValid()) {
+            throw new IllegalArgumentException(validationDTO.getMessage());
+        }
+        if (!amazonS3.doesBucketExist(bucketName)) {
+            LOG.info("Creating bucket {} in {} region", bucketName, region);
+            amazonS3.createBucket(bucketName, region.getName());
+        }
     }
 }

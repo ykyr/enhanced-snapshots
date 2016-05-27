@@ -50,7 +50,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 
 /**
@@ -92,10 +91,6 @@ public class SystemServiceImpl implements SystemService {
 
     @Autowired
     private NotificationService notificationService;
-
-    @Value("${enhancedsnapshots.bucket.name.prefix}")
-    private String bucketNamePrefix;
-
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -436,17 +431,6 @@ public class SystemServiceImpl implements SystemService {
         } else {
             return null;
         }
-    }
-
-    private String[] getSuffixesInUse() {
-        ArrayList<String> result = new ArrayList<>();
-        List<Bucket> allBuckets = amazonS3.listBuckets();
-        for (Bucket bucket : allBuckets) {
-            if (bucket.getName().startsWith(bucketNamePrefix)) {
-                result.add(bucket.getName().substring(bucketNamePrefix.length()));
-            }
-        }
-        return result.toArray(new String[result.size()]);
     }
 
     private void restoreFile(Path tempDirectory, Path destPath) throws IOException {

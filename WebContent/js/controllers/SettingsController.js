@@ -6,10 +6,6 @@ angular.module('web')
         $scope.isAdmin = currentUser.role === "admin";
 
         $scope.STRINGS = {
-            s3: {
-                empty: 'Bucket name field cannot be empty',
-                existing: ' name is already in use. Please choose another one.'
-            },
             sdfs: {
                 sdfsLocalCacheSize: {
                   empty: 'Local Cache Size field cannot be empty.'
@@ -31,7 +27,6 @@ angular.module('web')
             var modalInstance = $modal.open({
                 animation: true,
                 templateUrl: './partials/modal.wizard-progress.html',
-                backdrop: false,
                 scope: $scope
             });
 
@@ -43,7 +38,6 @@ angular.module('web')
         System.get().then(function (data) {
             $scope.settings = data;
             $scope.initialSettings = angular.copy(data);
-            // $scope.s3MutableSuffix = $scope.initialSettings.s3.bucketName.slice($scope.initialSettings.s3.immutablePrefix.length);
             $scope.progressState = '';
             loader.dismiss();
         }, function (e) {
@@ -85,22 +79,7 @@ angular.module('web')
             });
         };
 
-        $scope.isNameExist = function (name) {
-            // var initialName = $scope.initialSettings.s3.bucketName.slice($scope.initialSettings.s3.immutablePrefix.length);
-          //   $scope.nameExists = $scope.initialSettings.s3.suffixesInUse.filter(function (suffix) {
-          //     return suffix === name && name !== initialName;
-          // }).length;
-          //   $scope.s3.$setValidity("bucketName", false);
-        };
-
         $scope.isNewValues = function () {
-            if ($scope.settings) {
-                // $scope.settings.s3.bucketName = $scope.settings.s3.immutablePrefix + $scope.s3MutableSuffix;
-
-                if($scope.nameExists){
-                    $scope.settings.s3.bucketName = $scope.initialSettings.s3.bucketName;
-                }
-            }
            return JSON.stringify($scope.settings) !== JSON.stringify($scope.initialSettings);
         };
 

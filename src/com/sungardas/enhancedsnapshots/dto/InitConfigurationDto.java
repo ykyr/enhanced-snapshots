@@ -9,6 +9,7 @@ public class InitConfigurationDto {
     private List<S3> s3 = Collections.EMPTY_LIST;
     private SDFS sdfs;
     private DB db;
+    private String immutableBucketNamePrefix;
 
     public List<S3> getS3() {
         return s3;
@@ -63,6 +64,14 @@ public class InitConfigurationDto {
         public void setBucketName(String bucketName) {
             this.bucketName = bucketName;
         }
+    }
+
+    public String getImmutableBucketNamePrefix() {
+        return immutableBucketNamePrefix;
+    }
+
+    public void setImmutableBucketNamePrefix(String immutableBucketNamePrefix) {
+        this.immutableBucketNamePrefix = immutableBucketNamePrefix;
     }
 
     public static class SDFS {

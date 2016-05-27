@@ -6,7 +6,6 @@ angular.module('web')
 
         var newSettings = angular.copy($scope.settings);
         //deletion of Arrays from model per request of backend
-        // delete newSettings.s3.suffixesInUse;
         delete newSettings.systemProperties.volumeTypeOptions;
 
         $scope.updateSettings = function () {

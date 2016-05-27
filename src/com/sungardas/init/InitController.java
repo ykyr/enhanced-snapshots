@@ -1,13 +1,12 @@
 package com.sungardas.init;
 
-import java.util.Arrays;
-
 import javax.annotation.PostConstruct;
 
 import com.amazonaws.AmazonClientException;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.repository.UserRepository;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
+import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
 import com.sungardas.enhancedsnapshots.exception.ConfigurationException;
 import com.sungardas.enhancedsnapshots.exception.EnhancedSnapshotsException;
 import com.sungardas.enhancedsnapshots.rest.RestAuthenticationFilter;
@@ -21,17 +20,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.HttpStatus.OK;
 
 
 @RestController
@@ -44,6 +36,7 @@ class InitController implements ApplicationContextAware {
 
     @Autowired
     private InitConfigurationService initConfigurationService;
+    private InitConfigurationDto configurationDto;
 
     @Autowired
     private XmlWebApplicationContext applicationContext;
@@ -76,7 +69,6 @@ class InitController implements ApplicationContextAware {
     @RequestMapping(value = "/configuration/awscreds", method = RequestMethod.GET)
     public ResponseEntity<String> getAwsCredentialsInfo() {
         return new ResponseEntity<>("{\"contains\": true}", HttpStatus.OK);
-
     }
 
     @ExceptionHandler(value = {Exception.class, AmazonClientException.class})
@@ -103,13 +95,13 @@ class InitController implements ApplicationContextAware {
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.GET)
     public ResponseEntity<InitConfigurationDto> getConfiguration() {
-        return new ResponseEntity<>(initConfigurationService.getInitConfigurationDto(), HttpStatus.OK);
+        return new ResponseEntity<>(getInitConfigurationDTO(), HttpStatus.OK);
     }
 
 
     @RequestMapping(value = "/configuration/current", method = RequestMethod.POST)
     public ResponseEntity<String> setConfiguration(@RequestBody ConfigDto config) {
-        InitConfigurationDto initConfigurationDto = initConfigurationService.getInitConfigurationDto();
+        InitConfigurationDto initConfigurationDto = getInitConfigurationDTO();
         if (!initConfigurationDto.getDb().isValid()) {
             if (config.getUser() == null) {
                 throw new ConfigurationException("Please create default user");
@@ -120,6 +112,13 @@ class InitController implements ApplicationContextAware {
             initConfigurationService.setUser(config.getUser());
         }
         initConfigurationService.validateVolumeSize(config.getVolumeSize());
+        try {
+            // we need to ensure before context refresh that provided bucket name is valid
+            initConfigurationService.createBucket(config.getBucketName());
+        } catch (IllegalArgumentException e) {
+            LOG.warn("Failed to create bucket {}", config.getBucketName());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
         initConfigurationService.storePropertiesEditableFromConfigFile();
         initConfigurationService.createDBAndStoreSettings(config);
         try {
@@ -129,6 +128,11 @@ class InitController implements ApplicationContextAware {
             throw e;
         }
         return new ResponseEntity<>("", HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/configuration/bucket/{name:.+}", method = RequestMethod.GET)
+    public ResponseEntity<BucketNameValidationDTO> validateBucketName(@PathVariable("name") String bucketName) {
+        return new ResponseEntity<>(initConfigurationService.validateBucketName(bucketName), HttpStatus.OK);
     }
 
     @Override
@@ -156,15 +160,6 @@ class InitController implements ApplicationContextAware {
         private User user;
         private String bucketName;
         private int volumeSize;
-        private int sdfsLocalCacheSize;
-
-        public int getSdfsLocalCacheSize() {
-            return sdfsLocalCacheSize;
-        }
-
-        public void setSdfsLocalCacheSize(int sdfsLocalCacheSize) {
-            this.sdfsLocalCacheSize = sdfsLocalCacheSize;
-        }
 
         public int getVolumeSize() {
             return volumeSize;
@@ -189,5 +184,12 @@ class InitController implements ApplicationContextAware {
         public void setBucketName(String bucketName) {
             this.bucketName = bucketName;
         }
+    }
+
+    private InitConfigurationDto getInitConfigurationDTO() {
+        if (configurationDto == null) {
+            configurationDto = initConfigurationService.getInitConfigurationDto();
+        }
+        return configurationDto;
     }
 }

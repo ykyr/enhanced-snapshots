@@ -64,6 +64,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private int sdfsMountTime;
     @Value("${enhancedsnapshots.sdfs.script.path}")
     private String sdfsScript;
+    private String bucketLocation;
 
 
     @Autowired
@@ -313,15 +314,15 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     }
 
     private String getBucketLocation(String bucket) {
-        String location;
+        if (bucketLocation != null) {
+            return bucketLocation;
+        }
         if (amazonS3.doesBucketExist(bucket)) {
-            location = amazonS3.getBucketLocation(bucket);
+            bucketLocation = amazonS3.getBucketLocation(bucket);
+        } else {
+            bucketLocation = Regions.getCurrentRegion().getName();
         }
-        else {
-            location = Regions.getCurrentRegion().getName();
-        }
-
-        return location;
+        return bucketLocation;
     }
 
     private void print(Process p) throws IOException {
