@@ -6,6 +6,7 @@ angular.module('web')
             $scope.isBusy = false;
         $scope.STRINGS = {
             s3: {
+                empty: 'Bucket name field cannot be empty',
                 new: 'Will be created new as',
                 existing: 'Will be used existing bucket:'
             },
@@ -38,7 +39,9 @@ angular.module('web')
             false: 'danger'
         };
 
-        $scope.isAWS = false;
+        $scope.isCustomBucketName = false;
+        $scope.isNameWrong = false;
+        $scope.wrongNameMessage = '';
         $scope.isValidInstance = true;
         $scope.selectBucket = function (bucket) {
             $scope.selectedBucket = bucket;
@@ -48,7 +51,6 @@ angular.module('web')
             var modalInstance = $modal.open({
                 animation: true,
                 templateUrl: './partials/modal.wizard-progress.html',
-                backdrop: false,
                 scope: $scope
             });
 
@@ -60,26 +62,6 @@ angular.module('web')
             return modalInstance
         };
 
-        var getAwsStatus = function () {
-            $scope.progressState = 'loading';
-            var loader = wizardCreationProgress();
-            Configuration.get('awscreds').then(function (result, status) {
-                if (result.data.contains) {
-                    getCurrentConfig();
-                    loader.dismiss();
-                }
-                else {
-                    $scope.isAWS = true;
-                    loader.dismiss();
-                }
-            }, function (data, status) {
-                $scope.isValidInstance = false;
-                $scope.invalidMessage = data.data.localizedMessage;
-                loader.dismiss();
-            });
-        };
-        getAwsStatus();
-
         var getCurrentConfig = function () {
             $scope.progressState = 'loading';
             var loader = wizardCreationProgress();
@@ -87,7 +69,6 @@ angular.module('web')
             Configuration.get('current').then(function (result, status) {
                 $scope.settings = result.data;
                 $scope.selectedBucket = (result.data.s3 || [])[0] || {};
-                $scope.isAWS = false;
                 loader.dismiss();
             }, function (data, status) {
                 $scope.isValidInstance = false;
@@ -96,21 +77,7 @@ angular.module('web')
             });
         };
 
-        $scope.awsPublicKey = '';
-        $scope.awsSecretKey = '';
-
-        $scope.sendAWS = function () {
-            var keysCollection = {
-                'awsPublicKey': $scope.awsPublicKey,
-                'awsSecretKey': $scope.awsSecretKey
-            };
-
-            Configuration.send('awscreds', keysCollection).then(function () {
-                getCurrentConfig();
-
-            }, function (data, status) {
-            });
-        };
+        getCurrentConfig();
 
         $scope.sendSettings = function () {
             var volumeSize = $scope.isNewVolumeSize ? $scope.sdfsNewSize : $scope.settings.sdfs.volumeSize;
@@ -126,13 +93,13 @@ angular.module('web')
                     admin: true
                 };
 
-                var awsModalInstance = $modal.open({
+                var userModalInstance = $modal.open({
                     animation: true,
                     templateUrl: './partials/modal.user-edit.html',
                     scope: $scope
                 });
 
-                awsModalInstance.result.then(function () {
+                userModalInstance.result.then(function () {
                     settings.user = $scope.userToEdit;
                     delete settings.user.isNew;
 
@@ -151,12 +118,20 @@ angular.module('web')
 
                 Configuration.send('current', settings).then(function () {
                     $scope.progressState = 'success';
-                }, function () {
+                }, function (data, status) {
                     $scope.progressState = 'failed';
                 });
 
                 wizardCreationProgress();
             }
+        };
+
+        $scope.validateName = function () {
+            Configuration.get('bucket/' + encodeURIComponent($scope.selectedBucket.bucketName)).then(function (result) {
+                $scope.isNameWrong = !result.data.valid;
+                $scope.wrongNameMessage = result.data.message;
+            }, function (data, status) {
+            });
         };
 
 
