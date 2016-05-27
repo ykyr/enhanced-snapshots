@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
+
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -24,7 +25,7 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
 
     private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceDev.class);
-    @Value("${enhancedsnapshots.bucket.name.prefix.version.001}")
+    @Value("${enhancedsnapshots.bucket.name.prefix}")
     private String enhancedSnapshotBucketPrefix;
 
     @Value("${amazon.aws.accesskey}")
@@ -40,11 +41,10 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     private String region;
 
     private AWSCredentialsProvider credentialsProvider;
-    private AmazonS3Client amazonS3Client;
+    private AmazonS3Client amazonS3;
 
     @Override
     public void removeProperties() {
-
     }
 
     @PostConstruct
@@ -52,15 +52,16 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         String accessKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSAccessKey);
         String secretKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSSecretKey);
         credentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey));
+        amazonS3 =  new AmazonS3Client(credentialsProvider);
     }
 
     @Override
     public InitConfigurationDto getInitConfigurationDto() {
         InitConfigurationDto config = new InitConfigurationDto();
         List<InitConfigurationDto.S3> names = new ArrayList<>();
-        names.add(new InitConfigurationDto.S3("enhancedsnapshots.S0", false));
-        names.add(new InitConfigurationDto.S3("enhancedsnapshots.S1", true));
-        names.add(new InitConfigurationDto.S3("enhancedsnapshots.S2", true));
+        names.add(new InitConfigurationDto.S3(enhancedSnapshotBucketPrefix + "s0", false));
+        names.add(new InitConfigurationDto.S3(enhancedSnapshotBucketPrefix + "s1", true));
+        names.add(new InitConfigurationDto.S3(enhancedSnapshotBucketPrefix + "s2", true));
 
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setCreated(true);
@@ -81,6 +82,7 @@ class InitConfigurationServiceDev implements InitConfigurationService {
         config.setS3(names);
         config.setSdfs(sdfs);
         config.setDb(db);
+        config.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
 
         return config;
     }
@@ -133,10 +135,12 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     }
 
     public BucketNameValidationDTO validateBucketName(String bucketName) {
-        AmazonS3Client amazonS3Client = getS3Client();
-        if (amazonS3Client.doesBucketExist(bucketName)) {
+        if (!bucketName.startsWith(enhancedSnapshotBucketPrefix)) {
+            return new BucketNameValidationDTO(false, "Bucket name should start with " + enhancedSnapshotBucketPrefix);
+        }
+        if (amazonS3.doesBucketExist(bucketName)) {
             // check whether we own this bucket
-            List<Bucket> buckets = amazonS3Client.listBuckets();
+            List<Bucket> buckets = amazonS3.listBuckets();
             for(Bucket bucket: buckets){
                 if (bucket.getName().equals(bucketName)){
                     return new BucketNameValidationDTO(true, "");
@@ -154,19 +158,16 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public void createBucket(String bucketName) {
-        if (!getS3Client().doesBucketExist(bucketName)) {
+        BucketNameValidationDTO validationDTO = validateBucketName(bucketName);
+        if (!validationDTO.isValid()) {
+            throw new IllegalArgumentException(validationDTO.getMessage());
+        }
+        if (!amazonS3.doesBucketExist(bucketName)) {
             LOG.info("Creating bucket {} in {}", bucketName, "us-west-2");
-            getS3Client().createBucket(bucketName, "us-west-2");
+            amazonS3.createBucket(bucketName, "us-west-2");
             // delete created bucket in dev mode, we do not need it
             LOG.info("Removing bucket {} in {}", bucketName, "us-west-2");
-            getS3Client().deleteBucket(bucketName);
+            amazonS3.deleteBucket(bucketName);
         }
-    }
-
-    private AmazonS3Client getS3Client() {
-        if (amazonS3Client == null) {
-            amazonS3Client = new AmazonS3Client(credentialsProvider);
-        }
-        return amazonS3Client;
     }
 }

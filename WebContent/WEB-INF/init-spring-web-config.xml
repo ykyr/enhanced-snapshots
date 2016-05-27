@@ -16,10 +16,10 @@
     <bean class="com.sungardas.enhancedsnapshots.service.impl.CryptoServiceImpl"/>
 
     <beans profile="dev">
-      <bean class="com.sungardas.init.InitConfigurationServiceDev"/>
+        <bean class="com.sungardas.init.InitConfigurationServiceDev"/>
     </beans>
 
     <beans profile="prod">
-      <bean class="com.sungardas.init.InitConfigurationServiceImpl"/>
+        <bean class="com.sungardas.init.InitConfigurationServiceImpl"/>
     </beans>
 </beans>

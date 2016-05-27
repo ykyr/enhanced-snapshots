@@ -119,7 +119,7 @@ class InitController implements ApplicationContextAware {
             initConfigurationService.createBucket(config.getBucketName());
         } catch (IllegalArgumentException e) {
             LOG.warn("Failed to create bucket {}", config.getBucketName());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
         initConfigurationService.storePropertiesEditableFromConfigFile();
         initConfigurationService.createDBAndStoreSettings(config);
