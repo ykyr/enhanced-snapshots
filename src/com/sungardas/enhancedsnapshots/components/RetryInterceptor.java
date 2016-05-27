@@ -1,6 +1,7 @@
 package com.sungardas.enhancedsnapshots.components;
 
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -32,7 +33,11 @@ public class RetryInterceptor implements MethodInterceptor {
             try {
                 return methodInvocation.proceed();
             } catch (AmazonS3Exception e) {
+                // some requests can be executed only with endpoint in us-east-1 region
                 amazonS3.setRegion(com.amazonaws.regions.Region.getRegion(Regions.fromName(defaultS3Region)));
+                methodInvocation.proceed();
+                // setting back correct region
+                amazonS3.setRegion(Regions.getCurrentRegion());
             } catch (AmazonServiceException e) {
                 if (e.getErrorType() == AmazonServiceException.ErrorType.Client) {
                     throw e;
