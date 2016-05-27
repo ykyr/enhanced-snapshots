@@ -47,8 +47,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     @Autowired
     private AmazonS3 amazonS3;
 
-    @Value("${enhancedsnapshots.bucket.name.prefix}")
-    private String bucketNamePrefix;
     @Value("${enhancedsnapshots.app.version}")
     private String appVersion;
     private Configuration currentConfiguration;

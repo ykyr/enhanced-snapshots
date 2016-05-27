@@ -3,14 +3,12 @@ package com.sungardas.init;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.internal.BucketNameUtils;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.DeleteBucketRequest;
+import com.amazonaws.services.s3.model.Bucket;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.User;
 import com.sungardas.enhancedsnapshots.dto.InitConfigurationDto;
 import com.sungardas.enhancedsnapshots.dto.converter.BucketNameValidationDTO;
@@ -26,7 +24,7 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
 
     private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceDev.class);
-    @Value("${enhancedsnapshots.bucket.name.prefix}")
+    @Value("${enhancedsnapshots.bucket.name.prefix.version.001}")
     private String enhancedSnapshotBucketPrefix;
 
     @Value("${amazon.aws.accesskey}")
@@ -60,9 +58,9 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     public InitConfigurationDto getInitConfigurationDto() {
         InitConfigurationDto config = new InitConfigurationDto();
         List<InitConfigurationDto.S3> names = new ArrayList<>();
-        names.add(new InitConfigurationDto.S3("com.sungardas.enhancedsnapshots.S0", false));
-        names.add(new InitConfigurationDto.S3("com.sungardas.enhancedsnapshots.S1", true));
-        names.add(new InitConfigurationDto.S3("com.sungardas.enhancedsnapshots.S2", true));
+        names.add(new InitConfigurationDto.S3("enhancedsnapshots.S0", false));
+        names.add(new InitConfigurationDto.S3("enhancedsnapshots.S1", true));
+        names.add(new InitConfigurationDto.S3("enhancedsnapshots.S2", true));
 
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setCreated(true);
@@ -137,7 +135,14 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     public BucketNameValidationDTO validateBucketName(String bucketName) {
         AmazonS3Client amazonS3Client = getS3Client();
         if (amazonS3Client.doesBucketExist(bucketName)) {
-            return new BucketNameValidationDTO(false, "Bucket already exists!");
+            // check whether we own this bucket
+            List<Bucket> buckets = amazonS3Client.listBuckets();
+            for(Bucket bucket: buckets){
+                if (bucket.getName().equals(bucketName)){
+                    return new BucketNameValidationDTO(true, "");
+                }
+            }
+            return new BucketNameValidationDTO(false, "The requested bucket name is not available.Please select a different name.");
         }
         try {
             BucketNameUtils.validateBucketName(bucketName);

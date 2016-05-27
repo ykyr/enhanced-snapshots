@@ -114,8 +114,6 @@ class InitController implements ApplicationContextAware {
             initConfigurationService.setUser(config.getUser());
         }
         initConfigurationService.validateVolumeSize(config.getVolumeSize());
-        initConfigurationService.storePropertiesEditableFromConfigFile();
-        initConfigurationService.createDBAndStoreSettings(config);
         try {
             // we need to ensure before context refresh that provided bucket name is valid
             initConfigurationService.createBucket(config.getBucketName());
@@ -123,6 +121,8 @@ class InitController implements ApplicationContextAware {
             LOG.warn("Failed to create bucket {}", config.getBucketName());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+        initConfigurationService.storePropertiesEditableFromConfigFile();
+        initConfigurationService.createDBAndStoreSettings(config);
         try {
             refreshContext();
         } catch (Exception e) {
@@ -132,7 +132,7 @@ class InitController implements ApplicationContextAware {
         return new ResponseEntity<>("", HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/configuration/bucket/{name}", method = RequestMethod.GET)
+    @RequestMapping(value = "/configuration/bucket/{name:.+}", method = RequestMethod.GET)
     public ResponseEntity<BucketNameValidationDTO> validateBucketName(@PathVariable("name") String bucketName) {
         return new ResponseEntity<>(initConfigurationService.validateBucketName(bucketName), HttpStatus.OK);
     }

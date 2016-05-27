@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 import com.amazonaws.AmazonServiceException;
@@ -43,7 +41,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.support.CronSequenceGenerator;
 import org.springframework.stereotype.Service;
 
@@ -120,12 +117,18 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private String mountPoint;
     @Value("${enhancedsnapshots.default.sdfs.volume.name}")
     private String volumeName;
-    @Value("${enhancedsnapshots.bucket.name.prefix}")
-    private String enhancedSnapshotBucketPrefix;
+    @Value("${enhancedsnapshots.bucket.name.prefix.version.001}")
+    private String enhancedSnapshotBucketPrefix001;
+    @Value("${enhancedsnapshots.bucket.name.prefix.version.002}")
+    private String enhancedSnapshotBucketPrefix002;
     @Value("${enhancedsnapshots.awscli.conf.path}")
     private String awscliConfPath;
     @Value("${enhancedsnapshots.awslogs.conf.path}")
     private String awslogsConfPath;
+    @Value("${enhancedsnapshots.bucket.tag.value}")
+    private String tagValue;
+    @Value("${enhancedsnapshots.bucket.tag.key}")
+    private String tagkey;
 
     private AWSCredentialsProvider credentialsProvider;
     private AmazonDynamoDB amazonDynamoDB;
@@ -144,8 +147,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         region = Regions.getCurrentRegion();
         amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
         amazonDynamoDB.setRegion(region);
-
         mapper = new DynamoDBMapper(amazonDynamoDB);
+        amazonS3Client = new AmazonS3Client(credentialsProvider);
     }
 
     @Override
@@ -366,9 +369,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         ArrayList<InitConfigurationDto.S3> result = new ArrayList<>();
 
         try {
-            AmazonS3Client client = getS3Client();
-            List<Bucket> allBuckets = client.listBuckets();
-            String bucketName = enhancedSnapshotBucketPrefix + instanceId;
+            List<Bucket> allBuckets = amazonS3Client.listBuckets();
+            String bucketName = enhancedSnapshotBucketPrefix002 + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
 
             String currentLocation = region.toString();
@@ -377,8 +379,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             }
             for (Bucket bucket : allBuckets) {
                 try {
-                    if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix)) {
-                        String location = client.getBucketLocation(bucket.getName());
+                    if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix001)
+                            || bucket.getName().startsWith(enhancedSnapshotBucketPrefix002)
+                            || amazonS3Client.getBucketTaggingConfiguration(bucketName).getTagSet().getTag(tagkey).equals(tagValue)) {
+                        String location = amazonS3Client.getBucketLocation(bucket.getName());
 
                         // Because client.getBucketLocation(bucket.getName()) returns US if bucket is in us-east-1
                         if (!location.equalsIgnoreCase(currentLocation) && !location.equalsIgnoreCase("US")) {
@@ -387,7 +391,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
                         ListObjectsRequest request = new ListObjectsRequest()
                                 .withBucketName(bucket.getName()).withPrefix(FilenameUtils.removeExtension(sdfsStateBackupFileName));
-                        if (client.listObjects(request).getObjectSummaries().size() > 0) {
+                        if (amazonS3Client.listObjects(request).getObjectSummaries().size() > 0) {
                             if (bucketName.equals(bucket.getName())) {
                                 result.get(0).setCreated(true);
                             } else {
@@ -541,16 +545,16 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
-    private AmazonS3Client getS3Client() {
-        if (amazonS3Client == null) {
-            amazonS3Client = new AmazonS3Client(credentialsProvider);
-        }
-        return amazonS3Client;
-    }
-
     public BucketNameValidationDTO validateBucketName(String bucketName) {
-        if (getS3Client().doesBucketExist(bucketName)) {
-            return new BucketNameValidationDTO(false, "Bucket already exists!");
+        if (amazonS3Client.doesBucketExist(bucketName)) {
+            // check whether we own this bucket
+            List<Bucket> buckets = amazonS3Client.listBuckets();
+            for (Bucket bucket : buckets) {
+                if (bucket.getName().equals(bucketName)) {
+                    return new BucketNameValidationDTO(true, "");
+                }
+            }
+            return new BucketNameValidationDTO(false, "The requested bucket name is not available.Please select a different name.");
         }
         try {
             BucketNameUtils.validateBucketName(bucketName);
@@ -562,9 +566,16 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     @Override
     public void createBucket(String bucketName) {
-        if (!getS3Client().doesBucketExist(bucketName)) {
+        BucketNameValidationDTO validationDTO = validateBucketName(bucketName);
+        if (!validationDTO.isValid()) {
+            throw new IllegalArgumentException(validationDTO.getMessage());
+        }
+        if (!amazonS3Client.doesBucketExist(bucketName)) {
             LOG.info("Creating bucket {} in {} region", bucketName, region);
-            getS3Client().createBucket(bucketName, region.getName());
+            amazonS3Client.createBucket(bucketName, region.getName());
+            TagSet tagSet = new TagSet();
+            tagSet.setTag(tagkey, tagValue);
+            amazonS3Client.setBucketTaggingConfiguration(bucketName, new BucketTaggingConfiguration().withTagSets(tagSet));
         }
     }
 }
