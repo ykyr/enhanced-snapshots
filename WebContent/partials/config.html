@@ -20,11 +20,11 @@
 
                                     <p>{{ selectedBucket.isCreated ? STRINGS.s3.existing : STRINGS.s3.new}}</p>
                                     <p><span class="label label-success">{{settings.s3.bucketName}}</span></p>
-                                    <div class="btn-group" dropdown keyboard-nav ng-hide="isCustomBucketName" style="width: 300px">
+                                    <div class="btn-group" dropdown keyboard-nav ng-hide="isCustomBucketName">
                                         <button id="simple-btn-keyboard-nav" type="button"
                                                 class="btn btn-default dropdown-toggle" dropdown-toggle>
                                             <div class="pull-right">&nbsp;<span class="caret"></span></div>
-                                            <div class="text-left">
+                                            <div class="text-left caption">
                                                 {{selectedBucket.bucketName}}
                                             </div>
                                         </button>
@@ -37,7 +37,7 @@
                                             </li>
                                         </ul>
                                     </div>
-                                    <input type="text" ng-model="selectedBucket.bucketName" class="form-control" ng-class="{'ng-invalid': isNameWrong}" ng-show="isCustomBucketName" name="bucketName" required ng-change="validateName()" ng-trim/>
+                                    <input type="text" ng-model="selectedBucket.bucketName" class="form-control" ng-class="{'ng-invalid': isNameWrong}" ng-show="isCustomBucketName" name="bucketName" required ng-change="validateName()" ng-trim maxlength="63"/>
                                     <a href ng-click="isCustomBucketName = !isCustomBucketName" title="Rename" ng-hide="selectedBucket.isCreated"><span class="glyphicon glyphicon-{{ isCustomBucketName ? 'ok' : 'pencil'}} text-primary"></span></a>
                                     <div class="text-danger small" ng-show="configs.bucketName.$error.required">{{STRINGS.s3.empty}}</div>
                                     <div class="text-danger small" ng-show="isNameWrong && !selectedBucket.isCreated">{{wrongNameMessage}}</div>
