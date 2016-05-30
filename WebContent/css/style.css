@@ -1182,7 +1182,14 @@ div.tr.state-removed {
 .configuration .bucket .btn-group,
 .configuration .bucket button,
 .configuration .bucket .form-control {
-    width: 300px;
+    width: 400px;
+}
+
+.configuration .bucket button .caption {
+    max-width: 360px;
+    text-overflow: ellipsis;
+    display: block;
+    overflow: hidden;
 }
 
 .configuration .bucket .form-control {
