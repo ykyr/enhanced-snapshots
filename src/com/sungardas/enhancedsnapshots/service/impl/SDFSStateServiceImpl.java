@@ -59,6 +59,7 @@ public class SDFSStateServiceImpl implements SDFSStateService {
     private static final String GET_SATE_CMD = "--state";
     private static final String CONFIGURE_CMD = "--configure";
     private static final String EXPAND_VOLUME_CMD = "--expandvolume";
+    private static final String CLOUD_SYNC_CMD = "--cloudsync";
 
     @Value("${enhancedsnapshots.default.sdfs.mount.time}")
     private int sdfsMountTime;
@@ -113,22 +114,12 @@ public class SDFSStateServiceImpl implements SDFSStateService {
         tempFile.delete();
     }
 
-    @Override
-    public void restoreSDFS() {
-        restoreSDFS(configurationMediator.getSdfsBackupFileName());
-    }
 
     @Override
-    public void restoreSDFS(String fromArchive) {
+    public void restoreSDFS() {
         File file = null;
         try {
-            removeSdfsConfFile();
-            // copy sdfs config file from S3
-            file = Files.createTempFile(FilenameUtils.removeExtension(fromArchive),
-                    getFileExtension(fromArchive)).toFile();
-            downloadFromS3(fromArchive, file);
-            ZipUtils.unzip(file, new File(configurationMediator.getSdfsConfigPath()).getParentFile().getAbsolutePath());
-            file.delete();
+            stopSDFS();
             startSDFS(true);
             //SDFS mount time
             TimeUnit.SECONDS.sleep(sdfsMountTime);
@@ -286,14 +277,31 @@ public class SDFSStateServiceImpl implements SDFSStateService {
                 case 0:
                     LOG.debug("SDFS volume was expanded successfully");
                     break;
-                case 1:
-                    LOG.debug("Failed to expand SDFS volume");
                 default:
-                    throw new ConfigurationException("Failed to stop SDFS");
+                    throw new ConfigurationException("Failed to expand SDFS volume");
             }
         } catch (Exception e) {
             LOG.error(e);
             throw new ConfigurationException("Failed to expand SDFS volume");
+        }
+    }
+
+    @Override
+    public void cloudSync() {
+        String[] parameters;
+        try {
+            parameters = new String[]{getSdfsScriptFile(sdfsScript).getAbsolutePath(), CLOUD_SYNC_CMD};
+            Process p = executeScript(parameters);
+            switch (p.exitValue()) {
+                case 0:
+                    LOG.debug("SDFS metadata sync successfully");
+                    break;
+                default:
+                    throw new ConfigurationException("Failed to sync SDFS metadata");
+            }
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new ConfigurationException("Failed to sync SDFS metadata");
         }
     }
 

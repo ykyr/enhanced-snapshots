@@ -106,7 +106,7 @@ public class WorkersDispatcher {
                         if (!taskService.isCanceled(entry.getId())) {
                             switch (TaskEntry.TaskEntryType.getType(entry.getType())) {
                                 case BACKUP:
-                                    //TODO remove when sdfscli --expand volume will be fixed
+                                    //TODO remove when sdfscli will allow to expand cache size at runtime
                                     if (!sdfsStateService.sdfsIsAvailable()) {
                                         break;
                                     }

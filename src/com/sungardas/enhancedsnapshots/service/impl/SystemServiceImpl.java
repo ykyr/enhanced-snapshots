@@ -198,10 +198,10 @@ public class SystemServiceImpl implements SystemService {
 
     private void restoreDB(Path tempDirectory) throws IOException {
         restoreConfiguration(tempDirectory);
+        // TODO: sync backups with real data from /mnt/awspool
         restoreTable(BackupEntry.class, tempDirectory);
-        truncateTable(BackupEntry.class);
         restoreTable(RetentionEntry.class, tempDirectory);
-        truncateTable(BackupEntry.class);
+        truncateTable(SnapshotEntry.class);
         restoreTable(SnapshotEntry.class, tempDirectory);
         restoreTable(User.class, tempDirectory);
         truncateTable(TaskEntry.class);
@@ -212,21 +212,14 @@ public class SystemServiceImpl implements SystemService {
     private void backupSDFS(final Path tempDirectory, final String taskId) throws IOException {
         notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 15);
         copyToDirectory(Paths.get(currentConfiguration.getSdfsConfigPath()), tempDirectory);
-        //TODO sdfscli --cloud-sync-fs
         notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 20);
-        sdfsStateService.stopSDFS();
-        notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 35);
-        sdfsStateService.startSDFS();
+        sdfsStateService.cloudSync();
         notificationService.notifyAboutTaskProgress(taskId, "Backup SDFS state", 45);
     }
 
     private void restoreSDFS(final Path tempDirectory) throws IOException {
-        sdfsStateService.stopSDFS();
-
         restoreFile(tempDirectory, Paths.get(currentConfiguration.getSdfsConfigPath()));
-        //TODO sdfscli --cloud-sync-fs
-
-        sdfsStateService.startSDFS();
+        sdfsStateService.restoreSDFS();
     }
 
 

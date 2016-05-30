@@ -1,14 +1,18 @@
 package com.sungardas.enhancedsnapshots.service.upgrade;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.amazonaws.util.EC2MetadataUtils;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupEntry;
 import com.sungardas.enhancedsnapshots.aws.dynamodb.model.BackupState;
+import com.sungardas.enhancedsnapshots.components.impl.ConfigurationMediatorImpl;
 import com.sungardas.enhancedsnapshots.service.SDFSStateService;
 
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +36,8 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Autowired
     private SDFSStateService sdfsStateService;
+    @Autowired
+    private ConfigurationMediatorImpl configurationMediator;
 
 
     private static final int VOLUME_ID_INDEX = 0;
@@ -50,7 +56,8 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
             }
             LOG.info("Upgrading system to version {}", upgradeVersion);
             File destForBackups = Paths.get(tempFolder.toString(), BackupEntry.class.getName()).toFile();
-            sdfsStateService.restoreSDFS(sdfsSystemBackupArchive);
+            restoreFile(tempFolder, Paths.get(configurationMediator.getSdfsConfigPath()));
+            sdfsStateService.restoreSDFS();
             objectMapper.writeValue(destForBackups, restoreBackups());
         } catch (Exception e) {
             LOG.error("Failed to upgrade system: ", e);
@@ -102,6 +109,11 @@ public class UpgradeSystemTo002 implements SystemUpgrade {
 
     protected String getInstanceId() {
         return EC2MetadataUtils.getInstanceId();
+    }
+
+    private void restoreFile(Path tempDirectory, Path destPath) throws IOException {
+        Path fileName = destPath.getFileName();
+        Files.copy(Paths.get(tempDirectory.toString(), fileName.toString()), destPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
 }

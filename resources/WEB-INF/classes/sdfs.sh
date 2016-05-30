@@ -107,4 +107,12 @@ case "$commandName" in
     cd $sdfs_mount_point
     sdfscli --expandvolume $sdfs_volume_size
     ;;
+
+    ############################# cloud sync ####################################
+--cloudsync) echo "Sync local sdfs metadata with cloud"
+
+    ### sync sdfs metadata
+    cd $sdfs_mount_point
+    sdfscli --cloud-sync-fs
+    ;;
 esac

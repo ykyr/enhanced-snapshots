@@ -65,11 +65,6 @@ public interface SDFSStateService {
     void restoreSDFS();
 
     /**
-     * Restore SDFS from specific archive at S3 bucket
-     */
-    void restoreSDFS(String archiveName);
-
-    /**
      * Start SDFS if it is not running
      */
     void startSDFS();
@@ -88,6 +83,11 @@ public interface SDFSStateService {
      * Expand sdfs volume
      */
     void expandSdfsVolume(String newVolumeSize);
+
+    /**
+     * Sync local SDFS metadata with cloud
+     */
+    void cloudSync();
 
 
 }

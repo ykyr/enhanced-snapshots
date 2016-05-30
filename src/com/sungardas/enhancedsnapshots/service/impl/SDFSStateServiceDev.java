@@ -39,11 +39,6 @@ public class SDFSStateServiceDev extends SDFSStateServiceImpl {
     }
 
     @Override
-    public void restoreSDFS(String archiveName) {
-
-    }
-
-    @Override
     public void startSDFS() {
 
     }

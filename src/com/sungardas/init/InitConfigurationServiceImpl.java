@@ -557,7 +557,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         if (!bucketName.startsWith(enhancedSnapshotBucketPrefix)) {
             return new BucketNameValidationDTO(false, "Bucket name should starts with " + enhancedSnapshotBucketPrefix);
         }
-        if (amazonS3.doesBucketExist(bucketName)) {
+        if (bucketExists(bucketName)) {
             // check whether we own this bucket
             List<Bucket> buckets = amazonS3.listBuckets();
             for (Bucket bucket : buckets) {
@@ -581,9 +581,28 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         if (!validationDTO.isValid()) {
             throw new IllegalArgumentException(validationDTO.getMessage());
         }
-        if (!amazonS3.doesBucketExist(bucketName)) {
+        if (!bucketExists(bucketName)) {
             LOG.info("Creating bucket {} in {} region", bucketName, region);
+            // AWS throws exception when trying create bucket in US_EAST_1
+            if (region.getName().equalsIgnoreCase(Regions.US_EAST_1.getName())) {
+                amazonS3.createBucket(bucketName);
+                return;
+            }
             amazonS3.createBucket(bucketName, region.getName());
         }
+    }
+
+
+    // there is bug at US_EAST_1 AWS S3 endpoint, we should not check buckets existence with it
+    private boolean bucketExists(String bucketName) {
+        boolean result;
+        if (region.getName().equalsIgnoreCase(Regions.US_EAST_1.getName())) {
+            amazonS3.setRegion(Region.getRegion(Regions.EU_CENTRAL_1));
+            result = amazonS3.doesBucketExist(bucketName);
+            amazonS3.setRegion(region);
+        } else {
+            result = amazonS3.doesBucketExist(bucketName);
+        }
+        return result;
     }
 }
