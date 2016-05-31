@@ -25,7 +25,7 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
 
     private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceDev.class);
-    @Value("${enhancedsnapshots.bucket.name.prefix}")
+    @Value("${enhancedsnapshots.bucket.name.prefix.002}")
     private String enhancedSnapshotBucketPrefix;
 
     @Value("${amazon.aws.accesskey}")

@@ -41,7 +41,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.support.CronSequenceGenerator;
 import org.springframework.stereotype.Service;
@@ -117,8 +116,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private String mountPoint;
     @Value("${enhancedsnapshots.default.sdfs.volume.name}")
     private String volumeName;
-    @Value("${enhancedsnapshots.bucket.name.prefix}")
-    private String enhancedSnapshotBucketPrefix;
+    @Value("${enhancedsnapshots.bucket.name.prefix.001}")
+    private String enhancedSnapshotBucketPrefix001;
+    @Value("${enhancedsnapshots.bucket.name.prefix.002}")
+    private String enhancedSnapshotBucketPrefix002;
     @Value("${enhancedsnapshots.awscli.conf.path}")
     private String awscliConfPath;
     @Value("${enhancedsnapshots.awslogs.conf.path}")
@@ -365,7 +366,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
         try {
             List<Bucket> allBuckets = amazonS3.listBuckets();
-            String bucketName = enhancedSnapshotBucketPrefix + instanceId;
+            String bucketName = enhancedSnapshotBucketPrefix002 + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
 
             String currentLocation = region.toString();
@@ -374,7 +375,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             }
             for (Bucket bucket : allBuckets) {
                 try {
-                    if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix)) {
+                    if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix001) || bucket.getName().startsWith(enhancedSnapshotBucketPrefix002)) {
                         String location = amazonS3.getBucketLocation(bucket.getName());
 
                         // Because client.getBucketLocation(bucket.getName()) returns US if bucket is in us-east-1
@@ -427,7 +428,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
-        initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix);
+        initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix002);
         return initConfigurationDto;
     }
 
@@ -538,8 +539,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     public BucketNameValidationDTO validateBucketName(String bucketName) {
-        if (!bucketName.startsWith(enhancedSnapshotBucketPrefix)) {
-            return new BucketNameValidationDTO(false, "Bucket name should start with " + enhancedSnapshotBucketPrefix);
+        if (!bucketName.startsWith(enhancedSnapshotBucketPrefix002)) {
+            return new BucketNameValidationDTO(false, "Bucket name should start with " + enhancedSnapshotBucketPrefix002);
         }
         if (amazonS3.doesBucketExist(bucketName)) {
             // check whether we own this bucket
