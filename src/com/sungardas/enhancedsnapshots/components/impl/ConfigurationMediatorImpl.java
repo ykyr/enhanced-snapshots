@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 
 import static com.sungardas.enhancedsnapshots.service.SystemService.VOLUME_SIZE_UNIT;
 
+/**
+ * implementation for {@link ConfigurationMediator}
+ */
 @Service
 public class ConfigurationMediatorImpl implements ConfigurationMediator {
 

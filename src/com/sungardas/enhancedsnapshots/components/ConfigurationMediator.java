@@ -1,5 +1,8 @@
 package com.sungardas.enhancedsnapshots.components;
 
+/**
+ * Mediator pattern used for simplifying immediate update system properties in all dependant services
+ */
 public interface ConfigurationMediator {
     String getRegion();
 

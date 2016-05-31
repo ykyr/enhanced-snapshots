@@ -24,7 +24,6 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
 import com.amazonaws.services.ec2.model.VolumeType;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -155,6 +154,12 @@ public class SystemServiceImpl implements SystemService {
         }
     }
 
+    /**
+     * Method for defining application version, which created system backup
+     *
+     * @param tempDirectory directory to which was unzipped system backup
+     * @return application version
+     */
     private String getBackupVersion(final Path tempDirectory) {
         Path infoFile = Paths.get(tempDirectory.toString(), INFO_FILE_NAME);
         if (infoFile.toFile().exists()) {
@@ -175,6 +180,11 @@ public class SystemServiceImpl implements SystemService {
         return "0.0.1";
     }
 
+    /**
+     * Adding metainfo to system backup
+     * @param tempDirectory directory where system backup is stored
+     * @throws IOException checked file system exception
+     */
     private void addInfo(final Path tempDirectory) throws IOException {
         File dest = Paths.get(tempDirectory.toString(), INFO_FILE_NAME).toFile();
         Map<String, String> info = new HashMap<>();
@@ -395,6 +405,11 @@ public class SystemServiceImpl implements SystemService {
         configurationMediator.setCurrentConfiguration(currentConfiguration);
     }
 
+    /**
+     * Returns the latest official version of application
+     * Current version taken from {@link SystemServiceImpl::INFO_URL}
+     * @return latest version
+     */
     private String getLatestVersion() {
         try {
             URL infoURL = new URL(INFO_URL);

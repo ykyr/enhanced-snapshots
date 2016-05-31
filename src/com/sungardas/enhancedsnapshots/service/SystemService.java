@@ -17,8 +17,17 @@ public interface SystemService {
      */
     void restore();
 
+    /**
+     * Get current system configuration from DB
+     *
+     * @return system configuration {@link SystemConfiguration}
+     */
     SystemConfiguration getSystemConfiguration();
 
+    /**
+     * set new system configuration
+     * @param systemConfiguration new system configuration {@link SystemConfiguration}
+     */
     void setSystemConfiguration(SystemConfiguration systemConfiguration);
 
     String VOLUME_SIZE_UNIT = "GB";
