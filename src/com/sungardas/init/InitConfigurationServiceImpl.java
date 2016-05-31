@@ -23,12 +23,18 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
+
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.s3.AmazonS3;
+
+import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+
 import com.amazonaws.services.s3.internal.BucketNameUtils;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
@@ -132,12 +138,17 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     private String mountPoint;
     @Value("${enhancedsnapshots.default.sdfs.volume.name}")
     private String volumeName;
-    @Value("${enhancedsnapshots.bucket.name.prefix}")
-    private String enhancedSnapshotBucketPrefix;
+
+    @Value("${enhancedsnapshots.bucket.name.prefix.001}")
+    private String enhancedSnapshotBucketPrefix001;
+    @Value("${enhancedsnapshots.bucket.name.prefix.002}")
+    private String enhancedSnapshotBucketPrefix002;
+
     @Value("${enhancedsnapshots.awscli.conf.path}")
     private String awscliConfPath;
     @Value("${enhancedsnapshots.awslogs.conf.path}")
     private String awslogsConfPath;
+
     @Value("${enhancedsnapshots.nginx.cert.path}")
     private String nginxCertPath;
     @Value("${enhancedsnapshots.nginx.key.path}")
@@ -169,7 +180,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         region = Regions.getCurrentRegion();
         amazonDynamoDB = new AmazonDynamoDBClient(credentialsProvider);
         amazonDynamoDB.setRegion(region);
-
         dbPrefix = AmazonConfigProvider.getDynamoDbPrefix();
         DynamoDBMapperConfig config = new DynamoDBMapperConfig.Builder().withTableNameOverride(DynamoDBMapperConfig.TableNameOverride.
                 withTableNamePrefix(dbPrefix)).build();
@@ -381,7 +391,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
         try {
             List<Bucket> allBuckets = amazonS3.listBuckets();
-            String bucketName = enhancedSnapshotBucketPrefix + instanceId;
+            String bucketName = enhancedSnapshotBucketPrefix002 + instanceId;
             result.add(new InitConfigurationDto.S3(bucketName, false));
 
             String currentLocation = region.toString();
@@ -390,7 +400,8 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
             }
             for (Bucket bucket : allBuckets) {
                 try {
-                    if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix)) {
+
+                    if (bucket.getName().startsWith(enhancedSnapshotBucketPrefix001) || bucket.getName().startsWith(enhancedSnapshotBucketPrefix002)) {
                         String location = amazonS3.getBucketLocation(bucket.getName());
 
                         // Because client.getBucketLocation(bucket.getName()) returns US if bucket is in us-east-1
@@ -443,6 +454,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
         initConfigurationDto.setS3(getBucketsWithSdfsMetadata());
         initConfigurationDto.setSdfs(sdfs);
+        initConfigurationDto.setImmutableBucketNamePrefix(enhancedSnapshotBucketPrefix002);
         return initConfigurationDto;
     }
 
@@ -554,10 +566,10 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     }
 
     public BucketNameValidationDTO validateBucketName(String bucketName) {
-        if (!bucketName.startsWith(enhancedSnapshotBucketPrefix)) {
-            return new BucketNameValidationDTO(false, "Bucket name should starts with " + enhancedSnapshotBucketPrefix);
+        if (!bucketName.startsWith(enhancedSnapshotBucketPrefix002)) {
+            return new BucketNameValidationDTO(false, "Bucket name should start with " + enhancedSnapshotBucketPrefix002);
         }
-        if (bucketExists(bucketName)) {
+        if (amazonS3.doesBucketExist(bucketName)) {
             // check whether we own this bucket
             List<Bucket> buckets = amazonS3.listBuckets();
             for (Bucket bucket : buckets) {
@@ -592,7 +604,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
     }
 
-
     // there is bug at US_EAST_1 AWS S3 endpoint, we should not check buckets existence with it
     private boolean bucketExists(String bucketName) {
         boolean result;
@@ -605,4 +616,5 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         }
         return result;
     }
+
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
+
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.services.dynamodbv2.datamodeling.IDynamoDBMapper;
@@ -27,7 +28,8 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
 
     private static final Logger LOG = LogManager.getLogger(InitConfigurationServiceDev.class);
-    @Value("${enhancedsnapshots.bucket.name.prefix}")
+
+    @Value("${enhancedsnapshots.bucket.name.prefix.002}")
     private String enhancedSnapshotBucketPrefix;
 
     @Value("${amazon.aws.accesskey}")
@@ -42,17 +44,20 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     @Value("${amazon.aws.region}")
     private String region;
 
-    @Autowired
-    private AmazonS3 amazonS3;
 
+    private AWSCredentialsProvider credentialsProvider;
+    private AmazonS3Client amazonS3;
 
     @Override
     public void removeProperties() {
-
     }
 
     @PostConstruct
     private void init() {
+        String accessKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSAccessKey);
+        String secretKey = new CryptoServiceImpl().decrypt(instanceId, amazonAWSSecretKey);
+        credentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey));
+        amazonS3 =  new AmazonS3Client(credentialsProvider);
     }
 
     @Override
@@ -135,6 +140,9 @@ class InitConfigurationServiceDev implements InitConfigurationService {
     }
 
     public BucketNameValidationDTO validateBucketName(String bucketName) {
+        if (!bucketName.startsWith(enhancedSnapshotBucketPrefix)) {
+            return new BucketNameValidationDTO(false, "Bucket name should start with " + enhancedSnapshotBucketPrefix);
+        }
         if (amazonS3.doesBucketExist(bucketName)) {
             // check whether we own this bucket
             List<Bucket> buckets = amazonS3.listBuckets();
@@ -155,6 +163,10 @@ class InitConfigurationServiceDev implements InitConfigurationService {
 
     @Override
     public void createBucket(String bucketName) {
+        BucketNameValidationDTO validationDTO = validateBucketName(bucketName);
+        if (!validationDTO.isValid()) {
+            throw new IllegalArgumentException(validationDTO.getMessage());
+        }
         if (!amazonS3.doesBucketExist(bucketName)) {
             LOG.info("Creating bucket {} in {}", bucketName, "us-west-2");
             amazonS3.createBucket(bucketName, "us-west-2");
