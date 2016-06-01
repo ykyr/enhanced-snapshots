@@ -354,7 +354,7 @@ public class SystemServiceImpl implements SystemService {
         configuration.getSdfs().setVolumeSize(currentConfiguration.getSdfsSize());
         // user can only expand volume size
         configuration.getSdfs().setMinVolumeSize(currentConfiguration.getSdfsSize());
-        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize(true));
+        configuration.getSdfs().setMaxVolumeSize(SDFSStateService.getMaxVolumeSize());
 
         configuration.getSdfs().setSdfsLocalCacheSize(currentConfiguration.getSdfsLocalCacheSize());
         configuration.getSdfs().setMaxSdfsLocalCacheSize(SDFSStateService.getFreeStorageSpace() + configurationMediator.getSdfsLocalCacheSizeWithoutMeasureUnit());

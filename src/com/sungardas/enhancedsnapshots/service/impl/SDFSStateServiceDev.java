@@ -16,6 +16,10 @@ public class SDFSStateServiceDev extends SDFSStateServiceImpl {
     }
 
 
+    public void expandSdfsVolume(String newVolumeSize) {
+        System.out.println("Volume expanded to " + newVolumeSize);
+    }
+    
 
     @Override
     public boolean containsSdfsMetadata(String sBucket) {

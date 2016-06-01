@@ -443,7 +443,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
         InitConfigurationDto.SDFS sdfs = new InitConfigurationDto.SDFS();
         sdfs.setMountPoint(mountPoint);
         sdfs.setVolumeName(volumeName);
-        int maxVolumeSize = SDFSStateService.getMaxVolumeSize(false);
+        int maxVolumeSize = SDFSStateService.getMaxVolumeSize();
         sdfs.setMaxVolumeSize(String.valueOf(maxVolumeSize));
         sdfs.setVolumeSize(String.valueOf(Math.min(maxVolumeSize, defaultVolumeSize)));
         sdfs.setMinVolumeSize(minVolumeSize);
@@ -519,7 +519,7 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
     @Override
     public void validateVolumeSize(final int volumeSize) {
         int min = Integer.parseInt(minVolumeSize);
-        int max = SDFSStateService.getMaxVolumeSize(false);
+        int max = SDFSStateService.getMaxVolumeSize();
         if (volumeSize < min || volumeSize > max) {
             throw new ConfigurationException("Invalid volume size");
         }

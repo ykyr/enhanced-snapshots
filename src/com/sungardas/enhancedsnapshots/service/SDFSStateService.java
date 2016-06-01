@@ -9,7 +9,7 @@ public interface SDFSStateService {
 
     long BYTES_IN_GB = 1_073_741_824;
     int SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM = 2000;
-    long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB / 4;
+    long SYSTEM_RESERVED_RAM_IN_BYTES = BYTES_IN_GB;
 
     // Reserved storage for logs of Tomcat and other services
     long SYSTEM_RESERVED_STORAGE_IN_BYTES = BYTES_IN_GB / 2;
@@ -19,13 +19,10 @@ public interface SDFSStateService {
      * Returns max sdfs volume size for current system in GB
      * @return
      */
-    static int getMaxVolumeSize(boolean sdfsRunning) {
+    static int getMaxVolumeSize() {
         OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         //Total RAM - RAM available for Tomcat - reserved
-        long totalRAM = osBean.getFreePhysicalMemorySize() - Runtime.getRuntime().freeMemory() - SYSTEM_RESERVED_RAM_IN_BYTES;
-        if (!sdfsRunning) {
-            totalRAM = totalRAM - SDFS_RESERVED_RAM_IN_BYTES;
-        }
+        long totalRAM = osBean.getTotalPhysicalMemorySize() - Runtime.getRuntime().maxMemory() - SYSTEM_RESERVED_RAM_IN_BYTES - SDFS_RESERVED_RAM_IN_BYTES;
         int maxVolumeSize = (int) (totalRAM / BYTES_IN_GB) * SDFS_VOLUME_SIZE_IN_GB_PER_GB_OF_RAM;
         return maxVolumeSize;
     }
