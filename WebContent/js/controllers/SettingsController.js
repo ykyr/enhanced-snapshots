@@ -75,7 +75,9 @@ angular.module('web')
             });
 
             settingsUpdateModal.result.then(function () {
-                $scope.initialSettings = angular.copy($scope.settings);
+                if ($scope.state == "done") {
+                    $scope.initialSettings = angular.copy($scope.settings);
+                }
             });
         };
 
