@@ -589,10 +589,6 @@ class InitConfigurationServiceImpl implements InitConfigurationService {
 
     @Override
     public void createBucket(String bucketName) {
-        BucketNameValidationDTO validationDTO = validateBucketName(bucketName);
-        if (!validationDTO.isValid()) {
-            throw new IllegalArgumentException(validationDTO.getMessage());
-        }
         if (!bucketExists(bucketName)) {
             LOG.info("Creating bucket {} in {} region", bucketName, region);
             // AWS throws exception when trying create bucket in US_EAST_1
